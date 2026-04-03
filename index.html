@@ -1,0 +1,391 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="다픽 — 인터넷·TV·휴대폰·가전렌탈 지원금 비교 플랫폼. 숨겨진 지원금 최대 128만원 챙기세요."/>
+  <meta property="og:title" content="다픽 — 생활 지원금 플랫폼"/>
+  <meta property="og:description" content="가만히 두면 128만원 손해! 지금 바로 지원금 확인하세요."/>
+  <title>다픽 — 생활 지원금 플랫폼</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/reset.css"/>
+  <link rel="stylesheet" href="css/common.css"/>
+  <link rel="stylesheet" href="css/components.css"/>
+  <style>
+    /* ── 메인 전용 스타일 ── */
+
+    /* 히어로 */
+    .hero {
+      background: linear-gradient(135deg, #18103A 0%, #2D1F6E 55%, #1A2A5E 100%);
+      padding: 64px 40px 60px;
+      position: relative;
+      overflow: hidden;
+      min-height: 380px;
+      display: flex;
+      align-items: center;
+    }
+    .hero::before {
+      content: '';
+      position: absolute; top: -100px; right: -60px;
+      width: 480px; height: 480px;
+      background: radial-gradient(circle, rgba(201,168,76,.13) 0%, transparent 65%);
+      pointer-events: none;
+    }
+    .hero::after {
+      content: '';
+      position: absolute; bottom: -80px; left: 5%;
+      width: 320px; height: 320px;
+      background: radial-gradient(circle, rgba(108,63,197,.2) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .hero-inner {
+      max-width: var(--max-w);
+      margin: 0 auto;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 40px;
+      position: relative;
+      z-index: 1;
+    }
+    .hero-text { flex: 1; }
+    .hero-eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      background: rgba(255,255,255,.1);
+      border: 1px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.85);
+      font-size: 12px; font-weight: 600;
+      padding: 5px 16px; border-radius: 999px;
+      margin-bottom: 20px; letter-spacing: .3px;
+    }
+    .hero-h1 { font-size: 42px; font-weight: 900; color: #fff; line-height: 1.2; margin-bottom: 14px; }
+    .hero-h1 em { font-style: normal; color: var(--gold-light); }
+    .hero-h1 .big { font-size: 52px; display: block; }
+    .hero-sub { font-size: 15px; color: rgba(255,255,255,.55); line-height: 1.7; margin-bottom: 32px; }
+    .hero-cta { display: flex; gap: 12px; flex-wrap: wrap; }
+    .btn-cta-main {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--dark);
+      border-radius: 14px; padding: 16px 32px;
+      font-size: 15px; font-weight: 700;
+      box-shadow: 0 4px 20px rgba(201,168,76,.4);
+      transition: all .2s;
+    }
+    .btn-cta-main:hover { transform: translateY(-2px); box-shadow: 0 8px 28px rgba(201,168,76,.5); }
+    .btn-cta-sub {
+      background: rgba(255,255,255,.1);
+      border: 1.5px solid rgba(255,255,255,.25);
+      color: rgba(255,255,255,.9);
+      border-radius: 14px; padding: 16px 28px;
+      font-size: 15px; font-weight: 500;
+      transition: all .2s;
+    }
+    .btn-cta-sub:hover { background: rgba(255,255,255,.18); }
+    .hero-right { display: flex; flex-direction: column; gap: 16px; flex-shrink: 0; }
+    .stat-card {
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 16px; padding: 18px 28px;
+      text-align: center;
+    }
+    .stat-num   { font-size: 30px; font-weight: 900; color: var(--gold-light); }
+    .stat-label { font-size: 12px; color: rgba(255,255,255,.45); margin-top: 3px; }
+
+    /* 카테고리 바로가기 */
+    .cat-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+    .cat-block {
+      background: var(--white);
+      border: 1.5px solid var(--border-card);
+      border-radius: var(--radius);
+      padding: 24px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 12px;
+      cursor: pointer; transition: all .25s; text-decoration: none;
+    }
+    .cat-block:hover { border-color: var(--purple-soft); box-shadow: var(--shadow-h); transform: translateY(-3px); }
+    .cat-block-icon { width: 60px; height: 60px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 28px; }
+    .cat-block-icon.phone    { background: #EEF0FF; }
+    .cat-block-icon.internet { background: #E8F5E9; }
+    .cat-block-icon.card     { background: #FFF3E0; }
+    .cat-block-icon.water    { background: #E3F2FD; }
+    .cat-block-icon.rental   { background: #FCE4EC; }
+    .cat-block-name { font-size: 14px; font-weight: 700; }
+    .cat-block-desc { font-size: 11px; color: var(--text-muted); text-align: center; line-height: 1.5; }
+
+    /* 이벤트 배너 */
+    .event-banner {
+      background: linear-gradient(135deg, #1A1048, #3D1F8E);
+      border-radius: var(--radius);
+      padding: 32px 36px;
+      display: flex; align-items: center; justify-content: space-between; gap: 24px;
+      cursor: pointer; transition: all .2s;
+      position: relative; overflow: hidden;
+    }
+    .event-banner::after {
+      content: '';
+      position: absolute; right: -40px; top: -40px;
+      width: 200px; height: 200px;
+      background: radial-gradient(circle, rgba(201,168,76,.15) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .event-banner:hover { transform: translateY(-2px); box-shadow: var(--shadow-h); }
+    .event-eyebrow { font-size: 11px; font-weight: 600; color: var(--gold-light); letter-spacing: 1px; margin-bottom: 8px; }
+    .event-title { font-size: 22px; font-weight: 800; color: #fff; margin-bottom: 6px; }
+    .event-title em { font-style: normal; color: var(--gold-light); }
+    .event-sub  { font-size: 13px; color: rgba(255,255,255,.5); }
+    .event-btn {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--dark);
+      border-radius: 12px; padding: 14px 28px;
+      font-size: 14px; font-weight: 700;
+      white-space: nowrap; flex-shrink: 0;
+      position: relative; z-index: 1;
+    }
+
+    /* ── 반응형 ── */
+    @media (max-width: 1024px) {
+      .hero { padding: 48px 24px 44px; }
+      .hero-h1 { font-size: 32px; } .hero-h1 .big { font-size: 40px; }
+      .hero-right { display: none; }
+      .cat-grid { grid-template-columns: repeat(5, 1fr); gap: 10px; }
+    }
+    @media (max-width: 768px) {
+      .hero { padding: 36px 16px 32px; min-height: auto; }
+      .hero-h1 { font-size: 26px; } .hero-h1 .big { font-size: 34px; }
+      .hero-sub { font-size: 13px; }
+      .btn-cta-main, .btn-cta-sub { padding: 13px 22px; font-size: 14px; }
+      .cat-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .cat-block { padding: 18px 12px; }
+      .cat-block-icon { width: 48px; height: 48px; font-size: 22px; }
+      .cat-block-name { font-size: 13px; }
+      .cat-block-desc { display: none; }
+      .event-banner { flex-direction: column; text-align: center; padding: 24px 20px; }
+      .event-title { font-size: 18px; }
+    }
+    @media (max-width: 480px) {
+      .hero { padding: 28px 16px 28px; }
+      .hero-h1 { font-size: 22px; } .hero-h1 .big { font-size: 30px; }
+      .cat-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .hero-cta { flex-direction: column; }
+      .btn-cta-main, .btn-cta-sub { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 공지 -->
+<div class="notice-bar" onclick="goPage('internet')">
+  🎁 가만히 두면 <em>128만원 손해!</em> — 지금 바로 지원금 확인하세요 ›
+</div>
+
+<!-- GNB -->
+<nav class="gnb">
+  <div class="gnb-top">
+    <a class="logo" href="index.html"><span class="da">다</span><span class="pick">픽</span></a>
+    <div class="gnb-right">
+      <button class="btn-login">로그인</button>
+      <button class="btn-signup">회원가입</button>
+    </div>
+  </div>
+  <div class="cat-bar">
+    <div class="cat-inner">
+      <div class="cat-item" onclick="goPage('phone')"><span class="cat-icon">📱</span>휴대폰</div>
+      <div class="cat-item active" onclick="goPage('internet')"><span class="cat-icon">📡</span>인터넷/TV</div>
+      <div class="cat-item" onclick="goPage('card')"><span class="cat-icon">💳</span>카드</div>
+      <div class="cat-item" onclick="goPage('water')"><span class="cat-icon">💧</span>정수기</div>
+      <div class="cat-item" onclick="goPage('rental')"><span class="cat-icon">🏠</span>렌탈</div>
+    </div>
+  </div>
+</nav>
+
+<!-- 히어로 -->
+<div class="hero">
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-eyebrow">🏆 365 생활 지원금 플랫폼</div>
+      <h1 class="hero-h1">
+        가만히 두면
+        <em class="big">128만원 손해!</em>
+      </h1>
+      <p class="hero-sub">인터넷·TV · 가전렌탈 · 휴대폰 · 카드<br>숨어있는 내 지원금 지금 바로 챙기세요</p>
+      <div class="hero-cta">
+        <button class="btn-cta-main" onclick="goPage('internet')">📡 인터넷 지원금 확인</button>
+        <button class="btn-cta-sub"  onclick="goPage('phone')">📱 휴대폰 비교하기</button>
+      </div>
+    </div>
+    <div class="hero-right">
+      <div class="stat-card"><div class="stat-num">128만</div><div class="stat-label">최대 지원금</div></div>
+      <div class="stat-card"><div class="stat-num">8+</div><div class="stat-label">통신사 비교</div></div>
+      <div class="stat-card"><div class="stat-num">무료</div><div class="stat-label">전문 상담</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 서비스 바로가기 -->
+<div class="section">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom:20px;">
+      <span class="sec-title">서비스 바로가기</span>
+    </div>
+    <div class="cat-grid">
+      <div class="cat-block" onclick="goPage('phone')">
+        <div class="cat-block-icon phone">📱</div>
+        <div class="cat-block-name">휴대폰</div>
+        <div class="cat-block-desc">최신 스마트폰<br>최저가 비교</div>
+      </div>
+      <div class="cat-block" onclick="goPage('internet')">
+        <div class="cat-block-icon internet">📡</div>
+        <div class="cat-block-name">인터넷/TV</div>
+        <div class="cat-block-desc">통신사별 지원금<br>한눈에 비교</div>
+      </div>
+      <div class="cat-block" onclick="goPage('card')">
+        <div class="cat-block-icon card">💳</div>
+        <div class="cat-block-name">카드</div>
+        <div class="cat-block-desc">혜택별 카드<br>맞춤 추천</div>
+      </div>
+      <div class="cat-block" onclick="goPage('water')">
+        <div class="cat-block-icon water">💧</div>
+        <div class="cat-block-name">정수기</div>
+        <div class="cat-block-desc">브랜드별 렌탈료<br>비교 신청</div>
+      </div>
+      <div class="cat-block" onclick="goPage('rental')">
+        <div class="cat-block-icon rental">🏠</div>
+        <div class="cat-block-name">렌탈</div>
+        <div class="cat-block-desc">가전·가구<br>렌탈 최저가</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 베스트 요금제 -->
+<div class="section">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-title">오늘의 베스트 요금제</span>
+      <span class="sec-badge">BEST</span>
+      <a class="sec-more" href="internet.html">더보기 ›</a>
+    </div>
+    <p class="sec-sub">클릭하면 인터넷 지원금 계산기로 이동합니다</p>
+    <div class="best-grid">
+      <div class="best-card top" onclick="goPage('internet')">
+        <div class="best-rank r1">1</div>
+        <div class="best-cat-tag">인터넷/TV</div>
+        <div class="best-tag">합리적 | 3~4인 가구</div>
+        <div class="best-title-row"><span class="plogo sk">SK</span><span class="best-name">500MB 기가라이트</span><span class="best-ch">[263채널]</span></div>
+        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 784,500원</div></div>
+        <div class="best-before">결합 전 43,950원</div>
+        <div class="best-after">휴대폰 결합 후 <strong>월 24,750원</strong></div>
+      </div>
+      <div class="best-card" onclick="goPage('internet')">
+        <div class="best-rank r2">2</div>
+        <div class="best-cat-tag">인터넷/TV</div>
+        <div class="best-tag">고속 | 라이브·재택근무</div>
+        <div class="best-title-row"><span class="plogo sk">SK</span><span class="best-name">1Gbps 기가인터넷</span><span class="best-ch">[263채널]</span></div>
+        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 889,500원</div></div>
+        <div class="best-before">결합 전 50,050원</div>
+        <div class="best-after">휴대폰 결합 후 <strong>월 28,050원</strong></div>
+      </div>
+      <div class="best-card" onclick="goPage('internet')">
+        <div class="best-rank r3">3</div>
+        <div class="best-cat-tag">인터넷/TV</div>
+        <div class="best-tag">경제적 | 3~4인 가구</div>
+        <div class="best-title-row"><span class="plogo lg">U⁺</span><span class="best-name">500MB 기가라이트</span><span class="best-ch">[238채널]</span></div>
+        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 500,000원</div></div>
+        <div class="best-before">결합 전 44,000원</div>
+        <div class="best-after">휴대폰 결합 후 <strong>월 24,200원</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 이벤트 배너 -->
+<div class="section">
+  <div class="wrap">
+    <div class="event-banner" onclick="goPage('internet')">
+      <div>
+        <div class="event-eyebrow">🎉 4월 이벤트</div>
+        <div class="event-title">나만 모르는 인터넷 지원금!<br><em>숨겨진 지원금 💰 + 추가 혜택</em></div>
+        <div class="event-sub">SK · KT · LG 실제 정책 기준 지원금 계산기</div>
+      </div>
+      <button class="event-btn">지금 확인하기 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- 리얼 후기 -->
+<div class="section">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom:20px;">
+      <span class="sec-title">📸 리얼 후기</span>
+      <a class="sec-more" href="#">더보기 ›</a>
+    </div>
+    <div class="review-grid">
+      <div class="review-card">
+        <div class="review-img c1">📡<div class="review-img-badge">BEST</div></div>
+        <div class="review-body">
+          <div class="review-title">동작구 LG U+ 인터넷 가입</div>
+          <div class="review-desc">사은품도 많이 챙겨주셔서 다음에도 구매 예정 생각 있습니다.</div>
+          <div class="review-meta"><span class="review-cat">인터넷TV</span>2025.03.15</div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-img c2">📺<div class="review-img-badge">BEST</div></div>
+        <div class="review-body">
+          <div class="review-title">경기 의정부 LG 인터넷+TV</div>
+          <div class="review-desc">기존 요금이랑 크게 차이 안 나면서 혜택 많이 받을 수 있도록 설계 잘 해주셨습니다.</div>
+          <div class="review-meta"><span class="review-cat">인터넷TV</span>2025.03.10</div>
+        </div>
+      </div>
+      <div class="review-card">
+        <div class="review-img c3">🔌<div class="review-img-badge">BEST</div></div>
+        <div class="review-body">
+          <div class="review-title">수원 팔달구 사무실 인터넷</div>
+          <div class="review-desc">다른 곳과 비교해서 지원금 혜택이 너무 좋아서 가입 결정했습니다.</div>
+          <div class="review-meta"><span class="review-cat">인터넷</span>2025.03.08</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FAQ -->
+<div class="section" style="padding-bottom:72px;">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom:20px;">
+      <span class="sec-title">자주 묻는 질문</span>
+    </div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 인터넷·TV 가입 시 설치비가 있나요?</span><span class="faq-icon">∨</span></div>
+        <div class="faq-a"><div class="faq-a-inner">대부분의 경우 설치비는 무료입니다. 일부 특수 환경에서는 별도 비용이 발생할 수 있으며, 상담 시 미리 확인해드립니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 지원금(사은품)은 어떻게 받나요?</span><span class="faq-icon">∨</span></div>
+        <div class="faq-a"><div class="faq-a-inner">가입 후 개통 완료 시점에 상품권(SK/신세계/OK캐쉬백 등)으로 지급됩니다. 채널·약정·결합 조건에 따라 금액이 달라집니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 상담 신청 후 얼마나 기다려야 하나요?</span><span class="faq-icon">∨</span></div>
+        <div class="faq-a"><div class="faq-a-inner">영업시간(09:00~21:00) 기준 30분~2시간 내 연락드립니다. 야간·주말 접수 건은 다음 영업일 오전 중 연락드립니다.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 푸터 -->
+<div class="footer-placeholder"><p>푸터 영역 — 추후 업데이트 예정</p></div>
+
+<!-- 카카오 플로팅 -->
+<div class="kakao-float" onclick="openKakao()">
+  <button class="kakao-btn" title="카카오톡 상담">
+    <svg viewBox="0 0 48 48" fill="none"><path d="M24 6C13.507 6 5 13.134 5 21.9c0 5.466 3.187 10.271 8.013 13.18L11.1 42l8.52-4.44C20.99 37.84 22.48 38 24 38c10.493 0 19-7.134 19-15.9S34.493 6 24 6z" fill="#3A1D1D"/></svg>
+  </button>
+  <span class="kakao-label">카카오 상담</span>
+</div>
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">∧</button>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+</body>
+</html>

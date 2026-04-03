@@ -1,0 +1,345 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="description" content="다픽 인터넷/TV — 통신사별 지원금 최대 비교. SK·KT·LG 실제 정책 기준 계산기."/>
+  <title>다픽 — 인터넷/TV 지원금 비교</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/reset.css"/>
+  <link rel="stylesheet" href="css/common.css"/>
+  <link rel="stylesheet" href="css/components.css"/>
+  <style>
+    /* ── 인터넷 페이지 전용 ── */
+    .page-hero {
+      background: linear-gradient(135deg, #18103A, #2D1F6E 60%, #1A2A5E);
+      padding: 40px 40px 36px;
+      position: relative; overflow: hidden;
+    }
+    .page-hero::before {
+      content: '';
+      position: absolute; top: -60px; right: -60px;
+      width: 300px; height: 300px;
+      background: radial-gradient(circle, rgba(201,168,76,.14) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .page-hero-inner { max-width: var(--max-w); margin: 0 auto; position: relative; z-index: 1; }
+    .breadcrumb { font-size: 12px; color: rgba(255,255,255,.4); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+    .breadcrumb a { color: rgba(255,255,255,.4); } .breadcrumb a:hover { color: rgba(255,255,255,.7); }
+    .breadcrumb span { color: rgba(255,255,255,.25); }
+    .page-hero h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
+    .page-hero h1 em { font-style: normal; color: var(--gold-light); }
+    .page-hero p  { font-size: 14px; color: rgba(255,255,255,.5); }
+    .page-hero-cta { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
+    .btn-ph-main {
+      background: linear-gradient(135deg, var(--gold), var(--gold-light));
+      color: var(--dark); border-radius: 12px; padding: 13px 26px;
+      font-size: 14px; font-weight: 700; transition: all .2s;
+    }
+    .btn-ph-main:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(201,168,76,.4); }
+    .btn-ph-sub {
+      background: rgba(255,255,255,.1);
+      border: 1.5px solid rgba(255,255,255,.2);
+      color: rgba(255,255,255,.85);
+      border-radius: 12px; padding: 13px 22px;
+      font-size: 14px; font-weight: 500; transition: all .2s;
+    }
+    .btn-ph-sub:hover { background: rgba(255,255,255,.18); }
+
+    /* ── 반응형 ── */
+    @media (max-width: 1024px) {
+      .page-hero { padding: 32px 24px 28px; }
+    }
+    @media (max-width: 768px) {
+      .page-hero { padding: 24px 16px 20px; }
+      .page-hero h1 { font-size: 22px; }
+      .page-hero p  { font-size: 13px; }
+      .btn-ph-main, .btn-ph-sub { padding: 11px 18px; font-size: 13px; }
+    }
+    @media (max-width: 480px) {
+      .page-hero-cta { flex-direction: column; }
+      .btn-ph-main, .btn-ph-sub { text-align: center; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- 공지 -->
+<div class="notice-bar">🎁 가만히 두면 <em>128만원 손해!</em> — 지금 바로 지원금 확인하세요</div>
+
+<!-- GNB + 카테고리 sticky -->
+<nav class="gnb">
+  <div class="gnb-top">
+    <a class="logo" href="index.html"><span class="da">다</span><span class="pick">픽</span></a>
+    <div class="gnb-right">
+      <button class="btn-login">로그인</button>
+      <button class="btn-signup">회원가입</button>
+    </div>
+  </div>
+  <div class="cat-bar">
+    <div class="cat-inner">
+      <div class="cat-item" onclick="goPage('phone')"><span class="cat-icon">📱</span>휴대폰</div>
+      <div class="cat-item active"><span class="cat-icon">📡</span>인터넷/TV</div>
+      <div class="cat-item" onclick="goPage('card')"><span class="cat-icon">💳</span>카드</div>
+      <div class="cat-item" onclick="goPage('water')"><span class="cat-icon">💧</span>정수기</div>
+      <div class="cat-item" onclick="goPage('rental')"><span class="cat-icon">🏠</span>렌탈</div>
+    </div>
+  </div>
+</nav>
+
+<!-- 페이지 히어로 -->
+<div class="page-hero">
+  <div class="page-hero-inner">
+    <div class="breadcrumb">
+      <a href="index.html">홈</a><span>›</span><span style="color:rgba(255,255,255,.7)">인터넷/TV</span>
+    </div>
+    <h1>원하시는 상품을 <em>선택해주세요</em></h1>
+    <p>실제 정책 기준 · 3년 약정 · 아래 필독사항을 참고해주세요!</p>
+    <div class="page-hero-cta">
+      <button class="btn-ph-main" onclick="goTo('calc-section')">🔍 지원금 계산기 바로가기</button>
+      <button class="btn-ph-sub"  onclick="goTo('quick-section')">나에게 맞는 상품 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ① 베스트 요금제 -->
+<div class="section">
+  <div class="wrap">
+    <div class="sec-head">
+      <span class="sec-title">오늘의 베스트 요금제</span>
+      <span class="sec-badge">BEST</span>
+      <a class="sec-more" href="#">더보기 ›</a>
+    </div>
+    <p class="sec-sub">클릭하면 자동으로 계산기에 반영됩니다</p>
+    <div class="best-grid">
+      <div class="best-card top" onclick="applyBest('SKB_HAN','han-500','ALL+')">
+        <div class="best-rank r1">1</div>
+        <div class="best-tag">합리적 | 3~4인 가구</div>
+        <div class="best-title-row"><span class="plogo sk">SK</span><span class="best-name">500MB 기가라이트</span><span class="best-ch">[263채널]</span></div>
+        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 784,500원</div></div>
+        <div class="best-before">결합 전 43,950원</div>
+        <div class="best-after">휴대폰 결합 후 <strong>월 24,750원</strong></div>
+      </div>
+      <div class="best-card" onclick="applyBest('SKB_HAN','han-1g','ALL+')">
+        <div class="best-rank r2">2</div>
+        <div class="best-tag">고속 | 라이브·재택근무</div>
+        <div class="best-title-row"><span class="plogo sk">SK</span><span class="best-name">1Gbps 기가인터넷</span><span class="best-ch">[263채널]</span></div>
+        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 889,500원</div></div>
+        <div class="best-before">결합 전 50,050원</div>
+        <div class="best-after">휴대폰 결합 후 <strong>월 28,050원</strong></div>
+      </div>
+      <div class="best-card" onclick="applyBest('LG','lg-500','ALL+')">
+        <div class="best-rank r3">3</div>
+        <div class="best-tag">경제적 | 3~4인 가구</div>
+        <div class="best-title-row"><span class="plogo lg">U⁺</span><span class="best-name">500MB 기가라이트</span><span class="best-ch">[238채널]</span></div>
+        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 500,000원</div></div>
+        <div class="best-before">결합 전 44,000원</div>
+        <div class="best-after">휴대폰 결합 후 <strong>월 24,200원</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ② 퀵메뉴 -->
+<div class="section" id="quick-section">
+  <div class="wrap">
+    <div class="quick-grid">
+      <div class="quick-card" onclick="goTo('calc-section')">
+        <div class="quick-icon qi-purple">🔍</div>
+        <div>
+          <div class="quick-title">나에게 맞는 상품 찾기</div>
+          <div class="quick-desc">통신사·속도·TV 조건으로 빠르게 추천받는 맞춤 요금제</div>
+        </div>
+        <span class="quick-arrow">›</span>
+      </div>
+      <div class="quick-card" onclick="goTo('calc-section')">
+        <div class="quick-icon qi-gold">💰</div>
+        <div>
+          <div class="quick-title">지원금 계산기</div>
+          <div class="quick-desc">실제 정책 기준으로 한눈에 보는 견적표</div>
+        </div>
+        <span class="quick-arrow">›</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ③ 지원금 계산기 -->
+<div class="section" id="calc-section">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom:16px;"><span class="sec-title">지원금 계산기</span></div>
+    <div class="calc-wrap">
+      <div class="calc-head">
+        <h2>원하시는 상품을 선택해주세요</h2>
+        <p>통신사 → 인터넷 속도 → TV 순서로 진행해주세요 · 3년 약정 기준</p>
+      </div>
+      <div class="calc-body">
+        <div class="calc-label">통신사</div>
+        <div class="prov-scroll">
+          <div class="prov-row" id="prov-row"></div>
+        </div>
+        <div class="step-block" id="step-plan">
+          <hr class="calc-divider">
+          <div class="calc-label">인터넷</div>
+          <div class="plan-grid" id="plan-grid"></div>
+          <div style="margin-top:16px;">
+            <div style="font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:8px;">결합 옵션 <span style="font-size:11px;font-weight:400;color:var(--text-muted)">선택 시 지원금 변동</span></div>
+            <div class="opt-row">
+              <label class="opt-chip" id="opt-phone" onclick="toggleOpt('opt-phone','phone')"><span class="chk">✓</span> 휴대폰과 함께 (MNP)</label>
+              <label class="opt-chip" id="opt-tv"    onclick="toggleOpt('opt-tv','tv')"><span class="chk">✓</span> TV와 함께</label>
+            </div>
+          </div>
+        </div>
+        <div class="step-block" id="step-tv">
+          <hr class="calc-divider">
+          <div class="calc-label">TV</div>
+          <div class="tv-grid" id="tv-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ④ 모든 통신사 -->
+<div class="section">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom:20px;"><span class="sec-title">모든 통신사 비교</span></div>
+    <div class="provider-logo-grid">
+      <div class="plogo-card" onclick="selectProviderByKey('SKT')">
+        <!-- 로고 이미지 교체: <img src="assets/logos/kt.png" alt="KT"> -->
+        <div class="plogo-img-area">KT 로고</div>
+        <div class="plogo-name">KT</div>
+      </div>
+      <div class="plogo-card" onclick="selectProviderByKey('LG')">
+        <div class="plogo-img-area">LG U+ 로고</div>
+        <div class="plogo-name">LG 유플러스</div>
+      </div>
+      <div class="plogo-card" onclick="selectProviderByKey('SKB_RA')">
+        <div class="plogo-img-area">SK 로고</div>
+        <div class="plogo-name">SK브로드밴드</div>
+      </div>
+      <div class="plogo-card" onclick="selectProviderByKey('SKB_HAN')">
+        <div class="plogo-img-area">SKB 알뜰</div>
+        <div class="plogo-name">SKB (알뜰)</div>
+      </div>
+      <div class="plogo-card" onclick="selectProviderByKey('SKB_YE')">
+        <div class="plogo-img-area">스카이라이프</div>
+        <div class="plogo-name">스카이라이프</div>
+      </div>
+      <div class="plogo-card" onclick="selectProviderByKey('HCN')">
+        <div class="plogo-img-area">HCN 로고</div>
+        <div class="plogo-name">HCN</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑤ 필수지식 + 꿀팁 -->
+<div class="section">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom:20px;"><span class="sec-title">📚 필수 지식</span></div>
+    <div class="knowledge-grid">
+      <div class="knowledge-card">
+        <div class="kc-head"><h3>꿀팁 게시판</h3><a class="sec-more" href="#">바로가기 ›</a></div>
+        <div class="kc-item"><span class="kc-text">LG 유플러스 모바일 + 인터넷 결합! 최대 할인금액 & 통신비 절약 꿀팁</span><span class="kc-tag">인터넷TV</span></div>
+        <div class="kc-item"><span class="kc-text">KT 모바일 + 인터넷 결합! 최대 할인금액 & 통신비 절약 꿀팁</span><span class="kc-tag">인터넷TV</span></div>
+        <div class="kc-item"><span class="kc-text">SK 모바일 + 인터넷 결합! 최대 할인금액 & 통신비 절약 꿀팁</span><span class="kc-tag">인터넷TV</span></div>
+        <div class="kc-item"><span class="kc-text">인터넷 약정 끝났다고 그냥 두지 마세요! 타사 신규가입 vs 재가입</span><span class="kc-tag">인터넷TV</span></div>
+        <div class="kc-item"><span class="kc-text">느린 우리집 인터넷, 뭐가 문제일까? 5분 만에 해결하는 실전 팁</span><span class="kc-tag">인터넷TV</span></div>
+      </div>
+      <div class="knowledge-card">
+        <div class="kc-head"><h3>인터넷 설치 BEST 후기</h3><a class="sec-more" href="#">바로가기 ›</a></div>
+        <div class="kc-item"><span class="kc-text">📍 동작구 LG U+ 인터넷 가입 — 사은품도 많이 챙겨주셔서 다음에도 구매 예정</span><span class="kc-tag">후기</span></div>
+        <div class="kc-item"><span class="kc-text">📍 경기 의정부 LG 인터넷+TV 가입 — 기존 요금이랑 크게 차이 안 나면서 혜택 많이</span><span class="kc-tag">후기</span></div>
+        <div class="kc-item"><span class="kc-text">📍 수원 팔달구 사무실 인터넷 — 지원금 혜택이 너무 좋아서 가입 결정했습니다</span><span class="kc-tag">후기</span></div>
+        <div class="kc-item"><span class="kc-text">📍 강남구 SK 기가 인터넷 — 설치 당일 방문, 친절한 기사님 덕분에 만족합니다</span><span class="kc-tag">후기</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ⑥ FAQ -->
+<div class="section" style="padding-bottom:72px;">
+  <div class="wrap">
+    <div class="sec-head" style="margin-bottom:20px;"><span class="sec-title">자주 묻는 질문</span></div>
+    <div class="faq-list">
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 인터넷·TV 가입 시 설치비가 있나요?</span><span class="faq-icon">∨</span></div>
+        <div class="faq-a"><div class="faq-a-inner">대부분의 경우 설치비는 무료입니다. 일부 특수 환경에서는 별도 비용이 발생할 수 있습니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 채널은 몇 개나 볼 수 있나요?</span><span class="faq-icon">∨</span></div>
+        <div class="faq-a"><div class="faq-a-inner">이코노미(193CH)부터 ALL+(263CH)까지 요금제에 따라 선택 가능합니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 인터넷과 TV를 같이 가입하면 요금 할인이 되나요?</span><span class="faq-icon">∨</span></div>
+        <div class="faq-a"><div class="faq-a-inner">네, 동시 가입 시 결합 할인이 적용되며 사은품 지원금도 크게 증가합니다. 계산기에서 직접 비교해보세요.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 설치까지 얼마나 걸리나요?</span><span class="faq-icon">∨</span></div>
+        <div class="faq-a"><div class="faq-a-inner">신청 후 평균 2~5 영업일 내 설치가 진행됩니다. 원하시는 날짜·시간 선택 가능합니다.</div></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 약정 기간 중 해지하면 위약금이 발생하나요?</span><span class="faq-icon">∨</span></div>
+        <div class="faq-a"><div class="faq-a-inner">3년 약정 기준으로 잔여 약정에 따른 위약금이 발생합니다. 이사·폐업 등 불가피한 사유는 면제 가능합니다.</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer-placeholder"><p>푸터 영역 — 추후 업데이트 예정</p></div>
+
+<!-- 플로팅 바 -->
+<div class="floating-bar" id="floating-bar">
+  <div class="detail-panel" id="detail-panel">
+    <div class="detail-inner" id="detail-inner"></div>
+  </div>
+  <div class="bar-main">
+    <div class="bar-left">
+      <div class="bar-chips" id="bar-chips"></div>
+      <div class="bar-nums">
+        <div class="bar-num fee">월 요금 <em id="bar-fee">0</em><span style="font-size:11px;color:rgba(255,255,255,.3)">원~</span></div>
+        <div class="bar-sep"></div>
+        <div class="bar-num gift">최대 지원금 <em id="bar-gift">0</em><span style="font-size:11px;color:rgba(255,255,255,.3)">원</span></div>
+      </div>
+    </div>
+    <div class="bar-btns">
+      <button class="btn-detail-bar" id="btn-detail" onclick="toggleDetail()">상세요금 <span class="arr">▲</span></button>
+      <button class="btn-bar-reset" onclick="resetAll()">초기화</button>
+      <button class="btn-bar-consult" onclick="openConsultModal()">상담 신청 →</button>
+    </div>
+  </div>
+</div>
+
+<!-- 카카오 플로팅 -->
+<div class="kakao-float" onclick="openKakao()">
+  <button class="kakao-btn" title="카카오톡 상담">
+    <svg viewBox="0 0 48 48" fill="none"><path d="M24 6C13.507 6 5 13.134 5 21.9c0 5.466 3.187 10.271 8.013 13.18L11.1 42l8.52-4.44C20.99 37.84 22.48 38 24 38c10.493 0 19-7.134 19-15.9S34.493 6 24 6z" fill="#3A1D1D"/></svg>
+  </button>
+  <span class="kakao-label">카카오 상담</span>
+</div>
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">∧</button>
+
+<!-- 상담 모달 -->
+<div class="modal-overlay" id="modal">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">무료 상담 신청</div>
+    <div class="modal-sub">전문 상담사가 24시간 내 연락드립니다</div>
+    <div class="modal-summary" id="modal-summary">선택하신 상품으로 최적의 혜택을 안내드립니다.</div>
+    <div class="modal-form">
+      <input type="text" placeholder="이름" id="input-name">
+      <input type="tel"  placeholder="연락처 (010-0000-0000)" id="input-phone">
+      <button class="modal-submit" onclick="submitConsult()">무료 상담 신청하기</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/api.js"></script>
+<script src="js/utils.js"></script>
+<script src="js/internet.js"></script>
+</body>
+</html>
