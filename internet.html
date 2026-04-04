@@ -5,12 +5,14 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="description" content="다픽 인터넷/TV 통신사별 지원금 최대 비교. SK·KT·LG 실제 정책 기준 계산기."/>
-  <title>다픽 인터넷/TV 지원금 비교</title>
+  <title>다픽 인터넷/TV 지원금 | 다다다 | 다 싸다 | 다 모여 있다 | 다 준다!</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/reset.css"/>
   <link rel="stylesheet" href="css/common.css"/>
   <link rel="stylesheet" href="css/components.css"/>
+  <link rel="stylesheet" href="css/footer.css"/>
+
   <style>
     /* ── 인터넷 페이지 전용 ── */
     .page-hero {
@@ -27,11 +29,12 @@
     }
     .page-hero-inner { max-width: var(--max-w); margin: 0 auto; position: relative; z-index: 1; }
     .breadcrumb { font-size: 12px; color: rgba(255,255,255,.4); margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
-    .breadcrumb a { color: rgba(255,255,255,.4); } .breadcrumb a:hover { color: rgba(255,255,255,.7); }
+    .breadcrumb a { color: rgba(255,255,255,.4); }
+    .breadcrumb a:hover { color: rgba(255,255,255,.7); }
     .breadcrumb span { color: rgba(255,255,255,.25); }
     .page-hero h1 { font-size: 28px; font-weight: 800; color: #fff; margin-bottom: 8px; }
     .page-hero h1 em { font-style: normal; color: var(--gold-light); }
-    .page-hero p  { font-size: 14px; color: rgba(255,255,255,.5); }
+    .page-hero p { font-size: 14px; color: rgba(255,255,255,.5); }
     .page-hero-cta { display: flex; gap: 10px; margin-top: 20px; flex-wrap: wrap; }
     .btn-ph-main {
       background: linear-gradient(135deg, var(--gold), var(--gold-light));
@@ -48,19 +51,100 @@
     }
     .btn-ph-sub:hover { background: rgba(255,255,255,.18); }
 
+    /* ── 통신사 로고 카드 (계산기 시작점) ── */
+    .provider-logo-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+    }
+    .plogo-card {
+      background: var(--white);
+      border: 2px solid var(--border-card);
+      border-radius: var(--radius-sm);
+      padding: 20px 12px 16px;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      cursor: pointer;
+      transition: all .2s;
+      position: relative;
+    }
+    .plogo-card:hover {
+      border-color: var(--purple-soft);
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-h);
+    }
+    .plogo-card.selected {
+      border-color: var(--gold);
+      box-shadow: var(--shadow-gold);
+      background: var(--gold-pale);
+    }
+    .plogo-card.selected::after {
+      content: '✓';
+      position: absolute; top: 8px; right: 10px;
+      font-size: 11px; color: var(--gold); font-weight: 700;
+    }
+    .plogo-img-area {
+      width: 80px; height: 48px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent;
+    }
+    .plogo-img-area img {
+      max-width: 100%; max-height: 100%;
+      object-fit: contain;
+    }
+    .plogo-name {
+      font-size: 12px; font-weight: 600;
+      color: var(--text-sub);
+      text-align: center;
+    }
+
+    /* ── 계산기 펼침 영역 ── */
+    .calc-expand {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .4s cubic-bezier(.4,0,.2,1);
+    }
+    .calc-expand.open { max-height: 1200px; }
+    .calc-inner {
+      background: var(--white);
+      border: 1.5px solid var(--border-card);
+      border-radius: var(--radius);
+      overflow: hidden;
+      margin-top: 16px;
+    }
+    .calc-inner-head {
+      background: linear-gradient(135deg, #18103A, #2D1F6E);
+      padding: 18px 28px;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .calc-inner-head h3 { font-size: 16px; font-weight: 700; color: #fff; }
+    .calc-inner-head p  { font-size: 12px; color: rgba(255,255,255,.5); margin-top: 2px; }
+    .calc-inner-body { padding: 24px 28px; }
+    .calc-divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .calc-label {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 1.5px; color: var(--purple-soft);
+      text-transform: uppercase; margin-bottom: 12px;
+    }
+
     /* ── 반응형 ── */
     @media (max-width: 1024px) {
       .page-hero { padding: 32px 24px 28px; }
+      .provider-logo-grid { grid-template-columns: repeat(3, 1fr); }
+      .calc-inner-body { padding: 20px; }
     }
     @media (max-width: 768px) {
       .page-hero { padding: 24px 16px 20px; }
       .page-hero h1 { font-size: 22px; }
-      .page-hero p  { font-size: 13px; }
+      .page-hero p { font-size: 13px; }
       .btn-ph-main, .btn-ph-sub { padding: 11px 18px; font-size: 13px; }
+      .provider-logo-grid { grid-template-columns: repeat(3, 1fr); gap: 10px; }
+      .plogo-img-area { width: 64px; height: 40px; }
     }
     @media (max-width: 480px) {
       .page-hero-cta { flex-direction: column; }
-      .btn-ph-main, .btn-ph-sub { text-align: center; }
+      .provider-logo-grid { grid-template-columns: repeat(3, 1fr); gap: 8px; }
+      .plogo-card { padding: 14px 8px 12px; }
+      .plogo-name { font-size: 11px; }
     }
   </style>
 </head>
@@ -74,7 +158,7 @@
   <div class="gnb-top">
     <a class="logo" href="index.html"><span class="da">다</span><span class="pick">픽</span></a>
     <div class="gnb-right">
-      <button class="btn-login">로그인</button>
+      <button class="btn-login" onclick="window.location.href='login.html'">로그인</button>
       <button class="btn-signup">회원가입</button>
     </div>
   </div>
@@ -93,13 +177,14 @@
 <div class="page-hero">
   <div class="page-hero-inner">
     <div class="breadcrumb">
-      <a href="index.html">홈</a><span>›</span><span style="color:rgba(255,255,255,.7)">인터넷/TV</span>
+      <a href="index.html">홈</a><span>›</span>
+      <span style="color:rgba(255,255,255,.7)">인터넷/TV</span>
     </div>
     <h1>원하시는 상품을 <em>선택해주세요</em></h1>
     <p>실제 정책 기준 · 3년 약정 · 아래 필독사항을 참고해주세요!</p>
     <div class="page-hero-cta">
       <button class="btn-ph-main" onclick="goTo('calc-section')">🔍 지원금 계산기 바로가기</button>
-      <button class="btn-ph-sub"  onclick="goTo('quick-section')">나에게 맞는 상품 →</button>
+      <button class="btn-ph-sub" onclick="goTo('quick-section')">나에게 맞는 상품 →</button>
     </div>
   </div>
 </div>
@@ -166,92 +251,99 @@
   </div>
 </div>
 
-<!-- ③ 지원금 계산기 -->
+<!-- ③ 통신사 선택 + 계산기 통합 -->
 <div class="section" id="calc-section">
   <div class="wrap">
-    <div class="sec-head" style="margin-bottom:16px;"><span class="sec-title">지원금 계산기</span></div>
-    <div class="calc-wrap">
-      <div class="calc-head">
-        <h2>원하시는 상품을 선택해주세요</h2>
-        <p>통신사 → 인터넷 속도 → TV 순서로 진행해주세요 · 3년 약정 기준</p>
-      </div>
-      <div class="calc-body">
-        <div class="calc-label">통신사</div>
-        <div class="prov-scroll">
-          <div class="prov-row" id="prov-row"></div>
-        </div>
-        <div class="step-block" id="step-plan">
-          <hr class="calc-divider">
-          <div class="calc-label">인터넷</div>
-          <div class="plan-grid" id="plan-grid"></div>
-          <div style="margin-top:16px;">
-            <div style="font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:8px;">결합 옵션 <span style="font-size:11px;font-weight:400;color:var(--text-muted)">선택 시 지원금 변동</span></div>
-            <div class="opt-row">
-              <label class="opt-chip" id="opt-phone" onclick="toggleOpt('opt-phone','phone')"><span class="chk">✓</span> 휴대폰과 함께 (MNP)</label>
-              <label class="opt-chip" id="opt-tv"    onclick="toggleOpt('opt-tv','tv')"><span class="chk">✓</span> TV와 함께</label>
-            </div>
-          </div>
-        </div>
-        <div class="step-block" id="step-tv">
-          <hr class="calc-divider">
-          <div class="calc-label">TV</div>
-          <div class="tv-grid" id="tv-grid"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ④ 모든 통신사 -->
-<div class="section">
-  <div class="wrap">
     <div class="sec-head" style="margin-bottom:20px;">
-      <span class="sec-title">모든 통신사 비교</span>
+      <span class="sec-title">통신사를 선택해주세요</span>
     </div>
 
+    <!-- 로고 카드 그리드 (통신사 선택 = 계산기 시작) -->
     <div class="provider-logo-grid">
-
-      <div class="plogo-card" onclick="selectProviderByKey('SKT')">
+      <div class="plogo-card" id="logo-SKT" onclick="selectProviderByKey('SKT', this)">
         <div class="plogo-img-area">
-          <img src="assets/logos/SKTLOGO.png" alt="SKT 로고" class="provider-logo-img">
+          <img src="assets/logos/SKTLOGO.png" alt="SKT">
         </div>
         <div class="plogo-name">SKT</div>
       </div>
-
-      <div class="plogo-card" onclick="selectProviderByKey('KT')"> <div class="plogo-img-area">
-          <img src="assets/logos/KT.png" alt="KT 로고" class="provider-logo-img">
+      <div class="plogo-card" id="logo-KT" onclick="selectProviderByKey('SKT', this)">
+        <div class="plogo-img-area">
+          <img src="assets/logos/KT.png" alt="KT">
         </div>
         <div class="plogo-name">KT</div>
       </div>
-
-      <div class="plogo-card" onclick="selectProviderByKey('LG')"> <div class="plogo-img-area">
-          <img src="path/to/your/lguplus_logo.png" alt="LG U+ 로고" class="provider-logo-img">
+      <div class="plogo-card" id="logo-LG" onclick="selectProviderByKey('LG', this)">
+        <div class="plogo-img-area">
+          <img src="assets/logos/LG.png" alt="LG U+">
         </div>
         <div class="plogo-name">LG U+</div>
       </div>
-
-      <div class="plogo-card" onclick="selectProviderByKey('LG_HELLO')"> <div class="plogo-img-area">
-          <img src="assets/logos/LGhello.png" alt="LG HelloVision 로고" class="provider-logo-img">
+      <div class="plogo-card" id="logo-LG_HELLO" onclick="selectProviderByKey('LG', this)">
+        <div class="plogo-img-area">
+          <img src="assets/logos/LGhello.png" alt="LG HelloVision">
         </div>
         <div class="plogo-name">LG HelloVision</div>
       </div>
-
-      <div class="plogo-card" onclick="selectProviderByKey('SKB')"> <div class="plogo-img-area">
-          <img src="assets/logos/SKTLOGO1.png" alt="SK broadband 로고" class="provider-logo-img">
+      <div class="plogo-card" id="logo-SKB" onclick="selectProviderByKey('SKB_RA', this)">
+        <div class="plogo-img-area">
+          <img src="assets/logos/SKTLOGO1.png" alt="SK broadband">
         </div>
         <div class="plogo-name">SK broadband</div>
       </div>
-
-      <div class="plogo-card" onclick="selectProviderByKey('KT_SKYLIFE')"> <div class="plogo-img-area">
-          <img src="assets/logos/KTSkyLife.png" alt="Kt Skylife 로고" class="provider-logo-img">
+      <div class="plogo-card" id="logo-KT_SKYLIFE" onclick="selectProviderByKey('SKT', this)">
+        <div class="plogo-img-area">
+          <img src="assets/logos/KTSkyLife.png" alt="KT Skylife">
         </div>
-        <div class="plogo-name">Kt Skylife</div>
+        <div class="plogo-name">KT Skylife</div>
       </div>
     </div>
+
+    <!-- 계산기 펼침 영역 (통신사 선택 시 펼쳐짐) -->
+    <div class="calc-expand" id="calc-expand">
+      <div class="calc-inner">
+        <div class="calc-inner-head">
+          <div>
+            <h3 id="calc-provider-title">인터넷 요금제를 선택해주세요</h3>
+            <p>통신사 → 인터넷 속도 → TV 순서로 진행 · 3년 약정 기준</p>
+          </div>
+        </div>
+        <div class="calc-inner-body">
+
+          <!-- 인터넷 요금제 -->
+          <div class="calc-label">인터넷</div>
+          <div class="plan-grid" id="plan-grid"></div>
+
+          <!-- 결합 옵션 -->
+          <div class="step-block" id="step-options">
+            <hr class="calc-divider">
+            <div style="font-size:12px;font-weight:600;color:var(--text-sub);margin-bottom:10px;">
+              결합 옵션 <span style="font-size:11px;font-weight:400;color:var(--text-muted)">선택 시 지원금 변동</span>
+            </div>
+            <div class="opt-row">
+              <label class="opt-chip" id="opt-phone" onclick="toggleOpt('opt-phone','phone')">
+                <span class="chk">✓</span> 휴대폰과 함께 (MNP)
+              </label>
+              <label class="opt-chip" id="opt-tv" onclick="toggleOpt('opt-tv','tv')">
+                <span class="chk">✓</span> TV와 함께
+              </label>
+            </div>
+          </div>
+
+          <!-- TV 요금제 -->
+          <div class="step-block" id="step-tv">
+            <hr class="calc-divider">
+            <div class="calc-label">TV</div>
+            <div class="tv-grid" id="tv-grid"></div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
   </div>
 </div>
 
-<!-- ⑤ 필수지식 + 꿀팁 -->
+<!-- ④ 필수지식 + 꿀팁 -->
 <div class="section">
   <div class="wrap">
     <div class="sec-head" style="margin-bottom:20px;"><span class="sec-title">📚 필수 지식</span></div>
@@ -275,7 +367,7 @@
   </div>
 </div>
 
-<!-- ⑥ FAQ -->
+<!-- ⑤ FAQ -->
 <div class="section" style="padding-bottom:72px;">
   <div class="wrap">
     <div class="sec-head" style="margin-bottom:20px;"><span class="sec-title">자주 묻는 질문</span></div>
@@ -303,8 +395,6 @@
     </div>
   </div>
 </div>
-
-<div class="footer-placeholder"><p>푸터 영역 — 추후 업데이트 예정</p></div>
 
 <!-- 플로팅 바 -->
 <div class="floating-bar" id="floating-bar">
@@ -347,7 +437,7 @@
     <div class="modal-summary" id="modal-summary">선택하신 상품으로 최적의 혜택을 안내드립니다.</div>
     <div class="modal-form">
       <input type="text" placeholder="이름" id="input-name">
-      <input type="tel"  placeholder="연락처 (010-0000-0000)" id="input-phone">
+      <input type="tel" placeholder="연락처 (010-0000-0000)" id="input-phone">
       <button class="modal-submit" onclick="submitConsult()">무료 상담 신청하기</button>
     </div>
   </div>
@@ -356,5 +446,143 @@
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/internet.js"></script>
+<script>
+  // 로고 카드 클릭 → 계산기 펼치기 오버라이드
+  function selectProviderByKey(key, cardEl) {
+    // 카드 선택 표시
+    document.querySelectorAll('.plogo-card').forEach(c => c.classList.remove('selected'));
+    if (cardEl) cardEl.classList.add('selected');
+
+    // internet.js의 selectProvider 호출
+    const fakeEl = { classList: { add: ()=>{}, remove: ()=>{} } };
+    state = { provider: key, planId: null, optPhone: false, optTv: false, tvGrade: null };
+    document.querySelectorAll('.opt-chip').forEach(c => c.classList.remove('checked'));
+
+    // 계산기 제목 업데이트
+    const prov = PROVIDERS[key];
+    document.getElementById('calc-provider-title').textContent =
+      `${prov.label} 인터넷 요금제를 선택해주세요`;
+
+    // 요금제 렌더
+    renderPlans(key);
+    showStep('step-options');
+    hideStep('step-tv');
+
+    // 계산기 펼치기
+    document.getElementById('calc-expand').classList.add('open');
+
+    // 스크롤 이동
+    setTimeout(() => {
+      document.getElementById('calc-expand').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+
+    updateBar();
+    closeDetail();
+  }
+
+  
+</script>
+<!-- 푸터 -->
+<footer class="site-footer">
+
+  <!-- 상단: 로고 + 앱 다운로드 -->
+  <div class="footer-top">
+    <div class="footer-wrap">
+      <div class="footer-logo">
+        <span class="da">다</span><span class="pick">픽</span>
+      </div>
+      <div class="footer-app-btns">
+        <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div>
+            <div class="app-btn-sub">Download on the</div>
+            <div class="app-btn-main">App Store</div>
+          </div>
+        </a>
+        <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3.18 23.76c.3.17.65.19.97.08l11.1-6.41-2.39-2.39-9.68 8.72zm-1.1-19.7C2.03 4.3 2 4.57 2 4.86v14.28c0 .29.03.57.08.83l9.96-9.96-9.96-9.95zM20.1 10.24l-2.41-1.39-2.71 2.71 2.71 2.71 2.43-1.4c.69-.4.69-1.22-.02-1.63zM4.15.23C3.83.12 3.48.14 3.18.31L13.04 10.18l2.39-2.39L4.15.23z"/></svg>
+          <div>
+            <div class="app-btn-sub">GET IT ON</div>
+            <div class="app-btn-main">Google Play</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 중단: 링크 메뉴 -->
+  <div class="footer-nav-wrap">
+    <div class="footer-wrap">
+      <nav class="footer-nav">
+        <a href="#">회사소개</a>
+        <a href="#">공지사항</a>
+        <a href="#">이벤트</a>
+        <a href="https://daphone.ai.kr/">제휴/가맹문의</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- 하단: 사업자 정보 -->
+  <div class="footer-info-wrap">
+    <div class="footer-wrap">
+
+      <div class="footer-info">
+        <p><span>사이트명</span> 다픽(pick) &nbsp;|&nbsp; <span>대표자</span> 강성현</p>
+        <p><span>사업자명</span> 주식회사 다커넥트</p>
+        <p>
+          <span>사업자등록번호</span>  365-81-03029 &nbsp;|&nbsp;
+          <span>통신판매</span> 222-15-94039
+        </p>
+        <p>
+          <span>대표번호</span> 1899-8478 &nbsp;|&nbsp;
+          <span>주소</span> 울산 중구 병영로 13 
+        </p>
+        <p>
+          <span>이메일</span> wwh3218@gmail.com &nbsp;|&nbsp;
+          <span>책임관리자</span> 장지혁
+        </p>
+        <p class="footer-disclaimer">
+          다픽은 통신판매중개자이며 통신판매의 당사자가 아닙니다.<br>
+          상품, 상품정보, 거래에 관한 의무와 책임은 거래당사자에게 있습니다.
+        </p>
+      </div>
+
+      <!-- 소셜 + 인증 -->
+      <div class="footer-side">
+        <div class="footer-sns">
+          <!-- 네이버 -->
+          <a class="footer-sns-btn" href="https://blog.naver.com/daphone_kor" title="네이버 블로그">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>
+          </a>
+          <!-- 카카오 -->
+          <a class="footer-sns-btn" href="https://pf.kakao.com/_LxifxmG/" title="카카오톡 채널">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.6 5.1 4 6.6l-.9 3.3 3.8-2.5c.9.2 1.9.3 2.9.3 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>
+          </a>
+          <!-- 유튜브 -->
+          <a class="footer-sns-btn" href="https://www.youtube.com/@daphone_kor" title="유튜브">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </a>
+          <!-- 인스타 -->
+          <a class="footer-sns-btn" href="https://www.instagram.com/daphone_official?igsh=MThhZDB0dXMxY29hMQ%3D%3D%2F" title="인스타그램">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+          </a>
+          <!-- 틱톡 -->
+          <a class="footer-sns-btn" href="#" title="틱톡">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.95a8.24 8.24 0 0 0 4.83 1.55V7.04a4.85 4.85 0 0 1-1.06-.35z"/></svg>
+          </a>
+        </div>
+  <!-- 최하단: 정책 링크 + 카피라이트 -->
+  <div class="footer-bottom">
+    <br class="footer-wrap">
+      <div class="footer-policies">
+        <a href="#">개인정보처리방침</a>
+        <a href="#">이용약관</a>
+        <a href="#">정보수신 동의</a>
+        <a href="#">이메일 무단수집 거부</a>
+      </div>
+      <br><p class="footer-copy">Copyright © 2026 다픽. All rights reserved.</p></br>
+    </div>
+  </div>
+</footer>
 </body>
 </html>
