@@ -4,8 +4,8 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <meta name="description" content="다픽 인터넷/TV — 통신사별 지원금 최대 비교. SK·KT·LG 실제 정책 기준 계산기."/>
-  <title>다픽 — 인터넷/TV 지원금 비교</title>
+  <meta name="description" content="다픽 인터넷/TV 통신사별 지원금 최대 비교. SK·KT·LG 실제 정책 기준 계산기."/>
+  <title>다픽 인터넷/TV 지원금 비교</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/reset.css"/>
@@ -205,32 +205,47 @@
 <!-- ④ 모든 통신사 -->
 <div class="section">
   <div class="wrap">
-    <div class="sec-head" style="margin-bottom:20px;"><span class="sec-title">모든 통신사 비교</span></div>
+    <div class="sec-head" style="margin-bottom:20px;">
+      <span class="sec-title">모든 통신사 비교</span>
+    </div>
+
     <div class="provider-logo-grid">
+
       <div class="plogo-card" onclick="selectProviderByKey('SKT')">
-        <!-- 로고 이미지 교체: <img src="assets/logos/kt.png" alt="KT"> -->
-        <div class="plogo-img-area">KT 로고</div>
+        <div class="plogo-img-area">
+          <img src="assets/logos/SKTLOGO.png" alt="SKT 로고" class="provider-logo-img">
+        </div>
+        <div class="plogo-name">SKT</div>
+      </div>
+
+      <div class="plogo-card" onclick="selectProviderByKey('KT')"> <div class="plogo-img-area">
+          <img src="assets/logos/KT.png" alt="KT 로고" class="provider-logo-img">
+        </div>
         <div class="plogo-name">KT</div>
       </div>
-      <div class="plogo-card" onclick="selectProviderByKey('LG')">
-        <div class="plogo-img-area">LG U+ 로고</div>
-        <div class="plogo-name">LG 유플러스</div>
+
+      <div class="plogo-card" onclick="selectProviderByKey('LG')"> <div class="plogo-img-area">
+          <img src="path/to/your/lguplus_logo.png" alt="LG U+ 로고" class="provider-logo-img">
+        </div>
+        <div class="plogo-name">LG U+</div>
       </div>
-      <div class="plogo-card" onclick="selectProviderByKey('SKB_RA')">
-        <div class="plogo-img-area">SK 로고</div>
-        <div class="plogo-name">SK브로드밴드</div>
+
+      <div class="plogo-card" onclick="selectProviderByKey('LG_HELLO')"> <div class="plogo-img-area">
+          <img src="assets/logos/LGhello.png" alt="LG HelloVision 로고" class="provider-logo-img">
+        </div>
+        <div class="plogo-name">LG HelloVision</div>
       </div>
-      <div class="plogo-card" onclick="selectProviderByKey('SKB_HAN')">
-        <div class="plogo-img-area">SKB 알뜰</div>
-        <div class="plogo-name">SKB (알뜰)</div>
+
+      <div class="plogo-card" onclick="selectProviderByKey('SKB')"> <div class="plogo-img-area">
+          <img src="assets/logos/SKTLOGO1.png" alt="SK broadband 로고" class="provider-logo-img">
+        </div>
+        <div class="plogo-name">SK broadband</div>
       </div>
-      <div class="plogo-card" onclick="selectProviderByKey('SKB_YE')">
-        <div class="plogo-img-area">스카이라이프</div>
-        <div class="plogo-name">스카이라이프</div>
-      </div>
-      <div class="plogo-card" onclick="selectProviderByKey('HCN')">
-        <div class="plogo-img-area">HCN 로고</div>
-        <div class="plogo-name">HCN</div>
+
+      <div class="plogo-card" onclick="selectProviderByKey('KT_SKYLIFE')"> <div class="plogo-img-area">
+          <img src="assets/logos/KTSkyLife.png" alt="Kt Skylife 로고" class="provider-logo-img">
+        </div>
+        <div class="plogo-name">Kt Skylife</div>
       </div>
     </div>
   </div>
