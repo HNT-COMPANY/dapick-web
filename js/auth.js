@@ -92,7 +92,7 @@ function renderGnbAuth() {
     `;
   } else {
     gnbRight.innerHTML = `
-      <button class="btn-login" onclick="window.location.href='login.html'">로그인</button>
+      <button class="btn-login" onclick="window.location.href='login.html'">로그인/회원가입</button>
     `;
   }
 }
