@@ -1,6 +1,3 @@
-// login.js — 다픽 로그인 페이지 전용 스크립트
-// 소셜 로그인, 이메일 패널 토글, 이메일 로그인 제출 담당
-
 // ── 카카오 로그인 URL 요청 후 리다이렉트 ────────────────────────
 async function socialLogin(provider) {
   if (provider === 'kakao') {
@@ -21,8 +18,6 @@ async function socialLogin(provider) {
   }
 }
 
-// ── 카카오 콜백 후 URL 파라미터에서 토큰 파싱 ───────────────────
-// 백엔드가 login.html?accessToken=...&refreshToken=...으로 리다이렉트
 function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get('accessToken');

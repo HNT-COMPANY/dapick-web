@@ -1,7 +1,3 @@
-// api.js — 다픽 웹 백엔드 API 호출
-
-// 로컬 개발: http://localhost:8081
-// 운영 배포: https://api.dapick.co.kr
 const BASE_URL = 'https://api.dapick.co.kr';
 
 // ── 토큰 갱신 중복 방지 플래그 ───────────────────────────────────
