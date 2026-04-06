@@ -1,0 +1,256 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>로그인 — 다픽 네트워크</title>
+
+  <!-- 폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- 공통 CSS -->
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/common.css">
+  <link rel="stylesheet" href="css/footer.css"/>
+
+  <!-- 로그인 전용 CSS -->
+  <link rel="stylesheet" href="css/login.css">
+</head>
+<body>
+
+<!-- ── GNB ── -->
+<header class="gnb">
+  <div class="gnb-top">
+    <a class="logo" href="index.html">
+      <span class="da">Da</span><span class="pick">pick</span>
+    </a>
+  </div>
+</header>
+
+<!-- ── 로그인 본문 ── -->
+<main class="login-wrap">
+  <div class="login-card">
+
+    <!-- 헤더 (로고 + 태그라인) -->
+    <div class="login-header">
+      <a class="login-brand" href="index.html">
+        <span class="da">Da</span><span class="pick">pick</span>
+      </a>
+      <p class="login-tagline">휴대폰 · 인터넷 · 카드 · 가전렌탈<br>다픽의 생활 플랫폼</p>
+    </div>
+
+    <!-- ── 소셜 버튼 그룹 ── -->
+    <div class="social-group">
+
+      <!-- 카카오 말풍선 -->
+      <div class="kakao-balloon">⚡ 카카오로 1초만에 회원가입</div>
+
+      <!-- 카카오 -->
+      <button class="social-btn btn-kakao" onclick="socialLogin('kakao')">
+        <svg class="social-icon" viewBox="0 0 24 24">
+          <path d="M12 3C6.48 3 2 6.72 2 11.28c0 2.9 1.78 5.45 4.47 6.94L5.4 22l4.29-2.96A12.2 12.2 0 0012 19.56c5.52 0 10-3.72 10-8.28C22 6.72 17.52 3 12 3z" fill="#191919"/>
+        </svg>
+        카카오로 시작하기
+        <span class="soon-badge">준비중</span>
+      </button>
+
+      <!-- 네이버 -->
+      <button class="social-btn btn-naver" onclick="socialLogin('naver')">
+        <svg class="social-icon" viewBox="0 0 24 24">
+          <path d="M13.5 12.6L10.2 7H7v10h3.5V11.4L14.1 17H17V7h-3.5v5.6z" fill="white"/>
+        </svg>
+        네이버로 시작하기
+        <span class="soon-badge">준비중</span>
+      </button>
+
+      <!-- 애플 -->
+      <button class="social-btn btn-apple" onclick="socialLogin('apple')">
+        <svg class="social-icon" viewBox="0 0 24 24">
+          <path d="M17.05 12.536c-.02-2.164 1.767-3.206 1.848-3.258-1.007-1.473-2.573-1.675-3.13-1.697-1.327-.136-2.6.787-3.274.787-.674 0-1.704-.77-2.803-.749-1.436.022-2.764.838-3.503 2.12-1.5 2.597-.384 6.44 1.075 8.546.717 1.03 1.566 2.185 2.682 2.143 1.08-.044 1.487-.694 2.793-.694 1.307 0 1.68.694 2.819.67 1.16-.019 1.893-1.047 2.601-2.08.822-1.19 1.16-2.346 1.178-2.404-.025-.011-2.261-.868-2.286-3.384zM14.89 5.86c.595-.72 1-1.72.89-2.72-.86.035-1.898.572-2.513 1.294-.551.637-1.035 1.657-.905 2.634.96.074 1.934-.487 2.528-1.208z" fill="white"/>
+        </svg>
+        Apple로 시작하기
+        <span class="soon-badge">준비중</span>
+      </button>
+
+    </div><!-- /social-group -->
+
+    <!-- 구분선 -->
+    <div class="login-divider">또는</div>
+
+    <!-- 이메일 로그인 토글 링크 -->
+    <a class="email-login-link" href="#" id="email-toggle" onclick="toggleEmail(event)">
+      이메일로 로그인
+    </a>
+
+    <!-- 이메일 로그인 패널 (접고 펼치기) -->
+    <div class="email-panel" id="email-panel">
+      <div class="alert-banner" id="email-alert"></div>
+
+      <div class="form-group">
+        <label class="form-label" for="input-email">이메일</label>
+        <input
+          type="email"
+          id="input-email"
+          class="form-input"
+          placeholder="이메일을 입력하세요"
+          autocomplete="email"
+          onkeydown="if(event.key==='Enter') document.getElementById('input-pw').focus()"
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="input-pw">비밀번호</label>
+        <input
+          type="password"
+          id="input-pw"
+          class="form-input"
+          placeholder="비밀번호를 입력하세요"
+          autocomplete="current-password"
+          onkeydown="if(event.key==='Enter') submitEmailLogin()"
+        >
+      </div>
+
+      <button class="btn-email-submit" id="btn-email-submit" onclick="submitEmailLogin()">
+        <span id="email-btn-text">로그인</span>
+        <div class="btn-spinner" id="email-spinner"></div>
+      </button>
+    </div><!-- /email-panel -->
+
+    <!-- 홈으로 -->
+    <a href="index.html" class="back-home">← 메인으로 돌아가기</a>
+
+  </div><!-- /login-card -->
+</main>
+
+<!-- ── 카카오 플로팅 버튼 ── -->
+<div class="kakao-float">
+  <button class="kakao-btn" onclick="openKakao()" aria-label="카카오 상담">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 3C6.48 3 2 6.72 2 11.28c0 2.9 1.78 5.45 4.47 6.94L5.4 22l4.29-2.96A12.2 12.2 0 0012 19.56c5.52 0 10-3.72 10-8.28C22 6.72 17.52 3 12 3z" fill="#191919"/>
+    </svg>
+  </button>
+  <div class="kakao-label">카카오 상담</div>
+</div>
+
+<!-- 푸터 -->
+<footer class="site-footer">
+
+  <!-- 상단: 로고 + 앱 다운로드 -->
+  <div class="footer-top">
+    <div class="footer-wrap">
+      <div class="footer-logo">
+        <span class="da">다</span><span class="pick">픽</span>
+      </div>
+      <div class="footer-app-btns">
+        <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div>
+            <div class="app-btn-sub">Download on the</div>
+            <div class="app-btn-main">App Store</div>
+          </div>
+        </a>
+        <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3.18 23.76c.3.17.65.19.97.08l11.1-6.41-2.39-2.39-9.68 8.72zm-1.1-19.7C2.03 4.3 2 4.57 2 4.86v14.28c0 .29.03.57.08.83l9.96-9.96-9.96-9.95zM20.1 10.24l-2.41-1.39-2.71 2.71 2.71 2.71 2.43-1.4c.69-.4.69-1.22-.02-1.63zM4.15.23C3.83.12 3.48.14 3.18.31L13.04 10.18l2.39-2.39L4.15.23z"/></svg>
+          <div>
+            <div class="app-btn-sub">GET IT ON</div>
+            <div class="app-btn-main">Google Play</div>
+          </div>
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <!-- 중단: 링크 메뉴 -->
+  <div class="footer-nav-wrap">
+    <div class="footer-wrap">
+      <nav class="footer-nav">
+        <a href="#">회사소개</a>
+        <a href="#">공지사항</a>
+        <a href="#">이벤트</a>
+        <a href="https://daphone.ai.kr/">제휴/가맹문의</a>
+      </nav>
+    </div>
+  </div>
+
+  <!-- 하단: 사업자 정보 -->
+  <div class="footer-info-wrap">
+    <div class="footer-wrap">
+
+      <div class="footer-info">
+        <p><span>사이트명</span> 다픽(pick) &nbsp;|&nbsp; <span>대표자</span> 강성현</p>
+        <p><span>사업자명</span> 주식회사 다커넥트</p>
+        <p>
+          <span>사업자등록번호</span>  365-81-03029 &nbsp;|&nbsp;
+          <span>통신판매</span> 222-15-94039
+        </p>
+        <p>
+          <span>대표번호</span> 1899-8478 &nbsp;|&nbsp;
+          <span>주소</span> 울산 중구 병영로 13 
+        </p>
+        <p>
+          <span>이메일</span> wwh3218@gmail.com &nbsp;|&nbsp;
+          <span>책임관리자</span> 장지혁
+        </p>
+        <p class="footer-disclaimer">
+          다픽은 통신판매중개자이며 통신판매의 당사자가 아닙니다.<br>
+          상품, 상품정보, 거래에 관한 의무와 책임은 거래당사자에게 있습니다.
+        </p>
+      </div>
+
+      <!-- 소셜 + 인증 -->
+      <div class="footer-side">
+        <div class="footer-sns">
+          <!-- 네이버 -->
+          <a class="footer-sns-btn" href="https://blog.naver.com/daphone_kor" title="네이버 블로그">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg>
+          </a>
+          <!-- 카카오 -->
+          <a class="footer-sns-btn" href="https://pf.kakao.com/_LxifxmG/" title="카카오톡 채널">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.6 5.1 4 6.6l-.9 3.3 3.8-2.5c.9.2 1.9.3 2.9.3 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg>
+          </a>
+          <!-- 유튜브 -->
+          <a class="footer-sns-btn" href="https://www.youtube.com/@daphone_kor" title="유튜브">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>
+          </a>
+          <!-- 인스타 -->
+          <a class="footer-sns-btn" href="https://www.instagram.com/daphone_official?igsh=MThhZDB0dXMxY29hMQ%3D%3D%2F" title="인스타그램">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
+          </a>
+          <!-- 틱톡 -->
+          <a class="footer-sns-btn" href="#" title="틱톡">
+            <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M19.59 6.69a4.83 4.83 0 0 1-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 0 1-2.88 2.5 2.89 2.89 0 0 1-2.89-2.89 2.89 2.89 0 0 1 2.89-2.89c.28 0 .54.04.79.1V9.01a6.32 6.32 0 0 0-.79-.05 6.34 6.34 0 0 0-6.34 6.34 6.34 6.34 0 0 0 6.34 6.34 6.34 6.34 0 0 0 6.33-6.34V8.95a8.24 8.24 0 0 0 4.83 1.55V7.04a4.85 4.85 0 0 1-1.06-.35z"/></svg>
+          </a>
+        </div>
+  <!-- 최하단: 정책 링크 + 카피라이트 -->
+  <div class="footer-bottom">
+    <br class="footer-wrap">
+      <div class="footer-policies">
+        <a href="#">개인정보처리방침</a>
+        <a href="#">이용약관</a>
+        <a href="#">정보수신 동의</a>
+        <a href="#">이메일 무단수집 거부</a>
+      </div>
+      <br><p class="footer-copy">Copyright © 2026 다픽. All rights reserved.</p></br>
+    </div>
+  </div>
+</footer>
+
+<!-- 카카오 플로팅 -->
+<div class="kakao-float" onclick="openKakao()">
+  <button class="kakao-btn" title="카카오톡 상담">
+    <svg viewBox="0 0 48 48" fill="none"><path d="M24 6C13.507 6 5 13.134 5 21.9c0 5.466 3.187 10.271 8.013 13.18L11.1 42l8.52-4.44C20.99 37.84 22.48 38 24 38c10.493 0 19-7.134 19-15.9S34.493 6 24 6z" fill="#3A1D1D"/></svg>
+  </button>
+  <span class="kakao-label">카카오 상담</span>
+</div>
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">∧</button>
+
+<!-- ── JS (공통 → 로그인 전용 순서) ── -->
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/login.js"></script>
+
+</body>
+</html>

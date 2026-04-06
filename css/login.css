@@ -1,0 +1,356 @@
+/* ── login.css ── */
+/* 로그인 페이지 전용 스타일 */
+/* 공통 스타일은 common.css / components.css 참고 */
+
+/* ── 레이아웃 ── */
+body {
+  background: var(--bg);
+  font-family: 'Noto Sans KR', sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.login-wrap {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 20px;
+}
+
+/* ── 로그인 카드 ── */
+.login-card {
+  background: #fff;
+  border: 1.5px solid var(--border-card);
+  border-radius: 24px;
+  padding: 48px 40px 40px;
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 40px rgba(108, 63, 197, 0.08);
+  position: relative;
+  overflow: visible;
+}
+
+/* 상단 포인트 라인 제거 */
+
+/* ── 로고 / 헤더 ── */
+.login-header {
+  text-align: center;
+  margin-bottom: 56px; /* 말풍선 높이(44px) + 여유 공간 확보 */
+}
+
+.login-brand {
+  font-family: 'DM Serif Display', serif;
+  font-size: 34px;
+  display: inline-block;
+  margin-bottom: 8px;
+  text-decoration: none;
+}
+.login-brand .da {
+  color: var(--gold);
+}
+.login-brand .pick {
+  color: var(--purple);
+}
+
+.login-tagline {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* ── 소셜 버튼 그룹 ── */
+.social-group {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  position: relative; /* 말풍선 위치 기준 */
+}
+
+/* ── 카카오 말풍선 툴팁 ── */
+.kakao-balloon {
+  position: absolute;
+  top: -44px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #1a1a1a;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 999px;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  animation: balloonBounce 2.5s ease-in-out infinite;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
+  z-index: 10;
+}
+
+/* 말풍선 꼬리 */
+.kakao-balloon::after {
+  content: '';
+  position: absolute;
+  bottom: -7px;
+  left: 50%;
+  transform: translateX(-50%);
+  border-left: 7px solid transparent;
+  border-right: 7px solid transparent;
+  border-top: 8px solid #1a1a1a;
+}
+
+/* 둥실둥실 애니메이션 */
+@keyframes balloonBounce {
+  0%,
+  100% {
+    transform: translateX(-50%) translateY(0);
+  }
+  50% {
+    transform: translateX(-50%) translateY(-5px);
+  }
+}
+
+/* ── 소셜 버튼 공통 ── */
+.social-btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 16px 20px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  transition: all 0.18s;
+  position: relative;
+  letter-spacing: -0.2px;
+}
+.social-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.13);
+}
+.social-btn:active {
+  transform: translateY(0);
+}
+
+/* 카카오 */
+.btn-kakao {
+  background: #fee500;
+  color: #191919;
+}
+/* 네이버 */
+.btn-naver {
+  background: #03c75a;
+  color: #fff;
+}
+/* 애플 */
+.btn-apple {
+  background: #111;
+  color: #fff;
+}
+
+.social-icon {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+}
+
+/* 준비중 배지 */
+.soon-badge {
+  position: absolute;
+  right: 16px;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 9px;
+  border-radius: 999px;
+}
+.btn-kakao .soon-badge {
+  background: rgba(25, 25, 25, 0.1);
+  color: #555;
+}
+.btn-naver .soon-badge {
+  background: rgba(255, 255, 255, 0.28);
+  color: #fff;
+}
+.btn-apple .soon-badge {
+  background: rgba(255, 255, 255, 0.15);
+  color: rgba(255, 255, 255, 0.8);
+}
+
+/* ── 구분선 ── */
+.login-divider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 20px 0 0;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+.login-divider::before,
+.login-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border);
+}
+
+/* ── 이메일 로그인 토글 링크 ── */
+.email-login-link {
+  display: block;
+  text-align: center;
+  margin-top: 14px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+  padding: 4px;
+}
+.email-login-link:hover {
+  color: var(--purple);
+}
+
+/* ── 이메일 패널 (접고 펼치기) ── */
+.email-panel {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.email-panel.open {
+  max-height: 320px;
+}
+
+/* ── 폼 요소 ── */
+.form-group {
+  margin-top: 12px;
+}
+
+.form-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-sub);
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  border: 1.5px solid var(--border-card);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 14px;
+  font-family: 'Noto Sans KR', sans-serif;
+  outline: none;
+  transition:
+    border-color 0.2s,
+    box-shadow 0.2s;
+  background: #fff;
+  color: var(--text-main);
+  box-sizing: border-box;
+}
+.form-input:focus {
+  border-color: var(--purple-soft);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+.form-input.err {
+  border-color: #ef4444;
+}
+.form-input::placeholder {
+  color: var(--text-muted);
+}
+
+/* ── 이메일 로그인 버튼 ── */
+.btn-email-submit {
+  width: 100%;
+  background: linear-gradient(135deg, var(--purple), var(--purple-soft));
+  color: #fff;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: 'Noto Sans KR', sans-serif;
+  margin-top: 10px;
+  transition: all 0.2s;
+  box-shadow: 0 4px 14px rgba(108, 63, 197, 0.22);
+}
+.btn-email-submit:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 20px rgba(108, 63, 197, 0.32);
+}
+.btn-email-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+/* ── 에러 알림 배너 ── */
+.alert-banner {
+  padding: 11px 14px;
+  border-radius: 9px;
+  font-size: 12px;
+  font-weight: 500;
+  margin-top: 10px;
+  display: none;
+  line-height: 1.5;
+}
+.alert-banner.show {
+  display: block;
+}
+.alert-banner.error {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  color: #dc2626;
+}
+
+/* ── 로딩 스피너 ── */
+.btn-spinner {
+  display: none;
+  width: 15px;
+  height: 15px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  margin: 0 auto;
+}
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── 홈 돌아가기 ── */
+.back-home {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  margin-top: 28px;
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.back-home:hover {
+  color: var(--purple);
+}
+
+/* ── 반응형 ── */
+@media (max-width: 480px) {
+  .login-card {
+    padding: 40px 24px 32px;
+  }
+  .login-brand {
+    font-size: 28px;
+  }
+  .social-btn {
+    font-size: 14px;
+    padding: 15px 16px;
+  }
+  .kakao-balloon {
+    font-size: 11px;
+    padding: 7px 14px;
+  }
+}
