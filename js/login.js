@@ -1,10 +1,8 @@
-// ── 카카오 로그인 URL 요청 후 리다이렉트 ────────────────────────
+// ── 카카오 소셜 로그인 ────────────────────────────────────────────
 async function socialLogin(provider) {
   if (provider === 'kakao') {
     try {
-      // 백엔드에서 카카오 로그인 URL 받아오기
       const data = await api.get('/oauth2/kakao/url');
-      // 카카오 로그인 페이지로 리다이렉트
       window.location.href = data.url;
     } catch (e) {
       showToast('카카오 로그인 연결에 실패했습니다.', 'error');
@@ -18,6 +16,7 @@ async function socialLogin(provider) {
   }
 }
 
+// ── 카카오 OAuth 콜백 처리 ───────────────────────────────────────
 function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get('accessToken');
@@ -30,12 +29,11 @@ function handleOAuthCallback() {
   // 에러 처리
   if (error) {
     showToast('카카오 로그인에 실패했습니다. 다시 시도해주세요.', 'error');
-    // URL 파라미터 제거
     window.history.replaceState({}, document.title, '/login.html');
     return;
   }
 
-  // 토큰이 있으면 저장 후 리다이렉트
+  // 로그인 성공
   if (accessToken && refreshToken) {
     saveTokens(accessToken, refreshToken, role, nickname);
 
@@ -48,11 +46,37 @@ function handleOAuthCallback() {
       showToast(`다시 오셨군요, ${nickname || ''}님! 😊`, 'success');
     }
 
-    // URL 파라미터 제거 후 홈으로 이동
+    // URL 파라미터 제거
+    window.history.replaceState({}, document.title, '/login.html');
+
     setTimeout(() => {
-      window.location.href = 'index.html';
+      handleAfterLogin(role);
     }, 1000);
   }
+}
+
+// ── 로그인 성공 후 처리 (공통) ───────────────────────────────────
+function handleAfterLogin(role) {
+  // 1. 어드민이면 어드민 페이지로
+  if (role === 'LV4_ADMIN') {
+    window.location.href = 'https://admin.dapick.co.kr';
+    return;
+  }
+
+  // 2. pending 카카오 상담 있으면 처리
+  const pendingConsult = sessionStorage.getItem('pending_kakao_consult');
+  if (pendingConsult) {
+    // 원래 있던 페이지로 복귀 후 상담 열기
+    const redirect =
+      sessionStorage.getItem('redirect_after_login') || 'index.html';
+    sessionStorage.removeItem('redirect_after_login');
+    // pending_kakao_consult는 복귀 페이지에서 resumePendingKakaoConsult()가 처리
+    window.location.href = redirect;
+    return;
+  }
+
+  // 3. 그냥 홈으로
+  window.location.href = 'index.html';
 }
 
 // ── 이메일 패널 토글 ─────────────────────────────────────────────
@@ -94,8 +118,7 @@ async function submitEmailLogin() {
     saveTokens(data.accessToken, data.refreshToken, data.role, data.nickname);
     showToast('로그인 성공!', 'success');
     setTimeout(() => {
-      window.location.href =
-        data.role === 'LV4_ADMIN' ? 'https://admin.dapick.co.kr' : 'index.html';
+      handleAfterLogin(data.role);
     }, 700);
   } catch (e) {
     showEmailAlert(e.message || '로그인에 실패했습니다. 다시 시도해주세요.');
@@ -130,7 +153,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // 1. 카카오 콜백 파라미터 먼저 처리
   handleOAuthCallback();
 
-  // 2. 이미 로그인된 상태면 홈으로 (콜백 처리 후에 체크)
+  // 2. 이미 로그인된 상태면 홈으로
   if (
     !new URLSearchParams(window.location.search).get('accessToken') &&
     isLoggedIn()
