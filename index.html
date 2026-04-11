@@ -5,7 +5,7 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="naver-site-verification" content="915416fea52343dca0655e46b44dcf0c0f35c044" />
-  <title>다픽 생활지원금성지| 생활플랫폼 | 정보 네트워크 | 다 있다! || 다다다 | 모두다 선택하세요 | 숨은 지원금 찾아가세요</title>
+  <title>다픽|생활지원금성지| 생활플랫폼 | 정보 네트워크 | 다 있다! || 다다다 | 모두다 선택하세요 | 숨은 지원금 찾아가세요</title>
   <meta name="description" content="다픽에서 인터넷·TV·정수기·휴대폰·카드 지원금을 한눈에 비교하세요. 숨겨진 지원금 최대 128만원 챙기는 생활 지원금 플랫폼."/>
   <meta name="keywords" content="다픽, 인터넷 지원금, 정수기 렌탈, 휴대폰 지원금, 생활 지원금, 사은품 비교"/>
   <meta name="robots" content="index, follow"/>
@@ -36,11 +36,12 @@
   <link rel="stylesheet" href="css/components.css"/>
   <link rel="stylesheet" href="css/footer.css"/>
   <link rel="stylesheet" href="css/hero.css"/>
+  <link rel="stylesheet" href="css/icon.css"/>
 </head>
 <body>
 <!-- 공지 -->
 <div class="notice-bar" onclick="goPage('internet')">
-  🎁 가만히 두면 <em>128만원 손해!</em> 지금 바로 지원금 확인하세요 ›
+  🎁 가만히 두면 <em>128만원 손해!</em> 지금 바로 지원금 확인하세요
 </div>
 
 <!-- GNB -->
@@ -52,13 +53,15 @@
     </div>
   </div>
   <div class="cat-bar">
-    <div class="cat-inner">
-      <div class="cat-item" onclick="goPage('phone')"><span class="cat-icon">📱</span>휴대폰</div>
-      <div class="cat-item active" onclick="goPage('internet')"><span class="cat-icon">📡</span>인터넷/TV</div>
-      <div class="cat-item" onclick="goPage('card')"><span class="cat-icon">💳</span>카드</div>
-      <div class="cat-item" onclick="goPage('water')"><span class="cat-icon">💧</span>정수기</div>
-      <div class="cat-item" onclick="goPage('rental')"><span class="cat-icon">🏠</span>렌탈</div>
-    </div>
+  <div class="cat-bar">
+  <div class="cat-inner">
+    <div class="cat-item" onclick="goPage('phone')">휴대폰</div>
+    <div class="cat-item" onclick="goPage('internet')">인터넷</div>
+    <div class="cat-item" onclick="goPage('card')">카드</div>
+    <div class="cat-item" onclick="goPage('water')">정수기</div>
+    <div class="cat-item" onclick="goPage('rental')">렌탈</div>
+  </div>
+</div>
   </div>
 </nav>
 
@@ -84,7 +87,7 @@
   </div>
 </div>
 
-<!-- 서비스 바로가기 -->
+<!-- 서비스 바로가기 — 이미지 아이콘 + bounce 애니메이션 [수정] -->
 <div class="section">
   <div class="wrap">
     <div class="sec-head" style="margin-bottom:20px;">
@@ -92,27 +95,37 @@
     </div>
     <div class="cat-grid">
       <div class="cat-block" onclick="goPage('phone')">
-        <div class="cat-block-icon phone">📱</div>
+        <div class="cat-block-icon phone">
+          <img src="assets/icons/phone.png" alt="휴대폰">
+        </div>
         <div class="cat-block-name">휴대폰</div>
         <div class="cat-block-desc">최신 스마트폰<br>최저가 비교</div>
       </div>
       <div class="cat-block" onclick="goPage('internet')">
-        <div class="cat-block-icon internet">📡</div>
+        <div class="cat-block-icon internet">
+          <img src="assets/icons/internet.png" alt="인터넷/TV">
+        </div>
         <div class="cat-block-name">인터넷/TV</div>
         <div class="cat-block-desc">통신사별 지원금<br>한눈에 비교</div>
       </div>
       <div class="cat-block" onclick="goPage('card')">
-        <div class="cat-block-icon card">💳</div>
+        <div class="cat-block-icon card">
+          <img src="assets/icons/card.png" alt="카드">
+        </div>
         <div class="cat-block-name">카드</div>
         <div class="cat-block-desc">혜택별 카드<br>맞춤 추천</div>
       </div>
       <div class="cat-block" onclick="goPage('water')">
-        <div class="cat-block-icon water">💧</div>
+        <div class="cat-block-icon water">
+          <img src="assets/icons/water.png" alt="정수기">
+        </div>
         <div class="cat-block-name">정수기</div>
         <div class="cat-block-desc">브랜드별 렌탈료<br>비교 신청</div>
       </div>
       <div class="cat-block" onclick="goPage('rental')">
-        <div class="cat-block-icon rental">🏠</div>
+        <div class="cat-block-icon rental">
+          <img src="assets/icons/rental.png" alt="렌탈">
+        </div>
         <div class="cat-block-name">렌탈</div>
         <div class="cat-block-desc">가전·가구<br>렌탈 최저가</div>
       </div>
@@ -170,7 +183,7 @@
         <div class="event-title">나만 모르는 인터넷 지원금!<br><em>숨겨진 지원금 💰 + 추가 혜택</em></div>
         <div class="event-sub">SK · KT · LG 실제 정책 기준 지원금 계산기</div>
       </div>
-      <button class="event-btn">지금 확인하기 →</button>
+      <button class="event-btn">지금 확인하기</button>
     </div>
   </div>
 </div>

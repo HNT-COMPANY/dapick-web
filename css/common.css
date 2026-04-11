@@ -111,14 +111,15 @@
 /* ── 카테고리 탭 ── */
 .cat-bar {
   background: var(--white);
-  border-bottom: 2px solid var(--border);
+  border-bottom: 1px solid var(--border);
 }
 .cat-inner {
   max-width: var(--max-w);
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 10px 40px;
   display: flex;
   justify-content: center;
+  gap: 8px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -126,32 +127,60 @@
   display: none;
 }
 
+/* A안 + B안 조합 — 3D 박스 카드 + 이미지 bounce 애니메이션 [수정] */
 .cat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
-  padding: 13px 32px 12px;
+  gap: 6px;
+  padding: 10px 20px;
   cursor: pointer;
-  border-bottom: 3px solid transparent;
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 500;
   color: var(--text-sub);
   white-space: nowrap;
-  transition: all 0.2s;
+  border-radius: 14px;
+  border: 1.5px solid var(--border-card);
+  background: var(--white);
+  /* 3D 박스 효과 — 아래쪽 그림자로 입체감 표현 */
+  box-shadow: 0 3px 0 var(--border-card);
+  transition: all 0.2s ease;
   flex-shrink: 0;
-  margin-bottom: -2px;
+  min-width: 72px;
 }
 .cat-item:hover {
   color: var(--purple);
+  border-color: rgba(108, 63, 197, 0.3);
+  box-shadow: 0 3px 0 rgba(108, 63, 197, 0.2);
+  transform: translateY(-2px);
 }
+/* active 상태 — 골드 테마 */
 .cat-item.active {
   color: var(--purple);
-  border-color: var(--purple);
+  border-color: rgba(108, 63, 197, 0.35);
+  box-shadow: 0 3px 0 rgba(108, 63, 197, 0.2);
   font-weight: 700;
+  background: var(--purple-pale);
 }
+
+/* 이모지 아이콘 (기존 유지) */
 .cat-icon {
-  font-size: 20px;
+  font-size: 22px;
+}
+
+/* 이미지 아이콘 — bounce 애니메이션 [추가] */
+.cat-icon-img {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+.cat-item:hover .cat-icon-img {
+  /* cubic-bezier로 통통 튀는 bounce 효과 */
+  transform: translateY(-5px) scale(1.1);
+}
+.cat-item.active .cat-icon-img {
+  transform: translateY(-2px) scale(1.05);
 }
 
 /* ── 공통 래퍼 ── */
@@ -602,7 +631,7 @@
     padding-right: 24px;
   }
   .cat-inner {
-    padding: 0 24px;
+    padding: 8px 24px;
     justify-content: flex-start;
   }
 }
@@ -622,21 +651,28 @@
     padding: 7px 14px;
     font-size: 12px;
   }
+
+  /* 모바일 카테고리 탭 — 박스 크기 축소 */
   .cat-item {
-    padding: 11px 18px 10px;
-    font-size: 12px;
+    padding: 8px 14px;
+    font-size: 11px;
+    min-width: 60px;
+    border-radius: 12px;
   }
   .cat-icon {
     font-size: 18px;
   }
+  .cat-icon-img {
+    width: 26px;
+    height: 26px;
+  }
+
   .sec-title {
     font-size: 17px;
   }
   .section {
     padding: 36px 0 0;
   }
-
-  /* 플로팅 바 모바일 */
   .bar-main {
     padding: 10px 16px;
     gap: 8px;
@@ -646,18 +682,16 @@
   }
   .bar-num.gift {
     display: none;
-  } /* 모바일엔 월요금만 표시 */
+  }
   .btn-detail-bar {
     display: none;
-  } /* 모바일엔 상세요금 버튼 숨김 */
+  }
   .detail-cols {
     grid-template-columns: 1fr;
   }
   .detail-inner {
     padding: 12px 16px;
   }
-
-  /* 카카오 플로팅 모바일 */
   .kakao-float {
     bottom: 80px;
     right: 16px;
@@ -672,8 +706,6 @@
     width: 40px;
     height: 40px;
   }
-
-  /* 모달 */
   .modal-sheet {
     padding: 20px 20px 36px;
   }
@@ -687,7 +719,12 @@
     padding: 0 16px;
   }
   .cat-inner {
-    padding: 0 16px;
+    padding: 8px 16px;
+    gap: 6px;
+  }
+  .cat-item {
+    padding: 7px 12px;
+    min-width: 54px;
   }
   .bar-main {
     padding: 10px 12px;
