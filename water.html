@@ -38,6 +38,7 @@
   <link rel="stylesheet" href="css/components.css"/>
   <link rel="stylesheet" href="css/footer.css"/>
   <link rel="stylesheet" href="css/water.css"/>
+  <link rel="stylesheet" href="css/icon.css"/>
 </head>
 <body>
 
@@ -46,7 +47,7 @@
   🎁 가만히 두면 <em>128만원 손해!</em> 지금 바로 지원금 확인하세요 ›
 </div>
 
-<!-- GNB -->
+<!-- GNB + 카테고리 sticky -->
 <nav class="gnb">
   <div class="gnb-top">
     <a class="logo" href="index.html"><span class="da">다</span><span class="pick">픽</span></a>
@@ -55,14 +56,15 @@
     </div>
   </div>
   <div class="cat-bar">
-    <div class="cat-inner">
-      <div class="cat-item" onclick="goPage('phone')"><span class="cat-icon">📱</span>휴대폰</div>
-      <div class="cat-item" onclick="goPage('internet')"><span class="cat-icon">📡</span>인터넷/TV</div>
-      <div class="cat-item" onclick="goPage('card')"><span class="cat-icon">💳</span>카드</div>
-      <div class="cat-item active" onclick="goPage('water')"><span class="cat-icon">💧</span>정수기</div>
-      <div class="cat-item" onclick="goPage('rental')"><span class="cat-icon">🏠</span>렌탈</div>
-    </div>
+<div class="cat-bar">
+  <div class="cat-inner">
+    <div class="cat-item" onclick="goPage('phone')">휴대폰</div>
+    <div class="cat-item" onclick="goPage('internet')">인터넷</div>
+    <div class="cat-item" onclick="goPage('card')">카드</div>
+    <div class="cat-item active">정수기</div>
+    <div class="cat-item" onclick="goPage('rental')">렌탈</div>
   </div>
+</div>
 </nav>
 
 <!-- ══════════════════════════════════════
