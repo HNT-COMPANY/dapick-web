@@ -134,44 +134,102 @@
   </div>
 </div>
 
-<!-- 베스트 요금제 -->
+<!-- 베스트 요금제 — 가로 슬라이드형 [수정] -->
 <div class="section">
   <div class="wrap">
     <div class="sec-head">
-      <span class="sec-title">오늘의 베스트 요금제</span>
+      <span class="sec-title">베스트 요금제</span>
       <span class="sec-badge">BEST</span>
       <a class="sec-more" href="internet.html">더보기 ›</a>
     </div>
-    <p class="sec-sub">클릭하면 인터넷 지원금 계산기로 이동합니다</p>
-    <div class="best-grid">
-      <div class="best-card top" onclick="goPage('internet')">
-        <div class="best-rank r1">1</div>
-        <div class="best-cat-tag">인터넷/TV</div>
-        <div class="best-tag">합리적 | 3~4인 가구</div>
-        <div class="best-title-row"><span class="plogo sk">SK</span><span class="best-name">500MB 기가라이트</span><span class="best-ch">[263채널]</span></div>
-        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 784,500원</div></div>
-        <div class="best-before">결합 전 43,950원</div>
-        <div class="best-after">휴대폰 결합 후 <strong>월 24,750원</strong></div>
-      </div>
-      <div class="best-card" onclick="goPage('internet')">
-        <div class="best-rank r2">2</div>
-        <div class="best-cat-tag">인터넷/TV</div>
-        <div class="best-tag">고속 | 라이브·재택근무</div>
-        <div class="best-title-row"><span class="plogo sk">SK</span><span class="best-name">1Gbps 기가인터넷</span><span class="best-ch">[263채널]</span></div>
-        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 889,500원</div></div>
-        <div class="best-before">결합 전 50,050원</div>
-        <div class="best-after">휴대폰 결합 후 <strong>월 28,050원</strong></div>
-      </div>
-      <div class="best-card" onclick="goPage('internet')">
-        <div class="best-rank r3">3</div>
-        <div class="best-cat-tag">인터넷/TV</div>
-        <div class="best-tag">경제적 | 3~4인 가구</div>
-        <div class="best-title-row"><span class="plogo lg">U⁺</span><span class="best-name">500MB 기가라이트</span><span class="best-ch">[238채널]</span></div>
-        <div class="gift-box"><div class="gift-label">🎁 사은품</div><div class="gift-amt">최대 500,000원</div></div>
-        <div class="best-before">결합 전 44,000원</div>
-        <div class="best-after">휴대폰 결합 후 <strong>월 24,200원</strong></div>
+    <p class="sec-sub">카드를 밀어서 더 보세요 · 클릭하면 지원금 계산기로 이동합니다</p>
+
+    <div class="best-scroll-wrap">
+      <div class="best-grid" id="bestGrid">
+
+        <!-- 1위 -->
+        <div class="best-card top" onclick="goPage('internet')">
+          <div class="best-rank r1">1</div>
+          <div class="best-cat-tag">인터넷/TV</div>
+          <div class="best-tag">합리적 | 3~4인 가구</div>
+          <div class="best-title-row">
+            <span class="plogo sk">SK</span>
+            <span class="best-name">500MB 기가라이트</span>
+            <span class="best-ch">[263채널]</span>
+          </div>
+          <div class="gift-box">
+            <div class="gift-label">🎁 사은품</div>
+            <div class="gift-amt">최대 784,500원</div>
+          </div>
+          <div class="best-before">결합 전 43,950원</div>
+          <div class="best-after">휴대폰 결합 후 <strong>월 24,750원</strong></div>
+        </div>
+
+        <!-- 2위 -->
+        <div class="best-card" onclick="goPage('internet')">
+          <div class="best-rank r2">2</div>
+          <div class="best-cat-tag">인터넷/TV</div>
+          <div class="best-tag">고속 | 라이브·재택근무</div>
+          <div class="best-title-row">
+            <span class="plogo sk">SK</span>
+            <span class="best-name">1Gbps 기가인터넷</span>
+            <span class="best-ch">[263채널]</span>
+          </div>
+          <div class="gift-box">
+            <div class="gift-label">🎁 사은품</div>
+            <div class="gift-amt">최대 889,500원</div>
+          </div>
+          <div class="best-before">결합 전 50,050원</div>
+          <div class="best-after">휴대폰 결합 후 <strong>월 28,050원</strong></div>
+        </div>
+
+        <!-- 3위 -->
+        <div class="best-card" onclick="goPage('internet')">
+          <div class="best-rank r3">3</div>
+          <div class="best-cat-tag">인터넷/TV</div>
+          <div class="best-tag">경제적 | 3~4인 가구</div>
+          <div class="best-title-row">
+            <span class="plogo lg">U⁺</span>
+            <span class="best-name">500MB 기가라이트</span>
+            <span class="best-ch">[238채널]</span>
+          </div>
+          <div class="gift-box">
+            <div class="gift-label">🎁 사은품</div>
+            <div class="gift-amt">최대 500,000원</div>
+          </div>
+          <div class="best-before">결합 전 44,000원</div>
+          <div class="best-after">휴대폰 결합 후 <strong>월 24,200원</strong></div>
+        </div>
+
+        <!-- 4위 (추가 예시) -->
+        <div class="best-card" onclick="goPage('internet')">
+          <div class="best-rank r3">4</div>
+          <div class="best-cat-tag">인터넷/TV</div>
+          <div class="best-tag">고화질 | VOD 즐기는 가구</div>
+          <div class="best-title-row">
+            <span class="plogo kt">KT</span>
+            <span class="best-name">기가 인터넷</span>
+            <span class="best-ch">[230채널]</span>
+          </div>
+          <div class="gift-box">
+            <div class="gift-label">🎁 사은품</div>
+            <div class="gift-amt">최대 650,000원</div>
+          </div>
+          <div class="best-before">결합 전 46,200원</div>
+          <div class="best-after">휴대폰 결합 후 <strong>월 26,400원</strong></div>
+        </div>
+
       </div>
     </div>
+
+    <!-- 슬라이드 인디케이터 점 -->
+    <div class="best-dots">
+      <div class="best-dot active" onclick="scrollToBestCard(0)"></div>
+      <div class="best-dot" onclick="scrollToBestCard(1)"></div>
+      <div class="best-dot" onclick="scrollToBestCard(2)"></div>
+      <div class="best-dot" onclick="scrollToBestCard(3)"></div>
+    </div>
+
   </div>
 </div>
 
