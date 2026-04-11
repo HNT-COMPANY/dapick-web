@@ -1,0 +1,29 @@
+# 다픽 (dapick.co.kr) robots.txt
+
+# 일반 검색 크봇 허용 (구글, 네이버 등)
+User-agent: *
+Allow: /
+Disallow: /login.html
+
+# 네이버 검색 봇 명시적 허용
+User-agent: Yeti
+Allow: /
+
+# AI 학습 크롤러 차단
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+# 사이트맵
+Sitemap: https://dapick.co.kr/sitemap.xml
