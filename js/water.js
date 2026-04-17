@@ -1,13 +1,11 @@
 // ════════════════════════════════════════════════════
-// water.js — 렌더링 / 다이얼로그 / 즐겨찾기 로직
-// 데이터는 js/products/ 폴더에서 관리합니다
+// water.js — 정수기 페이지 렌더링 / 다이얼로그 / 즐겨찾기
+// 데이터는 /api/water/products 에서 로드됩니다
 // ════════════════════════════════════════════════════
 
 // ── 공통 상수 ──
-// EMPTY: 가격 미입력 상품에 사용 (0이면 "상담 시 안내" 자동 표시)
 const EMPTY = { monthly: 0, cardDiscount: 0, maxSupport: 0 };
 
-// 약정키 → 드롭다운 표시 텍스트
 const CONTRACT_LABELS = {
   '의무36/계약60': '36개월(의무) · 60개월(계약)',
   '의무60/계약60': '60개월(의무) · 60개월(계약)',
@@ -15,19 +13,89 @@ const CONTRACT_LABELS = {
   '의무84/계약84': '84개월(의무) · 84개월(계약)',
 };
 
-// ── 전체 상품 조합 (products/ 파일들이 먼저 로드된 후 합침) ──
-const WATER_PRODUCTS = {
-  coway: COWAY,
-  sk: SK,
-  chungho: CHUNGHO,
-  cuckoo: CUCKOO,
+// ── 브랜드 메타 (프론트 전용 — emoji 등) ──
+const BRAND_META = {
+  coway: { name: '코웨이', emoji: '💧' },
+  sk: { name: 'SK매직', emoji: '⚡' },
+  chungho: { name: '청호나이스', emoji: '🌊' },
+  cuckoo: { name: '쿠쿠', emoji: '🍃' },
 };
+
+// ── API로부터 로드된 상품 데이터 ──
+let WATER_PRODUCTS = {};
+let _productsPromise = null;
+
+// ════════════════════════════════════════════════════
+// API 호출 및 데이터 로딩
+// ════════════════════════════════════════════════════
+function loadWaterProducts() {
+  if (_productsPromise) return _productsPromise;
+
+  const url = `${DAPICK_CONFIG.API_BASE_URL}/api/water/products`;
+
+  _productsPromise = fetch(url, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((json) => {
+      // ApiResponse 래퍼 방어 — { data: [...] } 또는 [...] 모두 허용
+      const list = Array.isArray(json) ? json : json?.data || [];
+      WATER_PRODUCTS = groupByBrand(list);
+      return WATER_PRODUCTS;
+    })
+    .catch((err) => {
+      console.error('[water] 상품 로드 실패:', err);
+      _productsPromise = null; // 재시도 허용
+      throw err;
+    });
+
+  return _productsPromise;
+}
+
+// ── 백엔드 응답을 프론트 소비 형태로 변환 + 브랜드별 그룹핑 ──
+function groupByBrand(list) {
+  const groups = {};
+
+  list.forEach((p) => {
+    const brandKey = p.brand;
+    if (!brandKey) return;
+
+    if (!groups[brandKey]) {
+      groups[brandKey] = {
+        name: p.brandName || BRAND_META[brandKey]?.name || brandKey,
+        emoji: BRAND_META[brandKey]?.emoji || '💧',
+        products: [],
+      };
+    }
+
+    groups[brandKey].products.push({
+      id: p.id,
+      name: p.name,
+      desc: p.description || '',
+      image: p.imageUrl || '',
+      best: !!p.best,
+      new: !!p.new,
+      colors: Array.isArray(p.colors) && p.colors.length ? p.colors : ['기본'],
+      pricing: p.pricing || {},
+      sortOrder: p.sortOrder ?? 999,
+    });
+  });
+
+  // sortOrder 기준 정렬
+  Object.values(groups).forEach((g) => {
+    g.products.sort((a, b) => a.sortOrder - b.sortOrder);
+  });
+
+  return groups;
+}
 
 // ════════════════════════════════════════════════════
 // 헬퍼 함수
 // ════════════════════════════════════════════════════
-
-// 전체 최저가
 function getMinPrice(pricing) {
   let min = Infinity;
   Object.values(pricing).forEach((cycles) => {
@@ -40,7 +108,6 @@ function getMinPrice(pricing) {
   return min === Infinity ? 0 : min;
 }
 
-// 약정별 최저가
 function getMinByContract(pricing, contractKey) {
   const cycles = pricing[contractKey];
   if (!cycles) return null;
@@ -65,19 +132,34 @@ let dialogColor = '';
 // ════════════════════════════════════════════════════
 // 브랜드 전환
 // ════════════════════════════════════════════════════
-function switchBrand(brand) {
+async function switchBrand(brand) {
   currentBrand = brand;
   document
     .querySelectorAll('.brand-tab')
     .forEach((t) => t.classList.toggle('active', t.dataset.brand === brand));
-  renderBrand(brand);
+  await renderBrand(brand);
 }
 
 // ════════════════════════════════════════════════════
 // 렌더링
 // ════════════════════════════════════════════════════
-function renderBrand(brand) {
+async function renderBrand(brand) {
+  // 로딩 표시
+  renderLoading();
+
+  try {
+    await loadWaterProducts();
+  } catch (e) {
+    renderError();
+    return;
+  }
+
   const data = WATER_PRODUCTS[brand];
+  if (!data) {
+    renderEmpty(brand);
+    return;
+  }
+
   const best = data.products.filter((p) => p.best);
 
   document.getElementById('bestTitle').textContent = `${data.name} 인기 상품`;
@@ -151,11 +233,52 @@ function renderBrand(brand) {
     .join('');
 }
 
+// ── 로딩/에러/빈 상태 표시 ──
+function renderLoading() {
+  const html = `
+    <div style="grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--text-muted);">
+      <div style="display:inline-block;width:28px;height:28px;border:3px solid var(--purple-pale);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;"></div>
+      <div style="font-size:13px;">상품 정보를 불러오는 중입니다...</div>
+    </div>
+    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>`;
+  const bg = document.getElementById('bestGrid');
+  const lg = document.getElementById('listGrid');
+  if (bg) bg.innerHTML = html;
+  if (lg) lg.innerHTML = '';
+}
+
+function renderError() {
+  const html = `
+    <div style="grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--text-muted);">
+      <div style="font-size:32px;margin-bottom:8px;">⚠️</div>
+      <div style="font-size:14px;font-weight:700;color:var(--text-main);margin-bottom:6px;">상품 정보를 불러오지 못했습니다</div>
+      <div style="font-size:12px;margin-bottom:16px;">잠시 후 다시 시도해주세요</div>
+      <button onclick="renderBrand(currentBrand)" style="padding:8px 20px;border:1.5px solid var(--purple-soft);background:var(--white);color:var(--purple);border-radius:8px;font-weight:700;cursor:pointer;">다시 시도</button>
+    </div>`;
+  const bg = document.getElementById('bestGrid');
+  const lg = document.getElementById('listGrid');
+  if (bg) bg.innerHTML = html;
+  if (lg) lg.innerHTML = '';
+}
+
+function renderEmpty(brand) {
+  const name = BRAND_META[brand]?.name || brand;
+  const html = `
+    <div style="grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
+      ${name} 브랜드 상품이 등록되어 있지 않습니다.
+    </div>`;
+  const bg = document.getElementById('bestGrid');
+  const lg = document.getElementById('listGrid');
+  if (bg) bg.innerHTML = html;
+  if (lg) lg.innerHTML = '';
+}
+
 // ════════════════════════════════════════════════════
 // 다이얼로그
 // ════════════════════════════════════════════════════
 function openDialog(productId, brand) {
   const data = WATER_PRODUCTS[brand];
+  if (!data) return;
   const p = data.products.find((x) => x.id === productId);
   if (!p) return;
 
@@ -199,7 +322,6 @@ function openDialog(productId, brand) {
   document.body.style.overflow = 'hidden';
 }
 
-// 관리주기 드롭다운 갱신
 function updateCycleOptions(p, prevCycle) {
   const contract = document.getElementById('wDContract').value;
   const cycles = Object.keys(p.pricing[contract] || {});
@@ -216,7 +338,6 @@ function updateCycleOptions(p, prevCycle) {
   };
 }
 
-// 타사보상 드롭다운 갱신
 function updateTypeOptions(p, prevType) {
   const contract = document.getElementById('wDContract').value;
   const cycle = document.getElementById('wDCycle').value;
@@ -233,7 +354,6 @@ function updateTypeOptions(p, prevType) {
   typeSel.onchange = () => calcPrice();
 }
 
-// 색상 칩
 function renderColorChips(p) {
   document.getElementById('wDColors').innerHTML = p.colors
     .map(
@@ -242,6 +362,7 @@ function renderColorChips(p) {
     )
     .join('');
 }
+
 function selectColor(color) {
   dialogColor = color;
   document
@@ -249,7 +370,6 @@ function selectColor(color) {
     .forEach((c) => c.classList.toggle('active', c.textContent === color));
 }
 
-// 가격 자동 계산
 function calcPrice() {
   if (!dialogProd) return;
   const contract = document.getElementById('wDContract').value;
@@ -287,14 +407,15 @@ function calcPrice() {
   document.getElementById('wDDesc').textContent = dialogProd.desc;
 }
 
-// 다이얼로그 닫기
 function closeDialog() {
   document.getElementById('wDialogOverlay').classList.remove('show');
   document.body.style.overflow = '';
 }
+
 function closeDialogOutside(e) {
   if (e.target === document.getElementById('wDialogOverlay')) closeDialog();
 }
+
 document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeDialog();
 });
@@ -363,105 +484,8 @@ function updateBottomBar() {
 }
 
 // ════════════════════════════════════════════════════
-// 카카오 상담 — 선택한 상품 정보 포함
-// ════════════════════════════════════════════════════
-function openKakaoWithProduct() {
-  if (!dialogProd) {
-    window.open('http://pf.kakao.com/_LxifxmG/chat', '_blank');
-    return;
-  }
-  const contract = document.getElementById('wDContract').value;
-  const cycle = document.getElementById('wDCycle').value;
-  const type = document.getElementById('wDType').value;
-  const d = dialogProd.pricing[contract]?.[cycle]?.[type];
-  const monthly = d?.monthly || 0;
-
-  const msg = [
-    '[정수기 렌탈 상담 신청]',
-    `상품명: ${dialogProd.name}`,
-    `색상: ${dialogColor}`,
-    `약정: ${CONTRACT_LABELS[contract] || contract}`,
-    `관리주기: ${cycle} 방문 관리`,
-    `가입조건: ${type}`,
-    monthly
-      ? `월 렌탈료: ${monthly.toLocaleString()}원`
-      : '월 렌탈료: 상담 요청',
-  ].join('\n');
-
-  window.open(
-    `http://pf.kakao.com/_LxifxmG/chat?message=${encodeURIComponent(msg)}`,
-    '_blank',
-  );
-}
-
-// ════════════════════════════════════════════════════
-// 공통 유틸
-// ════════════════════════════════════════════════════
-function goPage(page) {
-  const map = {
-    phone: 'phone.html',
-    internet: 'internet.html',
-    card: 'card.html',
-    water: 'water.html',
-    rental: 'rental.html',
-  };
-  window.location.href = map[page] || 'index.html';
-}
-function openKakao() {
-  window.open('http://pf.kakao.com/_LxifxmG/chat', '_blank');
-}
-
-window.addEventListener(
-  'scroll',
-  () => {
-    const btn = document.getElementById('scroll-top');
-    if (btn) btn.classList.toggle('show', window.scrollY > 300);
-  },
-  { passive: true },
-);
-
-// ── 초기 실행 ──
-renderBrand('coway');
-
-// ════════════════════════════════════════════════════
 // 카카오 상담 — utils.js의 openKakaoConsult() 호출
 // ════════════════════════════════════════════════════
-function openKakaoWithProduct() {
-  if (!dialogProd) {
-    openKakaoConsult({});
-    return;
-  }
-
-  const contract = document.getElementById('wDContract').value;
-  const cycle = document.getElementById('wDCycle').value;
-  const type = document.getElementById('wDType').value;
-  const d = dialogProd.pricing[contract]?.[cycle]?.[type];
-
-  openKakaoConsult({
-    category: '정수기 렌탈',
-    productName: dialogProd.name,
-    detail: `${CONTRACT_LABELS[contract] || contract} / ${cycle} 방문 관리 / ${type}`,
-    monthly: d?.monthly || 0,
-    extra: `색상: ${dialogColor}`,
-  });
-}
-
-// 로그인 후 자동 상담 실행 (sessionStorage 확인)
-document.addEventListener('DOMContentLoaded', () => {
-  const auto = sessionStorage.getItem('kakao_consult_auto');
-  if (auto) {
-    sessionStorage.removeItem('kakao_consult_auto');
-    const info = JSON.parse(auto);
-    // 잠깐 딜레이 후 자동 실행
-    setTimeout(() => openKakaoConsult(info), 800);
-  }
-});
-
-// ════════════════════════════════════════════════════
-// 카카오 상담 — utils.js의 openKakaoConsult() 호출
-// ════════════════════════════════════════════════════
-
-// 다이얼로그에서 "카카오로 상담하기" 클릭 시 호출
 function openKakaoWithProduct() {
   if (!dialogProd) {
     openKakaoConsult();
@@ -485,7 +509,45 @@ function openKakaoWithProduct() {
   });
 }
 
+// ════════════════════════════════════════════════════
+// 공통 유틸
+// ════════════════════════════════════════════════════
+function goPage(page) {
+  const map = {
+    phone: 'phone.html',
+    internet: 'internet.html',
+    card: 'card.html',
+    water: 'water.html',
+    rental: 'rental.html',
+  };
+  window.location.href = map[page] || 'index.html';
+}
+
+function openKakao() {
+  window.open('http://pf.kakao.com/_LxifxmG/chat', '_blank');
+}
+
+window.addEventListener(
+  'scroll',
+  () => {
+    const btn = document.getElementById('scroll-top');
+    if (btn) btn.classList.toggle('show', window.scrollY > 300);
+  },
+  { passive: true },
+);
+
+// ════════════════════════════════════════════════════
+// 초기 실행
+// ════════════════════════════════════════════════════
+
+// 상품 데이터 프리로드 (boardView → productView 전환 시 대기 없이 렌더)
+loadWaterProducts().catch(() => {
+  // 에러는 renderBrand 호출 시점에 UI로 표시됨
+});
+
 // 로그인 후 복귀 시 pending 상담 자동 처리
 document.addEventListener('DOMContentLoaded', () => {
-  resumePendingKakaoConsult();
+  if (typeof resumePendingKakaoConsult === 'function') {
+    resumePendingKakaoConsult();
+  }
 });
