@@ -155,37 +155,57 @@ async function renderBrand(brand) {
   }
 
   const data = WATER_PRODUCTS[brand];
-  if (!data) {
+  if (!data || !data.products || data.products.length === 0) {
     renderEmpty(brand);
     return;
   }
 
   const best = data.products.filter((p) => p.best);
-
-  document.getElementById('bestTitle').textContent = `${data.name} 인기 상품`;
-  document.getElementById('bestSub').textContent =
-    `다픽 고객이 가장 많이 선택한 ${data.name} 정수기 TOP ${best.length}`;
-  document.getElementById('listTitle').textContent = `${data.name} 전체 상품`;
-
   const contractKeys = Object.keys(CONTRACT_LABELS);
 
-  // 베스트 카드
-  document.getElementById('bestGrid').innerHTML = best
-    .map((p) => {
-      const minPrice = getMinPrice(p.pricing);
-      const tierHtml = contractKeys
-        .map((key) => {
-          const val = getMinByContract(p.pricing, key);
-          const shortLabel = key.split('/')[0].replace('의무', '') + '개월';
-          return `
+  // ── 섹션 참조 ──
+  const bestSection = document.getElementById('bestSection');
+  const bestTitleEl = document.getElementById('bestTitle');
+  const bestSubEl = document.getElementById('bestSub');
+  const bestBadgeEl = document.getElementById('bestBadge');
+  const bestGridEl = document.getElementById('bestGrid');
+  const listTitleEl = document.getElementById('listTitle');
+  const listGridEl = document.getElementById('listGrid');
+
+  // ── 베스트 섹션: 개수 0이면 숨김 ──
+  if (best.length === 0) {
+    if (bestSection) bestSection.style.display = 'none';
+    if (bestGridEl) bestGridEl.innerHTML = '';
+  } else {
+    if (bestSection) bestSection.style.display = '';
+
+    if (bestTitleEl) bestTitleEl.textContent = `${data.name} 인기 상품`;
+    if (bestSubEl)
+      bestSubEl.textContent = `다픽 고객이 가장 많이 선택한 ${data.name} 정수기 TOP ${best.length}`;
+
+    // BEST 뱃지 — 1개면 "BEST", 여러 개면 "BEST N"
+    if (bestBadgeEl) {
+      bestBadgeEl.textContent =
+        best.length > 1 ? `BEST ${best.length}` : 'BEST';
+    }
+
+    // 베스트 카드
+    bestGridEl.innerHTML = best
+      .map((p) => {
+        const minPrice = getMinPrice(p.pricing);
+        const tierHtml = contractKeys
+          .map((key) => {
+            const val = getMinByContract(p.pricing, key);
+            const shortLabel = key.split('/')[0].replace('의무', '') + '개월';
+            return `
         <div class="water-card-tier">
           <div class="water-card-tier-label">${shortLabel}(의무)</div>
           <div class="water-card-tier-val">${val ? val.toLocaleString() + '원~' : '-'}</div>
         </div>`;
-        })
-        .join('');
+          })
+          .join('');
 
-      return `
+        return `
     <div class="water-card is-best" onclick="openDialog('${p.id}','${brand}')">
       <button class="water-card-heart ${favorites[p.id] ? 'active' : ''}" onclick="quickFav(event,'${p.id}','${brand}')">♥</button>
       <div class="water-card-badges">
@@ -204,11 +224,14 @@ async function renderBrand(brand) {
       <div class="water-card-tiers" style="grid-template-columns:repeat(4,1fr);">${tierHtml}</div>
       <div class="water-card-desc">${p.desc}</div>
     </div>`;
-    })
-    .join('');
+      })
+      .join('');
+  }
 
-  // 전체 리스트
-  document.getElementById('listGrid').innerHTML = data.products
+  // ── 전체 리스트 ──
+  if (listTitleEl) listTitleEl.textContent = `${data.name} 전체 상품`;
+
+  listGridEl.innerHTML = data.products
     .map((p) => {
       const minPrice = getMinPrice(p.pricing);
       return `
@@ -216,7 +239,7 @@ async function renderBrand(brand) {
       <div class="water-list-icon">
         ${
           p.image
-            ? `<img src="${p.image}" alt="${p.name}" style="width:100%;height:100%;object-fit:contain;padding:6px;">`
+            ? `<img src="${p.image}" alt="${p.name}">`
             : `<span>${data.emoji}</span>`
         }
       </div>
@@ -239,10 +262,13 @@ function renderLoading() {
     <div style="grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--text-muted);">
       <div style="display:inline-block;width:28px;height:28px;border:3px solid var(--purple-pale);border-top-color:var(--purple);border-radius:50%;animation:spin 0.8s linear infinite;margin-bottom:12px;"></div>
       <div style="font-size:13px;">상품 정보를 불러오는 중입니다...</div>
-    </div>
-    <style>@keyframes spin { to { transform: rotate(360deg); } }</style>`;
+    </div>`;
+  const bestSection = document.getElementById('bestSection');
   const bg = document.getElementById('bestGrid');
   const lg = document.getElementById('listGrid');
+
+  // 로딩 중에는 베스트 섹션 보이도록 (빈 상태 아니니까)
+  if (bestSection) bestSection.style.display = '';
   if (bg) bg.innerHTML = html;
   if (lg) lg.innerHTML = '';
 }
@@ -255,8 +281,11 @@ function renderError() {
       <div style="font-size:12px;margin-bottom:16px;">잠시 후 다시 시도해주세요</div>
       <button onclick="renderBrand(currentBrand)" style="padding:8px 20px;border:1.5px solid var(--purple-soft);background:var(--white);color:var(--purple);border-radius:8px;font-weight:700;cursor:pointer;">다시 시도</button>
     </div>`;
+  const bestSection = document.getElementById('bestSection');
   const bg = document.getElementById('bestGrid');
   const lg = document.getElementById('listGrid');
+
+  if (bestSection) bestSection.style.display = '';
   if (bg) bg.innerHTML = html;
   if (lg) lg.innerHTML = '';
 }
@@ -267,10 +296,15 @@ function renderEmpty(brand) {
     <div style="grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
       ${name} 브랜드 상품이 등록되어 있지 않습니다.
     </div>`;
+
+  // 빈 상태: 베스트 섹션 숨김
+  const bestSection = document.getElementById('bestSection');
   const bg = document.getElementById('bestGrid');
   const lg = document.getElementById('listGrid');
-  if (bg) bg.innerHTML = html;
-  if (lg) lg.innerHTML = '';
+
+  if (bestSection) bestSection.style.display = 'none';
+  if (bg) bg.innerHTML = '';
+  if (lg) lg.innerHTML = html;
 }
 
 // ════════════════════════════════════════════════════
@@ -449,21 +483,34 @@ function toggleFavInDialog() {
 
 function quickFav(e, productId, brand) {
   e.stopPropagation();
+
+  // Null 안전
+  const data = WATER_PRODUCTS[brand];
+  if (!data || !data.products) return;
+
   if (favorites[productId]) {
     delete favorites[productId];
   } else {
-    const p = WATER_PRODUCTS[brand].products.find((x) => x.id === productId);
+    const p = data.products.find((x) => x.id === productId);
+    if (!p) return;
+
     const contracts = Object.keys(p.pricing);
+    if (contracts.length === 0) return;
+
     const lastC = contracts[contracts.length - 1];
-    const cycles = Object.keys(p.pricing[lastC]);
+    const cycles = Object.keys(p.pricing[lastC] || {});
+    if (cycles.length === 0) return;
+
     const firstCy = cycles[0];
-    const types = Object.keys(p.pricing[lastC][firstCy]);
+    const types = Object.keys(p.pricing[lastC][firstCy] || {});
+    if (types.length === 0) return;
+
     favorites[productId] = {
       contract: lastC,
       cycle: firstCy,
       type: types[0],
-      color: p.colors[0],
-      monthly: p.pricing[lastC][firstCy][types[0]].monthly,
+      color: (p.colors && p.colors[0]) || '기본',
+      monthly: p.pricing[lastC][firstCy][types[0]]?.monthly || 0,
     };
   }
   updateBottomBar();

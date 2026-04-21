@@ -16,7 +16,7 @@ const DAPICK_CONFIG = {
       host.startsWith('10.') ||
       host.endsWith('.local')
     ) {
-      return 'http://localhost:8080';
+      return 'http://localhost:8081';
     }
 
     // Cloudflare Pages 프리뷰 (dapick-web.pages.dev)

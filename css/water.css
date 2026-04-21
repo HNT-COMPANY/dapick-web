@@ -1,8 +1,27 @@
-/* ══════════════════════════════════════
-       정수기 메인보드 — 브랜드 선택 화면
-    ══════════════════════════════════════ */
+/* ══════════════════════════════════════════════════════
+   water.css — 정수기 페이지 전용 스타일
+   ──────────────────────────────────────────────────────
+   구조:
+     1. 화면 전환 (boardView ↔ productView)
+     2. 메인보드 (브랜드 선택)
+     3. 상품뷰 헤더 (뒤로가기, 현재 브랜드)
+     4. 브랜드 탭
+     5. 페이지 히어로
+     6. 베스트 카드 그리드
+     7. 전체 리스트
+     8. 하단 고정 바
+     9. 다이얼로그
+     10. 반응형
+   ══════════════════════════════════════════════════════ */
 
-/* 화면 전환 */
+/* ── 공용 애니메이션 ────────────────────────────────── */
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* ── 1. 화면 전환 ───────────────────────────────────── */
 #boardView {
   display: block;
 }
@@ -10,7 +29,10 @@
   display: none;
 }
 
-/* 메인보드 히어로 */
+/* ══════════════════════════════════════════════════════
+   2. 메인보드 (브랜드 선택)
+   ══════════════════════════════════════════════════════ */
+
 .board-hero {
   background: linear-gradient(135deg, #18103a 0%, #2d1f6e 55%, #1a2a5e 100%);
   padding: 56px 5% 48px;
@@ -69,7 +91,6 @@
   line-height: 1.7;
 }
 
-/* 브랜드 선택 그리드 */
 .board-section {
   padding: 48px 5% 120px;
   max-width: 1200px;
@@ -154,7 +175,6 @@
   color: var(--text-muted);
   line-height: 1.5;
 }
-
 .brand-select-badge {
   display: inline-flex;
   align-items: center;
@@ -168,7 +188,6 @@
   position: relative;
   z-index: 1;
 }
-
 .brand-select-arrow {
   font-size: 1.2rem;
   color: var(--text-muted);
@@ -183,7 +202,10 @@
   color: var(--purple);
 }
 
-/* 상품 뷰 — 뒤로가기 버튼 */
+/* ══════════════════════════════════════════════════════
+   3. 상품뷰 헤더 (뒤로가기 + 현재 브랜드)
+   ══════════════════════════════════════════════════════ */
+
 .product-view-header {
   display: flex;
   align-items: center;
@@ -233,708 +255,9 @@
   color: var(--text-main);
 }
 
-/* 브랜드 탭 (상품뷰 안) */
-.brand-nav {
-  background: var(--white);
-  border-bottom: 2px solid var(--border);
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-.brand-nav::-webkit-scrollbar {
-  display: none;
-}
-.brand-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  padding: 0 5%;
-  display: flex;
-  justify-content: flex-start;
-}
-.brand-tab {
-  flex-shrink: 0;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 14px 24px;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-sub);
-  border-bottom: 3px solid transparent;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
-  margin-bottom: -2px;
-}
-.brand-tab:hover {
-  color: var(--purple);
-}
-.brand-tab.active {
-  color: var(--purple);
-  border-color: var(--purple);
-  font-weight: 700;
-}
-.brand-logo-img {
-  height: 22px;
-  width: auto;
-  object-fit: contain;
-}
-.brand-tab[data-brand='sk'] .brand-logo-img {
-  height: 32px;
-}
-.brand-tab[data-brand='chungho'] .brand-logo-img {
-  height: 30px;
-}
-.brand-tab[data-brand='cuckoo'] .brand-logo-img {
-  height: 28px;
-}
-
-/* 페이지 히어로 (상품뷰) */
-.page-hero {
-  background: linear-gradient(135deg, #18103a 0%, #2d1f6e 55%, #1a2a5e 100%);
-  padding: 36px 5% 32px;
-  position: relative;
-  overflow: hidden;
-}
-.page-hero::before {
-  content: '';
-  position: absolute;
-  top: -80px;
-  right: -40px;
-  width: 360px;
-  height: 360px;
-  background: radial-gradient(
-    circle,
-    rgba(201, 168, 76, 0.13) 0%,
-    transparent 65%
-  );
-  pointer-events: none;
-}
-.page-hero-inner {
-  max-width: 1200px;
-  margin: 0 auto;
-  position: relative;
-  z-index: 1;
-}
-.page-hero-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: rgba(255, 255, 255, 0.85);
-  font-size: 11px;
-  font-weight: 600;
-  padding: 4px 14px;
-  border-radius: 999px;
-  margin-bottom: 12px;
-  letter-spacing: 0.5px;
-}
-.page-hero h1 {
-  font-size: clamp(1.3rem, 3vw, 1.9rem);
-  font-weight: 900;
-  color: #fff;
-  line-height: 1.25;
-  margin-bottom: 8px;
-}
-.page-hero h1 em {
-  font-style: normal;
-  color: var(--gold-light);
-}
-.page-hero p {
-  font-size: 0.85rem;
-  color: rgba(255, 255, 255, 0.55);
-  line-height: 1.7;
-}
-
-/* 베스트 카드 그리드 */
-.water-best-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
-  margin-bottom: 48px;
-}
-.water-card {
-  background: var(--white);
-  border: 1.5px solid var(--border-card);
-  border-radius: var(--radius);
-  padding: 22px 20px;
-  cursor: pointer;
-  transition: all 0.25s;
-  position: relative;
-}
-.water-card:hover {
-  border-color: var(--purple-soft);
-  box-shadow: var(--shadow-h);
-  transform: translateY(-3px);
-}
-.water-card.is-best {
-  border-color: var(--gold);
-}
-.water-card-badges {
-  display: flex;
-  gap: 6px;
-  margin-bottom: 12px;
-  flex-wrap: wrap;
-}
-.wbadge {
-  font-size: 10px;
-  font-weight: 700;
-  padding: 3px 10px;
-  border-radius: 999px;
-}
-.wbadge-best {
-  background: linear-gradient(135deg, var(--gold), var(--gold-light));
-  color: var(--dark);
-}
-.wbadge-brand {
-  background: var(--purple-pale);
-  color: var(--purple);
-}
-.wbadge-new {
-  background: #dcfce7;
-  color: #166534;
-}
-.water-card-img {
-  width: 100%;
-  height: 130px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-  border-radius: var(--radius-xs);
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-.water-card-img img {
-  height: 110px;
-  width: auto;
-  object-fit: contain;
-}
-.water-card-img span {
-  font-size: 2.5rem;
-}
-.water-card-name {
-  font-size: 0.95rem;
-  font-weight: 700;
-  margin-bottom: 6px;
-  line-height: 1.4;
-}
-.water-card-price-row {
-  display: flex;
-  align-items: flex-end;
-  gap: 4px;
-  margin-bottom: 10px;
-}
-.water-card-price {
-  font-size: 1.3rem;
-  font-weight: 900;
-  color: var(--purple);
-}
-.water-card-price-unit {
-  font-size: 0.75rem;
-  color: var(--text-muted);
-  margin-bottom: 3px;
-}
-.water-card-tiers {
-  background: var(--bg);
-  border-radius: var(--radius-xs);
-  padding: 10px 12px;
-  margin-bottom: 10px;
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 4px;
-}
-.water-card-tier {
-  text-align: center;
-}
-.water-card-tier-label {
-  font-size: 9px;
-  color: var(--text-muted);
-  margin-bottom: 2px;
-}
-.water-card-tier-val {
-  font-size: 11px;
-  font-weight: 700;
-  color: var(--text-main);
-}
-.water-card-desc {
-  font-size: 11px;
-  color: var(--text-sub);
-  line-height: 1.6;
-}
-.water-card-heart {
-  position: absolute;
-  top: 14px;
-  right: 14px;
-  width: 30px;
-  height: 30px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border-card);
-  background: var(--white);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 13px;
-  color: var(--text-muted);
-  transition: all 0.2s;
-}
-.water-card-heart.active {
-  color: #ef4444;
-  border-color: #fecaca;
-  background: #fff5f5;
-}
-
-/* 전체 리스트 */
-.water-list-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 12px;
-}
-.water-list-item {
-  background: var(--white);
-  border: 1.5px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  padding: 14px 16px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-}
-.water-list-item:hover {
-  border-color: var(--purple-soft);
-  box-shadow: var(--shadow);
-}
-.water-list-icon {
-  width: 52px;
-  height: 52px;
-  border-radius: 12px;
-  background: var(--purple-pale);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 22px;
-  flex-shrink: 0;
-  overflow: hidden;
-}
-.water-list-icon img {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  padding: 6px;
-}
-.water-list-info {
-  flex: 1;
-  min-width: 0;
-}
-.water-list-name {
-  font-size: 0.88rem;
-  font-weight: 700;
-  margin-bottom: 3px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.water-list-price {
-  font-size: 0.95rem;
-  font-weight: 900;
-  color: var(--purple);
-}
-.water-list-price span {
-  font-size: 0.72rem;
-  font-weight: 400;
-  color: var(--text-muted);
-}
-.water-list-arrow {
-  color: var(--text-muted);
-  font-size: 18px;
-  flex-shrink: 0;
-}
-
-/* 하단 고정 바 */
-.water-bottom-bar {
-  position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  z-index: 250;
-  background: var(--dark);
-  border-top: 1px solid rgba(201, 168, 76, 0.2);
-  padding: 12px 5%;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.wbb-total {
-  flex: 1;
-}
-.wbb-label {
-  font-size: 10px;
-  color: rgba(255, 255, 255, 0.35);
-  margin-bottom: 3px;
-  letter-spacing: 1px;
-}
-.wbb-price {
-  font-size: clamp(14px, 3vw, 20px);
-  font-weight: 900;
-  color: var(--gold-light);
-}
-.wbb-count {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.4);
-  margin-left: 6px;
-}
-.wbb-kakao {
-  background: var(--kakao);
-  color: var(--dark);
-  font-weight: 700;
-  font-size: 0.88rem;
-  padding: 11px 20px;
-  border-radius: 10px;
-  text-decoration: none;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-.wbb-kakao:hover {
-  transform: translateY(-1px);
-}
-.wbb-consult {
-  background: linear-gradient(135deg, var(--gold), var(--gold-light));
-  color: var(--dark);
-  font-weight: 700;
-  font-size: 0.88rem;
-  padding: 11px 20px;
-  border-radius: 10px;
-  border: none;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-.wbb-consult:hover {
-  box-shadow: 0 4px 16px rgba(201, 168, 76, 0.4);
-}
-
-/* 다이얼로그 */
-.w-dialog-overlay {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(17, 16, 24, 0.75);
-  z-index: 500;
-  align-items: flex-end;
-  justify-content: center;
-}
-.w-dialog-overlay.show {
-  display: flex;
-}
-.w-dialog {
-  background: var(--white);
-  width: 100%;
-  max-width: 540px;
-  border-radius: 24px 24px 0 0;
-  max-height: 90vh;
-  overflow-y: auto;
-  animation: slideUp 0.28s ease;
-}
-@keyframes slideUp {
-  from {
-    transform: translateY(100%);
-  }
-  to {
-    transform: translateY(0);
-  }
-}
-.w-dialog-header {
-  position: sticky;
-  top: 0;
-  background: var(--white);
-  padding: 16px 24px 14px;
-  border-bottom: 1px solid var(--border);
-  z-index: 10;
-}
-.w-dialog-handle {
-  width: 36px;
-  height: 4px;
-  background: #e0ddef;
-  border-radius: 2px;
-  margin: 0 auto 14px;
-}
-.w-dialog-header-row {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 12px;
-}
-.w-dialog-brand-tag {
-  font-size: 10px;
-  font-weight: 700;
-  color: var(--purple);
-  background: var(--purple-pale);
-  padding: 3px 10px;
-  border-radius: 999px;
-  display: inline-block;
-  margin-bottom: 6px;
-}
-.w-dialog-name {
-  font-size: 1.1rem;
-  font-weight: 900;
-  line-height: 1.3;
-}
-.w-dialog-close {
-  width: 32px;
-  height: 32px;
-  border-radius: 50%;
-  border: 1.5px solid var(--border-card);
-  background: var(--white);
-  font-size: 16px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  color: var(--text-sub);
-  transition: all 0.2s;
-}
-.w-dialog-close:hover {
-  border-color: var(--purple-soft);
-  color: var(--purple);
-}
-.w-dialog-body {
-  padding: 20px 24px 28px;
-}
-.w-price-box {
-  background: linear-gradient(135deg, var(--purple-pale), #ede9f8);
-  border-radius: var(--radius-sm);
-  padding: 18px 20px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 20px;
-}
-.w-price-left .wpl-label {
-  font-size: 11px;
-  color: var(--text-muted);
-  margin-bottom: 4px;
-}
-.w-price-val {
-  font-size: 2rem;
-  font-weight: 900;
-  color: var(--purple);
-  line-height: 1;
-}
-.w-price-val span {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--text-sub);
-}
-.w-price-right {
-  text-align: right;
-}
-.w-total-label {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-bottom: 3px;
-}
-.w-total-val {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: var(--text-main);
-}
-.w-option-group {
-  margin-bottom: 16px;
-}
-.w-option-label {
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
-  color: var(--purple-soft);
-  text-transform: uppercase;
-  margin-bottom: 8px;
-}
-.w-select {
-  width: 100%;
-  padding: 11px 36px 11px 14px;
-  border: 1.5px solid var(--border-card);
-  border-radius: var(--radius-sm);
-  background: var(--white);
-  font-family: 'Noto Sans KR', sans-serif;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--text-main);
-  cursor: pointer;
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b5cf6' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  transition: border-color 0.2s;
-}
-.w-select:focus {
-  outline: none;
-  border-color: var(--purple-soft);
-}
-.w-color-chips {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
-}
-.w-chip {
-  padding: 7px 16px;
-  border-radius: 999px;
-  border: 1.5px solid var(--border-card);
-  font-size: 0.82rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: all 0.15s;
-  color: var(--text-sub);
-}
-.w-chip.active {
-  border-color: var(--purple-soft);
-  background: var(--purple-pale);
-  color: var(--purple);
-  font-weight: 700;
-}
-.w-chip:hover {
-  border-color: var(--purple-soft);
-}
-.w-spec-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-.w-spec-item {
-  background: var(--bg);
-  border-radius: var(--radius-xs);
-  padding: 10px 14px;
-}
-.w-spec-label {
-  font-size: 10px;
-  color: var(--text-muted);
-  margin-bottom: 3px;
-}
-.w-spec-val {
-  font-size: 0.88rem;
-  font-weight: 700;
-}
-.w-desc-box {
-  background: var(--bg);
-  border-radius: var(--radius-xs);
-  padding: 12px 14px;
-  font-size: 0.82rem;
-  color: var(--text-sub);
-  line-height: 1.7;
-  margin-bottom: 18px;
-}
-.w-actions {
-  display: flex;
-  gap: 10px;
-}
-.w-btn-kakao {
-  flex: 1;
-  background: var(--kakao);
-  color: var(--dark);
-  border: none;
-  padding: 15px;
-  border-radius: var(--radius-sm);
-  font-size: 0.95rem;
-  font-weight: 700;
-  cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
-  transition: all 0.2s;
-  text-decoration: none;
-  text-align: center;
-  display: block;
-}
-.w-btn-kakao:hover {
-  transform: translateY(-1px);
-}
-.w-btn-heart {
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--border-card);
-  background: var(--white);
-  font-size: 20px;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  transition: all 0.2s;
-}
-.w-btn-heart.active {
-  border-color: #fecaca;
-  background: #fff5f5;
-}
-
-/* ══ 반응형 ══ */
-@media (max-width: 1024px) {
-  .brand-select-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-@media (max-width: 768px) {
-  .board-section {
-    padding: 36px 4% 100px;
-  }
-  .brand-select-grid {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 12px;
-  }
-  .brand-select-card {
-    padding: 24px 16px 20px;
-  }
-  .water-best-grid {
-    grid-template-columns: 1fr 1fr;
-  }
-  .brand-tab {
-    padding: 12px 16px;
-    font-size: 0.82rem;
-  }
-}
-@media (max-width: 480px) {
-  .board-hero {
-    padding: 40px 5% 36px;
-  }
-  .brand-select-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-  }
-  .brand-select-card {
-    padding: 20px 12px 18px;
-    gap: 10px;
-  }
-  .brand-select-name {
-    font-size: 0.88rem;
-  }
-  .brand-select-desc {
-    display: none;
-  }
-  .water-best-grid {
-    grid-template-columns: 1fr;
-  }
-  .water-bottom-bar {
-    padding: 10px 4%;
-    gap: 8px;
-  }
-  .wbb-kakao,
-  .wbb-consult {
-    padding: 10px 14px;
-    font-size: 0.8rem;
-  }
-  .product-view-header {
-    padding: 12px 4%;
-  }
-  .brand-inner {
-    padding: 0 4%;
-  }
-}
-@media (max-width: 360px) {
-  .brand-select-grid {
-    grid-template-columns: 1fr;
-  }
-}
+/* ══════════════════════════════════════════════════════
+   4. 브랜드 탭 (sticky 적용 — 두 번째 정의 우선)
+   ══════════════════════════════════════════════════════ */
 
 .brand-nav {
   background: var(--white);
@@ -948,6 +271,7 @@
 .brand-nav::-webkit-scrollbar {
   display: none;
 }
+
 .brand-inner {
   max-width: var(--max-w);
   margin: 0 auto;
@@ -983,7 +307,26 @@
   font-size: 18px;
 }
 
-/* 페이지 히어로 */
+/* 브랜드 탭 로고 (브랜드별 높이 조정) */
+.brand-logo-img {
+  height: 20px;
+  width: auto;
+  object-fit: contain;
+}
+.brand-tab[data-brand='sk'] .brand-logo-img {
+  height: 32px;
+}
+.brand-tab[data-brand='chungho'] .brand-logo-img {
+  height: 32px;
+}
+.brand-tab[data-brand='cuckoo'] .brand-logo-img {
+  height: 30px;
+}
+
+/* ══════════════════════════════════════════════════════
+   5. 페이지 히어로 (두 번째 정의 우선 — px 기반)
+   ══════════════════════════════════════════════════════ */
+
 .page-hero {
   background: linear-gradient(135deg, #18103a 0%, #2d1f6e 55%, #1a2a5e 100%);
   padding: 48px 40px 40px;
@@ -1041,7 +384,10 @@
   line-height: 1.7;
 }
 
-/* 베스트 카드 그리드 */
+/* ══════════════════════════════════════════════════════
+   6. 베스트 카드 그리드 (두 번째 정의 우선 — px 기반)
+   ══════════════════════════════════════════════════════ */
+
 .water-best-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -1065,6 +411,7 @@
 .water-card.is-best {
   border-color: var(--gold);
 }
+
 .water-card-badges {
   display: flex;
   gap: 6px;
@@ -1089,6 +436,27 @@
   background: #dcfce7;
   color: #166534;
 }
+
+.water-card-img {
+  width: 100%;
+  height: 130px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--bg);
+  border-radius: var(--radius-xs);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.water-card-img img {
+  height: 110px;
+  width: auto;
+  object-fit: contain;
+}
+.water-card-img span {
+  font-size: 2.5rem;
+}
+
 .water-card-name {
   font-size: 15px;
   font-weight: 700;
@@ -1111,6 +479,7 @@
   color: var(--text-muted);
   margin-bottom: 3px;
 }
+
 .water-card-tiers {
   background: var(--bg);
   border-radius: var(--radius-xs);
@@ -1133,6 +502,7 @@
   font-weight: 700;
   color: var(--text-main);
 }
+
 .water-card-desc {
   font-size: 11px;
   color: var(--text-sub);
@@ -1161,7 +531,10 @@
   background: #fff5f5;
 }
 
-/* 전체 리스트 */
+/* ══════════════════════════════════════════════════════
+   7. 전체 리스트
+   ══════════════════════════════════════════════════════ */
+
 .water-list-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
@@ -1192,6 +565,13 @@
   justify-content: center;
   font-size: 22px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+.water-list-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 6px;
 }
 .water-list-info {
   flex: 1;
@@ -1221,7 +601,10 @@
   flex-shrink: 0;
 }
 
-/* 하단 고정 바 */
+/* ══════════════════════════════════════════════════════
+   8. 하단 고정 바 (두 번째 정의 우선)
+   ══════════════════════════════════════════════════════ */
+
 .water-bottom-bar {
   position: fixed;
   bottom: 0;
@@ -1286,7 +669,10 @@
   box-shadow: 0 4px 16px rgba(201, 168, 76, 0.4);
 }
 
-/* 다이얼로그 */
+/* ══════════════════════════════════════════════════════
+   9. 다이얼로그 (두 번째 정의 우선 — px 기반)
+   ══════════════════════════════════════════════════════ */
+
 .w-dialog-overlay {
   display: none;
   position: fixed;
@@ -1299,6 +685,7 @@
 .w-dialog-overlay.show {
   display: flex;
 }
+
 .w-dialog {
   background: var(--white);
   width: 100%;
@@ -1446,11 +833,9 @@
   background-position: right 14px center;
   transition: border-color 0.2s;
 }
-.w-select:focus {
-  outline: none;
-  border-color: var(--purple-soft);
-}
+.w-select:focus,
 .w-select:hover {
+  outline: none;
   border-color: var(--purple-soft);
 }
 
@@ -1557,8 +942,14 @@
   background: #fff5f5;
 }
 
-/* ── 반응형 ── */
+/* ══════════════════════════════════════════════════════
+   10. 반응형 (병합본 — 모든 미디어쿼리 통합)
+   ══════════════════════════════════════════════════════ */
+
 @media (max-width: 1024px) {
+  .brand-select-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
   .brand-inner,
   .water-bottom-bar {
     padding-left: 24px;
@@ -1568,7 +959,18 @@
     padding: 36px 24px 32px;
   }
 }
+
 @media (max-width: 768px) {
+  .board-section {
+    padding: 36px 4% 100px;
+  }
+  .brand-select-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .brand-select-card {
+    padding: 24px 16px 20px;
+  }
   .water-best-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -1580,12 +982,31 @@
     font-size: 24px;
   }
 }
+
 @media (max-width: 480px) {
+  .board-hero {
+    padding: 40px 5% 36px;
+  }
+  .brand-select-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+  }
+  .brand-select-card {
+    padding: 20px 12px 18px;
+    gap: 10px;
+  }
+  .brand-select-name {
+    font-size: 0.88rem;
+  }
+  .brand-select-desc {
+    display: none;
+  }
   .water-best-grid {
     grid-template-columns: 1fr;
   }
   .brand-inner {
     padding-left: 16px;
+    padding-right: 16px;
   }
   .page-hero {
     padding: 28px 16px 24px;
@@ -1602,44 +1023,13 @@
     padding: 10px 14px;
     font-size: 13px;
   }
+  .product-view-header {
+    padding: 12px 4%;
+  }
 }
 
-/* 브랜드 탭 로고 */
-.brand-logo-img {
-  height: 20px;
-  width: auto;
-  object-fit: contain;
-}
-
-.brand-tab[data-brand='cuckoo'] .brand-logo-img {
-  height: 30px; /* 숫자 바꿔가며 맞춰보세요 */
-}
-
-.brand-tab[data-brand='chungho'] .brand-logo-img {
-  height: 32px;
-}
-
-.brand-tab[data-brand='sk'] .brand-logo-img {
-  height: 32px;
-}
-
-/* ── 상품 카드 이미지 ── */
-.water-card-img {
-  width: 100%;
-  height: 130px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: var(--bg);
-  border-radius: var(--radius-xs);
-  margin-bottom: 12px;
-  overflow: hidden;
-}
-.water-card-img img {
-  height: 110px;
-  width: auto;
-  object-fit: contain;
-}
-.water-card-img span {
-  font-size: 2.5rem;
+@media (max-width: 360px) {
+  .brand-select-grid {
+    grid-template-columns: 1fr;
+  }
 }

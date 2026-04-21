@@ -180,13 +180,17 @@
   <!-- 상품 컨텐츠 -->
   <div class="section">
     <div class="wrap">
-      <div class="sec-head">
-        <span class="sec-title" id="bestTitle">코웨이 인기 상품</span>
-        <span class="sec-badge">BEST 3</span>
+      <!-- 베스트 섹션: 상품 0개일 때 JS에서 숨김 처리 -->
+      <div id="bestSection">
+        <div class="sec-head">
+          <span class="sec-title" id="bestTitle">인기 상품</span>
+          <span class="sec-badge" id="bestBadge">BEST</span>
+        </div>
+        <p class="sec-sub" id="bestSub">클릭하면 약정·관리주기·타사보상 선택 가능</p>
+        <div class="water-best-grid" id="bestGrid"></div>
       </div>
-      <p class="sec-sub" id="bestSub">클릭하면 약정·관리주기·타사보상 선택 가능</p>
-      <div class="water-best-grid" id="bestGrid"></div>
 
+      <!-- 전체 상품 섹션 -->
       <div class="sec-head">
         <span class="sec-title" id="listTitle">전체 상품</span>
       </div>
@@ -330,7 +334,7 @@
 </footer>
 
 <!-- ── 스크립트 로드 순서 중요: config.js 최우선 ── -->
-<script src="js/config.js"></script>
+<script src="js/common/config.js"></script>
 <script src="js/api.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/utils.js"></script>
