@@ -1,0 +1,61 @@
+/* ==========================================================================
+   다픽 카카오 플러스친구 배너 (1920 × 300) - 풀폭
+   ========================================================================== */
+.kakao-banner {
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+  background: #fee500; /* 카카오 옐로우 - 이미지 로딩 전 플래시 방지 */
+}
+
+.kakao-banner__link {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1920 / 300;
+  max-height: 300px;
+  text-decoration: none;
+  position: relative;
+}
+
+.kakao-banner__image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+  transition:
+    transform 0.4s ease,
+    filter 0.3s ease;
+}
+
+/* 호버 시 살짝 확대 + 밝게 */
+.kakao-banner__link:hover .kakao-banner__image {
+  transform: scale(1.02);
+  filter: brightness(1.05);
+}
+
+/* 클릭 시 살짝 눌리는 효과 */
+.kakao-banner__link:active .kakao-banner__image {
+  transform: scale(0.995);
+  transition: transform 0.1s ease;
+}
+
+/* ── 반응형 ── */
+@media (max-width: 1024px) {
+  .kakao-banner__link {
+    max-height: 220px;
+  }
+}
+
+@media (max-width: 768px) {
+  .kakao-banner__link {
+    max-height: 140px;
+  }
+}
+
+@media (max-width: 480px) {
+  .kakao-banner__link {
+    max-height: 100px;
+  }
+}
