@@ -1,4 +1,6 @@
 // internet.js — 인터넷/TV 지원금 계산기 (6개 통신사 완전 분리)
+// ⚠️ 지원금 기획 미확정으로 모든 support 값을 0 으로 초기화함.
+//    기획 확정 시 support 객체 값만 교체하면 자동 반영됨.
 
 const PROVIDERS = {
   // ── SKT ─────────────────────────────────────────────────────
@@ -11,9 +13,9 @@ const PROVIDERS = {
       { id: 'skt-1g', speed: 1e3, name: '기가 인터넷', fee: 28050 },
     ],
     support: {
-      'skt-100': { solo: 110000, tv: 400000, tv_allp: 400000, mnp: 55000 },
-      'skt-500': { solo: 170000, tv: 480000, tv_allp: 480000, mnp: 55000 },
-      'skt-1g': { solo: 170000, tv: 480000, tv_allp: 480000, mnp: 55000 },
+      'skt-100': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'skt-500': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'skt-1g': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
     },
   },
 
@@ -27,9 +29,9 @@ const PROVIDERS = {
       { id: 'kt-1g', speed: 1e3, name: '기가 프리미엄', fee: 33000 },
     ],
     support: {
-      'kt-100': { solo: 100000, tv: 350000, tv_allp: 380000, mnp: 50000 },
-      'kt-500': { solo: 160000, tv: 450000, tv_allp: 480000, mnp: 50000 },
-      'kt-1g': { solo: 160000, tv: 500000, tv_allp: 530000, mnp: 50000 },
+      'kt-100': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'kt-500': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'kt-1g': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
     },
   },
 
@@ -43,9 +45,9 @@ const PROVIDERS = {
       { id: 'lg-1g', speed: 1e3, name: '기가 인터넷', fee: 28600 },
     ],
     support: {
-      'lg-100': { solo: 80000, tv: 300000, tv_allp: 350000, mnp: 50000 },
-      'lg-500': { solo: 120000, tv: 400000, tv_allp: 450000, mnp: 50000 },
-      'lg-1g': { solo: 150000, tv: 450000, tv_allp: 500000, mnp: 50000 },
+      'lg-100': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'lg-500': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'lg-1g': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
     },
   },
 
@@ -59,9 +61,9 @@ const PROVIDERS = {
       { id: 'hello-1g', speed: 1e3, name: '기가 프리', fee: 26400 },
     ],
     support: {
-      'hello-100': { solo: 70000, tv: 250000, tv_allp: 300000, mnp: 40000 },
-      'hello-500': { solo: 110000, tv: 350000, tv_allp: 400000, mnp: 40000 },
-      'hello-1g': { solo: 140000, tv: 400000, tv_allp: 450000, mnp: 40000 },
+      'hello-100': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'hello-500': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'hello-1g': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
     },
   },
 
@@ -75,9 +77,9 @@ const PROVIDERS = {
       { id: 'skb-1g', speed: 1e3, name: '기가인터넷', fee: 28050 },
     ],
     support: {
-      'skb-100': { solo: 110000, tv: 400000, tv_allp: 400000, mnp: 55000 },
-      'skb-500': { solo: 170000, tv: 480000, tv_allp: 480000, mnp: 55000 },
-      'skb-1g': { solo: 170000, tv: 480000, tv_allp: 480000, mnp: 55000 },
+      'skb-100': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'skb-500': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'skb-1g': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
     },
   },
 
@@ -91,9 +93,9 @@ const PROVIDERS = {
       { id: 'sky-1g', speed: 1e3, name: '프리미엄', fee: 29700 },
     ],
     support: {
-      'sky-100': { solo: 90000, tv: 320000, tv_allp: 360000, mnp: 45000 },
-      'sky-500': { solo: 140000, tv: 420000, tv_allp: 460000, mnp: 45000 },
-      'sky-1g': { solo: 150000, tv: 460000, tv_allp: 500000, mnp: 45000 },
+      'sky-100': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'sky-500': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
+      'sky-1g': { solo: 0, tv: 0, tv_allp: 0, mnp: 0 },
     },
   },
 };
@@ -104,6 +106,15 @@ const TV_PLANS = [
   { id: 'tv-all', grade: 'ALL', ch: 238, fee: 19800 },
   { id: 'tv-allp', grade: 'ALL+', ch: 263, fee: 22000 },
 ];
+
+// ── 지원금 표시 포맷 유틸 ─────────────────────────────────────
+// 원 단위 숫자를 "00만원 + @" 형태로 변환한다.
+// 지원금 값이 0 이어도 일관되게 "0만원 + @" 로 노출된다.
+function formatGift(won) {
+  if (won == null || isNaN(won) || won < 0) return '0만원 + @';
+  const man = Math.floor(won / 10000);
+  return `${man}만원 + @`;
+}
 
 // ── 상태 ──────────────────────────────────────────────────────
 let state = {
@@ -246,7 +257,7 @@ function renderPlans(key) {
       <div class="plan-fee">${p.fee.toLocaleString()}<span>원/월~</span></div>
       <div class="plan-gift">
         <div class="plan-gift-l">최대 지원금</div>
-        <div class="plan-gift-v">최대 ${maxS.toLocaleString()}원</div>
+        <div class="plan-gift-v">최대 ${formatGift(maxS)}</div>
       </div>
     </div>`;
     })
@@ -364,8 +375,7 @@ function updateBar() {
 
   document.getElementById('bar-chips').innerHTML = chips.join('');
   document.getElementById('bar-fee').textContent = getFee().toLocaleString();
-  document.getElementById('bar-gift').textContent =
-    getSupport().toLocaleString();
+  document.getElementById('bar-gift').textContent = formatGift(getSupport());
   document.getElementById('floating-bar').classList.add('show');
 
   if (detailOpen) renderDetail();
@@ -415,29 +425,18 @@ function renderDetail() {
 
   let sR = '';
   if (!state.optTv) {
-    sR += dr(
-      '인터넷 단독 지원금',
-      (sup.solo || 0).toLocaleString() + '원',
-      'green',
-    );
+    sR += dr('인터넷 단독 지원금', formatGift(sup.solo || 0), 'green');
   } else {
     const base =
       state.tvGrade === 'ALL+' ? sup.tv_allp || sup.tv || 0 : sup.tv || 0;
-    sR += dr('인터넷+TV 기본 지원금', base.toLocaleString() + '원', 'green');
-    if (sup.gift)
-      sR += dr('본사 사은품', sup.gift.toLocaleString() + '원', 'green');
-    if (sup.gi)
-      sR += dr('인터넷 본사 사은품', sup.gi.toLocaleString() + '원', 'green');
-    if (sup.gt)
-      sR += dr('TV 본사 사은품', sup.gt.toLocaleString() + '원', 'green');
+    sR += dr('인터넷+TV 기본 지원금', formatGift(base), 'green');
+    if (sup.gift) sR += dr('본사 사은품', formatGift(sup.gift), 'green');
+    if (sup.gi) sR += dr('인터넷 본사 사은품', formatGift(sup.gi), 'green');
+    if (sup.gt) sR += dr('TV 본사 사은품', formatGift(sup.gt), 'green');
   }
   if (state.optPhone && sup.mnp)
-    sR += dr(
-      'MNP 번호이동 추가',
-      '+' + sup.mnp.toLocaleString() + '원',
-      'green',
-    );
-  sR += `<div class="dtotal"><span class="dl">최대 지원금 합계</span><span class="dv gold">${getSupport().toLocaleString()}원</span></div>`;
+    sR += dr('MNP 번호이동 추가', '+ ' + formatGift(sup.mnp), 'green');
+  sR += `<div class="dtotal"><span class="dl">최대 지원금 합계</span><span class="dv gold">${formatGift(getSupport())}</span></div>`;
 
   document.getElementById('detail-inner').innerHTML = `
     <div class="detail-cols">
@@ -465,7 +464,7 @@ function openConsultModal() {
   if (state.optPhone) s += `<strong>옵션</strong> 휴대폰 MNP 동시 개통<br>`;
   if (tv)
     s += `<strong>TV</strong> ${tv.grade} (${tv.ch}CH) — 월 ${tv.fee.toLocaleString()}원<br>`;
-  s += `<strong style="color:var(--gold)">🎁 예상 최대 지원금 ${getSupport().toLocaleString()}원</strong>`;
+  s += `<strong style="color:var(--gold)">🎁 예상 최대 지원금 ${formatGift(getSupport())}</strong>`;
   openModal(s);
 }
 
