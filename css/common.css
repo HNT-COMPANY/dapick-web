@@ -45,23 +45,44 @@
   font-weight: 700;
 }
 
-/* ── GNB ── */
+/* ════════════════════════════════════
+   GNB (Global Navigation Bar) — 헤더 확대
+   로고 120px 기준, 전체 요소 비례 확대
+   ════════════════════════════════════ */
 .gnb {
   background: var(--white);
   border-bottom: 1px solid var(--border);
   position: sticky;
   top: 0;
   z-index: 300;
+  padding: 10px 0;
 }
 .gnb-top {
   max-width: var(--max-w);
   margin: 0 auto;
-  padding: 0 0px;
-  height: 80px !important;
+  padding: 0 40px;
+  min-height: 130px;
   display: flex;
   align-items: center;
   justify-content: space-between;
 }
+
+/* ── 로고 영역 ── */
+.logo-wrap {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  flex-shrink: 0;
+}
+.logo-wrap__img {
+  height: 120px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+
+/* 기존 텍스트 로고 (푸터 등에서 사용) */
 .logo {
   font-family: 'DM Serif Display', serif;
   font-size: 24px;
@@ -76,42 +97,60 @@
   color: var(--purple);
 }
 
+/* ── 우측 영역 ── */
 .gnb-right {
   display: flex;
   align-items: center;
   gap: 10px;
 }
+
+/* ── 로그인 버튼 — 확대 ── */
 .btn-login {
   background: none;
   border: 1.5px solid var(--border-card);
   border-radius: 8px;
-  padding: 7px 16px;
-  font-size: 13px;
-  font-weight: 500;
+  padding: 14px 28px;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--text-sub);
   transition: all 0.2s;
+  cursor: pointer;
+  font-family: inherit;
 }
 .btn-login:hover {
   border-color: var(--purple-soft);
   color: var(--purple);
+  transform: translateY(-1px);
 }
+.btn-login:active {
+  transform: translateY(0);
+}
+
+/* ── 회원가입 버튼 (참조용) ── */
 .btn-signup {
   background: var(--purple);
   border-radius: 8px;
-  padding: 8px 18px;
-  font-size: 13px;
+  padding: 14px 28px;
+  font-size: 16px;
   font-weight: 600;
   color: #fff;
   transition: all 0.2s;
+  border: none;
+  cursor: pointer;
 }
 .btn-signup:hover {
   background: var(--purple-soft);
+  transform: translateY(-1px);
 }
 
-/* ── 카테고리 탭 ── */
+/* ════════════════════════════════════
+   카테고리 탭 — 3D 박스 카드 + bounce 애니메이션
+   헤더 확대에 맞춰 여백·폰트 확대
+   ════════════════════════════════════ */
 .cat-bar {
   background: var(--white);
   border-bottom: 1px solid var(--border);
+  padding: 8px 0;
 }
 .cat-inner {
   max-width: var(--max-w);
@@ -119,7 +158,7 @@
   padding: 10px 40px;
   display: flex;
   justify-content: center;
-  gap: 8px;
+  gap: 40px;
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -127,16 +166,16 @@
   display: none;
 }
 
-/* A안 + B안 조합 — 3D 박스 카드 + 이미지 bounce 애니메이션 [수정] */
+/* 3D 박스 카드 + 이미지 bounce 애니메이션 [확대] */
 .cat-item {
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 6px;
-  padding: 10px 20px;
+  padding: 16px 24px;
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 500;
+  font-size: 18px;
+  font-weight: 600;
   color: var(--text-sub);
   white-space: nowrap;
   border-radius: 14px;
@@ -146,7 +185,7 @@
   box-shadow: 0 3px 0 var(--border-card);
   transition: all 0.2s ease;
   flex-shrink: 0;
-  min-width: 72px;
+  min-width: 90px;
 }
 .cat-item:hover {
   color: var(--purple);
@@ -154,7 +193,7 @@
   box-shadow: 0 3px 0 rgba(108, 63, 197, 0.2);
   transform: translateY(-2px);
 }
-/* active 상태 — 골드 테마 */
+/* active 상태 — 퍼플 테마 */
 .cat-item.active {
   color: var(--purple);
   border-color: rgba(108, 63, 197, 0.35);
@@ -168,7 +207,7 @@
   font-size: 22px;
 }
 
-/* 이미지 아이콘 — bounce 애니메이션 [추가] */
+/* 이미지 아이콘 — bounce 애니메이션 */
 .cat-icon-img {
   width: 32px;
   height: 32px;
@@ -623,7 +662,26 @@
    반응형 — 모바일 최적화
    ════════════════════════════════════ */
 @media (max-width: 1024px) {
-  .gnb-top,
+  .gnb {
+    padding: 8px 0;
+  }
+  .gnb-top {
+    padding-left: 24px;
+    padding-right: 24px;
+    min-height: 100px;
+  }
+  .logo-wrap__img {
+    height: 90px;
+  }
+  .btn-login {
+    padding: 12px 22px;
+    font-size: 15px;
+  }
+  .btn-signup {
+    padding: 12px 22px;
+    font-size: 15px;
+  }
+
   .wrap,
   .detail-inner,
   .bar-main {
@@ -633,30 +691,52 @@
   .cat-inner {
     padding: 8px 24px;
     justify-content: flex-start;
+    gap: 28px;
+  }
+  .cat-item {
+    font-size: 16px;
+    padding: 14px 20px;
+    min-width: 80px;
   }
 }
 
 @media (max-width: 768px) {
+  .gnb {
+    padding: 6px 0;
+  }
   .gnb-top {
-    height: 54px;
+    min-height: 80px;
+    padding: 0 16px;
+  }
+  .logo-wrap__img {
+    height: 70px;
   }
   .logo {
     font-size: 20px;
   }
   .btn-login {
-    padding: 6px 12px;
-    font-size: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 6px;
   }
   .btn-signup {
-    padding: 7px 14px;
-    font-size: 12px;
+    padding: 10px 16px;
+    font-size: 14px;
+    border-radius: 6px;
   }
 
   /* 모바일 카테고리 탭 — 박스 크기 축소 */
+  .cat-bar {
+    padding: 4px 0;
+  }
+  .cat-inner {
+    padding: 8px 16px;
+    gap: 12px;
+  }
   .cat-item {
-    padding: 8px 14px;
-    font-size: 11px;
-    min-width: 60px;
+    padding: 10px 16px;
+    font-size: 13px;
+    min-width: 64px;
     border-radius: 12px;
   }
   .cat-icon {
@@ -714,17 +794,31 @@
 @media (max-width: 480px) {
   .gnb-top {
     padding: 0 16px;
+    min-height: 70px;
   }
+  .logo-wrap__img {
+    height: 55px;
+  }
+  .btn-login {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+  .btn-signup {
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
   .wrap {
     padding: 0 16px;
   }
   .cat-inner {
-    padding: 8px 16px;
-    gap: 6px;
+    padding: 8px 12px;
+    gap: 8px;
   }
   .cat-item {
-    padding: 7px 12px;
-    min-width: 54px;
+    padding: 8px 12px;
+    font-size: 12px;
+    min-width: 56px;
   }
   .bar-main {
     padding: 10px 12px;
