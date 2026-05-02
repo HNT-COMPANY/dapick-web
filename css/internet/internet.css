@@ -1,0 +1,1007 @@
+/* ══════════════════════════════════════════════════════
+   internet.css — 다픽 인터넷/TV 페이지
+   ──────────────────────────────────────────────────────
+   컨셉: water 패턴 적용 — 메인보드 + 상품 뷰 + 다이얼로그
+   네임스페이스: i- (water의 w- 와 분리)
+   구조:
+     1. 화면 전환 (boardView ↔ productView)
+     2. 메인보드 (통신사 선택)
+     3. 상품 뷰 헤더 (뒤로가기, 현재 통신사)
+     4. 통신사 탭
+     5. 페이지 히어로
+     6. 베스트 카드 그리드
+     7. 전체 리스트
+     8. 하단 고정 바
+     9. 다이얼로그
+     10. 반응형
+   ══════════════════════════════════════════════════════ */
+
+/* ── 1. 화면 전환 ───────────────────────────────────── */
+#boardView {
+  display: block;
+}
+#productView {
+  display: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   2. 메인보드 (통신사 선택)
+   ══════════════════════════════════════════════════════ */
+
+.i-board-hero {
+  background: linear-gradient(135deg, #18103a 0%, #2d1f6e 55%, #1a2a5e 100%);
+  padding: 56px 5% 48px;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+.i-board-hero::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -40px;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(
+    circle,
+    rgba(201, 168, 76, 0.13) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+.i-board-hero-inner {
+  position: relative;
+  z-index: 1;
+  max-width: 680px;
+  margin: 0 auto;
+}
+.i-board-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 16px;
+  letter-spacing: 0.5px;
+}
+.i-board-hero h1 {
+  font-size: clamp(1.6rem, 4vw, 2.6rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+.i-board-hero h1 em {
+  font-style: normal;
+  color: var(--gold-light, #e5cf85);
+}
+.i-board-hero p {
+  font-size: 0.9rem;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.7;
+}
+
+.i-board-section {
+  padding: 48px 5% 120px;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+.i-board-section-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+.i-board-section-sub {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+/* 통신사 카드 그리드 (3단 × 2행, 모바일 2단) */
+.i-provider-select-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+.i-provider-select-card {
+  background: var(--white);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius);
+  padding: 32px 20px 28px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+  overflow: hidden;
+}
+.i-provider-select-card::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, var(--purple-pale), transparent);
+  opacity: 0;
+  transition: opacity 0.25s;
+}
+.i-provider-select-card:hover {
+  border-color: var(--purple-soft);
+  box-shadow: var(--shadow-h);
+  transform: translateY(-4px);
+}
+.i-provider-select-card:hover::before {
+  opacity: 1;
+}
+
+.i-provider-select-logo {
+  width: 100%;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  z-index: 1;
+}
+.i-provider-select-logo img {
+  max-height: 44px;
+  max-width: 100%;
+  object-fit: contain;
+}
+
+.i-provider-select-info {
+  text-align: center;
+  position: relative;
+  z-index: 1;
+}
+.i-provider-select-name {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 4px;
+}
+.i-provider-select-desc {
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+.i-provider-select-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: var(--purple-pale);
+  color: var(--purple);
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  position: relative;
+  z-index: 1;
+}
+
+/* ══════════════════════════════════════════════════════
+   3. 상품뷰 헤더
+   ══════════════════════════════════════════════════════ */
+
+.i-product-view-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 5%;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 80;
+}
+.i-btn-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.i-btn-back:hover {
+  background: var(--bg);
+  color: var(--purple);
+}
+.i-product-view-provider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.i-product-view-provider img {
+  height: 36px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ══════════════════════════════════════════════════════
+   4. 통신사 탭 (sticky)
+   ══════════════════════════════════════════════════════ */
+
+.i-provider-nav {
+  background: var(--white);
+  border-bottom: 2px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 200;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.i-provider-nav::-webkit-scrollbar {
+  display: none;
+}
+.i-provider-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+  display: flex;
+  gap: 0;
+  justify-content: center;
+}
+.i-provider-tab {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 50px 50px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-sub);
+  border-bottom: 3px solid transparent;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  margin-bottom: -2px;
+}
+.i-provider-tab:hover {
+  color: var(--purple);
+}
+.i-provider-tab.active {
+  color: var(--purple);
+  border-color: var(--purple);
+  font-weight: 700;
+}
+.i-provider-logo-img {
+  height: 40px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ══════════════════════════════════════════════════════
+   5. 페이지 히어로
+   ══════════════════════════════════════════════════════ */
+
+.i-page-hero {
+  background: linear-gradient(135deg, #18103a 0%, #2d1f6e 55%, #1a2a5e 100%);
+  padding: 48px 40px 40px;
+  position: relative;
+  overflow: hidden;
+}
+.i-page-hero::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -40px;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(
+    circle,
+    rgba(201, 168, 76, 0.13) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+.i-page-hero-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.i-page-hero-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 11px;
+  font-weight: 600;
+  padding: 4px 14px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+  letter-spacing: 0.5px;
+}
+.i-page-hero h1 {
+  font-size: 32px;
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.25;
+  margin-bottom: 10px;
+}
+.i-page-hero h1 em {
+  font-style: normal;
+  color: var(--gold-light, #e5cf85);
+}
+.i-page-hero p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.55);
+  line-height: 1.7;
+}
+
+/* ══════════════════════════════════════════════════════
+   6. 베스트 카드 그리드 (3단)
+   ══════════════════════════════════════════════════════ */
+
+.i-best-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-bottom: 48px;
+}
+.i-card {
+  background: var(--white);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius);
+  padding: 22px 20px;
+  cursor: pointer;
+  transition: all 0.25s;
+  position: relative;
+}
+.i-card:hover {
+  border-color: var(--purple-soft);
+  box-shadow: var(--shadow-h);
+  transform: translateY(-3px);
+}
+.i-card.is-best {
+  border-color: var(--gold);
+}
+
+.i-card-badges {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+.i-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+.i-badge-best {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--dark);
+}
+.i-badge-provider {
+  background: var(--purple-pale);
+  color: var(--purple);
+}
+.i-badge-recommend {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.i-card-title-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+}
+.i-card-name {
+  font-size: 15px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-main);
+  flex: 1;
+  min-width: 0;
+}
+.i-card-channels {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* 사은품 박스 */
+.i-card-gift {
+  background: linear-gradient(135deg, #fef9e7, #fff5d6);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: var(--radius-xs);
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+.i-card-gift-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.i-card-gift-amt {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--gold-dark, #8a6d28);
+}
+
+.i-card-before {
+  font-size: 11px;
+  color: var(--text-muted);
+  text-decoration: line-through;
+  margin-bottom: 4px;
+}
+.i-card-after {
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.i-card-after strong {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--purple);
+}
+
+.i-card-heart {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-card);
+  background: var(--white);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--text-muted);
+  transition: all 0.2s;
+}
+.i-card-heart.active {
+  color: #ef4444;
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+/* ══════════════════════════════════════════════════════
+   7. 전체 리스트
+   ══════════════════════════════════════════════════════ */
+
+.i-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 12px;
+}
+.i-list-item {
+  background: var(--white);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.i-list-item:hover {
+  border-color: var(--purple-soft);
+  box-shadow: var(--shadow);
+}
+.i-list-info {
+  flex: 1;
+  min-width: 0;
+}
+.i-list-name {
+  font-size: 14px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-main);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.i-list-meta {
+  font-size: 11px;
+  color: var(--text-muted);
+  display: flex;
+  gap: 8px;
+}
+.i-list-price {
+  text-align: right;
+  flex-shrink: 0;
+}
+.i-list-price-val {
+  font-size: 16px;
+  font-weight: 900;
+  color: var(--purple);
+}
+.i-list-price-unit {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.i-list-arrow {
+  color: var(--text-muted);
+  font-size: 18px;
+  flex-shrink: 0;
+}
+
+/* 빈 상태 */
+.i-empty {
+  grid-column: 1 / -1;
+  padding: 56px 20px;
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 14px;
+  background: var(--bg);
+  border-radius: 14px;
+  line-height: 1.7;
+}
+
+/* ══════════════════════════════════════════════════════
+   8. 하단 고정 바
+   ══════════════════════════════════════════════════════ */
+
+.i-bottom-bar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 250;
+  background: var(--dark);
+  border-top: 1px solid rgba(201, 168, 76, 0.2);
+  padding: 12px 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.i-bb-total {
+  flex: 1;
+}
+.i-bb-label {
+  font-size: 10px;
+  color: rgba(255, 255, 255, 0.35);
+  margin-bottom: 3px;
+  letter-spacing: 1px;
+}
+.i-bb-price {
+  font-size: 20px;
+  font-weight: 900;
+  color: var(--gold-light);
+}
+.i-bb-count {
+  font-size: 11px;
+  color: rgba(255, 255, 255, 0.4);
+  margin-left: 6px;
+}
+.i-bb-kakao {
+  background: var(--kakao);
+  color: var(--dark);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  text-decoration: none;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.i-bb-kakao:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+}
+.i-bb-consult {
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--dark);
+  font-weight: 700;
+  font-size: 14px;
+  padding: 12px 24px;
+  border-radius: 10px;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+  font-family: inherit;
+}
+.i-bb-consult:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(201, 168, 76, 0.4);
+}
+
+/* ══════════════════════════════════════════════════════
+   9. 다이얼로그
+   ══════════════════════════════════════════════════════ */
+
+.i-dialog-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 16, 24, 0.75);
+  z-index: 500;
+  align-items: flex-end;
+  justify-content: center;
+}
+.i-dialog-overlay.show {
+  display: flex;
+}
+.i-dialog {
+  background: var(--white);
+  width: 100%;
+  max-width: 540px;
+  border-radius: 24px 24px 0 0;
+  max-height: 88vh;
+  overflow-y: auto;
+  animation: iSlideUp 0.28s ease;
+}
+@keyframes iSlideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+.i-dialog-header {
+  position: sticky;
+  top: 0;
+  background: var(--white);
+  padding: 16px 24px 14px;
+  border-bottom: 1px solid var(--border);
+  z-index: 10;
+}
+.i-dialog-handle {
+  width: 36px;
+  height: 4px;
+  background: #e0ddef;
+  border-radius: 2px;
+  margin: 0 auto 14px;
+}
+.i-dialog-header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+.i-dialog-provider-tag {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--purple);
+  background: var(--purple-pale);
+  padding: 3px 10px;
+  border-radius: 999px;
+  display: inline-block;
+  margin-bottom: 6px;
+}
+.i-dialog-name {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1.3;
+  color: var(--text-main);
+}
+.i-dialog-close {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 1.5px solid var(--border-card);
+  background: var(--white);
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--text-sub);
+  transition: all 0.2s;
+}
+.i-dialog-close:hover {
+  border-color: var(--purple-soft);
+  color: var(--purple);
+}
+
+.i-dialog-body {
+  padding: 20px 24px 28px;
+}
+
+/* 가격 박스 */
+.i-price-box {
+  background: linear-gradient(135deg, var(--purple-pale), #ede9f8);
+  border-radius: var(--radius-sm);
+  padding: 18px 20px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20px;
+}
+.i-price-left .i-pl-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 4px;
+}
+.i-price-val {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--purple);
+  line-height: 1;
+}
+.i-price-val span {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-sub);
+}
+.i-price-right {
+  text-align: right;
+}
+.i-gift-label {
+  font-size: 10px;
+  color: var(--text-muted);
+  margin-bottom: 3px;
+}
+.i-gift-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--gold-dark, #8a6d28);
+}
+
+/* 옵션 */
+.i-option-group {
+  margin-bottom: 16px;
+}
+.i-option-label {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: var(--purple-soft);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+/* 약정 칩 */
+.i-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.i-chip {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-card);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-sub);
+  background: var(--white);
+  font-family: inherit;
+}
+.i-chip:hover {
+  border-color: var(--purple-soft);
+}
+.i-chip.active {
+  border-color: var(--purple-soft);
+  background: var(--purple-pale);
+  color: var(--purple);
+  font-weight: 700;
+}
+
+/* 결합 토글 (휴대폰/TV) */
+.i-toggle-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.i-toggle {
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: var(--white);
+  text-align: left;
+  font-family: inherit;
+}
+.i-toggle:hover {
+  border-color: var(--purple-soft);
+}
+.i-toggle.active {
+  border-color: var(--purple);
+  background: var(--purple-pale);
+}
+.i-toggle-icon {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+.i-toggle-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+.i-toggle-desc {
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* TV 셀렉트 (TV 결합 활성 시) */
+.i-tv-select {
+  margin-top: 10px;
+  width: 100%;
+  padding: 11px 36px 11px 14px;
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b5cf6' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+}
+.i-tv-select:focus {
+  outline: none;
+  border-color: var(--purple-soft);
+}
+
+/* 액션 버튼 */
+.i-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 4px;
+}
+.i-btn-kakao {
+  flex: 1;
+  background: var(--kakao);
+  color: var(--dark);
+  border: none;
+  padding: 15px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  text-decoration: none;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.i-btn-kakao:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
+}
+.i-btn-apply {
+  flex: 1;
+  background: linear-gradient(135deg, var(--gold), var(--gold-light));
+  color: var(--dark);
+  border: none;
+  padding: 15px;
+  border-radius: var(--radius-sm);
+  font-size: 14px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+}
+.i-btn-apply:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 16px rgba(201, 168, 76, 0.4);
+}
+.i-btn-heart {
+  width: 52px;
+  height: 52px;
+  border-radius: var(--radius-sm);
+  border: 1.5px solid var(--border-card);
+  background: var(--white);
+  font-size: 20px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.2s;
+}
+.i-btn-heart.active {
+  border-color: #fecaca;
+  background: #fff5f5;
+}
+
+/* ══════════════════════════════════════════════════════
+   10. 반응형
+   ══════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .i-provider-select-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .i-provider-inner,
+  .i-bottom-bar {
+    padding-left: 24px;
+    padding-right: 24px;
+  }
+  .i-page-hero {
+    padding: 36px 24px 32px;
+  }
+}
+
+@media (max-width: 768px) {
+  .i-board-section {
+    padding: 36px 4% 100px;
+  }
+  .i-provider-select-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .i-provider-select-card {
+    padding: 24px 16px 20px;
+  }
+  .i-best-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .i-provider-tab {
+    padding: 12px 16px;
+    font-size: 13px;
+  }
+  .i-page-hero h1 {
+    font-size: 24px;
+  }
+  .i-toggle-row {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 480px) {
+  .i-board-hero {
+    padding: 40px 5% 36px;
+  }
+  .i-provider-select-card {
+    padding: 20px 12px 18px;
+    gap: 10px;
+  }
+  .i-provider-select-name {
+    font-size: 0.88rem;
+  }
+  .i-provider-select-desc {
+    display: none;
+  }
+  .i-provider-inner {
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+  .i-page-hero {
+    padding: 28px 16px 24px;
+  }
+  .i-bottom-bar {
+    padding: 10px 16px;
+    gap: 8px;
+  }
+  .i-bb-price {
+    font-size: 16px;
+  }
+  .i-bb-kakao,
+  .i-bb-consult {
+    padding: 10px 14px;
+    font-size: 13px;
+  }
+  .i-product-view-header {
+    padding: 12px 4%;
+  }
+  .i-price-val {
+    font-size: 24px;
+  }
+}

@@ -1,0 +1,214 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다픽 | 회원가입</title>
+
+  <!-- 폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- 공통 CSS -->
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/common/common.css"/>
+
+  <!-- 회원가입 전용 CSS -->
+  <link rel="stylesheet" href="css/signup.css">
+</head>
+<body>
+
+<!-- ── GNB ── -->
+<header class="gnb">
+  <div class="gnb-top">
+    <a class="logo-wrap" href="index.html">
+      <img src="assets/logos/dapicklogo.png" alt="다픽" class="logo-wrap__img">
+    </a>
+  </div>
+</header>
+
+<!-- ── 회원가입 본문 ── -->
+<main class="signup-wrap">
+  <div class="signup-card">
+
+    <!-- 헤더 (이미지 로고 + 태그라인) -->
+    <div class="signup-header">
+      <a class="signup-brand" href="index.html">
+        <img src="assets/logos/dapicklogo.png" alt="다픽" class="signup-brand-img">
+      </a>
+      <p class="signup-tagline">다픽에서 나에게 딱 맞는<br>생활 상품을 만나보세요</p>
+    </div>
+
+    <!-- ── 카카오 3초 가입 ── -->
+    <div class="social-group">
+      <div class="kakao-balloon">⚡ 카카오로 3초만에 가입하기</div>
+      <button class="social-btn btn-kakao" onclick="socialLogin('kakao')">
+        <svg class="social-icon" viewBox="0 0 24 24">
+          <path d="M12 3C6.48 3 2 6.72 2 11.28c0 2.9 1.78 5.45 4.47 6.94L5.4 22l4.29-2.96A12.2 12.2 0 0012 19.56c5.52 0 10-3.72 10-8.28C22 6.72 17.52 3 12 3z" fill="#191919"/>
+        </svg>
+        카카오로 가입하기
+      </button>
+    </div>
+
+    <!-- 구분선 -->
+    <div class="login-divider">또는 이메일로 가입</div>
+
+    <!-- 에러/성공 알림 배너 -->
+    <div class="alert-banner" id="signup-alert"></div>
+
+    <!-- Step 1: 이메일 입력 -->
+    <div class="step-panel active" id="step-1">
+      <div class="form-group">
+        <label class="form-label" for="input-email">이메일</label>
+        <div class="input-with-btn">
+          <input
+            type="email"
+            id="input-email"
+            class="form-input"
+            placeholder="이메일을 입력하세요"
+            autocomplete="email"
+          >
+          <button class="btn-action" id="btn-send-code" onclick="sendVerificationCode()">
+            <span id="send-code-text">인증코드 발송</span>
+            <div class="btn-spinner" id="send-code-spinner"></div>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 2: 인증코드 확인 -->
+    <div class="step-panel" id="step-2">
+      <div class="form-group">
+        <label class="form-label" for="input-code">인증코드</label>
+        <div class="input-with-btn">
+          <input
+            type="text"
+            id="input-code"
+            class="form-input"
+            placeholder="6자리 숫자"
+            maxlength="6"
+            inputmode="numeric"
+            autocomplete="one-time-code"
+          >
+          <button class="btn-action" id="btn-verify-code" onclick="verifyCode()">
+            <span id="verify-code-text">확인</span>
+            <div class="btn-spinner" id="verify-code-spinner"></div>
+          </button>
+        </div>
+        <div class="code-helper">
+          <span class="code-timer" id="code-timer">05:00</span>
+          <button class="code-resend" onclick="sendVerificationCode()">재발송</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Step 3: 나머지 정보 입력 -->
+    <div class="step-panel" id="step-3">
+
+      <!-- 인입 경로 (자동 추출, 사용자에게 안 보임) -->
+      <input type="hidden" id="input-signup-source" value="DIRECT">
+
+      <div class="form-group">
+        <label class="form-label" for="input-password">비밀번호</label>
+        <input
+          type="password"
+          id="input-password"
+          class="form-input"
+          placeholder="8자 이상, 영대소·숫자·특수문자 포함"
+          autocomplete="new-password"
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="input-password-confirm">비밀번호 확인</label>
+        <input
+          type="password"
+          id="input-password-confirm"
+          class="form-input"
+          placeholder="비밀번호를 한번 더 입력하세요"
+          autocomplete="new-password"
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="input-name">이름</label>
+        <input
+          type="text"
+          id="input-name"
+          class="form-input"
+          placeholder="실명을 입력하세요"
+          maxlength="10"
+          autocomplete="name"
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="input-nickname">닉네임</label>
+        <input
+          type="text"
+          id="input-nickname"
+          class="form-input"
+          placeholder="다픽에서 사용할 닉네임 (2~20자)"
+          maxlength="20"
+        >
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="input-phone">전화번호</label>
+        <input
+          type="tel"
+          id="input-phone"
+          class="form-input"
+          placeholder="010-0000-0000"
+          maxlength="13"
+          autocomplete="tel"
+        >
+      </div>
+
+      <!-- 약관 동의 -->
+      <div class="agree-group">
+        <label class="agree-all">
+          <input type="checkbox" id="agree-all" onchange="toggleAllAgreements(this)">
+          <span class="agree-text"><strong>전체 약관 동의</strong></span>
+        </label>
+        <div class="agree-list">
+          <label class="agree-item">
+            <input type="checkbox" id="agree-terms" class="agree-checkbox">
+            <span class="agree-text">[필수] 이용약관 동의</span>
+            <a href="#" class="agree-link" onclick="event.preventDefault(); alert('이용약관은 준비 중입니다.');">보기</a>
+          </label>
+          <label class="agree-item">
+            <input type="checkbox" id="agree-privacy" class="agree-checkbox">
+            <span class="agree-text">[필수] 개인정보처리방침 동의</span>
+            <a href="#" class="agree-link" onclick="event.preventDefault(); alert('개인정보처리방침은 준비 중입니다.');">보기</a>
+          </label>
+          <label class="agree-item">
+            <input type="checkbox" id="agree-marketing" class="agree-checkbox">
+            <span class="agree-text">[선택] 마케팅 정보 수신 동의</span>
+          </label>
+        </div>
+      </div>
+
+      <button class="btn-signup-submit" id="btn-signup-submit" onclick="submitSignup()">
+        <span id="signup-btn-text">회원가입 완료</span>
+        <div class="btn-spinner" id="signup-spinner"></div>
+      </button>
+    </div><!-- /step-3 -->
+
+    <!-- 로그인 링크 -->
+    <a href="login.html" class="back-login">
+      이미 회원이신가요? <strong>로그인</strong>
+    </a>
+
+  </div><!-- /signup-card -->
+</main>
+
+<!-- ── JS (공통 → 회원가입 전용 순서) ── -->
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/signup.js"></script>
+
+</body>
+</html>

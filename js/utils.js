@@ -4,7 +4,7 @@
 function goPage(cat) {
   const pages = {
     internet: 'internet.html',
-    phone: 'phone.html',
+    mobile: 'mobile.html',
     card: 'card.html',
     water: 'water.html',
     rental: 'rental.html',

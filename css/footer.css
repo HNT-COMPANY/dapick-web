@@ -26,14 +26,13 @@
   gap: 16px;
 }
 .footer-logo {
-  font-family: 'DM Serif Display', serif;
-  font-size: 26px;
+  display: flex;
+  align-items: center;
 }
-.footer-logo .da {
-  color: var(--gold);
-}
-.footer-logo .pick {
-  color: var(--purple-soft);
+.footer-logo__img {
+  height: 60px;
+  width: auto;
+  display: block;
 }
 
 .footer-app-btns {
@@ -256,6 +255,9 @@
     flex: 1;
     justify-content: center;
   }
+  .footer-logo__img {
+    height: 32px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -272,5 +274,8 @@
   }
   .footer-app-btns {
     flex-direction: column;
+  }
+  .footer-logo__img {
+    height: 28px;
   }
 }

@@ -45,113 +45,7 @@
   <meta name="twitter:card" content="summary_large_image"/>
   <meta name="twitter:title" content="다픽 | 인터넷·TV·휴대폰·정수기 지원금 비교 플랫폼"/>
   <meta name="twitter:description" content="인터넷·TV·정수기·휴대폰 지원금을 한눈에 비교하세요. 생활 지원금 비교부터 상담까지 한 번에 해결하는 생활 플랫폼."/>
-  <meta name="twitter:image" content="https://dapick.co.kr/assets/logos/dapicklogo.png"/>
-
-  <!-- ── Structured Data (JSON-LD) ── -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@graph": [
-      {
-        "@type": "Organization",
-        "@id": "https://dapick.co.kr/#organization",
-        "name": "다픽",
-        "alternateName": ["다픽 플랫폼", "주식회사 다커넥트"],
-        "legalName": "주식회사 다커넥트",
-        "url": "https://dapick.co.kr/",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://dapick.co.kr/assets/logos/dapick.png"
-        },
-        "description": "인터넷·TV·정수기·휴대폰·카드 지원금을 한눈에 비교하는 생활 지원금 플랫폼",
-        "founder": {
-          "@type": "Person",
-          "name": "강성현"
-        },
-        "telephone": "1899-8478",
-        "email": "wwh3218@gmail.com",
-        "address": {
-          "@type": "PostalAddress",
-          "streetAddress": "병영로 13",
-          "addressLocality": "중구",
-          "addressRegion": "울산광역시",
-          "addressCountry": "KR"
-        },
-        "contactPoint": {
-          "@type": "ContactPoint",
-          "contactType": "customer service",
-          "telephone": "1899-8478",
-          "availableLanguage": "Korean",
-          "url": "https://pf.kakao.com/_exaRjX"
-        },
-        "sameAs": [
-          "https://blog.naver.com/daphone_kor",
-          "https://www.instagram.com/daphone_official",
-          "https://www.youtube.com/@daphone_kor",
-          "https://pf.kakao.com/_exaRjX"
-        ]
-      },
-      {
-        "@type": "WebSite",
-        "@id": "https://dapick.co.kr/#website",
-        "url": "https://dapick.co.kr/",
-        "name": "다픽",
-        "description": "인터넷·TV·정수기·휴대폰 지원금 비교 플랫폼",
-        "inLanguage": "ko-KR",
-        "publisher": {
-          "@id": "https://dapick.co.kr/#organization"
-        }
-      },
-      {
-        "@type": "WebPage",
-        "@id": "https://dapick.co.kr/#webpage",
-        "url": "https://dapick.co.kr/",
-        "name": "다픽 | 인터넷·TV·휴대폰·정수기 지원금 비교 플랫폼",
-        "isPartOf": { "@id": "https://dapick.co.kr/#website" },
-        "about": { "@id": "https://dapick.co.kr/#organization" },
-        "primaryImageOfPage": {
-          "@type": "ImageObject",
-          "@id": "https://dapick.co.kr/#primaryimage",
-          "url": "https://dapick.co.kr/assets/logos/dapick.png",
-          "caption": "다픽 생활 지원금 비교 플랫폼"
-        },
-        "image": { "@id": "https://dapick.co.kr/#primaryimage" },
-        "thumbnailUrl": "https://dapick.co.kr/assets/logos/dapick.png",
-        "inLanguage": "ko-KR"
-      },
-      {
-        "@type": "FAQPage",
-        "@id": "https://dapick.co.kr/#faq",
-        "mainEntity": [
-          {
-            "@type": "Question",
-            "name": "인터넷·TV 가입 시 설치비가 있나요?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "대부분의 경우 설치비는 무료입니다. 일부 특수 환경에서는 별도 비용이 발생할 수 있으며, 상담 시 미리 확인해드립니다."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "지원금(사은품)은 어떻게 받나요?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "가입 후 개통 완료 시점에 상품권(SK/신세계/OK캐쉬백 등)으로 지급됩니다. 채널·약정·결합 조건에 따라 금액이 달라집니다."
-            }
-          },
-          {
-            "@type": "Question",
-            "name": "상담 신청 후 얼마나 기다려야 하나요?",
-            "acceptedAnswer": {
-              "@type": "Answer",
-              "text": "영업시간(10:00~22:00) 30분~2시간 내 연락드립니다. 야간·주말 접수 건은 다음 영업일 오전 중 연락드립니다."
-            }
-          }
-        ]
-      }
-    ]
-  }
-  </script>
+  <meta name="twitter:image" content="https://dapick.co.kr/assets/logos/dapick.png"/>
 
   <!-- 폰트 -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -159,12 +53,15 @@
 
   <!-- CSS -->
   <link rel="stylesheet" href="css/reset.css"/>
-  <link rel="stylesheet" href="css/common.css"/>
+  <link rel="stylesheet" href="css/common/common.css"/>
   <link rel="stylesheet" href="css/components.css"/>
   <link rel="stylesheet" href="css/footer.css"/>
   <link rel="stylesheet" href="css/hero.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
   <link rel="stylesheet" href="css/kakao-banner.css"/>
+
+  <!-- Structured Data (JSON-LD) — 외부 분리 -->
+  <script src="js/seo/structured-data-index.js" defer></script>
 </head>
 <body>
 <!-- 공지 -->
@@ -173,18 +70,23 @@
 </div>
 
 <nav class="gnb">
-  <div class="gnb-top">
-
-    <a href="index.html" class="logo-wrap">
-      <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
-    </a>
-    <div class="gnb-right">
-      <button class="btn-login" onclick="window.location.href='login.html'">로그인/회원가입</button>
-    </div>
+<div class="gnb-top">
+  <a href="index.html" class="logo-wrap">
+    <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
+  </a>
+  <nav class="gnb-extras">
+    <a href="contact.html">고객센터</a>
+    <a href="events.html" class="has-new">이벤트</a>
+    <a href="reviews.html">후기</a>
+    <a href="faq.html">자주묻는질문</a>
+  </nav>
+  <div class="gnb-right">
+    <button class="btn-login">로그인/회원가입</button>
   </div>
+</div>
   <div class="cat-bar">
     <div class="cat-inner">
-      <div class="cat-item" onclick="goPage('phone')">휴대폰</div>
+      <div class="cat-item" onclick="goPage('mobile')">휴대폰</div>
       <div class="cat-item" onclick="goPage('internet')">인터넷</div>
       <div class="cat-item" onclick="goPage('card')">카드</div>
       <div class="cat-item" onclick="goPage('water')">정수기</div>
@@ -197,7 +99,7 @@
 <div class="hero">
   <div class="hero-inner">
     <div class="hero-text">
-      <div class="hero-eyebrow"> 매일매일 생활 지원금 플랫폼</div>
+      <div class="hero-eyebrow">매일매일 생활 지원금 플랫폼</div>
       <h1 class="hero-h1">
         숨어있는 내 지원금
         <em class="big">지금 바로 확인하세요</em>
@@ -205,16 +107,17 @@
       <p class="hero-sub">인터넷·TV · 가전렌탈 · 휴대폰 · 카드<br>모든 생활 지원금을 한눈에 비교</p>
       <div class="hero-cta">
         <button class="btn-cta-main" onclick="goPage('internet')">인터넷 지원금 확인</button>
-        <button class="btn-cta-sub"  onclick="goPage('phone')">휴대폰 가격 비교하기</button>
+        <button class="btn-cta-sub"  onclick="goPage('mobile')">휴대폰 가격 비교하기</button>
       </div>
     </div>
-  </div> 
+  </div>
 </div>
 
+<!-- 카카오 배너 -->
 <section class="kakao-banner">
   <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-banner__link" aria-label="다픽 카카오톡 플러스친구 추가">
     <img
-      src="/assets/kakaobanner/kakaobanner-01.png"
+      src="assets/kakaobanner/kakaobanner-01.png"
       alt="다픽 카카오톡 플러스친구 추가"
       class="kakao-banner__image"
       width="1920"
@@ -227,11 +130,11 @@
 <!-- 서비스 바로가기 -->
 <div class="section">
   <div class="wrap">
-    <div class="sec-head" style="margin-bottom:20px;">
+    <div class="sec-head sec-head--tight">
       <span class="sec-title">서비스 바로가기</span>
     </div>
     <div class="cat-grid">
-      <div class="cat-block" onclick="goPage('phone')">
+      <div class="cat-block" onclick="goPage('mobile')">
         <div class="cat-block-icon phone">
           <img src="assets/icons/phone.png" alt="휴대폰">
         </div>
@@ -369,7 +272,7 @@
   <div class="wrap">
     <div class="event-banner" onclick="goPage('internet')">
       <div>
-        <div class="event-eyebrow">🎉 4월 이벤트</div>
+        <div class="event-eyebrow">🎉 5월 이벤트</div>
         <div class="event-title">나만 모르는 인터넷 지원금!<br><em>숨겨진 지원금 💰 + 추가 혜택</em></div>
         <div class="event-sub">SK · KT · LG 실제 정책 기준 지원금 계산기</div>
       </div>
@@ -381,13 +284,13 @@
 <!-- 리얼 후기 -->
 <div class="section">
   <div class="wrap">
-    <div class="sec-head" style="margin-bottom:20px;">
+    <div class="sec-head sec-head--tight">
       <span class="sec-title">리얼 후기</span>
       <a class="sec-more" href="#">더보기 ›</a>
     </div>
     <div class="review-grid">
       <div class="review-card">
-        <div class="review-img c1">📡<div class="review-img-badge">BEST</div></div>
+        <div class="review-img c1"><div class="review-img-badge">BEST</div></div>
         <div class="review-body">
           <div class="review-title">동작구 LG U+ 인터넷 가입</div>
           <div class="review-desc">사은품도 많이 챙겨주셔서 다음에도 구매 예정 생각 있습니다.</div>
@@ -395,7 +298,7 @@
         </div>
       </div>
       <div class="review-card">
-        <div class="review-img c2">📺<div class="review-img-badge">BEST</div></div>
+        <div class="review-img c2"><div class="review-img-badge">BEST</div></div>
         <div class="review-body">
           <div class="review-title">경기 의정부 LG 인터넷+TV</div>
           <div class="review-desc">기존 요금이랑 크게 차이 안 나면서 혜택 많이 받을 수 있도록 설계 잘 해주셨습니다.</div>
@@ -403,7 +306,7 @@
         </div>
       </div>
       <div class="review-card">
-        <div class="review-img c3">🔌<div class="review-img-badge">BEST</div></div>
+        <div class="review-img c3"><div class="review-img-badge">BEST</div></div>
         <div class="review-body">
           <div class="review-title">수원 팔달구 사무실 인터넷</div>
           <div class="review-desc">다른 곳과 비교해서 지원금 혜택이 너무 좋아서 가입 결정했습니다.</div>
@@ -415,9 +318,9 @@
 </div>
 
 <!-- FAQ -->
-<div class="section" style="padding-bottom:72px;">
+<div class="section section--last">
   <div class="wrap">
-    <div class="sec-head" style="margin-bottom:20px;">
+    <div class="sec-head sec-head--tight">
       <span class="sec-title">자주 묻는 질문</span>
     </div>
     <div class="faq-list">
@@ -443,7 +346,7 @@
   <div class="footer-top">
     <div class="footer-wrap">
       <div class="footer-logo">
-        <span class="da">다</span><span class="pick">픽</span>
+        <img src="assets/logos/dapicklogo.png" alt="다픽" class="footer-logo__img" />
       </div>
       <div class="footer-app-btns">
         <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
@@ -487,7 +390,7 @@
         </p>
         <p>
           <span>대표번호</span> 1899-8478 &nbsp;|&nbsp;
-          <span>주소</span> 울산 중구 병영로 13 
+          <span>주소</span> 울산 중구 병영로 13
         </p>
         <p>
           <span>이메일</span> wwh3218@gmail.com &nbsp;|&nbsp;
@@ -514,15 +417,20 @@
             <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg>
           </a>
         </div>
-  <div class="footer-bottom">
-    <br class="footer-wrap">
-      <div class="footer-policies">
-        <a href="#">개인정보처리방침</a>
-        <a href="#">이용약관</a>
-        <a href="#">정보수신 동의</a>
-        <a href="#">이메일 무단수집 거부</a>
       </div>
-      <br><p class="footer-copy">Copyright © 2026 다픽. All rights reserved.</p></br>
+
+    </div>
+  </div>
+
+  <div class="footer-bottom">
+    <div class="footer-wrap">
+      <div class="footer-policies">
+        <a href="privacy.html">개인정보처리방침</a>
+        <a href="terms.html">이용약관</a>
+        <a href="marketing.html">정보수신 동의</a>
+        <a href="email-policy.html">이메일 무단수집 거부</a>
+      </div>
+      <p class="footer-copy">Copyright © 2026 다픽. All rights reserved.</p>
     </div>
   </div>
 </footer>
@@ -539,5 +447,8 @@
 <script src="js/api.js"></script>
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
+<scrpit src="js/internet/structured-data-skt.js"></scrpit>
+<scrpit src="js/common/"></scrpit>
+
 </body>
 </html>

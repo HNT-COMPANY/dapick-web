@@ -1,0 +1,502 @@
+/* ══════════════════════════════════════════════════════
+   internet-product.css — 통신사 페이지 공통 스타일 (아정당 패턴)
+   ──────────────────────────────────────────────────────
+   레이아웃: 한 페이지 안에서 인라인 옵션 선택 + 하단 고정 가격 박스
+   네임스페이스: ip- (internet product)
+   통신사 컬러: --ip-brand-color (페이지별 :root에서 박음)
+   ══════════════════════════════════════════════════════ */
+
+:root {
+  --ip-brand-color: #5b3fbe; /* 기본 보라, 통신사별 덮어씀 */
+}
+
+/* ══════════════════════════════════════════════════════
+   1. 통신사 헤더 (뒤로가기 + 로고 + 컬러 띠)
+   ══════════════════════════════════════════════════════ */
+
+.ip-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px 5%;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 80;
+  border-left: 4px solid var(--ip-brand-color);
+}
+.ip-back {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-sub);
+  cursor: pointer;
+  padding: 6px 12px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  font-family: inherit;
+  text-decoration: none;
+}
+.ip-back:hover {
+  background: var(--bg);
+  color: var(--ip-brand-color);
+}
+.ip-header-logo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+.ip-header-logo img {
+  height: 32px;
+  width: auto;
+  object-fit: contain;
+}
+
+/* ══════════════════════════════════════════════════════
+   2. 페이지 히어로
+   ══════════════════════════════════════════════════════ */
+
+.ip-hero {
+  background: linear-gradient(135deg, #18103a 0%, #2d1f6e 55%, #1a2a5e 100%);
+  padding: 56px 40px 48px;
+  position: relative;
+  overflow: hidden;
+}
+.ip-hero::before {
+  content: '';
+  position: absolute;
+  top: -80px;
+  right: -40px;
+  width: 360px;
+  height: 360px;
+  background: radial-gradient(
+    circle,
+    rgba(201, 168, 76, 0.13) 0%,
+    transparent 65%
+  );
+  pointer-events: none;
+}
+.ip-hero-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  position: relative;
+  z-index: 1;
+}
+.ip-hero h1 {
+  font-size: clamp(1.6rem, 4vw, 2.4rem);
+  font-weight: 900;
+  color: #fff;
+  line-height: 1.25;
+  margin: 0 0 12px;
+}
+.ip-hero h1 em {
+  font-style: normal;
+  color: var(--gold-light, #e5cf85);
+}
+.ip-hero p {
+  font-size: 14px;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* ══════════════════════════════════════════════════════
+   3. 옵션 섹션 (속도 / TV / 부가옵션 / 약정)
+   ══════════════════════════════════════════════════════ */
+
+.ip-builder {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 40px 40px 240px; /* 하단 가격 박스 가려짐 방지 */
+}
+
+.ip-section {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 32px;
+  align-items: flex-start;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--border);
+}
+.ip-section:last-of-type {
+  border-bottom: none;
+}
+.ip-section-label {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--text-main);
+  padding-top: 12px;
+}
+
+/* ── 카드 그리드 (속도 / TV) ──────────────────────── */
+.ip-card-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.ip-opt-card {
+  position: relative;
+  background: var(--white);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius-sm);
+  padding: 22px 20px 18px;
+  cursor: pointer;
+  transition: all 0.2s;
+  text-align: left;
+  font-family: inherit;
+}
+.ip-opt-card:hover {
+  border-color: var(--ip-brand-color);
+}
+.ip-opt-card.active {
+  border-color: var(--ip-brand-color);
+  background: rgba(91, 63, 190, 0.03);
+  box-shadow: 0 0 0 1px var(--ip-brand-color);
+}
+.ip-opt-card.active::before {
+  content: '';
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ip-brand-color);
+}
+
+.ip-opt-recommend {
+  position: absolute;
+  top: -8px;
+  right: 16px;
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.ip-opt-headline {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+  margin-bottom: 4px;
+}
+.ip-opt-num {
+  font-size: 28px;
+  font-weight: 900;
+  color: var(--text-main);
+  line-height: 1;
+}
+.ip-opt-unit {
+  font-size: 14px;
+  color: var(--text-sub);
+  font-weight: 500;
+}
+.ip-opt-tier {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main);
+  margin-bottom: 2px;
+}
+.ip-opt-desc {
+  font-size: 12px;
+  color: var(--text-muted);
+  margin-bottom: 14px;
+}
+.ip-opt-price {
+  font-size: 16px;
+  font-weight: 800;
+  color: var(--ip-brand-color);
+}
+.ip-opt-price-prefix {
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-right: 2px;
+}
+
+/* ── 옵션 토글 (체크박스) ────────────────────────── */
+.ip-toggles {
+  display: flex;
+  gap: 24px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.ip-toggle-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: var(--text-sub);
+  cursor: pointer;
+  user-select: none;
+}
+.ip-toggle-item input {
+  appearance: none;
+  width: 18px;
+  height: 18px;
+  border: 1.5px solid var(--border-card);
+  border-radius: 4px;
+  position: relative;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.ip-toggle-item input:checked {
+  border-color: var(--ip-brand-color);
+  background: var(--ip-brand-color);
+}
+.ip-toggle-item input:checked::after {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 1px;
+  width: 5px;
+  height: 10px;
+  border: solid #fff;
+  border-width: 0 2px 2px 0;
+  transform: rotate(45deg);
+}
+.ip-toggle-item input:checked + .ip-toggle-label {
+  color: var(--text-main);
+  font-weight: 700;
+}
+.ip-toggle-label {
+  transition: all 0.15s;
+}
+
+/* ── 약정 칩 ──────────────────────────────────────── */
+.ip-chips {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 8px 0;
+}
+.ip-chip {
+  padding: 9px 18px;
+  border-radius: 999px;
+  border: 1.5px solid var(--border-card);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--text-sub);
+  background: var(--white);
+  font-family: inherit;
+}
+.ip-chip:hover {
+  border-color: var(--ip-brand-color);
+}
+.ip-chip.active {
+  border-color: var(--ip-brand-color);
+  background: rgba(91, 63, 190, 0.08);
+  color: var(--ip-brand-color);
+  font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════════════
+   4. 하단 고정 가격 박스
+   ══════════════════════════════════════════════════════ */
+
+.ip-pricebar {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 250;
+  background: var(--white);
+  border-top: 2px solid var(--ip-brand-color);
+  box-shadow: 0 -8px 24px rgba(0, 0, 0, 0.08);
+  padding: 18px 40px;
+}
+.ip-pricebar-inner {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr auto;
+  gap: 32px;
+  align-items: center;
+}
+
+.ip-pb-prices {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ip-pb-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  color: var(--text-sub);
+}
+.ip-pb-row-label {
+  color: var(--text-muted);
+}
+.ip-pb-row-val {
+  color: var(--text-sub);
+  font-weight: 500;
+}
+.ip-pb-row.is-final {
+  margin-top: 6px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  font-size: 14px;
+}
+.ip-pb-row.is-final .ip-pb-row-label {
+  color: var(--text-main);
+  font-weight: 700;
+}
+.ip-pb-row.is-final .ip-pb-row-val {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--ip-brand-color);
+}
+.ip-pb-row.is-final .ip-pb-row-val small {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  margin-left: 4px;
+}
+
+.ip-pb-gift {
+  background: linear-gradient(135deg, #fef9e7, #fff5d6);
+  border: 1px solid rgba(201, 168, 76, 0.3);
+  border-radius: 10px;
+  padding: 14px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.ip-pb-gift-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.ip-pb-gift-val {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--gold-dark, #8a6d28);
+}
+.ip-pb-gift-val small {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin-left: 4px;
+  font-weight: 500;
+}
+
+.ip-pb-apply {
+  background: linear-gradient(
+    135deg,
+    var(--ip-brand-color),
+    color-mix(in srgb, var(--ip-brand-color) 70%, #ffffff)
+  );
+  color: #fff;
+  border: none;
+  padding: 18px 36px;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 800;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 160px;
+}
+.ip-pb-apply:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+.ip-pb-apply:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   5. 빈/숨김 상태
+   ══════════════════════════════════════════════════════ */
+
+.ip-section.is-hidden {
+  display: none;
+}
+
+/* ══════════════════════════════════════════════════════
+   6. 반응형
+   ══════════════════════════════════════════════════════ */
+
+@media (max-width: 1024px) {
+  .ip-hero {
+    padding: 40px 24px 32px;
+  }
+  .ip-builder {
+    padding: 32px 24px 280px;
+  }
+  .ip-section {
+    grid-template-columns: 80px 1fr;
+    gap: 20px;
+  }
+  .ip-pricebar {
+    padding: 16px 24px;
+  }
+  .ip-pricebar-inner {
+    grid-template-columns: 1fr auto;
+    gap: 16px;
+  }
+  .ip-pb-gift {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+  }
+}
+
+@media (max-width: 768px) {
+  .ip-section {
+    grid-template-columns: 1fr;
+    gap: 12px;
+    padding: 24px 0;
+  }
+  .ip-section-label {
+    padding-top: 0;
+  }
+  .ip-card-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+  .ip-hero h1 {
+    font-size: 24px;
+  }
+  .ip-builder {
+    padding: 24px 16px 320px;
+  }
+  .ip-pricebar {
+    padding: 14px 16px;
+  }
+  .ip-pricebar-inner {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+  .ip-pb-apply {
+    width: 100%;
+    padding: 16px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ip-hero {
+    padding: 32px 16px 24px;
+  }
+  .ip-header {
+    padding: 12px 4%;
+  }
+  .ip-toggles {
+    gap: 16px;
+  }
+}

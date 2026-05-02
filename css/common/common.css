@@ -45,6 +45,86 @@
   font-weight: 700;
 }
 
+/* 1. 보조 메뉴 박음 */
+/* ── 1. 보조 메뉴 (로고 바로 옆 좌측 정렬) ────────── */
+.gnb-extras {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  margin-left: 32px; /* 로고와 살짝만 띄움 */
+}
+.gnb-extras a {
+  position: relative;
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-sub);
+  text-decoration: none;
+  white-space: nowrap;
+  transition: color 0.15s;
+}
+.gnb-extras a:hover {
+  color: var(--purple);
+}
+
+/* NEW 배지 (이벤트 등) */
+.gnb-extras a.has-new::after {
+  content: 'NEW';
+  position: absolute;
+  top: -10px;
+  right: -22px;
+  background: linear-gradient(135deg, #ef4444, #f87171);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+/* ── 2. 우측 영역 = 끝으로 밀어냄 ──────────────── */
+.gnb-right {
+  margin-left: auto;
+}
+
+/* ── 3. 로고와 카테고리 거리 정정 ────────────────── */
+.gnb-top {
+  min-height: 88px !important; /* 110px → 88px */
+  padding-top: 12px !important;
+  padding-bottom: 8px !important;
+}
+.cat-bar {
+  padding-top: 0 !important;
+  padding-bottom: 8px !important;
+}
+.cat-inner {
+  padding-top: 4px !important;
+}
+
+/* ── 4. 반응형 ──────────────────────────────────── */
+@media (max-width: 1024px) {
+  .gnb-extras {
+    gap: 20px;
+    margin-left: 24px;
+  }
+  .gnb-extras a {
+    font-size: 13px;
+  }
+  .gnb-top {
+    min-height: 78px !important;
+  }
+}
+
+@media (max-width: 768px) {
+  /* 모바일: 보조 메뉴 숨김 (햄버거 메뉴 검토 시 추후 박음) */
+  .gnb-extras {
+    display: none;
+  }
+  .gnb-top {
+    min-height: 64px !important;
+  }
+}
+
 /* ════════════════════════════════════
    GNB (Global Navigation Bar) — 헤더 확대
    로고 120px 기준, 전체 요소 비례 확대
@@ -60,8 +140,8 @@
 .gnb-top {
   max-width: var(--max-w);
   margin: 0 auto;
-  padding: 0 40px;
-  min-height: 130px;
+  padding: 0 30px;
+  min-height: 110px;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -76,7 +156,7 @@
   flex-shrink: 0;
 }
 .logo-wrap__img {
-  height: 120px;
+  height: 100px;
   width: auto;
   object-fit: contain;
   display: block;

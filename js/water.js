@@ -31,7 +31,7 @@ let _productsPromise = null;
 function loadWaterProducts() {
   if (_productsPromise) return _productsPromise;
 
-  const url = `${DAPICK_CONFIG.API_BASE_URL}/api/water/products`;
+  const url = `${DAPICK_CONFIG.API_BASE_URL}/api/water-products`;
 
   _productsPromise = fetch(url, {
     method: 'GET',

@@ -1,0 +1,14 @@
+/* ════════════════════════════════════════════════════
+   common-additions.css — 인라인 style 제거 대응 헬퍼
+   기존 common.css 끝에 append 권장
+   ════════════════════════════════════════════════════ */
+
+/* sec-head margin-bottom 압축 (인라인 style="margin-bottom:20px" 대체) */
+.sec-head--tight {
+  margin-bottom: 20px;
+}
+
+/* 마지막 섹션 padding-bottom 확장 (인라인 style="padding-bottom:72px" 대체) */
+.section--last {
+  padding-bottom: 72px;
+}
