@@ -1,28 +1,82 @@
-<?xml version="1.0" encoding="UTF-8"?>
+This XML file does not appear to have any style information associated with it. The document tree is shown below.
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-
-  <!-- 메인 -->
-  <url>
-    <loc>https://dapick.co.kr/</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>1.0</priority>
-  </url>
-
-  <!-- 인터넷/TV -->
-  <url>
-    <loc>https://dapick.co.kr/internet.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
-  <!-- 정수기 -->
-  <url>
-    <loc>https://dapick.co.kr/water.html</loc>
-    <lastmod>2026-04-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.9</priority>
-  </url>
-
+<!--  ════════════════════════════════════════════
+       메인 페이지
+       ════════════════════════════════════════════  -->
+<url>
+<loc>https://dapick.co.kr/</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>weekly</changefreq>
+<priority>1.0</priority>
+</url>
+<!--  ════════════════════════════════════════════
+       카테고리 메인보드
+       ════════════════════════════════════════════  -->
+<url>
+<loc>https://dapick.co.kr/mobile.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+<url>
+<loc>https://dapick.co.kr/internet.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+<url>
+<loc>https://dapick.co.kr/water.html</loc>
+<lastmod>2026-04-23</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.8</priority>
+</url>
+<!--  ════════════════════════════════════════════
+       통신사별 인터넷·TV 페이지 (SEO 핵심)
+       검색어: "SKT 인터넷 지원금" / "KT 인터넷 사은품" 등
+       ════════════════════════════════════════════  -->
+<url>
+<loc>https://dapick.co.kr/internet-skt.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.9</priority>
+</url>
+<url>
+<loc>https://dapick.co.kr/internet-kt.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.9</priority>
+</url>
+<url>
+<loc>https://dapick.co.kr/internet-lg.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>weekly</changefreq>
+<priority>0.9</priority>
+</url>
+<!--  ════════════════════════════════════════════
+       정책 페이지 (낮은 priority)
+       ════════════════════════════════════════════  -->
+<url>
+<loc>https://dapick.co.kr/privacy.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.3</priority>
+</url>
+<url>
+<loc>https://dapick.co.kr/terms.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.3</priority>
+</url>
+<url>
+<loc>https://dapick.co.kr/marketing.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.3</priority>
+</url>
+<url>
+<loc>https://dapick.co.kr/email-policy.html</loc>
+<lastmod>2026-05-02</lastmod>
+<changefreq>monthly</changefreq>
+<priority>0.3</priority>
+</url>
 </urlset>
