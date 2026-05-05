@@ -2,113 +2,261 @@
 <!DOCTYPE html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>다픽 | 마이페이지</title>
-
-  <!-- 폰트 -->
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
-
-  <!-- 공통 CSS -->
-  <link rel="stylesheet" href="css/reset.css">
-  <link rel="stylesheet" href="css/common/common.css">
-  <link rel="stylesheet" href="css/mypage/mypage.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>마이페이지 | 다픽</title>
+  <link rel="icon" href="favicon.ico" />
+  <link rel="stylesheet" href="css/common.css" />
+  <link rel="stylesheet" href="css/mypage/mypage.css" />
+  <!-- GTM -->
+  <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-TXD83M4F');</script>
 </head>
 <body>
+  <noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-TXD83M4F" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
 
-<!-- ── GNB ── -->
-<header class="gnb">
-  <div class="gnb-top">
-    <a class="logo-wrap" href="index.html">
-      <img src="assets/logos/dapicklogo.png" alt="다픽" class="logo-wrap__img">
-    </a>
-    <div class="gnb-right"></div>
-  </div>
-</header>
+  <!-- GNB -->
+  <header class="gnb">
+    <div class="gnb__inner">
+      <a href="index.html" class="gnb__logo">
+        <img src="assets/logos/dapicklogo.png" alt="다픽" />
+      </a>
+      <div class="gnb-right" id="gnb-auth"></div>
+    </div>
+  </header>
 
-<!-- ── 본문 ── -->
-<main class="mypage-wrap">
-  <div class="mypage-container">
-
-    <h1 class="page-title">마이페이지</h1>
-
-    <!-- 내 정보 -->
-    <section class="profile-section">
-      <div class="section-header">
-        <h2 class="section-title">내 정보</h2>
+  <!-- 마이페이지 -->
+  <main class="mypage">
+    <!-- ── 사이드바 ───────────────────────────────────── -->
+    <aside class="mp-sidebar" id="mp-sidebar">
+      <!-- 사용자 카드 (사이드바 상단) -->
+      <div class="mp-sidebar__user">
+        <div class="mp-sidebar__avatar" id="sidebar-avatar">D</div>
+        <div class="mp-sidebar__user-info">
+          <p class="mp-sidebar__nick" id="sidebar-nick">다픽 회원</p>
+          <p class="mp-sidebar__email" id="sidebar-email">-</p>
+        </div>
       </div>
-      <div class="profile-card" id="profile-card">
-        <div class="loading-placeholder">불러오는 중...</div>
+
+      <!-- 메뉴 -->
+      <nav class="mp-menu">
+        <p class="mp-menu__group">나의 정보</p>
+        <button class="mp-menu__item is-active" data-tab="info">
+          <span class="mp-menu__icon">👤</span>
+          <span class="mp-menu__label">내 정보</span>
+        </button>
+        <button class="mp-menu__item" data-tab="profile-edit">
+          <span class="mp-menu__icon">🔒</span>
+          <span class="mp-menu__label">회원정보 수정</span>
+        </button>
+
+        <p class="mp-menu__group">활동</p>
+        <button class="mp-menu__item" data-tab="applications">
+          <span class="mp-menu__icon">📋</span>
+          <span class="mp-menu__label">신청 내역</span>
+        </button>
+        <button class="mp-menu__item" data-tab="favorites">
+          <span class="mp-menu__icon">⭐</span>
+          <span class="mp-menu__label">즐겨찾기</span>
+          <span class="mp-menu__badge">준비중</span>
+        </button>
+        <button class="mp-menu__item" data-tab="compare">
+          <span class="mp-menu__icon">⚖️</span>
+          <span class="mp-menu__label">비교함</span>
+          <span class="mp-menu__badge">준비중</span>
+        </button>
+
+        <p class="mp-menu__group">고객센터</p>
+        <button class="mp-menu__item" data-tab="notice">
+          <span class="mp-menu__icon">📢</span>
+          <span class="mp-menu__label">공지사항</span>
+          <span class="mp-menu__badge">준비중</span>
+        </button>
+        <button class="mp-menu__item" data-tab="faq">
+          <span class="mp-menu__icon">❓</span>
+          <span class="mp-menu__label">자주 묻는 질문</span>
+          <span class="mp-menu__badge">준비중</span>
+        </button>
+      </nav>
+
+      <!-- 사이드바 로그아웃 -->
+      <button class="mp-sidebar__logout" id="btn-logout">로그아웃</button>
+    </aside>
+
+    <!-- ── 컨텐츠 영역 ───────────────────────────────── -->
+    <section class="mp-content">
+      <!-- 인사말 카드 (다픽 보라+골드 그라디언트) -->
+      <div class="mp-greeting">
+        <div class="mp-greeting__main">
+          <h1 class="mp-greeting__title">
+            <span id="greeting-nick">다픽 회원</span>님 안녕하세요 <span class="wave">👋</span>
+          </h1>
+          <p class="mp-greeting__email" id="greeting-email">-</p>
+        </div>
+        <div class="mp-greeting__badge">
+          <span class="mp-grade">LV1 회원</span>
+        </div>
+      </div>
+
+      <!-- 빠른 메뉴 그리드 (4개) -->
+      <div class="mp-quick">
+        <button class="mp-quick__item" data-tab="applications">
+          <div class="mp-quick__icon mp-quick__icon--purple">📋</div>
+          <span class="mp-quick__label">신청 내역</span>
+          <strong class="mp-quick__count" id="quick-app-count">0</strong>
+        </button>
+        <button class="mp-quick__item" data-tab="favorites">
+          <div class="mp-quick__icon mp-quick__icon--gold">⭐</div>
+          <span class="mp-quick__label">즐겨찾기</span>
+          <small class="mp-quick__soon">준비중</small>
+        </button>
+        <button class="mp-quick__item" data-tab="compare">
+          <div class="mp-quick__icon mp-quick__icon--blue">⚖️</div>
+          <span class="mp-quick__label">비교함</span>
+          <small class="mp-quick__soon">준비중</small>
+        </button>
+        <button class="mp-quick__item" data-tab="notice">
+          <div class="mp-quick__icon mp-quick__icon--red">🔔</div>
+          <span class="mp-quick__label">알림</span>
+          <small class="mp-quick__soon">준비중</small>
+        </button>
+      </div>
+
+      <!-- ── 탭별 컨텐츠 ────────────────────────────── -->
+      <div class="mp-tabs">
+        <!-- 내 정보 (기본 활성) -->
+        <div class="mp-tab is-active" id="tab-info">
+          <h2 class="mp-tab__title">내 정보</h2>
+          <div class="mp-card">
+            <div class="info-row">
+              <span class="info-row__label">이메일</span>
+              <span class="info-row__value" id="profile-email">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row__label">닉네임</span>
+              <div class="info-row__value">
+                <span id="profile-nickname">-</span>
+                <button class="btn-edit" id="btn-edit-nickname">변경</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="info-row__label">이름</span>
+              <span class="info-row__value" id="profile-realname">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row__label">전화번호</span>
+              <span class="info-row__value" id="profile-phone">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row__label">가입일</span>
+              <span class="info-row__value" id="profile-created">-</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row__label">마케팅 수신</span>
+              <span class="info-row__value" id="profile-marketing">미동의</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 회원정보 수정 -->
+        <div class="mp-tab" id="tab-profile-edit" hidden>
+          <h2 class="mp-tab__title">회원정보 수정</h2>
+          <div class="mp-card">
+            <div class="info-row">
+              <span class="info-row__label">비밀번호 변경</span>
+              <div class="info-row__value">
+                <span class="text-muted">5월 중 오픈 예정</span>
+                <button class="btn-edit" disabled>변경</button>
+              </div>
+            </div>
+            <div class="info-row">
+              <span class="info-row__label">이메일</span>
+              <span class="info-row__value text-muted">변경 불가</span>
+            </div>
+            <div class="info-row">
+              <span class="info-row__label">전화번호</span>
+              <div class="info-row__value">
+                <span class="text-muted">5월 중 오픈 예정</span>
+                <button class="btn-edit" disabled>변경</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 신청 내역 -->
+        <div class="mp-tab" id="tab-applications" hidden>
+          <div class="mp-tab__head">
+            <h2 class="mp-tab__title">내 신청 내역</h2>
+            <span class="mp-tab__count" id="app-count">0건</span>
+          </div>
+
+          <div class="apps-filter">
+            <button class="apps-filter__btn is-active" data-filter="all">전체</button>
+            <button class="apps-filter__btn" data-filter="progress">진행중</button>
+            <button class="apps-filter__btn" data-filter="done">완료</button>
+            <button class="apps-filter__btn" data-filter="cancelled">취소</button>
+          </div>
+
+          <div class="apps-list" id="apps-list">
+            <!-- JS로 렌더링 -->
+          </div>
+        </div>
+
+        <!-- 준비중 탭들 (즐겨찾기/비교함/공지사항/FAQ) -->
+        <div class="mp-tab" id="tab-favorites" hidden>
+          <div class="empty-soon">
+            <div class="empty-soon__icon">⭐</div>
+            <h3>즐겨찾기 준비중</h3>
+            <p>곧 만나보실 수 있어요!</p>
+          </div>
+        </div>
+        <div class="mp-tab" id="tab-compare" hidden>
+          <div class="empty-soon">
+            <div class="empty-soon__icon">⚖️</div>
+            <h3>비교함 준비중</h3>
+            <p>곧 만나보실 수 있어요!</p>
+          </div>
+        </div>
+        <div class="mp-tab" id="tab-notice" hidden>
+          <div class="empty-soon">
+            <div class="empty-soon__icon">📢</div>
+            <h3>공지사항 준비중</h3>
+            <p>곧 만나보실 수 있어요!</p>
+          </div>
+        </div>
+        <div class="mp-tab" id="tab-faq" hidden>
+          <div class="empty-soon">
+            <div class="empty-soon__icon">❓</div>
+            <h3>자주 묻는 질문 준비중</h3>
+            <p>곧 만나보실 수 있어요!</p>
+          </div>
+        </div>
       </div>
     </section>
+  </main>
 
-    <!-- 내 신청 내역 -->
-    <section class="apps-section">
-      <div class="section-header">
-        <h2 class="section-title">내 신청 내역</h2>
-        <span class="apps-count" id="apps-count">0건</span>
+  <!-- 닉네임 변경 모달 -->
+  <div class="modal" id="modal-nickname" hidden>
+    <div class="modal__backdrop" data-close-modal></div>
+    <div class="modal__content">
+      <h3 class="modal__title">닉네임 변경</h3>
+      <input type="text" id="input-nickname" class="modal__input" placeholder="새 닉네임 (2~20자)" maxlength="20" />
+      <p class="modal__hint" id="nickname-hint"></p>
+      <div class="modal__actions">
+        <button class="btn btn--ghost" id="btn-cancel-nickname">취소</button>
+        <button class="btn btn--primary" id="btn-save-nickname">저장</button>
       </div>
-
-      <!-- 탭 -->
-      <div class="apps-tabs">
-        <button class="apps-tab active" data-filter="ALL" onclick="filterApplications(this, 'ALL')">전체</button>
-        <button class="apps-tab" data-filter="ACTIVE" onclick="filterApplications(this, 'ACTIVE')">진행중</button>
-        <button class="apps-tab" data-filter="DONE" onclick="filterApplications(this, 'DONE')">완료</button>
-        <button class="apps-tab" data-filter="CANCELLED" onclick="filterApplications(this, 'CANCELLED')">취소</button>
-      </div>
-
-      <!-- 신청 카드 리스트 -->
-      <div class="apps-list" id="apps-list">
-        <div class="loading-placeholder">불러오는 중...</div>
-      </div>
-    </section>
-
-  </div>
-</main>
-
-<!-- ── 닉네임 변경 모달 ── -->
-<div class="modal" id="nickname-modal">
-  <div class="modal-backdrop" onclick="closeNicknameModal()"></div>
-  <div class="modal-card">
-    <h3 class="modal-title">닉네임 변경</h3>
-    <div class="form-group">
-      <label class="form-label" for="modal-nickname">새 닉네임</label>
-      <input
-        type="text"
-        id="modal-nickname"
-        class="form-input"
-        placeholder="2~20자"
-        maxlength="20"
-        autocomplete="off"
-      >
-    </div>
-    <div class="alert-banner" id="modal-alert"></div>
-    <div class="modal-actions">
-      <button class="btn-secondary" onclick="closeNicknameModal()">취소</button>
-      <button class="btn-primary" id="btn-save-nickname" onclick="saveNickname()">
-        <span id="save-nickname-text">저장</span>
-        <div class="btn-spinner" id="save-nickname-spinner"></div>
-      </button>
     </div>
   </div>
-</div>
 
-<!-- ── 카카오 플로팅 ── -->
-<div class="kakao-float">
-  <button class="kakao-btn" onclick="openKakao()" aria-label="카카오 상담">
-    <svg viewBox="0 0 24 24" fill="none">
-      <path d="M12 3C6.48 3 2 6.72 2 11.28c0 2.9 1.78 5.45 4.47 6.94L5.4 22l4.29-2.96A12.2 12.2 0 0012 19.56c5.52 0 10-3.72 10-8.28C22 6.72 17.52 3 12 3z" fill="#191919"/>
-    </svg>
-  </button>
-  <div class="kakao-label">카카오 상담</div>
-</div>
+  <!-- 카카오 플로팅 -->
+  <a href="https://pf.kakao.com/_exaRjX/chat" class="kakao-float" target="_blank" rel="noopener">
+    <span class="kakao-float__text">카카오 상담</span>
+  </a>
 
-<!-- ── JS ── -->
-<script src="js/utils.js"></script>
-<script src="js/auth.js"></script>
-<script src="js/common/api.js"></script>
-<script src="js/mypage/mypage.js"></script>
-
+  <script src="js/config.js"></script>
+  <script src="js/common/api.js"></script>
+  <script src="js/auth.js"></script>
+  <script src="js/utils.js"></script>
+  <script src="js/mypage/mypage.js"></script>
 </body>
 </html>
