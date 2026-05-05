@@ -88,7 +88,7 @@ function renderProfile(p) {
     </div>
     <div class="profile-row">
       <span class="profile-row__label">이름</span>
-      <span class="profile-row__value">${escapeHtml(p.name || '-')}</span>
+      <span class="profile-row__value">${escapeHtml(p.realName || '-')}</span>
     </div>
     <div class="profile-row">
       <span class="profile-row__label">전화번호</span>
@@ -153,7 +153,6 @@ function renderApplications(items) {
   if (!items.length) {
     list.innerHTML = `
       <div class="empty-state">
-        <div class="empty-state__icon">📋</div>
         <div class="empty-state__title">신청 내역이 없습니다</div>
         <div class="empty-state__desc">다픽에서 나에게 딱 맞는 상품을 둘러보세요!</div>
         <a href="index.html" class="empty-state__cta">상품 둘러보기</a>
