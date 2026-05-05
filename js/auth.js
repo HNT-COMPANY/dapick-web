@@ -86,7 +86,7 @@ function renderGnbAuth() {
   if (isLoggedIn()) {
     const nick = localStorage.getItem(NICK_KEY) || '사용자';
     gnbRight.innerHTML = `
-      <span style="font-size:13px;color:var(--text-sub);font-weight:500;">${nick}님</span>
+    <a href="mypage.html" style="font-size:13px;color:var(--text-sub);font-weight:500;text-decoration:none;cursor:pointer;">${nick}님</a>
       ${isAdmin() ? '<a href="dashboard.html" style="font-size:13px;color:var(--purple);font-weight:600;text-decoration:none;">어드민</a>' : ''}
       <button class="btn-login" onclick="logout()">로그아웃</button>
     `;

@@ -1,0 +1,114 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>다픽 | 마이페이지</title>
+
+  <!-- 폰트 -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Noto+Sans+KR:wght@400;500;600;700;900&display=swap" rel="stylesheet">
+
+  <!-- 공통 CSS -->
+  <link rel="stylesheet" href="css/reset.css">
+  <link rel="stylesheet" href="css/common/common.css">
+  <link rel="stylesheet" href="css/mypage/mypage.css">
+</head>
+<body>
+
+<!-- ── GNB ── -->
+<header class="gnb">
+  <div class="gnb-top">
+    <a class="logo-wrap" href="index.html">
+      <img src="assets/logos/dapicklogo.png" alt="다픽" class="logo-wrap__img">
+    </a>
+    <div class="gnb-right"></div>
+  </div>
+</header>
+
+<!-- ── 본문 ── -->
+<main class="mypage-wrap">
+  <div class="mypage-container">
+
+    <h1 class="page-title">마이페이지</h1>
+
+    <!-- 내 정보 -->
+    <section class="profile-section">
+      <div class="section-header">
+        <h2 class="section-title">내 정보</h2>
+      </div>
+      <div class="profile-card" id="profile-card">
+        <div class="loading-placeholder">불러오는 중...</div>
+      </div>
+    </section>
+
+    <!-- 내 신청 내역 -->
+    <section class="apps-section">
+      <div class="section-header">
+        <h2 class="section-title">내 신청 내역</h2>
+        <span class="apps-count" id="apps-count">0건</span>
+      </div>
+
+      <!-- 탭 -->
+      <div class="apps-tabs">
+        <button class="apps-tab active" data-filter="ALL" onclick="filterApplications(this, 'ALL')">전체</button>
+        <button class="apps-tab" data-filter="ACTIVE" onclick="filterApplications(this, 'ACTIVE')">진행중</button>
+        <button class="apps-tab" data-filter="DONE" onclick="filterApplications(this, 'DONE')">완료</button>
+        <button class="apps-tab" data-filter="CANCELLED" onclick="filterApplications(this, 'CANCELLED')">취소</button>
+      </div>
+
+      <!-- 신청 카드 리스트 -->
+      <div class="apps-list" id="apps-list">
+        <div class="loading-placeholder">불러오는 중...</div>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ── 닉네임 변경 모달 ── -->
+<div class="modal" id="nickname-modal">
+  <div class="modal-backdrop" onclick="closeNicknameModal()"></div>
+  <div class="modal-card">
+    <h3 class="modal-title">닉네임 변경</h3>
+    <div class="form-group">
+      <label class="form-label" for="modal-nickname">새 닉네임</label>
+      <input
+        type="text"
+        id="modal-nickname"
+        class="form-input"
+        placeholder="2~20자"
+        maxlength="20"
+        autocomplete="off"
+      >
+    </div>
+    <div class="alert-banner" id="modal-alert"></div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeNicknameModal()">취소</button>
+      <button class="btn-primary" id="btn-save-nickname" onclick="saveNickname()">
+        <span id="save-nickname-text">저장</span>
+        <div class="btn-spinner" id="save-nickname-spinner"></div>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- ── 카카오 플로팅 ── -->
+<div class="kakao-float">
+  <button class="kakao-btn" onclick="openKakao()" aria-label="카카오 상담">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 3C6.48 3 2 6.72 2 11.28c0 2.9 1.78 5.45 4.47 6.94L5.4 22l4.29-2.96A12.2 12.2 0 0012 19.56c5.52 0 10-3.72 10-8.28C22 6.72 17.52 3 12 3z" fill="#191919"/>
+    </svg>
+  </button>
+  <div class="kakao-label">카카오 상담</div>
+</div>
+
+<!-- ── JS ── -->
+<script src="js/utils.js"></script>
+<script src="js/auth.js"></script>
+<script src="js/api.js"></script>
+<script src="js/mypage/mypage.js"></script>
+
+</body>
+</html>

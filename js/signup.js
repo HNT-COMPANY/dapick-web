@@ -1,5 +1,6 @@
 // signup.js — 다픽 회원가입 페이지 로직
-// 3단계 플로우: 이메일 → 인증코드 → 정보 입력 → 자동 로그인
+// 3단계 플로우: 이메일 → 인증코드 → 정보 입력 → 자동 로그인 → pending 자동 복귀
+// 메모리 #15: 가입 완료 후 pending 신청 자동 복귀 박음 (DapickApplication)
 
 // ── 전역 상태 ────────────────────────────────────────────────────
 let currentStep = 1;
@@ -35,6 +36,8 @@ function goToStep(step) {
 
 // ── 인입 경로 자동 추출 ──────────────────────────────────────────
 // 우선순위: UTM 광고 > 다폰 경유 > 검색엔진 > 직접 접속(DIRECT)
+// 백엔드 SignupSource enum 박힌 값과 일치
+//   (DIRECT, ADVERTISEMENT, DAPHONE_LANDING, NAVER_SEARCH, GOOGLE_SEARCH)
 function detectSignupSource() {
   const params = new URLSearchParams(window.location.search);
   const referrer = document.referrer || '';
@@ -237,8 +240,36 @@ async function submitSignup() {
       showToast(`다픽에 오신 걸 환영해요, ${data.nickname}님! 🎉`, 'success');
     }
 
-    // 홈으로 이동
+    // ── 메모리 #15: pending 신청 자동 복귀 ─────────────────────
+    // 우선순위: 백엔드 신청 > 카카오 상담 > redirect 경로 > 홈
     setTimeout(() => {
+      // 1순위: 백엔드 신청 (DapickApplication.apply 표준 흐름)
+      if (
+        typeof DapickApplication !== 'undefined' &&
+        sessionStorage.getItem('dapick:pendingApplication')
+      ) {
+        DapickApplication.resumeIfPending();
+        return;
+      }
+
+      // 2순위: 카카오 상담 pending (utils.js 흐름)
+      if (
+        typeof resumePendingKakaoConsult === 'function' &&
+        sessionStorage.getItem('pending_kakao_consult')
+      ) {
+        resumePendingKakaoConsult();
+        return;
+      }
+
+      // 3순위: 로그인 후 복귀 페이지 (utils.js의 redirect_after_login)
+      const redirectPath = sessionStorage.getItem('redirect_after_login');
+      if (redirectPath) {
+        sessionStorage.removeItem('redirect_after_login');
+        window.location.href = redirectPath;
+        return;
+      }
+
+      // 기본: 홈으로
       window.location.href = 'index.html';
     }, 1200);
   } catch (e) {
@@ -338,15 +369,21 @@ function setButtonLoading(btnId, textId, spinnerId, loading) {
   if (spn) spn.style.display = loading ? 'block' : 'none';
 }
 
-// ── 소셜 로그인 (login.js와 동일 - 독립성 유지) ─────────────────
+// ── 소셜 로그인 (5/6 OAuth 백엔드 박힐 때까지 준비중 안내) ──────
 async function socialLogin(provider) {
   if (provider === 'kakao') {
-    try {
-      const data = await api.get('/oauth2/kakao/url');
-      window.location.href = data.url;
-    } catch (e) {
-      showSignupAlert('카카오 로그인 연결에 실패했습니다.');
+    if (typeof showToast === 'function') {
+      showToast(
+        '카카오 가입은 5월 중 오픈 예정입니다. 이메일로 가입해주세요!',
+        'info',
+      );
+    } else {
+      showSignupAlert(
+        '카카오 가입은 5월 중 오픈 예정입니다. 이메일로 가입해주세요!',
+        'success',
+      );
     }
+    return;
   }
 }
 

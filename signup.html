@@ -15,7 +15,7 @@
   <link rel="stylesheet" href="css/common/common.css"/>
 
   <!-- 회원가입 전용 CSS -->
-  <link rel="stylesheet" href="css/signup.css">
+  <link rel="stylesheet" href="css/signup/signup.css">
 </head>
 <body>
 
@@ -40,7 +40,7 @@
       <p class="signup-tagline">다픽에서 나에게 딱 맞는<br>생활 상품을 만나보세요</p>
     </div>
 
-    <!-- ── 카카오 3초 가입 ── -->
+    <!-- ── 카카오 3초 가입 (5/6 OAuth 박힐 때까지 준비중 패턴) ── -->
     <div class="social-group">
       <div class="kakao-balloon">⚡ 카카오로 3초만에 가입하기</div>
       <button class="social-btn btn-kakao" onclick="socialLogin('kakao')">
@@ -176,16 +176,17 @@
           <label class="agree-item">
             <input type="checkbox" id="agree-terms" class="agree-checkbox">
             <span class="agree-text">[필수] 이용약관 동의</span>
-            <a href="#" class="agree-link" onclick="event.preventDefault(); alert('이용약관은 준비 중입니다.');">보기</a>
+            <a href="terms.html" target="_blank" rel="noopener" class="agree-link">보기</a>
           </label>
           <label class="agree-item">
             <input type="checkbox" id="agree-privacy" class="agree-checkbox">
             <span class="agree-text">[필수] 개인정보처리방침 동의</span>
-            <a href="#" class="agree-link" onclick="event.preventDefault(); alert('개인정보처리방침은 준비 중입니다.');">보기</a>
+            <a href="privacy.html" target="_blank" rel="noopener" class="agree-link">보기</a>
           </label>
           <label class="agree-item">
             <input type="checkbox" id="agree-marketing" class="agree-checkbox">
             <span class="agree-text">[선택] 마케팅 정보 수신 동의</span>
+            <a href="marketing.html" target="_blank" rel="noopener" class="agree-link">보기</a>
           </label>
         </div>
       </div>
@@ -204,10 +205,21 @@
   </div><!-- /signup-card -->
 </main>
 
+<!-- ── 카카오 플로팅 버튼 (login.html 패턴 통일) ── -->
+<div class="kakao-float">
+  <button class="kakao-btn" onclick="openKakao()" aria-label="카카오 상담">
+    <svg viewBox="0 0 24 24" fill="none">
+      <path d="M12 3C6.48 3 2 6.72 2 11.28c0 2.9 1.78 5.45 4.47 6.94L5.4 22l4.29-2.96A12.2 12.2 0 0012 19.56c5.52 0 10-3.72 10-8.28C22 6.72 17.52 3 12 3z" fill="#191919"/>
+    </svg>
+  </button>
+  <div class="kakao-label">카카오 상담</div>
+</div>
+
 <!-- ── JS (공통 → 회원가입 전용 순서) ── -->
 <script src="js/utils.js"></script>
 <script src="js/auth.js"></script>
 <script src="js/api.js"></script>
+<script src="js/application.js"></script>
 <script src="js/signup.js"></script>
 
 </body>

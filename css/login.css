@@ -354,3 +354,22 @@ body {
     padding: 7px 14px;
   }
 }
+
+/* -- 회원가입 버튼 -- */
+/* ── 회원가입 안내 (signup.css의 .back-login 패턴 미러링) ── */
+.signup-link {
+  display: block;
+  text-align: center;
+  margin-top: 24px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.signup-link strong {
+  color: var(--purple);
+  font-weight: 700;
+}
+.signup-link:hover {
+  color: var(--purple);
+}

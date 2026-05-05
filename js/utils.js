@@ -45,7 +45,7 @@ function switchCat(el, cat) {
 // ════════════════════════════════════════════════════
 // 카카오 상담 — 모든 페이지 공통
 // ════════════════════════════════════════════════════
-const KAKAO_CHANNEL_URL = 'http://pf.kakao.com/_LxifxmG/chat';
+const KAKAO_CHANNEL_URL = 'https://pf.kakao.com/_exaRjX/chat';
 
 /**
  * 카카오 상담 열기 (상품 정보 없이 — 기본 상담)
