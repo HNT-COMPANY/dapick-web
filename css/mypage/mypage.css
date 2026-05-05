@@ -545,10 +545,13 @@ body {
 /* ════════════════════════════════════════════════════
  * 모달
  * ════════════════════════════════════════════════════ */
+/* 변경 후 */
 .modal {
   position: fixed;
   inset: 0;
   z-index: 1000;
+}
+.modal:not([hidden]) {
   display: flex;
   align-items: center;
   justify-content: center;
