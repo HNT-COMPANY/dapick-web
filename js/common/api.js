@@ -1,4 +1,30 @@
-const BASE_URL = 'https://api.dapick.co.kr';
+// ════════════════════════════════════════════════════
+// api.js — 다픽 웹 API 클라이언트
+// BASE_URL은 config.js 박혀있으면 거기서 박음, 박지 않으면 자체 분기 박음
+// ════════════════════════════════════════════════════
+
+// ── BASE_URL 박음 (환경 자동 분기) ────────────────────────────────
+const BASE_URL = (() => {
+  // 1순위: config.js 박은 DAPICK_CONFIG 박음
+  if (typeof DAPICK_CONFIG !== 'undefined' && DAPICK_CONFIG.API_BASE_URL) {
+    return DAPICK_CONFIG.API_BASE_URL;
+  }
+
+  // 2순위 (fallback): config.js 박지 않은 페이지 박은 자체 분기 박음
+  const host = window.location.hostname;
+  if (
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.startsWith('192.168.') ||
+    host.startsWith('10.') ||
+    host.endsWith('.local')
+  ) {
+    return 'http://localhost:8081'; // 로컬 개발 박음
+  }
+  return 'https://api.dapick.co.kr'; // 운영 박음 (Cloudflare Pages 박은 영역 포함)
+})();
+
+console.log('[api] BASE_URL =', BASE_URL);
 
 // ── 토큰 갱신 중복 방지 플래그 ───────────────────────────────────
 // 여러 요청이 동시에 401 받아도 갱신은 한 번만 실행
