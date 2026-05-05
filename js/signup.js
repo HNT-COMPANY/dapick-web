@@ -237,7 +237,7 @@ async function submitSignup() {
     saveTokens(data.accessToken, data.refreshToken, data.role, data.nickname);
 
     if (typeof showToast === 'function') {
-      showToast(`다픽에 오신 걸 환영해요, ${data.nickname}님! 🎉`, 'success');
+      showToast(`다픽에 오신 걸 환영해요, ${data.nickname}님!`, 'success');
     }
 
     // ── 메모리 #15: pending 신청 자동 복귀 ─────────────────────
