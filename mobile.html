@@ -63,6 +63,9 @@
 
   <!-- Structured Data (JSON-LD) — 외부 분리 -->
   <script src="js/seo/structured-data-mobile.js" defer></script>
+
+  <!-- ── 카카오맵 SDK (https 명시 박음, autoload=false → mobile.js에서 lazy load) ── -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=33e40eaf10ae42730be369f1d1bf5828&libraries=services&autoload=false"></script>
 </head>
 <body>
 
@@ -118,7 +121,7 @@
 </section>
 
 <!-- ════════════════════════════════════════════════════
-     지원금 안내 이미지 — 제작중 placeholder
+     지원금 안내 — 공시지원금 + 카드 할인 합산
      ════════════════════════════════════════════════════ -->
 <section class="m-section">
   <div class="m-wrap">
@@ -126,9 +129,40 @@
       <span class="m-section-title">지원금 한눈에 보기</span>
       <span class="m-section-sub">통신사별 공시지원금 + 카드 할인 정책 안내</span>
     </div>
-    <div class="m-image-placeholder" aria-label="휴대폰 지원금 안내 이미지 (제작중)">
-      <div class="m-placeholder-inner">
-        <div class="m-placeholder-title">이미지 제작 중</div>
+
+    <div class="m-subsidy-banner">
+      <div class="m-subsidy-row">
+
+        <div class="m-subsidy-card m-fade-up">
+          <span class="m-subsidy-tag">통신사 공시지원금</span>
+          <div class="m-subsidy-img-wrap">
+            <img src="assets/mobile/samsung-01.png" alt="삼성 갤럭시 시리즈" />
+          </div>
+          <div class="m-subsidy-amount">
+            <span class="m-subsidy-amount-label">공통지원금</span>
+            <strong class="m-subsidy-amount-value">700,000원</strong>
+          </div>
+        </div>
+
+        <div class="m-subsidy-plus" aria-hidden="true">+</div>
+
+        <div class="m-subsidy-card m-fade-up m-fade-up--delay1">
+          <span class="m-subsidy-tag">제휴카드 추가 할인</span>
+          <div class="m-subsidy-img-wrap">
+            <img src="assets/mobile/point-01.png" alt="제휴카드 할인" />
+          </div>
+          <div class="m-subsidy-amount">
+            <span class="m-subsidy-amount-label">제휴카드 할인</span>
+            <strong class="m-subsidy-amount-value">최대 900,000원</strong>
+            <span class="m-subsidy-amount-note">30만원 이상 사용 시</span>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="m-subsidy-total m-fade-up m-fade-up--delay2">
+        <span class="m-subsidy-total-label">두 가지 혜택을 더하면</span>
+        <strong class="m-subsidy-total-value">최대 <em>160만원</em></strong>
       </div>
     </div>
   </div>
@@ -141,7 +175,6 @@
   <div class="m-wrap">
     <div class="m-cta-card">
       <div class="m-cta-text">
-        <div class="m-cta-eyebrow">⚡ 가장 빠른 길</div>
         <div class="m-cta-title">카카오톡으로 1:1 맞춤 상담</div>
         <div class="m-cta-desc">
           기종·통신사·요금제·약정까지 전문 상담사가 직접 안내드립니다.<br>
@@ -157,7 +190,6 @@
 
 <!-- ════════════════════════════════════════════════════
      다폰 오프라인 매장 + 방문 혜택 (아정당 패턴 통합)
-     매장 데이터는 추후 mobile.js의 STORES 상수에 박을 예정
      ════════════════════════════════════════════════════ -->
 <section class="m-section">
   <div class="m-wrap">
@@ -172,7 +204,7 @@
       <button class="m-region-tab" data-region="ulsan" onclick="selectRegion('ulsan', this)">울산</button>
     </div>
 
-    <!-- 매장 카드 그리드 (placeholder 3개, 데이터 받으면 mobile.js로 동적 렌더) -->
+    <!-- 매장 카드 그리드 (STORES 데이터 박히면 mobile.js renderStores가 자동 교체) -->
     <div class="m-store-grid" id="mStoreGrid">
 
       <div class="m-store-card" onclick="openStoreModal('placeholder-1')">
@@ -354,6 +386,72 @@
     </div>
   </div>
 </footer>
+
+<!-- ════════════════════════════════════════════════════
+     지점안내 모달
+     - 헤더(지점안내 + [당근 채널] 버튼 + X) + 메인 이미지 + 카카오 지도 + 매장 정보 + 사전승낙
+     ════════════════════════════════════════════════════ -->
+<div class="m-modal" id="storeModal" aria-hidden="true" role="dialog" aria-labelledby="storeModalTitle">
+  <div class="m-modal-overlay" onclick="closeStoreModal()"></div>
+  <div class="m-modal-box" role="document">
+    <header class="m-modal-head">
+      <h3 class="m-modal-title" id="storeModalTitle">지점안내</h3>
+      <div class="m-modal-head-actions">
+        <!-- 당근 채널 버튼 (당근 매장 페이지 새 창) -->
+        <a class="m-modal-daangn" id="storeModalDaangn" href="#" target="_blank" rel="noopener">
+          당근 채널
+        </a>
+        <button type="button" class="m-modal-close" aria-label="닫기" onclick="closeStoreModal()">×</button>
+      </div>
+    </header>
+    <div class="m-modal-body">
+
+      <!-- 매장 메인 이미지 (간판 1장) -->
+      <div class="m-modal-hero">
+        <img id="storeModalImage" src="" alt="매장 사진" />
+        <div class="m-modal-hero-fallback" id="storeModalImageFallback">매장 사진 준비 중</div>
+      </div>
+
+      <!-- 카카오 지도 (mobile.js의 renderStoreMap이 박음) -->
+      <div class="m-modal-map" id="storeModalMap">
+        <div class="m-modal-map-fallback" id="storeModalMapFallback">지도 로딩 중...</div>
+      </div>
+
+      <!-- 매장 정보 -->
+      <div class="m-modal-info">
+        <strong class="m-modal-store-name" id="storeModalName">-</strong>
+        <ul class="m-modal-meta">
+          <li>
+            <span class="m-modal-meta-key">주소</span>
+            <span class="m-modal-meta-val" id="storeModalAddr">-</span>
+          </li>
+          <li>
+            <span class="m-modal-meta-key">영업시간</span>
+            <span class="m-modal-meta-val" id="storeModalHours">-</span>
+          </li>
+        </ul>
+
+        <!-- 사전승낙 판매점 (로고 + 가운데 정렬) -->
+        <div class="m-modal-precon-wrap">
+          <a class="m-modal-precon" id="storeModalPrecon" href="#" target="_blank" rel="noopener">
+            <img src="assets/badges/precon.png" alt="" class="m-modal-precon-icon" />
+            이동통신 사전승낙 판매점
+          </a>
+        </div>
+      </div>
+    </div>
+    <footer class="m-modal-foot">
+      <a class="m-modal-btn m-modal-btn--kakao" id="storeModalKakao"
+         href="https://pf.kakao.com/_exaRjX/chat" target="_blank" rel="noopener">
+        카카오 채널 상담
+      </a>
+      <button type="button" class="m-modal-btn m-modal-btn--detail"
+              onclick="goStoreDetail()">
+        자세히 보기
+      </button>
+    </footer>
+  </div>
+</div>
 
 <!-- 카카오 플로팅 -->
 <div class="kakao-float" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">

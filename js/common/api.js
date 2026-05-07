@@ -95,9 +95,7 @@ const api = {
     if (res.status === 401 && retry) {
       // 이미 갱신 중이면 완료까지 대기
       if (isRefreshing) {
-        const newToken = await new Promise((resolve) =>
-          refreshQueue.push(resolve),
-        );
+        await new Promise((resolve) => refreshQueue.push(resolve));
         // 새 토큰으로 원래 요청 재시도
         return api.request(method, path, body, false);
       }
@@ -116,14 +114,24 @@ const api = {
       return null; // 갱신 실패 시 (이미 로그인 페이지로 이동됨)
     }
 
-    // ── 응답 파싱 ───────────────────────────────────────────────
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.message || '요청 실패');
+    // ── 응답 파싱 (text 한 번만 읽고 JSON 파싱 시도) ─────────────
+    // 빈 응답(403 등) 안전 처리: text가 비어있으면 data = null
+    const text = await res.text();
+    let data = null;
+    if (text) {
+      try {
+        data = JSON.parse(text);
+      } catch (e) {
+        /* 비-JSON 응답은 무시 */
+      }
     }
 
-    return data.data ?? data;
+    if (!res.ok) {
+      throw new Error((data && data.message) || `요청 실패 (${res.status})`);
+    }
+
+    // 백엔드 응답 = ApiResponse 래퍼 박은 박음 = data.data 박음 추출, 박지 않으면 그대로 박음
+    return data?.data ?? data;
   },
 
   get: (path) => api.request('GET', path),

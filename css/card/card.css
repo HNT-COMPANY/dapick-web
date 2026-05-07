@@ -1,0 +1,300 @@
+/* ═══════════════════════════════════════
+   다픽 카드 페이지 — card/card.css
+   - card-hero
+   - partner-section
+   - card-grid (7개 카드사)
+   - 반응형 (4 → 3 → 2열)
+═══════════════════════════════════════ */
+
+/* ═════════════════════════════════════
+   CARD HERO
+═════════════════════════════════════ */
+.card-hero {
+  background: linear-gradient(135deg, #f7f3ff 0%, #ffffff 100%);
+  padding: 60px 20px 50px;
+  text-align: center;
+  border-bottom: 1px solid rgba(124, 58, 237, 0.08);
+}
+.card-hero__inner {
+  max-width: 800px;
+  margin: 0 auto;
+}
+.card-hero__title {
+  font-size: 32px;
+  font-weight: 900;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
+  margin-bottom: 14px;
+  line-height: 1.2;
+}
+.card-hero__title em {
+  color: #7c3aed;
+  font-style: normal;
+}
+.card-hero__sub {
+  font-size: 15px;
+  color: #666;
+  line-height: 1.7;
+}
+.card-hero__sub .mo-only {
+  display: none;
+}
+
+/* ═════════════════════════════════════
+   PARTNER SECTION
+═════════════════════════════════════ */
+.partner-section {
+  padding: 56px 0 80px;
+}
+.partner-section .wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+.partner-head {
+  margin-bottom: 32px;
+}
+.partner-tag {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7c3aed;
+  letter-spacing: 1.5px;
+  background: #f3e8ff;
+  padding: 6px 14px;
+  border-radius: 999px;
+  margin-bottom: 14px;
+}
+.partner-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+  letter-spacing: -0.3px;
+}
+.partner-desc {
+  font-size: 14px;
+  color: #888;
+}
+
+/* ═════════════════════════════════════
+   CARD GRID (7개 카드사)
+═════════════════════════════════════ */
+.card-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 14px;
+}
+
+.card-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 140px;
+  padding: 24px 16px;
+  background: #ffffff;
+  border: 1.5px solid #ececec;
+  border-radius: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  overflow: hidden;
+}
+.card-item::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(124, 58, 237, 0.06),
+    rgba(212, 175, 55, 0.04)
+  );
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  pointer-events: none;
+}
+.card-item:hover {
+  border-color: #7c3aed;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.14);
+}
+.card-item:hover::before {
+  opacity: 1;
+}
+
+.card-item__brand {
+  font-size: 17px;
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: -0.3px;
+  z-index: 1;
+}
+.card-item__sub {
+  font-size: 12px;
+  font-weight: 600;
+  color: #888;
+  z-index: 1;
+  transition: color 0.22s ease;
+}
+.card-item:hover .card-item__sub {
+  color: #7c3aed;
+}
+.card-item__arrow {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  font-size: 14px;
+  color: #cccccc;
+  transition: all 0.22s ease;
+  z-index: 1;
+}
+.card-item:hover .card-item__arrow {
+  color: #7c3aed;
+  transform: translate(2px, -2px);
+}
+
+/* 카드사별 컬러 좌측 라인 (호버 시) */
+.card-item::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 3px;
+  height: 0;
+  background: var(--brand-color, #7c3aed);
+  transition: height 0.25s ease;
+  border-radius: 0 3px 3px 0;
+}
+.card-item:hover::after {
+  height: 60%;
+}
+
+.card-item[data-brand='hyundai'] {
+  --brand-color: #000000;
+}
+.card-item[data-brand='shinhan'] {
+  --brand-color: #0046ff;
+}
+.card-item[data-brand='samsung'] {
+  --brand-color: #1428a0;
+}
+.card-item[data-brand='kb'] {
+  --brand-color: #ffb700;
+}
+.card-item[data-brand='lotte'] {
+  --brand-color: #ed1c24;
+}
+.card-item[data-brand='woori'] {
+  --brand-color: #0067ac;
+}
+.card-item[data-brand='hana'] {
+  --brand-color: #009a8a;
+}
+
+/* ═════════════════════════════════════
+   PARTNER NOTICE (안내 박스)
+═════════════════════════════════════ */
+.partner-notice {
+  margin-top: 40px;
+  padding: 18px 20px;
+  background: #fafaf7;
+  border-left: 3px solid #d4af37;
+  border-radius: 6px;
+  font-size: 13px;
+  color: #666;
+  line-height: 1.7;
+}
+.partner-notice strong {
+  color: #1a1a1a;
+  font-weight: 700;
+}
+
+/* ══════════════════════════════════════════════
+   반응형 — 태블릿 (≤ 900px)
+══════════════════════════════════════════════ */
+@media (max-width: 900px) {
+  .card-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+  }
+  .card-hero {
+    padding: 50px 20px 40px;
+  }
+  .card-hero__title {
+    font-size: 28px;
+  }
+  .partner-section {
+    padding: 44px 0 60px;
+  }
+}
+
+/* ══════════════════════════════════════════════
+   반응형 — 모바일 (≤ 640px)
+══════════════════════════════════════════════ */
+@media (max-width: 640px) {
+  .card-hero {
+    padding: 40px 16px 32px;
+  }
+  .card-hero__title {
+    font-size: 24px;
+    margin-bottom: 10px;
+  }
+  .card-hero__sub {
+    font-size: 13px;
+    line-height: 1.6;
+  }
+  .card-hero__sub .mo-only {
+    display: inline;
+  }
+
+  .partner-section {
+    padding: 32px 0 50px;
+  }
+  .partner-section .wrap {
+    padding: 0 16px;
+  }
+  .partner-tag {
+    font-size: 11px;
+    padding: 5px 12px;
+  }
+  .partner-title {
+    font-size: 19px;
+  }
+  .partner-desc {
+    font-size: 13px;
+  }
+  .partner-head {
+    margin-bottom: 22px;
+  }
+
+  .card-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  .card-item {
+    min-height: 110px; /* 44px 터치 영역 충분히 확보 */
+    padding: 18px 12px;
+    gap: 6px;
+  }
+  .card-item__brand {
+    font-size: 15px;
+  }
+  .card-item__sub {
+    font-size: 11px;
+  }
+  .card-item__arrow {
+    top: 10px;
+    right: 10px;
+    font-size: 13px;
+  }
+
+  .partner-notice {
+    margin-top: 28px;
+    padding: 14px 16px;
+    font-size: 12px;
+  }
+}
