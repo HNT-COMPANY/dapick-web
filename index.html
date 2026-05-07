@@ -54,8 +54,9 @@
   <!-- CSS -->
   <link rel="stylesheet" href="css/reset.css"/>
   <link rel="stylesheet" href="css/common/common.css"/>
-  <link rel="stylesheet" href="css/components.css"/>
-  <link rel="stylesheet" href="css/footer.css"/>
+  <link rel="stylesheet" href="css/common/components.css"/>
+  <link rel="stylesheet" href="css/common/footer.css"/>
+  <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <link rel="stylesheet" href="css/hero.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
   <link rel="stylesheet" href="css/kakao-banner.css"/>
@@ -268,18 +269,18 @@
 </div>
 
 <!-- 이벤트 배너 -->
-<div class="section">
-  <div class="wrap">
-    <div class="event-banner" onclick="goPage('internet')">
-      <div>
-        <div class="event-eyebrow">🎉 5월 이벤트</div>
-        <div class="event-title">나만 모르는 인터넷 지원금!<br><em>숨겨진 지원금 💰 + 추가 혜택</em></div>
-        <div class="event-sub">SK · KT · LG 실제 정책 기준 지원금 계산기</div>
-      </div>
-      <button class="event-btn">지금 확인하기</button>
-    </div>
-  </div>
-</div>
+<section class="event-banner-wrap">
+  <a href="events.html" class="event-banner-link" aria-label="5월 한정 이벤트 - 당일 지급 혜택 최대 47만원">
+    <img
+      src="assets/event/event-01.png"
+      alt="5월 한정 이벤트 - 당일 지급 혜택 최대 47만원"
+      class="event-banner-img"
+      width="1920"
+      height="500"
+      loading="lazy"
+    />
+  </a>
+</section>
 
 <!-- 리얼 후기 -->
 <div class="section">
@@ -445,8 +446,9 @@
 <button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">∧</button>
 
 <script src="js/common/api.js"></script>
-<script src="js/utils.js"></script>
-<script src="js/auth.js"></script>
+<script src="js/common/utils.js"></script>
+<script src="js/common/auth.js"></script>
+<script src="js/common/gnb-user.js"></script>
 <scrpit src="js/internet/structured-data-skt.js"></scrpit>
 <scrpit src="js/common/application.js"></scrpit>
 

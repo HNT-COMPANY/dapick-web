@@ -1,0 +1,212 @@
+/* ════════════════════════════════════════════════════════
+   gnb-user.css — GNB 우측 사용자 드롭 스타일
+   ════════════════════════════════════════════════════════ */
+
+.gnb-user {
+  position: relative;
+  display: inline-block;
+}
+
+/* 닉네임 버튼 (트리거) */
+.gnb-user-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #1a1a1a;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+  min-height: 40px;
+  line-height: 1;
+}
+.gnb-user-btn:hover {
+  border-color: #b8a6f0;
+  color: #5b3fbe;
+}
+
+.gnb-user-name {
+  white-space: nowrap;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gnb-user-arrow {
+  font-size: 10px;
+  color: #8a8a8a;
+  transition: transform 0.2s;
+}
+.gnb-user.is-open .gnb-user-arrow {
+  transform: rotate(180deg);
+  color: #5b3fbe;
+}
+.gnb-user.is-open .gnb-user-btn {
+  border-color: #5b3fbe;
+  color: #5b3fbe;
+}
+
+/* 드롭 패널 */
+.gnb-user-panel {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+  width: 260px;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.12);
+  padding: 4px 0 0;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition:
+    opacity 0.18s,
+    transform 0.18s,
+    visibility 0.18s;
+  z-index: 9999;
+  overflow: hidden;
+}
+.gnb-user.is-open .gnb-user-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+/* 패널 헤더 (닉네임) */
+.gnb-user-panel-head {
+  padding: 16px 18px 14px;
+  border-bottom: 1px solid #f4f4f4;
+}
+.gnb-user-panel-name {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1a1a;
+  letter-spacing: -0.2px;
+}
+
+/* 섹션 (월렛 / 계정) */
+.gnb-user-section {
+  padding: 12px 18px;
+  border-bottom: 1px solid #f4f4f4;
+}
+
+.gnb-user-section-title {
+  font-size: 11px;
+  font-weight: 700;
+  color: #8a8a8a;
+  margin-bottom: 8px;
+  letter-spacing: 0.3px;
+}
+
+/* 월렛 row (포인트) */
+.gnb-user-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 0;
+  font-size: 13px;
+  color: #4a4a4a;
+}
+.gnb-user-row strong {
+  font-weight: 800;
+  color: #5b3fbe;
+  font-size: 14px;
+}
+
+/* 계정 링크 (마이페이지 / 어드민) */
+.gnb-user-link {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border: none;
+  background: transparent;
+  font-size: 13px;
+  font-weight: 500;
+  color: #4a4a4a;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+  transition:
+    color 0.15s,
+    padding-left 0.15s;
+  border-radius: 6px;
+}
+.gnb-user-link:hover {
+  color: #5b3fbe;
+  font-weight: 600;
+  padding-left: 4px;
+}
+
+.gnb-user-link--admin {
+  color: #5b3fbe;
+  font-weight: 600;
+}
+.gnb-user-link--admin:hover {
+  color: #4a30a6;
+  font-weight: 700;
+}
+
+.gnb-user-arrow-r {
+  font-size: 14px;
+  color: #c0c0c0;
+  font-weight: 300;
+  transition: color 0.15s;
+}
+.gnb-user-link:hover .gnb-user-arrow-r {
+  color: #5b3fbe;
+}
+
+/* 패널 하단 — 로그아웃 박스 영역 */
+.gnb-user-foot {
+  padding: 12px 18px 14px;
+}
+
+/* 로그아웃 박스 버튼 (위험 액션 강조) */
+.gnb-user-logout {
+  display: block;
+  width: 100%;
+  padding: 11px 16px;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #ef4444;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: all 0.15s;
+  line-height: 1.2;
+}
+.gnb-user-logout:hover {
+  background: #fef2f2;
+  border-color: #fca5a5;
+  color: #dc2626;
+}
+.gnb-user-logout:active {
+  transform: translateY(1px);
+}
+
+/* 모바일 반응형 */
+@media (max-width: 768px) {
+  .gnb-user-name {
+    max-width: 80px;
+  }
+  .gnb-user-btn {
+    padding: 7px 12px;
+    font-size: 13px;
+    min-height: 36px;
+  }
+  .gnb-user-panel {
+    width: 240px;
+    right: -8px;
+  }
+}

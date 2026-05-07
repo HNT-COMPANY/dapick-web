@@ -1,7 +1,9 @@
 // ════════════════════════════════════════════════════
-// internet-kt.js — KT 인터넷·TV 페이지
+// internet-kt.js — KT 인터넷·TV 데이터
 // ────────────────────────────────────────────────────
-// 통신사 메타 + 상품 데이터 정의 후 InternetProductBase.init 호출
+// SKT 패턴 그대로, KT 데이터 박음
+// 가격은 모두 0 (자료 박힌 후 매핑)
+// TV 채널수: 220 / 230 / 250 추측 박음 (정확한 자료 박힌 후 수정)
 // ════════════════════════════════════════════════════
 
 (function () {
@@ -15,89 +17,84 @@
     color: '#000000',
   };
 
-  const PRODUCTS = [
-    {
-      id: 'kt-giga-500',
-      name: '500MB 기가 인터넷 + 지니TV 베이직',
-      channels: 245,
-      isBest: true,
-      tag: '합리적 | 3~4인 가구',
-      contracts: [
-        { months: 12, price: 49500, gift: 250000 },
-        { months: 24, price: 45100, gift: 350000 },
-        { months: 36, price: 37400, gift: 450000 },
-      ],
-      tvOptions: [
-        { code: 'GENIE-BASIC', name: '지니TV 베이직', addPrice: 5500 },
-        { code: 'GENIE-STD', name: '지니TV 스탠다드', addPrice: 11000 },
-      ],
-      phoneCombo: { discount: 19250 },
-    },
-    {
-      id: 'kt-giga-1g',
-      name: '1Gbps 기가 인터넷 + 지니TV 프리미엄',
-      channels: 280,
-      isBest: true,
-      tag: '인기 | 영상 시청 많은 가구',
-      contracts: [
-        { months: 12, price: 55000, gift: 300000 },
-        { months: 24, price: 50600, gift: 400000 },
-        { months: 36, price: 42900, gift: 500000 },
-      ],
-      tvOptions: [
-        { code: 'GENIE-STD', name: '지니TV 스탠다드', addPrice: 11000 },
-        { code: 'GENIE-PRM', name: '지니TV 프리미엄', addPrice: 16500 },
-      ],
-      phoneCombo: { discount: 22000 },
-    },
-    {
-      id: 'kt-giga-2g',
-      name: '2Gbps 기가 인터넷 + 지니TV 프리미엄',
-      channels: 305,
-      isBest: true,
-      tag: 'VIP | 게이밍 + 4K 시청',
-      contracts: [
-        { months: 12, price: 64900, gift: 350000 },
-        { months: 24, price: 59400, gift: 450000 },
-        { months: 36, price: 51700, gift: 550000 },
-      ],
-      tvOptions: [
-        { code: 'GENIE-PRM', name: '지니TV 프리미엄', addPrice: 16500 },
-      ],
-      phoneCombo: { discount: 25300 },
-    },
-    {
-      id: 'kt-light-100',
-      name: '100MB 라이트 (단독 인터넷)',
-      channels: null,
-      isBest: false,
-      tag: '실속형 | 1인 가구',
-      contracts: [
-        { months: 12, price: 32450, gift: 150000 },
-        { months: 24, price: 30250, gift: 200000 },
-        { months: 36, price: 26950, gift: 250000 },
-      ],
-      tvOptions: null,
-      phoneCombo: { discount: 11000 },
-    },
-    {
-      id: 'kt-only-1g',
-      name: '1Gbps 기가 인터넷 단독',
-      channels: null,
-      isBest: false,
-      tag: '인터넷만 | TV 미사용',
-      contracts: [
-        { months: 12, price: 41250, gift: 200000 },
-        { months: 24, price: 37950, gift: 300000 },
-        { months: 36, price: 32450, gift: 400000 },
-      ],
-      tvOptions: null,
-      phoneCombo: { discount: 16500 },
-    },
-  ];
+  const PRODUCT = {
+    // TODO: 백엔드 productId 받으면 정정
+    productId: 'kt-internet-tv-default',
+
+    // 인터넷 속도 옵션 3개
+    speeds: [
+      {
+        code: 'SPEED_100M',
+        label: '100',
+        unit: 'Mbps',
+        tier: '슬림',
+        desc: '1-2인 가구',
+        basePrice: 0,
+      },
+      {
+        code: 'SPEED_500M',
+        label: '500',
+        unit: 'Mbps',
+        tier: '베이직',
+        desc: '3-4인 가구',
+        basePrice: 0,
+        isRecommend: true,
+      },
+      {
+        code: 'SPEED_1G',
+        label: '1',
+        unit: 'Gbps',
+        tier: '에센스',
+        desc: '라이브 방송 / 게이밍',
+        basePrice: 0,
+      },
+    ],
+
+    // TV 채널 옵션 3개 (KT 지니TV)
+    // TODO: 정확한 KT 지니TV 채널수/티어명 자료 박힌 후 수정
+    tvOptions: [
+      {
+        code: 'TV_LITE',
+        channels: 220,
+        tier: '라이트',
+        desc: '경제적인 채널',
+        addPrice: 0,
+      },
+      {
+        code: 'TV_STD',
+        channels: 230,
+        tier: '스탠다드',
+        desc: '합리적인 가격',
+        addPrice: 0,
+        isRecommend: true,
+      },
+      {
+        code: 'TV_PRM',
+        channels: 250,
+        tier: '프리미엄',
+        desc: '최다 채널',
+        addPrice: 0,
+      },
+    ],
+
+    // 부가 옵션 가격
+    routerPrice: 5500,
+    phonePrice: 3300,
+
+    // 결합 할인
+    phoneComboDiscount: 0,
+    cardDiscount: 0,
+
+    // 약정 + 사은품
+    contracts: [
+      { months: 12, gift: 0 },
+      { months: 24, gift: 0 },
+      { months: 36, gift: 0, isRecommend: true },
+    ],
+  };
 
   InternetProductBase.init({
     provider: PROVIDER,
-    products: PRODUCTS,
+    product: PRODUCT,
   });
 })();

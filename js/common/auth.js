@@ -1,5 +1,9 @@
+// ════════════════════════════════════════════════════════
 // auth.js — 다픽 웹 인증 관리
-// 토큰 저장/삭제, 로그인 상태 확인, GNB 렌더링 담당
+// ────────────────────────────────────────────────────────
+// 책임: 토큰 저장/삭제, 로그인 상태 확인, 토큰 갱신
+// GNB 렌더링은 gnb-user.js가 담당 (책임 분리 박음)
+// ════════════════════════════════════════════════════════
 
 const TOKEN_KEY = 'dapick_token';
 const REFRESH_KEY = 'dapick_refresh';
@@ -48,7 +52,7 @@ async function logout() {
     }
   }
   clearTokens();
-  window.location.href = 'login.html';
+  window.location.href = 'index.html';
 }
 
 // ── Access Token 갱신 ────────────────────────────────────────────
@@ -76,28 +80,3 @@ async function refreshAccessToken() {
   clearTokens();
   return null;
 }
-
-// ── GNB 로그인/로그아웃 버튼 렌더링 ─────────────────────────────
-// GNB가 없는 페이지(login.html 등)에서는 실행 안 함
-function renderGnbAuth() {
-  const gnbRight = document.querySelector('.gnb-right');
-  if (!gnbRight) return; // [수정] GNB 없는 페이지 안전 처리
-
-  if (isLoggedIn()) {
-    const nick = localStorage.getItem(NICK_KEY) || '사용자';
-    gnbRight.innerHTML = `
-    <a href="mypage.html" style="font-size:13px;color:var(--text-sub);font-weight:500;text-decoration:none;cursor:pointer;">${nick}님</a>
-      ${isAdmin() ? '<a href="dashboard.html" style="font-size:13px;color:var(--purple);font-weight:600;text-decoration:none;">어드민</a>' : ''}
-      <button class="btn-login" onclick="logout()">로그아웃</button>
-    `;
-  } else {
-    gnbRight.innerHTML = `
-      <button class="btn-login" onclick="window.location.href='login.html'">로그인/회원가입</button>
-    `;
-  }
-}
-
-// ── 자동 실행 ────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  renderGnbAuth();
-});
