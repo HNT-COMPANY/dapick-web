@@ -211,12 +211,21 @@ function goStoreDetail() {
     alert('매장 정보가 준비되지 않았습니다.');
     return;
   }
+
+  const pageMap = {
+    'dapon-byeongyeong': 'store-byeongyeong.html',
+  };
   // TODO Phase 1-3: store.html 박힌 후 아래 주석 해제
   // window.location.href = `store.html?id=${currentModalStoreId}`;
-  alert(
-    '상세 페이지는 곧 오픈 예정입니다.\n\n' +
-      '현재는 카카오톡으로 문의해주시면\n자세한 안내를 드립니다.',
-  );
+  const target = pageMap[currentModalStoreId];
+  if (target) {
+    window.location.href = target;
+  } else {
+    alert(
+      '상세 페이지는 곧 오픈 예정입니다.\n\n' +
+        '현재는 카카오톡으로 문의해주시면\n자세한 안내를 드립니다.',
+    );
+  }
 }
 
 // ESC 키로 모달 닫기

@@ -1,0 +1,571 @@
+/* ════════════════════════════════════════════════════════
+   store-detail.css — 매장 상세페이지 전용
+   ────────────────────────────────────────────────────────
+   네임스페이스: store-* (다른 페이지와 격리)
+   ════════════════════════════════════════════════════════ */
+
+/* ── 공통 wrap ──────────────────────────────────── */
+.store-wrap {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ════════════════════════════════════════════════════════
+   1. 페이지 헤더
+   ════════════════════════════════════════════════════════ */
+.store-page-head {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 24px 24px 16px;
+}
+
+.store-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #8a8a8a;
+  text-decoration: none;
+  margin-bottom: 14px;
+  transition: color 0.15s;
+}
+.store-back:hover {
+  color: #5b3fbe;
+}
+
+.store-page-title-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.store-page-title {
+  font-size: 26px;
+  font-weight: 900;
+  color: #1a1a1a;
+  letter-spacing: -0.5px;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.store-page-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+  border-radius: 999px;
+  letter-spacing: 0.3px;
+}
+
+.store-page-tagline {
+  font-size: 14px;
+  color: #8a8a8a;
+  margin: 0;
+}
+
+/* ════════════════════════════════════════════════════════
+   2. 매장 메인 이미지
+   ════════════════════════════════════════════════════════ */
+.store-hero {
+  max-width: 920px;
+  margin: 0 auto;
+  padding: 0 24px 24px;
+}
+
+.store-hero-img {
+  width: 100%;
+  height: 320px;
+  object-fit: cover;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #f3eeff 0%, #e9e2fa 100%);
+  display: block;
+}
+
+/* ════════════════════════════════════════════════════════
+   3+. 공통 섹션
+   ════════════════════════════════════════════════════════ */
+.store-section {
+  padding: 32px 0;
+}
+.store-section--bg {
+  background: #fafafb;
+}
+
+.store-section-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin: 0 0 18px;
+  letter-spacing: -0.3px;
+}
+
+/* ════════════════════════════════════════════════════════
+   3. 카카오맵 + 매장 정보
+   ════════════════════════════════════════════════════════ */
+.store-map {
+  position: relative;
+  width: 100%;
+  height: 280px;
+  background: #f4f4f4;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.store-map-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  color: #8a8a8a;
+  font-weight: 500;
+}
+
+.store-info-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.store-info-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f4f4f4;
+  font-size: 14px;
+}
+.store-info-row:last-child {
+  border-bottom: none;
+}
+
+.store-info-key {
+  flex-shrink: 0;
+  width: 80px;
+  font-weight: 600;
+  color: #8a8a8a;
+}
+
+.store-info-val {
+  color: #1a1a1a;
+  font-weight: 500;
+  word-break: keep-all;
+}
+
+.store-info-val--link {
+  color: #5b3fbe;
+  text-decoration: none;
+  font-weight: 700;
+  transition: color 0.15s;
+}
+.store-info-val--link:hover {
+  color: #4a30a6;
+}
+
+/* ════════════════════════════════════════════════════════
+   4. 매장 소개 (특징)
+   ════════════════════════════════════════════════════════ */
+.store-description {
+  font-size: 14px;
+  line-height: 1.7;
+  color: #4a4a4a;
+  margin-bottom: 22px;
+  word-break: keep-all;
+}
+
+.store-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.store-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+}
+
+.store-feature-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.store-feature-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-feature-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+.store-feature-desc {
+  font-size: 12px;
+  color: #8a8a8a;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+/* ════════════════════════════════════════════════════════
+   5. 사진 갤러리
+   ════════════════════════════════════════════════════════ */
+.store-gallery {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.store-gallery-item {
+  display: block;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  background: #f4f4f4;
+  transition: transform 0.2s;
+}
+.store-gallery-item:hover {
+  transform: translateY(-2px);
+}
+
+.store-gallery-item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ════════════════════════════════════════════════════════
+   6. 외부 링크 (사전승낙 / 당근)
+   ════════════════════════════════════════════════════════ */
+.store-links {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.store-link {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  border-radius: 14px;
+  text-decoration: none;
+  transition: all 0.15s;
+}
+.store-link:hover {
+  border-color: #b8a6f0;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(91, 63, 190, 0.08);
+}
+
+.store-link-icon {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.store-link-emoji {
+  font-size: 28px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.store-link-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-link-label {
+  font-size: 13px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+.store-link-desc {
+  font-size: 11px;
+  color: #8a8a8a;
+}
+
+.store-link-arrow {
+  flex-shrink: 0;
+  font-size: 20px;
+  color: #c0c0c0;
+  font-weight: 300;
+}
+
+.store-link--daangn:hover {
+  border-color: #ff6f0f;
+  box-shadow: 0 6px 18px rgba(255, 111, 15, 0.12);
+}
+.store-link--daangn:hover .store-link-arrow {
+  color: #ff6f0f;
+}
+
+/* ════════════════════════════════════════════════════════
+   7. 하단 고정 CTA
+   ════════════════════════════════════════════════════════ */
+.store-cta-bar {
+  position: sticky;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: #fff;
+  border-top: 1px solid #ececec;
+  box-shadow: 0 -4px 16px rgba(0, 0, 0, 0.04);
+  z-index: 100;
+}
+
+.store-cta-inner {
+  max-width: 920px;
+  margin: 0 auto;
+  display: flex;
+  gap: 10px;
+  padding: 14px 24px;
+}
+
+.store-cta-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  min-height: 50px;
+  padding: 12px 16px;
+  border: none;
+  border-radius: 12px;
+  font-size: 14px;
+  font-weight: 800;
+  font-family: inherit;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.store-cta-btn--map {
+  background: #fff;
+  color: #5b3fbe;
+  border: 1.5px solid #5b3fbe;
+}
+.store-cta-btn--map:hover {
+  background: #ede9f8;
+}
+
+.store-cta-btn--kakao {
+  background: #fee500;
+  color: #3a1d1d;
+}
+.store-cta-btn--kakao:hover {
+  filter: brightness(0.97);
+}
+
+.store-cta-icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* ════════════════════════════════════════════════════════
+   반응형 (모바일 / 태블릿)
+   ════════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .store-wrap {
+    padding: 0 16px;
+  }
+  .store-page-head {
+    padding: 20px 16px 14px;
+  }
+  .store-page-title {
+    font-size: 22px;
+  }
+  .store-hero {
+    padding: 0 16px 20px;
+  }
+  .store-hero-img {
+    height: 220px;
+    border-radius: 12px;
+  }
+  .store-section {
+    padding: 24px 0;
+  }
+  .store-section-title {
+    font-size: 18px;
+  }
+  .store-map {
+    height: 240px;
+  }
+  .store-features {
+    grid-template-columns: 1fr;
+  }
+  .store-links {
+    grid-template-columns: 1fr;
+  }
+  .store-cta-inner {
+    padding: 12px 16px;
+  }
+}
+
+/* ════════════════════════════════════════════════════════
+   4. 매장 소개 (인트로 + 본문 + 체크리스트 + 특징)
+   ════════════════════════════════════════════════════════ */
+
+/* 인트로 (보라 좌측띠 + 그라디언트 배경) */
+.store-intro {
+  font-size: 17px;
+  line-height: 1.6;
+  color: #1a1a1a;
+  font-weight: 500;
+  margin-bottom: 22px;
+  padding: 20px 24px;
+  background: linear-gradient(135deg, #f3eeff 0%, #e9e2fa 100%);
+  border-left: 4px solid #5b3fbe;
+  border-radius: 0 14px 14px 0;
+  word-break: keep-all;
+}
+.store-intro strong {
+  font-weight: 800;
+  color: #5b3fbe;
+}
+
+/* 본문 */
+.store-description {
+  font-size: 14px;
+  line-height: 1.8;
+  color: #4a4a4a;
+  word-break: keep-all;
+  margin-bottom: 22px;
+}
+.store-description p {
+  margin: 0 0 12px;
+}
+.store-description p:last-child {
+  margin-bottom: 0;
+}
+
+/* 체크리스트 카드 */
+.store-checklist {
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+  padding: 18px 22px;
+  margin-bottom: 22px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03);
+}
+
+.store-checklist-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f4f4f4;
+}
+.store-checklist-icon {
+  font-size: 22px;
+  line-height: 1;
+}
+.store-checklist-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1a1a;
+}
+
+.store-checklist-items {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.store-checklist-items li {
+  position: relative;
+  padding: 7px 0 7px 26px;
+  font-size: 13px;
+  color: #4a4a4a;
+  line-height: 1.6;
+}
+.store-checklist-items li::before {
+  content: '✓';
+  position: absolute;
+  left: 4px;
+  top: 7px;
+  color: #5b3fbe;
+  font-weight: 800;
+  font-size: 14px;
+}
+
+/* 특징 4개 (기존 유지) */
+.store-features {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 14px;
+}
+
+.store-feature {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid #ececec;
+  border-radius: 14px;
+}
+
+.store-feature-icon {
+  font-size: 22px;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.store-feature-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.store-feature-label {
+  font-size: 14px;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin-bottom: 2px;
+}
+
+.store-feature-desc {
+  font-size: 12px;
+  color: #8a8a8a;
+  line-height: 1.5;
+  word-break: keep-all;
+}
+
+/* 모바일 반응형 추가 */
+@media (max-width: 768px) {
+  .store-intro {
+    font-size: 15px;
+    padding: 16px 18px;
+    border-radius: 0 12px 12px 0;
+  }
+  .store-checklist {
+    padding: 16px 18px;
+  }
+  .store-features {
+    grid-template-columns: 1fr;
+  }
+}
