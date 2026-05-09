@@ -150,6 +150,30 @@ const STORES = [
     preconUrl:
       'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000190944&YN=1',
   },
+  {
+    id: 'dapon-mugeo',
+    region: 'ulsan',
+    name: '다폰 무거점',
+    address: '울산 남구 신복로 66',
+    phone: '010-4511-6660',
+    hours: '12:00~19:00',
+    closedDay: '매주 일요일 휴무',
+    description: '', // Phase 1-3 상세 페이지에서 표시
+    mainImage: 'assets/store/daphone-07/main.jpg',
+    images: [
+      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
+    ],
+    badge: 'NEW',
+    lat: null,
+    lng: null,
+    kakaoChatUrl: 'https://pf.kakao.com/_WPxjpn',
+    daangnUrl:
+      'https://www.daangn.com/kr/local-profile/3b4ts7et8jia/?referrer=share',
+    naverPlaceUrl: '', // 무거점 네이버 플레이스 미박힘
+    secretBenefit: '비밀혜택',
+    preconUrl:
+      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000197319&YN=1',
+  },
 ];
 
 // 모달 상태
@@ -336,6 +360,7 @@ function goStoreDetail() {
     'dapon-mandeok': 'store-mandeok.html', //<!--store-mandeok.html-->
     'dapon-guyeong': '', //'store-guyeong.html',
     'dapon-onsan': 'store-onsan.html',
+    'dapon-mugeo': 'store-mugeo.html',
   };
   // TODO Phase 1-3: store.html 박힌 후 아래 주석 해제
   // window.location.href = `store.html?id=${currentModalStoreId}`;
@@ -496,6 +521,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderStores(currentRegion);
   }
   initFadeUp();
+  initHeroTextRepeat();
 });
 
 // ════════════════════════════════════════════════════
@@ -518,6 +544,34 @@ function initFadeUp() {
     {
       threshold: 0.15,
       rootMargin: '0px 0px -60px 0px',
+    },
+  );
+
+  targets.forEach((t) => io.observe(t));
+}
+
+// ════════════════════════════════════════════════════
+// 9. HERO 텍스트 순차 등장 (반복 재생, unobserve 금지 — 협업룰 §9)
+// ════════════════════════════════════════════════════
+function initHeroTextRepeat() {
+  const targets = document.querySelectorAll(
+    '.m-hero-title, .m-hero-sub, .m-hero-visual',
+  );
+  if (!targets.length || !('IntersectionObserver' in window)) return;
+
+  const io = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('is-animating');
+        } else {
+          entry.target.classList.remove('is-animating');
+        }
+      });
+    },
+    {
+      threshold: 0.3,
+      rootMargin: '0px 0px -50px 0px',
     },
   );
 
