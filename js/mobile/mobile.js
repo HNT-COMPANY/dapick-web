@@ -127,6 +127,29 @@ const STORES = [
     preconUrl:
       'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000167277&YN=1',
   },
+  {
+    id: 'dapon-onsan',
+    region: 'ulsan',
+    name: '다폰 온산점',
+    address: '울산 울주군 온산읍 영남6길 19',
+    phone: '010-8748-8188',
+    hours: '10:00~20:00',
+    closedDay: '매주 일요일 휴무',
+    description: '', // Phase 1-3 상세 페이지에서 표시
+    mainImage: 'assets/store/daphone-06/main.jpg',
+    images: [
+      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
+    ],
+    badge: 'NEW',
+    lat: null,
+    lng: null,
+    kakaoChatUrl: 'https://pf.kakao.com/_ssdlX',
+    daangnUrl: '', // 온산점 당근 채널 미박힘
+    naverPlaceUrl: 'https://map.naver.com/p/entry/place/1023746911',
+    secretBenefit: '비밀혜택',
+    preconUrl:
+      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000190944&YN=1',
+  },
 ];
 
 // 모달 상태
@@ -312,6 +335,7 @@ function goStoreDetail() {
     'dapon-cheongok': 'store-cheongok.html', //'store-cheongok.html',
     'dapon-mandeok': 'store-mandeok.html', //<!--store-mandeok.html-->
     'dapon-guyeong': '', //'store-guyeong.html',
+    'dapon-onsan': 'store-onsan.html',
   };
   // TODO Phase 1-3: store.html 박힌 후 아래 주석 해제
   // window.location.href = `store.html?id=${currentModalStoreId}`;
