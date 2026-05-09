@@ -33,6 +33,100 @@ const STORES = [
     preconUrl:
       'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000197945&YN=1',
   },
+  {
+    id: 'dapon-beomil',
+    region: 'busan',
+    name: '다폰 범일점',
+    address: '부산 동구 범일로 21 상가동 103호',
+    phone: '010-9286-3210',
+    hours: '11:00~20:00',
+    closedDay: '매주 일요일 휴무',
+    description: '', // Phase 1-3 상세 페이지에서 표시
+    mainImage: 'assets/store/daphone-02/main.jpg', // 간판 (모달)
+    images: [
+      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
+    ],
+    badge: 'NEW',
+    lat: null, // 비워두면 카카오 Geocoder가 주소→좌표 자동 변환
+    lng: null,
+    kakaoChatUrl: 'https://pf.kakao.com/_WYqQn',
+    daangnUrl: 'https://www.daangn.com/kr/local-profile/197xdqmh9jd9/',
+    naverPlaceUrl: 'https://map.naver.com/p/entry/place/2047078345',
+    secretBenefit: '비밀혜택', // Phase 1-3 상세 페이지에서 표시
+    preconUrl:
+      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000198117&YN=1',
+    preconAlttulUrl:
+      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000198117&YN=2',
+  },
+  {
+    id: 'dapon-cheongok',
+    region: 'ulsan',
+    name: '다폰 천곡점',
+    address: '울산 북구 아진로 76 1층 다폰',
+    phone: '010-5085-9891',
+    hours: '10:30~19:30',
+    closedDay: '매주 일요일 휴무',
+    description: '', // Phase 1-3 상세 페이지에서 표시
+    mainImage: 'assets/store/daphone-03/main.jpg',
+    images: [
+      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
+    ],
+    badge: 'NEW',
+    lat: null,
+    lng: null,
+    kakaoChatUrl: 'https://pf.kakao.com/_DMdlX',
+    daangnUrl: 'https://www.daangn.com/kr/local-profile/kdwbpjg96rbu/',
+    naverPlaceUrl: 'https://naver.me/G1pdFWuc',
+    secretBenefit: '비밀혜택',
+    preconUrl:
+      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000145925&YN=1',
+  },
+  {
+    id: 'dapon-mandeok',
+    region: 'busan',
+    name: '다폰 만덕점',
+    address: '부산 북구 덕천로 234번길 24',
+    phone: '010-2045-9125',
+    hours: '10:00~19:30',
+    closedDay: '매주 일요일 휴무',
+    description: '', // Phase 1-3 상세 페이지에서 표시
+    mainImage: 'assets/store/daphone-04/main.jpg',
+    images: [
+      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
+    ],
+    badge: 'NEW',
+    lat: null,
+    lng: null,
+    kakaoChatUrl: 'https://pf.kakao.com/_ssdlX',
+    daangnUrl: 'https://www.daangn.com/kr/local-profile/6bd92e9qt289/',
+    naverPlaceUrl: 'https://map.naver.com/p/entry/place/2069788725',
+    secretBenefit: '비밀혜택',
+    preconUrl:
+      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000190290&YN=1',
+  },
+  {
+    id: 'dapon-guyeong',
+    region: 'ulsan',
+    name: '다폰 구영점',
+    address: '울산 울주군 범서읍 대리1길 26',
+    phone: '010-8140-0902',
+    hours: '11:00~20:00',
+    closedDay: '매주 일요일 휴무',
+    description: '', // Phase 1-3 상세 페이지에서 표시
+    mainImage: 'assets/store/daphone-05/main.jpg',
+    images: [
+      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
+    ],
+    badge: 'NEW',
+    lat: null,
+    lng: null,
+    kakaoChatUrl: 'https://pf.kakao.com/_xgxcgUG',
+    daangnUrl: 'https://www.daangn.com/kr/local-profile/ayg7hg2ueo8f/',
+    naverPlaceUrl: 'https://naver.me/xdpYfSRh',
+    secretBenefit: '비밀혜택',
+    preconUrl:
+      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000167277&YN=1',
+  },
 ];
 
 // 모달 상태
@@ -214,6 +308,10 @@ function goStoreDetail() {
 
   const pageMap = {
     'dapon-byeongyeong': 'store-byeongyeong.html',
+    'dapon-beomil': 'store-beomil.html',
+    'dapon-cheongok': 'store-cheongok.html', //'store-cheongok.html',
+    'dapon-mandeok': 'store-mandeok.html', //<!--store-mandeok.html-->
+    'dapon-guyeong': '', //'store-guyeong.html',
   };
   // TODO Phase 1-3: store.html 박힌 후 아래 주석 해제
   // window.location.href = `store.html?id=${currentModalStoreId}`;
