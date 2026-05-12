@@ -1,5 +1,5 @@
 # 다픽 (dapick.co.kr) robots.txt
-# 최종 정정: 2026-05-02
+# 최종 정정: 2026-05-12
 
 # ── 일반 검색 크롤러 (구글, 네이버 등) ──
 User-agent: *
@@ -9,7 +9,7 @@ Allow: /
 Disallow: /login.html
 Disallow: /signup.html
 Disallow: /application-success.html
-Disallow: /mypage/
+Disallow: /mypage.html
 Disallow: /admin/
 Disallow: /api/
 
@@ -19,7 +19,7 @@ Allow: /
 Disallow: /login.html
 Disallow: /signup.html
 Disallow: /application-success.html
-Disallow: /mypage/
+Disallow: /mypage.html
 Disallow: /admin/
 Disallow: /api/
 
@@ -29,6 +29,7 @@ Allow: /
 Disallow: /login.html
 Disallow: /signup.html
 Disallow: /application-success.html
+Disallow: /mypage.html
 
 # ── AI 학습 크롤러 차단 ──
 User-agent: GPTBot
