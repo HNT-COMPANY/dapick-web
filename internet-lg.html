@@ -40,7 +40,7 @@
   <link rel="stylesheet" href="css/icon.css"/>
   <link rel="stylesheet" href="css/internet/internet-product.css"/>
 
-  <!-- LG U+ 통신사 컬러 -->
+  <!-- SKT 통신사 컬러 -->
   <style>
     :root { --ip-brand-color: #E6007E; }
   </style>
@@ -91,31 +91,25 @@
   </div>
 </div>
 
-<!-- 상품 빌더 -->
+<!-- 상품 빌더 (v3: 아정당 패턴) -->
 <div class="ip-builder">
 
-  <!-- 인터넷 속도 -->
+  <!-- 인터넷 속도 카드 (100M / 500M / 1G) -->
   <div class="ip-section">
     <div class="ip-section-label">인터넷</div>
-    <div class="ip-card-grid" id="ipSpeedGrid"></div>
+    <div class="ip-card-grid" id="ipInternetGrid"></div>
   </div>
 
-  <!-- 부가 옵션 토글 -->
+  <!-- 부가 옵션 토글 3개 (공유기 / TV / 전화) -->
   <div class="ip-section">
     <div class="ip-section-label">부가 옵션</div>
     <div class="ip-toggles" id="ipToggles"></div>
   </div>
 
-  <!-- TV 채널 (TV 토글 ON 시 노출) -->
+  <!-- TV 카드 (TV 토글 ON 시 노출) -->
   <div class="ip-section is-hidden" id="ipTvSection">
     <div class="ip-section-label">TV</div>
     <div class="ip-card-grid" id="ipTvGrid"></div>
-  </div>
-
-  <!-- 약정 기간 -->
-  <div class="ip-section">
-    <div class="ip-section-label">약정</div>
-    <div class="ip-chips" id="ipContracts"></div>
   </div>
 
 </div>
@@ -128,22 +122,23 @@
         <span class="ip-pb-row-label">기본 요금</span>
         <span class="ip-pb-row-val" id="ipPbBase">-</span>
       </div>
-      <div class="ip-pb-row" id="ipPbPhoneComboRow" style="display:none">
+      <div class="ip-pb-row">
         <span class="ip-pb-row-label">휴대폰 결합 요금</span>
         <span class="ip-pb-row-val" id="ipPbPhoneCombo">-</span>
       </div>
       <div class="ip-pb-row is-final">
-        <span class="ip-pb-row-label">최종 혜택가</span>
+        <span class="ip-pb-row-label">휴대폰 결합 + 카드할인 혜택가</span>
         <span class="ip-pb-row-val">
           <span id="ipPbFinal">-</span>원<small>/월 (부가세 포함)</small>
         </span>
       </div>
+      <div class="ip-pb-row ip-pb-settop-hint" id="ipSettopHint" style="font-size:12px;color:#888;margin-top:4px;"></div>
     </div>
     <div class="ip-pb-gift">
       <div class="ip-pb-gift-label">사은품</div>
-      <div class="ip-pb-gift-val" id="ipPbGift">-</div>
+      <div class="ip-pb-gift-val" id="ipPbGift">상담 시 안내</div>
     </div>
-    <button class="ip-pb-apply" id="ipApplyBtn" type="button">신청하기</button>
+    <button class="ip-pb-apply" id="ipApplyBtn" type="button" disabled>신청하기</button>
   </div>
 </div>
 

@@ -358,7 +358,7 @@ function goStoreDetail() {
     'dapon-beomil': 'store-beomil.html',
     'dapon-cheongok': 'store-cheongok.html', //'store-cheongok.html',
     'dapon-mandeok': 'store-mandeok.html', //<!--store-mandeok.html-->
-    'dapon-guyeong': '', //'store-guyeong.html',
+    'dapon-guyeong': 'store-guyeong.html', //'store-guyeong.html',
     'dapon-onsan': 'store-onsan.html',
     'dapon-mugeo': 'store-mugeo.html',
   };
