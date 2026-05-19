@@ -92,12 +92,18 @@ window.DapickApplication = (function () {
       window.location.href = `application-success.html?${params.toString()}`;
     } catch (err) {
       console.error('[DapickApplication] 신청 실패:', err);
-      alert(
-        '신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\n계속 발생 시 카카오톡 상담으로 연락주세요.',
-      );
+      // 백엔드 메시지 우선 노출 (예: 409 중복신청, 400 검증 실패 등)
+      const hasBackendMessage =
+        err.message && !err.message.startsWith('요청 실패');
+      if (hasBackendMessage) {
+        alert(err.message);
+      } else {
+        alert(
+          '신청 처리 중 오류가 발생했습니다. 잠시 후 다시 시도해주세요.\n계속 발생 시 카카오톡 상담으로 연락주세요.',
+        );
+      }
     }
   }
-
   // ════════════════════════════════════════════════════
   // 자동 복귀 (로그인 후 페이지 진입 시 호출)
   // ════════════════════════════════════════════════════

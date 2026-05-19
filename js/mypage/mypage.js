@@ -157,6 +157,17 @@ function renderApps(filter) {
         <p class="app-card__no">${escapeHtml(app.consultationNumber || '-')}</p>
         <h4 class="app-card__title">${escapeHtml(app.productName || getCategoryLabel(app.categoryType) || '상담 신청')}</h4>
         <p class="app-card__meta">${formatDate(app.createdAt)} · ${escapeHtml(getCategoryLabel(app.categoryType))}</p>
+        ${
+          app.status === 'CANCELLED' && app.rejectReason
+            ? `
+          <div style="margin-top:10px;padding:10px 12px;background:#fff3cd;border-radius:6px;border-left:3px solid #dc3545;font-size:13px;">
+            <div style="color:#856404;font-weight:600;margin-bottom:4px;">⚠ 상담 거절</div>
+            <div style="color:#5a4a08;line-height:1.5;">${escapeHtml(app.rejectReason)}</div>
+            ${app.cancelledAt ? `<div style="color:#999;font-size:11px;margin-top:6px;">${formatDate(app.cancelledAt)} 처리</div>` : ''}
+          </div>
+        `
+            : ''
+        }
       </div>
       <span class="app-card__status ${getStatusClass(app.status)}">${getStatusLabel(app.status)}</span>
     </div>
@@ -187,7 +198,7 @@ function getStatusClass(status) {
 
 function getCategoryLabel(type) {
   const map = {
-    MOBILE: '휴대폰',
+    PHONE: '휴대폰',
     INTERNET_TV: '인터넷/TV',
     CARD: '카드',
     WATER: '정수기',

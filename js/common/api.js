@@ -70,6 +70,7 @@ async function silentRefresh() {
     localStorage.removeItem('dapick_refresh');
     localStorage.removeItem('dapick_role');
     localStorage.removeItem('dapick_nick');
+    alert('로그인 세션이 만료되었습니다.\n다시 로그인해주세요.');
     window.location.href = '/login.html';
     return null;
   }
