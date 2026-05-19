@@ -12,7 +12,7 @@
   };
 
   // SKT 카테고리 UUID (public.categories)
-  const SKT_CATEGORY_ID = '054c916e-f51a-417f-86c6-d3b123350cf3';
+  const SKT_CATEGORY_ID = 'acbe6c19-c70b-453c-aa14-409069f86e9a';
 
   InternetProductBase.init({
     provider,
