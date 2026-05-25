@@ -28,6 +28,14 @@
   --max-w: 1200px;
 }
 
+/* ── 사이트 전체 배경 톤 통일 (연보랏빛) ──
+   본문 여백을 순백 대신 --bg로 깔아 히어로(남보라)와의 이질감 제거.
+   GNB·카드·모달 등 흰색 요소는 각자 --white/#fff를 명시하므로 그대로 흰색 유지. */
+body {
+  background: var(--bg);
+  color: var(--text-main);
+}
+
 /* ── 공지 바 ── */
 .notice-bar {
   background: linear-gradient(90deg, var(--purple), #8b5cf6);

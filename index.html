@@ -96,10 +96,30 @@
   </div>
 </nav>
 
-<!-- 히어로 -->
-<!-- 히어로 -->
+<!-- 히어로 (배경 깨끗 — 로고 띠는 아래 별도 섹션으로 분리) -->
 <div class="hero">
-  <!-- 배경 로고 띠 (텍스트 뒤) -->
+  <div class="hero-inner">
+    <div class="hero-text">
+      <div class="hero-eyebrow">매일매일 생활 지원금 플랫폼</div>
+      <h1 class="hero-h1">
+        숨어있는 내 지원금
+        <em class="big">지금 바로 확인하세요</em>
+      </h1>
+      <p class="hero-sub">인터넷·TV · 가전렌탈 · 휴대폰 · 카드<br>모든 생활 지원금을 한눈에 비교</p>
+      <div class="hero-cta">
+        <button class="btn-cta-main" onclick="goPage('internet')">인터넷 지원금 확인</button>
+        <button class="btn-cta-sub"  onclick="goPage('mobile')">휴대폰 가격 비교하기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 브랜드 로고 띠 (히어로 아래 독립 섹션) -->
+<section class="brand-marquee" aria-label="다픽 제휴 브랜드">
+  <div class="brand-marquee-head">
+    <span class="brand-marquee-title">이 모든 브랜드를 한 곳에서 비교</span>
+    <span class="brand-marquee-sub">통신·렌탈·카드 주요 브랜드를 다픽이 직접 비교해드립니다</span>
+  </div>
   <div class="hero-marquee-bg" aria-hidden="true">
     <div class="hm-row hm-left">
       <div class="hm-track">
@@ -126,25 +146,7 @@
       </div>
     </div>
   </div>
-
-  <!-- 텍스트 (로고 위) -->
-  <div class="hero-inner">
-    <div class="hero-text">
-      <div class="hero-eyebrow">매일매일 생활 지원금 플랫폼</div>
-      <h1 class="hero-h1">
-        숨어있는 내 지원금
-        <em class="big">지금 바로 확인하세요</em>
-      </h1>
-      <p class="hero-sub">인터넷·TV · 가전렌탈 · 휴대폰 · 카드<br>모든 생활 지원금을 한눈에 비교</p>
-      <div class="hero-cta">
-        <button class="btn-cta-main" onclick="goPage('internet')">인터넷 지원금 확인</button>
-        <button class="btn-cta-sub"  onclick="goPage('mobile')">휴대폰 가격 비교하기</button>
-      </div>
-    </div>
-  </div>
-
-</div>
-
+</section>
 
 <!-- 서비스 바로가기 -->
 <div class="section">
