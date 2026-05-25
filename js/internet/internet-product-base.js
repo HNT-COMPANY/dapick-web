@@ -1,34 +1,25 @@
 // ════════════════════════════════════════════════════
-// internet-product-base.js v4 — 인터넷·TV 빌더 (백엔드 InternetTvProduct 구조)
+// internet-product-base.js v6 — 인터넷·TV 빌더 (아정당식 카드)
 // ────────────────────────────────────────────────────
 // 사용: InternetProductBase.init({ provider })
 //   - provider.key = 'SKT' / 'KT' / 'LG_UPLUS' (carrier 필터)
 //
-// 백엔드: GET /api/internet-tv-products?categoryId={INTERNET_TV}
-//   응답: [{ id, carrier, name, description, imageUrl,
-//            internetOptions:[{name,desc,imageUrl,channels,normalPrice,bundlePrice}],
-//            tvOptions:[...], routerOptions:[...], phoneOptions:[...] }]
-//   → carrier === provider.key 인 상품을 사용
+// 백엔드: GET /api/internet-tv-products   (categoryId 없이 전체 활성 조회 → carrier 필터)
+//
+// ── 어드민 입력 규칙 (표시용 약속) ──────────────────────
+//   인터넷 옵션:
+//     name = "100Mbps"        → 큰 숫자(100) + 단위(Mbps) 자동 분리
+//     desc = "슬림|1-2인가구"  → "|"로 등급명 + 설명 2줄 (| 없으면 통째로 설명)
+//   TV 옵션:
+//     name = "베이직"          → 등급명
+//     channels = 238          → 큰 숫자(238) + "채널"
+//     desc = "경제적인 요금의 채널" → 설명
+//
+// v6 변경점: SPEED_MAP 제거. 어드민이 정한 name/desc를 그대로 존중하여 파싱.
 // ════════════════════════════════════════════════════
 
 window.InternetProductBase = (function () {
   'use strict';
-
-  // prod INTERNET_TV 1단계 카테고리 (고정)
-  const INTERNET_TV_CATEGORY_ID = 'acbe6c19-c70b-453c-aa14-409069f86e9a';
-
-  // 속도 라벨 매핑 (옵션 name → 속도 표시). 매칭 안 되면 옵션 name 그대로 노출
-  const SPEED_MAP = {
-    광랜인터넷: { speed: '100Mbps', tier: '1-2인가구' },
-    기가라이트인터넷: { speed: '500Mbps', tier: '3-4인가구 기본' },
-    기가인터넷: { speed: '1Gbps', tier: '고사양 게임 전용' },
-    '인터넷 슬림': { speed: '100Mbps', tier: '1-2인가구' },
-    '인터넷 베이직': { speed: '500Mbps', tier: '3-4인가구 기본' },
-    '인터넷 에센스': { speed: '1Gbps', tier: '라이브 방송 전문' },
-    '프리미엄 안심 보상 100M': { speed: '100Mbps', tier: '1-2인가구' },
-    '프리미엄 안심 보상 500M': { speed: '500Mbps', tier: '3-4인가구 기본' },
-    '프리미엄 안심 보상 1G': { speed: '1Gbps', tier: '고사양 게임 전용' },
-  };
 
   let _provider = null;
   let _product = null; // carrier 매칭된 상품 1개
@@ -68,9 +59,8 @@ window.InternetProductBase = (function () {
 
     ready(async () => {
       try {
-        const list = await api.get(
-          `/api/internet-tv-products?categoryId=${encodeURIComponent(INTERNET_TV_CATEGORY_ID)}`,
-        );
+        // categoryId 없이 전체 활성 인터넷·TV 상품 조회 → carrier로 필터
+        const list = await api.get('/api/internet-tv-products');
 
         if (!Array.isArray(list) || list.length === 0) {
           showError(
@@ -124,13 +114,32 @@ window.InternetProductBase = (function () {
     });
   }
 
-  // ── 옵션 name으로 속도 메타 추출 ─────────────────────────────
-  function speedMeta(opt) {
-    return SPEED_MAP[opt.name] || { speed: opt.name, tier: opt.desc || '' };
+  // ── name "100Mbps" → { num: '100', unit: 'Mbps' } ───────────
+  //   숫자+단위 패턴이면 분리, 아니면 통째로 num에 넣고 unit 비움
+  function parseSpeed(name) {
+    const s = String(name ?? '').trim();
+    const m = s.match(/^(\d+(?:\.\d+)?)\s*([A-Za-z]+)?$/);
+    if (m) {
+      return { num: m[1], unit: m[2] || '' };
+    }
+    return { num: s, unit: '' };
+  }
+
+  // ── desc "슬림|1-2인가구" → { grade: '슬림', sub: '1-2인가구' } ─
+  //   "|" 없으면 grade 비우고 전체를 sub로
+  function parseDesc(desc) {
+    const s = String(desc ?? '').trim();
+    if (!s) return { grade: '', sub: '' };
+    const idx = s.indexOf('|');
+    if (idx === -1) return { grade: '', sub: s };
+    return {
+      grade: s.slice(0, idx).trim(),
+      sub: s.slice(idx + 1).trim(),
+    };
   }
 
   // ════════════════════════════════════════════════════
-  // 렌더 — 인터넷 옵션 카드
+  // 렌더 — 인터넷 옵션 카드 (아정당식: 큰숫자+단위 / 등급 / 설명 / 가격)
   // ════════════════════════════════════════════════════
   function renderInternets() {
     const el = document.getElementById('ipInternetGrid');
@@ -138,23 +147,20 @@ window.InternetProductBase = (function () {
 
     el.innerHTML = _internets
       .map((opt) => {
-        const meta = speedMeta(opt);
         const isActive = opt === _selectedInternet;
         const fee = Number(opt.normalPrice || 0);
-
-        const m = String(meta.speed).match(/^(\d+)\s*(Mbps|Gbps)?$/i);
-        const numText = m ? m[1] : meta.speed;
-        const unitText =
-          m && m[2] ? m[2] : String(meta.speed).includes('G') ? 'Gbps' : 'Mbps';
+        const { num, unit } = parseSpeed(opt.name);
+        const { grade, sub } = parseDesc(opt.desc);
 
         return `
           <button class="ip-opt-card ${isActive ? 'active' : ''}"
                   data-internet="${escapeAttr(opt.name)}" type="button">
             <div class="ip-opt-headline">
-              <span class="ip-opt-num">${escapeHtml(numText)}</span>
-              <span class="ip-opt-unit">${escapeHtml(unitText)}</span>
+              <span class="ip-opt-num">${escapeHtml(num)}</span>
+              ${unit ? `<span class="ip-opt-unit">${escapeHtml(unit)}</span>` : ''}
             </div>
-            <div class="ip-opt-tier">${escapeHtml(meta.tier || '')}</div>
+            ${grade ? `<div class="ip-opt-grade">${escapeHtml(grade)}</div>` : ''}
+            ${sub ? `<div class="ip-opt-tier">${escapeHtml(sub)}</div>` : ''}
             <div class="ip-opt-price">
               <span class="ip-opt-price-prefix">월</span>${formatPrice(fee)}원
             </div>
@@ -198,7 +204,8 @@ window.InternetProductBase = (function () {
   }
 
   // ════════════════════════════════════════════════════
-  // 렌더 — TV 카드 (TV 토글 ON 시만)
+  // 렌더 — TV 카드 (아정당식: 큰숫자+채널 / 등급 / 설명 / 가격)
+  //   TV는 channels가 큰 숫자, name이 등급명, desc가 설명
   // ════════════════════════════════════════════════════
   function renderTvOptions() {
     const el = document.getElementById('ipTvGrid');
@@ -208,15 +215,21 @@ window.InternetProductBase = (function () {
       .map((tv) => {
         const isActive = tv === _selectedTv;
         const fee = Number(tv.normalPrice || 0);
-        const ch = tv.channels
-          ? ` <span class="ip-opt-ch">[${tv.channels}채널]</span>`
-          : '';
+        const { sub } = parseDesc(tv.desc);
+        const hasCh = tv.channels != null && tv.channels !== '';
+
         return `
       <button class="ip-opt-card ${isActive ? 'active' : ''}"
               data-tv="${escapeAttr(tv.name)}" type="button">
         <div class="ip-opt-headline">
-          <span class="ip-opt-num">${escapeHtml(tv.name)}</span>${ch}
+          ${
+            hasCh
+              ? `<span class="ip-opt-num">${escapeHtml(String(tv.channels))}</span><span class="ip-opt-unit">채널</span>`
+              : `<span class="ip-opt-num">${escapeHtml(tv.name)}</span>`
+          }
         </div>
+        ${hasCh && tv.name ? `<div class="ip-opt-grade">${escapeHtml(tv.name)}</div>` : ''}
+        ${sub ? `<div class="ip-opt-tier">${escapeHtml(sub)}</div>` : ''}
         <div class="ip-opt-price">
           <span class="ip-opt-price-prefix">월</span>${formatPrice(fee)}원
         </div>

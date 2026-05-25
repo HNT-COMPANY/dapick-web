@@ -3,7 +3,8 @@
    ──────────────────────────────────────────────────────
    레이아웃: 한 페이지 안에서 인라인 옵션 선택 + 하단 고정 가격 박스
    네임스페이스: ip- (internet product)
-   통신사 컬러: --ip-brand-color (페이지별 :root에서 박음)
+   통신사 컬러: --ip-brand-color (페이지별 :root에서 지정)
+   ── v6 대응: 카드 등급명(.ip-opt-grade) + 버튼형 토글 ──
    ══════════════════════════════════════════════════════ */
 
 :root {
@@ -186,7 +187,7 @@
   display: flex;
   align-items: baseline;
   gap: 4px;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
 }
 .ip-opt-num {
   font-size: 28px;
@@ -199,17 +200,28 @@
   color: var(--text-sub);
   font-weight: 500;
 }
-.ip-opt-tier {
-  font-size: 13px;
+
+/* v6: 등급명 (굵게) — 슬림/베이직/에센스 */
+.ip-opt-grade {
+  font-size: 14px;
   font-weight: 700;
   color: var(--text-main);
   margin-bottom: 2px;
 }
+/* v6: 설명 (회색 작게) — 1-2인가구 / 경제적인 요금의 채널 */
+.ip-opt-tier {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.45;
+  margin-bottom: 14px;
+}
+/* (구) .ip-opt-desc — v6 미사용, 잔존 호환용 */
 .ip-opt-desc {
   font-size: 12px;
   color: var(--text-muted);
   margin-bottom: 14px;
 }
+
 .ip-opt-price {
   font-size: 16px;
   font-weight: 800;
@@ -222,53 +234,88 @@
   margin-right: 2px;
 }
 
-/* ── 옵션 토글 (체크박스) ────────────────────────── */
+/* ── 옵션 토글 (버튼형 — v6) ──────────────────────────
+   체크박스 숨기고 라벨 전체를 클릭 버튼으로.
+   선택 시 브랜드 컬러 테두리+배경 (아정당 패턴)
+   ──────────────────────────────────────────────────── */
 .ip-toggles {
   display: flex;
-  gap: 24px;
+  gap: 12px;
   flex-wrap: wrap;
   padding: 8px 0;
 }
+
+/* 라벨 전체가 클릭 가능한 버튼 */
 .ip-toggle-item {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   font-size: 14px;
+  font-weight: 600;
   color: var(--text-sub);
   cursor: pointer;
   user-select: none;
-}
-.ip-toggle-item input {
-  appearance: none;
-  width: 18px;
-  height: 18px;
   border: 1.5px solid var(--border-card);
-  border-radius: 4px;
-  position: relative;
-  cursor: pointer;
-  transition: all 0.15s;
+  border-radius: var(--radius-sm);
+  padding: 13px 22px;
+  background: var(--white);
+  transition: all 0.18s;
+  min-width: 130px;
+  justify-content: center;
 }
-.ip-toggle-item input:checked {
+.ip-toggle-item:hover {
   border-color: var(--ip-brand-color);
-  background: var(--ip-brand-color);
 }
-.ip-toggle-item input:checked::after {
-  content: '';
+
+/* 체크박스는 숨김 (라벨 클릭으로 토글됨) */
+.ip-toggle-item input {
   position: absolute;
-  left: 5px;
-  top: 1px;
-  width: 5px;
-  height: 10px;
-  border: solid #fff;
-  border-width: 0 2px 2px 0;
-  transform: rotate(45deg);
+  opacity: 0;
+  width: 0;
+  height: 0;
+  margin: 0;
+  pointer-events: none;
 }
-.ip-toggle-item input:checked + .ip-toggle-label {
-  color: var(--text-main);
+
+/* 선택 상태: 라벨 안에 :checked 인 input이 있으면 */
+.ip-toggle-item:has(input:checked) {
+  border-color: var(--ip-brand-color);
+  background: rgba(91, 63, 190, 0.06);
+  color: var(--ip-brand-color);
   font-weight: 700;
 }
-.ip-toggle-label {
+
+/* 라벨 앞 체크 표시 (◯ → ✓) */
+.ip-toggle-item .ip-toggle-label {
   transition: all 0.15s;
+}
+.ip-toggle-item .ip-toggle-label::before {
+  content: '';
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  margin-right: 8px;
+  border: 1.5px solid var(--border-card);
+  border-radius: 4px;
+  vertical-align: -3px;
+  transition: all 0.15s;
+  box-sizing: border-box;
+}
+.ip-toggle-item:has(input:checked) .ip-toggle-label::before {
+  border-color: var(--ip-brand-color);
+  background: var(--ip-brand-color)
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='8' viewBox='0 0 10 8'%3E%3Cpath d='M1 4l2.5 2.5L9 1' stroke='white' stroke-width='1.8' fill='none' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E")
+    center / 10px no-repeat;
+}
+
+/* 비활성 토글 (전화 - 상담 안내) */
+.ip-toggle-item--disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+  background: var(--bg);
+}
+.ip-toggle-item--disabled:hover {
+  border-color: var(--border-card);
 }
 
 /* ── 약정 칩 ──────────────────────────────────────── */
@@ -487,6 +534,10 @@
     width: 100%;
     padding: 16px;
   }
+  .ip-toggle-item {
+    flex: 1;
+    min-width: 0;
+  }
 }
 
 @media (max-width: 480px) {
@@ -497,6 +548,6 @@
     padding: 12px 4%;
   }
   .ip-toggles {
-    gap: 16px;
+    gap: 8px;
   }
 }
