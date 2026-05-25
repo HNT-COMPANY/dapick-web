@@ -1,0 +1,191 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="naver-site-verification" content="915416fea52343dca0655e46b44dcf0c0f35c044" />
+  <title>다픽 SK broadband 인터넷·TV 지원금 | BTv 결합 사은품 비교</title>
+  <meta name="description" content="SK broadband 인터넷·TV 실제 정책 기준 지원금 비교. BTv 결합 사은품, 무료 상담 신청까지."/>
+  <meta name="keywords" content="SK broadband, SKB 인터넷, BTv, SK브로드밴드 사은품, 다픽"/>
+
+  <link rel="canonical" href="https://dapick.co.kr/internet-skb.html" />
+
+  <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+  <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
+  <meta name="Yeti" content="index, follow"/>
+  <meta name="author" content="주식회사 다커넥트"/>
+
+  <link rel="icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <link rel="shortcut icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <meta name="theme-color" content="#3617CE" />
+
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="다픽"/>
+  <meta property="og:title" content="다픽 SK broadband 인터넷·TV 지원금 | BTv 결합 사은품 비교"/>
+  <meta property="og:description" content="SK broadband 인터넷·TV 실제 정책 기준 지원금 비교. BTv 결합 사은품, 무료 상담 신청까지."/>
+  <meta property="og:url" content="https://dapick.co.kr/internet-skb.html"/>
+  <meta property="og:image" content="https://dapick.co.kr/assets/og-internet.png"/>
+  <meta property="og:locale" content="ko_KR"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/reset.css"/>
+  <link rel="stylesheet" href="css/common/common.css"/>
+  <link rel="stylesheet" href="css/common/components.css"/>
+  <link rel="stylesheet" href="css/common/footer.css"/>
+  <link rel="stylesheet" href="css/common/gnb-user.css"/>
+  <link rel="stylesheet" href="css/icon.css"/>
+  <link rel="stylesheet" href="css/internet/internet-product.css"/>
+
+  <!-- SK broadband 통신사 컬러 -->
+  <style>
+    :root { --ip-brand-color: #3617CE; }
+  </style>
+
+ <script src="js/internet/structured-data-sk-broadband.js" defer></script>
+</head>
+<body>
+
+<!-- 공통 NAV -->
+<nav class="gnb">
+  <div class="gnb-top">
+    <a href="index.html" class="logo-wrap">
+      <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
+    </a>
+    <div class="gnb-right">
+      <button class="btn-login" onclick="window.location.href='login.html'">로그인/회원가입</button>
+    </div>
+  </div>
+  <div class="cat-bar">
+    <div class="cat-inner">
+      <div class="cat-item" onclick="goPage('mobile')">휴대폰</div>
+      <div class="cat-item" onclick="goPage('internet')">인터넷</div>
+      <div class="cat-item" onclick="goPage('card')">카드</div>
+      <div class="cat-item" onclick="goPage('water')">정수기</div>
+      <div class="cat-item" onclick="goPage('rental')">렌탈</div>
+    </div>
+  </div>
+</nav>
+
+<!-- 통신사 헤더 -->
+<div class="ip-header">
+  <a class="ip-back" href="internet.html">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    통신사 선택
+  </a>
+  <div class="ip-header-logo">
+    <img src="assets/logos/SKTLOGO1.png" alt="SK broadband">
+  </div>
+</div>
+
+<!-- 페이지 히어로 -->
+<div class="ip-hero">
+  <div class="ip-hero-inner">
+    <h1>SK broadband 인터넷 사은품<br><em>최대 00만원 + 결합 할인</em></h1>
+    <p>기가 인터넷 · BTv · 휴대폰 결합 시 추가 할인</p>
+  </div>
+</div>
+
+<!-- 상품 빌더 -->
+<div class="ip-builder">
+  <div class="ip-section">
+    <div class="ip-section-label">인터넷</div>
+    <div class="ip-card-grid" id="ipInternetGrid"></div>
+  </div>
+  <div class="ip-section">
+    <div class="ip-section-label">부가 옵션</div>
+    <div class="ip-toggles" id="ipToggles"></div>
+  </div>
+  <div class="ip-section is-hidden" id="ipTvSection">
+    <div class="ip-section-label">TV</div>
+    <div class="ip-card-grid" id="ipTvGrid"></div>
+  </div>
+</div>
+
+<!-- 하단 고정 가격 박스 -->
+<div class="ip-pricebar">
+  <div class="ip-pricebar-inner">
+    <div class="ip-pb-prices">
+      <div class="ip-pb-row">
+        <span class="ip-pb-row-label">기본 요금</span>
+        <span class="ip-pb-row-val" id="ipPbBase">-</span>
+      </div>
+      <div class="ip-pb-row">
+        <span class="ip-pb-row-label">휴대폰 결합 요금</span>
+        <span class="ip-pb-row-val" id="ipPbPhoneCombo">-</span>
+      </div>
+      <div class="ip-pb-row is-final">
+        <span class="ip-pb-row-label">휴대폰 결합 + 카드할인 혜택가</span>
+        <span class="ip-pb-row-val">
+          <span id="ipPbFinal">-</span>원<small>/월 (부가세 포함)</small>
+        </span>
+      </div>
+      <div class="ip-pb-row ip-pb-settop-hint" id="ipSettopHint" style="font-size:12px;color:#888;margin-top:4px;"></div>
+    </div>
+    <div class="ip-pb-gift">
+      <div class="ip-pb-gift-label">사은품</div>
+      <div class="ip-pb-gift-val" id="ipPbGift">상담 시 안내</div>
+    </div>
+    <button class="ip-pb-apply" id="ipApplyBtn" type="button" disabled>신청하기</button>
+  </div>
+</div>
+
+<!-- 카카오 플로팅 -->
+<div class="kakao-float" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
+  <button class="kakao-btn" title="카카오톡 상담">
+    <svg viewBox="0 0 48 48" fill="none"><path d="M24 6C13.507 6 5 13.134 5 21.9c0 5.466 3.187 10.271 8.013 13.18L11.1 42l8.52-4.44C20.99 37.84 22.48 38 24 38c10.493 0 19-7.134 19-15.9S34.493 6 24 6z" fill="#3A1D1D"/></svg>
+  </button>
+  <span class="kakao-label">카카오 상담</span>
+</div>
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">∧</button>
+
+<!-- 공통 푸터 -->
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-wrap">
+      <div class="footer-logo">
+        <img src="assets/logos/dapicklogo.png" alt="다픽" class="footer-logo__img" />
+      </div>
+    </div>
+  </div>
+  <div class="footer-info-wrap">
+    <div class="footer-wrap">
+      <div class="footer-info">
+        <p><span>사이트명</span> 다픽(pick) &nbsp;|&nbsp; <span>대표자</span> 강성현</p>
+        <p><span>사업자명</span> 주식회사 다커넥트</p>
+        <p><span>사업자등록번호</span> 365-81-03029 &nbsp;|&nbsp; <span>통신판매</span> 222-15-94039</p>
+        <p><span>대표번호</span> 1899-8478 &nbsp;|&nbsp; <span>주소</span> 울산 중구 병영로 13</p>
+        <p><span>이메일</span> wwh3218@gmail.com &nbsp;|&nbsp; <span>책임관리자</span> 장지혁</p>
+        <p class="footer-disclaimer">다픽은 통신판매중개자이며 통신판매의 당사자가 아닙니다.<br>상품, 상품정보, 거래에 관한 의무와 책임은 거래당사자에게 있습니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-wrap">
+      <div class="footer-policies">
+        <a href="privacy.html">개인정보처리방침</a>
+        <a href="terms.html">이용약관</a>
+        <a href="marketing.html">정보수신 동의</a>
+        <a href="email-policy.html">이메일 무단수집 거부</a>
+      </div>
+      <p class="footer-copy">Copyright © 2026 다픽. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- 공통 JS (api.js → application.js → base → 데이터 순) -->
+<script src="js/common/api.js"></script>
+<script src="js/common/auth.js"></script>
+<script src="js/common/utils.js"></script>
+<script src="js/common/application.js"></script>
+<script src="js/common/gnb-user.js"></script>
+<script src="js/internet/internet-product-base.js"></script>
+<script src="js/internet/internet-sk-broadband.js"></script>
+
+</body>
+</html>
