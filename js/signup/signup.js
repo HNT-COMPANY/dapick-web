@@ -1,6 +1,11 @@
 // signup.js — 다픽 회원가입 페이지 로직
 // 3단계 플로우: 이메일 → 인증코드 → 정보 입력 → 자동 로그인 → pending 자동 복귀
-// 메모리 #15: 가입 완료 후 pending 신청 자동 복귀 박음 (DapickApplication)
+// 메모리 #15: 가입 완료 후 pending 신청 자동 복귀 (DapickApplication)
+//
+// ※ 5/25 수정:
+//   - 주소(address) 필드 추가. 다음 우편번호 API로 우편번호+기본주소 검색,
+//     상세주소는 직접 입력. 제출 시 "기본주소 (상세주소)" 형태로 합쳐
+//     백엔드 SignupRequest.address(@NotBlank, max 500) 한 문자열로 전송.
 
 // ── 전역 상태 ────────────────────────────────────────────────────
 let currentStep = 1;
@@ -36,7 +41,7 @@ function goToStep(step) {
 
 // ── 인입 경로 자동 추출 ──────────────────────────────────────────
 // 우선순위: UTM 광고 > 다폰 경유 > 검색엔진 > 직접 접속(DIRECT)
-// 백엔드 SignupSource enum 박힌 값과 일치
+// 백엔드 SignupSource enum 값과 일치
 //   (DIRECT, ADVERTISEMENT, DAPHONE_LANDING, NAVER_SEARCH, GOOGLE_SEARCH)
 function detectSignupSource() {
   const params = new URLSearchParams(window.location.search);
@@ -62,6 +67,51 @@ function detectSignupSource() {
 
   // 4. 그 외 (직접 URL 입력 또는 알 수 없음)
   return 'DIRECT';
+}
+
+// ── 다음(카카오) 우편번호 검색 ────────────────────────────────────
+// daum.Postcode 스크립트는 signup.html에서 로드.
+// 검색 완료 시 우편번호 + 기본주소(도로명 우선)를 채우고 상세주소로 포커스.
+function openPostcode() {
+  if (typeof daum === 'undefined' || !daum.Postcode) {
+    showSignupAlert(
+      '주소 검색 서비스를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+    );
+    return;
+  }
+
+  new daum.Postcode({
+    oncomplete: function (data) {
+      // 도로명 주소 우선, 없으면 지번 주소
+      const base =
+        data.roadAddress && data.roadAddress.trim()
+          ? data.roadAddress
+          : data.jibunAddress;
+
+      const zonecodeEl = document.getElementById('input-zonecode');
+      const addr1El = document.getElementById('input-address1');
+      const addr2El = document.getElementById('input-address2');
+
+      if (zonecodeEl) zonecodeEl.value = data.zonecode || '';
+      if (addr1El) {
+        addr1El.value = base || '';
+        addr1El.classList.remove('err');
+      }
+
+      // 상세주소 입력으로 포커스
+      if (addr2El) addr2El.focus();
+      hideSignupAlert();
+    },
+  }).open();
+}
+
+// 기본주소 + 상세주소 → 백엔드 전송용 단일 문자열
+//   "서울 강남구 ... 123 (상세주소)" / 상세 없으면 "서울 강남구 ... 123"
+function buildAddressString() {
+  const addr1 = (document.getElementById('input-address1')?.value || '').trim();
+  const addr2 = (document.getElementById('input-address2')?.value || '').trim();
+  if (!addr1) return '';
+  return addr2 ? `${addr1} (${addr2})` : addr1;
 }
 
 // ── Step 1: 인증코드 발송 ─────────────────────────────────────────
@@ -171,6 +221,7 @@ async function submitSignup() {
   const name = document.getElementById('input-name').value.trim();
   const nickname = document.getElementById('input-nickname').value.trim();
   const phone = document.getElementById('input-phone').value.trim();
+  const address = buildAddressString();
   const agreeTerms = document.getElementById('agree-terms').checked;
   const agreePrivacy = document.getElementById('agree-privacy').checked;
   const agreeMarketing = document.getElementById('agree-marketing').checked;
@@ -207,6 +258,17 @@ async function submitSignup() {
     document.getElementById('input-phone').classList.add('err');
     return;
   }
+  // 주소: 우편번호 검색으로 기본주소가 채워졌는지 확인 (백엔드 @NotBlank)
+  if (!address) {
+    showSignupAlert('주소를 입력해주세요. (주소 검색 버튼을 눌러주세요)');
+    document.getElementById('input-address1').classList.add('err');
+    return;
+  }
+  if (address.length > 500) {
+    showSignupAlert('주소가 너무 깁니다. (상세주소를 줄여주세요)');
+    document.getElementById('input-address2').classList.add('err');
+    return;
+  }
   if (!agreeTerms || !agreePrivacy) {
     showSignupAlert('필수 약관에 동의해주세요.');
     return;
@@ -227,6 +289,7 @@ async function submitSignup() {
       nickname,
       name,
       phone,
+      address,
       agreeTerms,
       agreePrivacy,
       agreeMarketing,
@@ -369,20 +432,13 @@ function setButtonLoading(btnId, textId, spinnerId, loading) {
   if (spn) spn.style.display = loading ? 'block' : 'none';
 }
 
-// ── 소셜 로그인 (5/6 OAuth 백엔드 박힐 때까지 준비중 안내) ──────
+// ── 소셜 로그인 (signup 페이지: 이메일 가입 유도) ──────────────
+// ※ 카카오 OAuth 실동작은 login.js가 담당. signup 페이지에서는
+//   login.html로 보내 동일한 카카오 흐름을 타도록 통일.
 async function socialLogin(provider) {
   if (provider === 'kakao') {
-    if (typeof showToast === 'function') {
-      showToast(
-        '카카오 가입은 5월 중 오픈 예정입니다. 이메일로 가입해주세요!',
-        'info',
-      );
-    } else {
-      showSignupAlert(
-        '카카오 가입은 5월 중 오픈 예정입니다. 이메일로 가입해주세요!',
-        'success',
-      );
-    }
+    // login.html의 카카오 버튼과 동일 흐름으로 위임
+    window.location.href = 'login.html';
     return;
   }
 }
@@ -434,9 +490,10 @@ document.addEventListener('DOMContentLoaded', () => {
       if (e.key === 'Enter') verifyCode();
     });
   }
-  const phoneEnter = document.getElementById('input-phone');
-  if (phoneEnter) {
-    phoneEnter.addEventListener('keydown', (e) => {
+  // 상세주소에서 Enter → 제출
+  const addr2Enter = document.getElementById('input-address2');
+  if (addr2Enter) {
+    addr2Enter.addEventListener('keydown', (e) => {
       if (e.key === 'Enter') submitSignup();
     });
   }

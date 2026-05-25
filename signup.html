@@ -40,7 +40,7 @@
       <p class="signup-tagline">다픽에서 나에게 딱 맞는<br>생활 상품을 만나보세요</p>
     </div>
 
-    <!-- ── 카카오 3초 가입 (5/6 OAuth 박힐 때까지 준비중 패턴) ── -->
+    <!-- ── 카카오 3초 가입 ── -->
     <div class="social-group">
       <div class="kakao-balloon">⚡ 카카오로 3초만에 가입하기</div>
       <button class="social-btn btn-kakao" onclick="socialLogin('kakao')">
@@ -166,6 +166,42 @@
         >
       </div>
 
+      <!-- 주소 (다음 우편번호 API) -->
+      <div class="form-group">
+        <label class="form-label" for="input-address1">주소</label>
+        <div class="input-with-btn">
+          <input
+            type="text"
+            id="input-zonecode"
+            class="form-input"
+            placeholder="우편번호"
+            readonly
+            style="max-width:120px;"
+          >
+          <button type="button" class="btn-action" id="btn-search-address" onclick="openPostcode()">
+            주소 검색
+          </button>
+        </div>
+        <input
+          type="text"
+          id="input-address1"
+          class="form-input"
+          placeholder="기본주소 (검색 버튼을 눌러주세요)"
+          readonly
+          style="margin-top:8px;"
+          onclick="openPostcode()"
+        >
+        <input
+          type="text"
+          id="input-address2"
+          class="form-input"
+          placeholder="상세주소 (동·호수 등)"
+          maxlength="100"
+          autocomplete="address-line2"
+          style="margin-top:8px;"
+        >
+      </div>
+
       <!-- 약관 동의 -->
       <div class="agree-group">
         <label class="agree-all">
@@ -215,9 +251,11 @@
   <div class="kakao-label">카카오 상담</div>
 </div>
 
+<!-- ── 다음(카카오) 우편번호 API ── -->
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
+
 <!-- ── JS (공통 → 회원가입 전용 순서) ── -->
-<script src="js/utils.js"></script>
-<script src="js/common/api.js"></script>
+<script src="js/common/utils.js"></script>
 <script src="js/common/api.js"></script>
 <script src="js/common/auth.js"></script>
 <script src="js/common/application.js"></script>
