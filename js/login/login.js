@@ -35,23 +35,24 @@ function handleOAuthCallback() {
 
   // 로그인 성공
   if (accessToken && refreshToken) {
+    // 토큰 저장 (신규/기존 공통 — 신규 유저는 PENDING_PROFILE이지만
+    // complete-signup 호출에 이 accessToken이 필요하므로 저장한다)
     saveTokens(accessToken, refreshToken, role, nickname);
-
-    if (isNewUser) {
-      showToast(
-        `환영해요, ${nickname || ''}님! 다픽에 가입되었어요 🎉`,
-        'success',
-      );
-    } else {
-      showToast(`다시 오셨군요, ${nickname || ''}님! 😊`, 'success');
-    }
 
     // URL 파라미터 제거
     window.history.replaceState({}, document.title, '/login.html');
 
-    setTimeout(() => {
-      handleAfterLogin(role);
-    }, 1000);
+    if (isNewUser) {
+      // ── 신규 카카오 회원 → 추가정보 입력 모달 ──
+      // 백엔드가 PENDING_PROFILE 상태로 생성. 이름/전화(SMS)/주소를
+      // 입력받아 PATCH /api/auth/complete-signup 으로 ACTIVE 전환해야 함.
+      openCompleteSignupModal(nickname);
+    } else {
+      showToast(`다시 오셨군요, ${nickname || ''}님! 😊`, 'success');
+      setTimeout(() => {
+        handleAfterLogin(role);
+      }, 1000);
+    }
   }
 }
 
@@ -66,17 +67,229 @@ function handleAfterLogin(role) {
   // 2. pending 카카오 상담 있으면 처리
   const pendingConsult = sessionStorage.getItem('pending_kakao_consult');
   if (pendingConsult) {
-    // 원래 있던 페이지로 복귀 후 상담 열기
     const redirect =
       sessionStorage.getItem('redirect_after_login') || 'index.html';
     sessionStorage.removeItem('redirect_after_login');
-    // pending_kakao_consult는 복귀 페이지에서 resumePendingKakaoConsult()가 처리
     window.location.href = redirect;
     return;
   }
 
   // 3. 그냥 홈으로
   window.location.href = 'index.html';
+}
+
+// ════════════════════════════════════════════════════════════════
+// 카카오 추가정보 입력 모달 (PENDING_PROFILE → ACTIVE)
+// 입력: 이름 / 전화번호 + SMS 인증 / 주소(다음 우편번호)
+// 제출: PATCH /api/auth/complete-signup  { name, phone, address, smsCode }
+//   인증: 콜백에서 받은 accessToken (saveTokens로 저장됨) 자동 사용
+// ════════════════════════════════════════════════════════════════
+let _csSmsSent = false;
+let _csSmsTimer = null;
+let _csSmsRemain = 180;
+
+function openCompleteSignupModal(nickname) {
+  const overlay = document.getElementById('cs-modal-overlay');
+  if (!overlay) {
+    // 모달 DOM이 없으면 안전 폴백 — 홈으로 (정상 배포 시 발생하지 않음)
+    console.error('[completeSignup] 모달 DOM 없음');
+    window.location.href = 'index.html';
+    return;
+  }
+  const greet = document.getElementById('cs-greeting');
+  if (greet)
+    greet.textContent = `${nickname || ''}님, 가입을 위해 정보를 입력해주세요`;
+
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+// 전화번호 자동 포맷 (010-XXXX-XXXX)
+function csFormatPhone(input) {
+  let v = input.value.replace(/\D/g, '');
+  if (v.length > 11) v = v.slice(0, 11);
+  if (v.length > 7) {
+    v = v.replace(/(\d{3})(\d{4})(\d+)/, '$1-$2-$3');
+  } else if (v.length > 3) {
+    v = v.replace(/(\d{3})(\d+)/, '$1-$2');
+  }
+  input.value = v;
+}
+
+// 다음 우편번호 검색
+function csOpenPostcode() {
+  if (typeof daum === 'undefined' || !daum.Postcode) {
+    csAlert(
+      '주소 검색 서비스를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+    );
+    return;
+  }
+  new daum.Postcode({
+    oncomplete: function (data) {
+      const base =
+        data.roadAddress && data.roadAddress.trim()
+          ? data.roadAddress
+          : data.jibunAddress;
+      const zEl = document.getElementById('cs-zonecode');
+      const a1El = document.getElementById('cs-address1');
+      const a2El = document.getElementById('cs-address2');
+      if (zEl) zEl.value = data.zonecode || '';
+      if (a1El) {
+        a1El.value = base || '';
+        a1El.classList.remove('err');
+      }
+      if (a2El) a2El.focus();
+      csHideAlert();
+    },
+  }).open();
+}
+
+function csBuildAddress() {
+  const a1 = (document.getElementById('cs-address1')?.value || '').trim();
+  const a2 = (document.getElementById('cs-address2')?.value || '').trim();
+  if (!a1) return '';
+  return a2 ? `${a1} (${a2})` : a1;
+}
+
+// ── SMS 인증코드 발송 ──
+// ※ SMS 발송 엔드포인트는 SmsController 확인 후 정확히 맞출 것.
+//   현재 가정: POST /api/sms/send  { phone }
+async function csSendSms() {
+  const phoneEl = document.getElementById('cs-phone');
+  const phone = phoneEl.value.trim();
+  if (!/^010-\d{4}-\d{4}$/.test(phone)) {
+    csAlert('전화번호 형식이 올바르지 않습니다. (010-XXXX-XXXX)');
+    phoneEl.classList.add('err');
+    return;
+  }
+
+  csSetBtnLoading('cs-btn-sms', true);
+  try {
+    // SmsController: POST /api/auth/sms/send  { phone }
+    await api.post('/api/auth/sms/send', { phone });
+    _csSmsSent = true;
+    csAlert('인증번호가 발송되었습니다. 문자를 확인해주세요.', 'success');
+
+    // SMS 입력칸 노출 + 타이머
+    const codeGroup = document.getElementById('cs-sms-group');
+    if (codeGroup) codeGroup.style.display = '';
+    csStartSmsTimer();
+
+    setTimeout(() => {
+      const c = document.getElementById('cs-smscode');
+      if (c) c.focus();
+    }, 200);
+  } catch (e) {
+    csAlert(e.message || 'SMS 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+  } finally {
+    csSetBtnLoading('cs-btn-sms', false);
+  }
+}
+
+function csStartSmsTimer() {
+  _csSmsRemain = 180;
+  csUpdateSmsTimer();
+  if (_csSmsTimer) clearInterval(_csSmsTimer);
+  _csSmsTimer = setInterval(() => {
+    _csSmsRemain--;
+    csUpdateSmsTimer();
+    if (_csSmsRemain <= 0) {
+      clearInterval(_csSmsTimer);
+      _csSmsTimer = null;
+      csAlert('인증번호가 만료되었습니다. 다시 발송해주세요.');
+    }
+  }, 1000);
+}
+
+function csUpdateSmsTimer() {
+  const mm = String(Math.floor(_csSmsRemain / 60)).padStart(2, '0');
+  const ss = String(_csSmsRemain % 60).padStart(2, '0');
+  const el = document.getElementById('cs-sms-timer');
+  if (el) el.textContent = `${mm}:${ss}`;
+}
+
+// ── 추가정보 제출 (complete-signup) ──
+async function csSubmit() {
+  const name = document.getElementById('cs-name').value.trim();
+  const phone = document.getElementById('cs-phone').value.trim();
+  const smsCode = document.getElementById('cs-smscode').value.trim();
+  const address = csBuildAddress();
+
+  if (!name || name.length < 2 || name.length > 10) {
+    csAlert('이름은 2~10자 사이여야 합니다.');
+    document.getElementById('cs-name').classList.add('err');
+    return;
+  }
+  if (!/^010-\d{4}-\d{4}$/.test(phone)) {
+    csAlert('전화번호 형식이 올바르지 않습니다. (010-XXXX-XXXX)');
+    document.getElementById('cs-phone').classList.add('err');
+    return;
+  }
+  if (!_csSmsSent) {
+    csAlert('휴대폰 인증을 먼저 진행해주세요.');
+    return;
+  }
+  if (!/^\d{6}$/.test(smsCode)) {
+    csAlert('인증번호 6자리를 입력해주세요.');
+    document.getElementById('cs-smscode').classList.add('err');
+    return;
+  }
+  if (!address) {
+    csAlert('주소를 입력해주세요. (주소 검색 버튼을 눌러주세요)');
+    document.getElementById('cs-address1').classList.add('err');
+    return;
+  }
+  if (address.length > 500) {
+    csAlert('주소가 너무 깁니다. (상세주소를 줄여주세요)');
+    document.getElementById('cs-address2').classList.add('err');
+    return;
+  }
+
+  csSetBtnLoading('cs-btn-submit', true);
+  try {
+    // PATCH /api/auth/complete-signup
+    //   인증: api.js가 저장된 accessToken을 Authorization 헤더에 자동 첨부
+    //   (백엔드 @AuthenticationPrincipal User 로 식별)
+    await api.patch('/api/auth/complete-signup', {
+      name,
+      phone,
+      address,
+      smsCode,
+    });
+
+    if (_csSmsTimer) clearInterval(_csSmsTimer);
+    showToast('가입이 완료되었습니다! 환영해요 🎉', 'success');
+
+    // 모달 닫고 후속 처리
+    const overlay = document.getElementById('cs-modal-overlay');
+    if (overlay) overlay.classList.remove('show');
+    document.body.style.overflow = '';
+
+    setTimeout(() => {
+      handleAfterLogin(getRole());
+    }, 900);
+  } catch (e) {
+    csAlert(e.message || '가입 완료에 실패했습니다. 입력 정보를 확인해주세요.');
+  } finally {
+    csSetBtnLoading('cs-btn-submit', false);
+  }
+}
+
+// ── 모달 헬퍼 ──
+function csAlert(msg, type = 'error') {
+  const el = document.getElementById('cs-alert');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `alert-banner show ${type}`;
+  if (type === 'success') setTimeout(() => el.classList.remove('show'), 3000);
+}
+function csHideAlert() {
+  const el = document.getElementById('cs-alert');
+  if (el) el.classList.remove('show');
+}
+function csSetBtnLoading(btnId, on) {
+  const btn = document.getElementById(btnId);
+  if (btn) btn.disabled = on;
 }
 
 // ── 이메일 패널 토글 ─────────────────────────────────────────────
@@ -154,10 +367,14 @@ document.addEventListener('DOMContentLoaded', () => {
   handleOAuthCallback();
 
   // 2. 이미 로그인된 상태면 홈으로
-  if (
-    !new URLSearchParams(window.location.search).get('accessToken') &&
-    isLoggedIn()
-  ) {
+  //    단, 카카오 콜백(신규 모달 표시 중)이면 리다이렉트 금지
+  const hasCallback = new URLSearchParams(window.location.search).get(
+    'accessToken',
+  );
+  const modalOpen = document
+    .getElementById('cs-modal-overlay')
+    ?.classList.contains('show');
+  if (!hasCallback && !modalOpen && isLoggedIn()) {
     window.location.href = 'index.html';
     return;
   }
@@ -167,6 +384,13 @@ document.addEventListener('DOMContentLoaded', () => {
     el.addEventListener('input', function () {
       this.classList.remove('err');
       hideEmailAlert();
+      csHideAlert();
     });
   });
+
+  // 4. 모달 전화번호 자동 포맷
+  const csPhone = document.getElementById('cs-phone');
+  if (csPhone) {
+    csPhone.addEventListener('input', () => csFormatPhone(csPhone));
+  }
 });

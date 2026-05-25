@@ -17,6 +17,9 @@
 
   <!-- 로그인 전용 CSS -->
   <link rel="stylesheet" href="css/logoin/login.css">
+
+  <!-- 카카오 추가정보 모달 CSS (신규) -->
+  <link rel="stylesheet" href="css/logoin/cs-modal.css">
 </head>
 <body>
 
@@ -118,6 +121,59 @@
   </div><!-- /login-card -->
 </main>
 
+<!-- ════ 카카오 추가정보 입력 모달 (PENDING_PROFILE → ACTIVE) ════ -->
+<div class="cs-modal-overlay" id="cs-modal-overlay">
+  <div class="cs-modal">
+    <div class="cs-modal-head">
+      <div class="cs-modal-title">추가 정보 입력</div>
+      <p class="cs-modal-greet" id="cs-greeting">가입을 위해 정보를 입력해주세요</p>
+    </div>
+
+    <div class="alert-banner" id="cs-alert"></div>
+
+    <div class="cs-modal-body">
+      <!-- 이름 -->
+      <div class="form-group">
+        <label class="form-label" for="cs-name">이름</label>
+        <input type="text" id="cs-name" class="form-input" placeholder="실명을 입력하세요" maxlength="10" autocomplete="name">
+      </div>
+
+      <!-- 전화번호 + SMS 발송 -->
+      <div class="form-group">
+        <label class="form-label" for="cs-phone">휴대폰 번호</label>
+        <div class="input-with-btn">
+          <input type="tel" id="cs-phone" class="form-input" placeholder="010-0000-0000" maxlength="13" autocomplete="tel">
+          <button type="button" class="btn-action" id="cs-btn-sms" onclick="csSendSms()">인증번호 받기</button>
+        </div>
+      </div>
+
+      <!-- SMS 인증코드 (발송 후 노출) -->
+      <div class="form-group" id="cs-sms-group" style="display:none;">
+        <label class="form-label" for="cs-smscode">인증번호</label>
+        <input type="text" id="cs-smscode" class="form-input" placeholder="6자리 숫자" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+        <div class="cs-sms-timer-row">
+          <span class="cs-sms-timer" id="cs-sms-timer">03:00</span>
+          <button type="button" class="cs-sms-resend" onclick="csSendSms()">재발송</button>
+        </div>
+      </div>
+
+      <!-- 주소 (다음 우편번호) -->
+      <div class="form-group">
+        <label class="form-label" for="cs-address1">주소</label>
+        <div class="input-with-btn">
+          <input type="text" id="cs-zonecode" class="form-input" placeholder="우편번호" readonly style="max-width:120px;">
+          <button type="button" class="btn-action" onclick="csOpenPostcode()">주소 검색</button>
+        </div>
+        <input type="text" id="cs-address1" class="form-input" placeholder="기본주소 (검색 버튼을 눌러주세요)" readonly style="margin-top:8px;" onclick="csOpenPostcode()">
+        <input type="text" id="cs-address2" class="form-input" placeholder="상세주소 (동·호수 등)" maxlength="100" autocomplete="address-line2" style="margin-top:8px;">
+      </div>
+
+      <button class="btn-cs-submit" id="cs-btn-submit" onclick="csSubmit()">가입 완료</button>
+      <p class="cs-modal-note">입력하신 정보는 상담·배송 안내에만 사용됩니다.</p>
+    </div>
+  </div>
+</div>
+
 <!-- ── 카카오 플로팅 버튼 ── -->
 <div class="kakao-float">
   <button class="kakao-btn" onclick="openKakao()" aria-label="카카오 상담">
@@ -127,6 +183,9 @@
   </button>
   <div class="kakao-label">카카오 상담</div>
 </div>
+
+<!-- ── 다음(카카오) 우편번호 API ── -->
+<script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 <!-- ── JS (공통 → 로그인 전용 순서) ── -->
 <script src="js/common/utils.js"></script>
