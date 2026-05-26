@@ -16,6 +16,10 @@ async function socialLogin(provider) {
   }
 }
 
+// ── 카카오 가입 진행 중 보관 값 ──────────────────────────────────
+let _csNickname = '';
+let _csAgreeMarketing = false;
+
 // ── 카카오 OAuth 콜백 처리 ───────────────────────────────────────
 function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
@@ -43,10 +47,10 @@ function handleOAuthCallback() {
     window.history.replaceState({}, document.title, '/login.html');
 
     if (isNewUser) {
-      // ── 신규 카카오 회원 → 추가정보 입력 모달 ──
-      // 백엔드가 PENDING_PROFILE 상태로 생성. 이름/전화(SMS)/주소를
-      // 입력받아 PATCH /api/auth/complete-signup 으로 ACTIVE 전환해야 함.
-      openCompleteSignupModal(nickname);
+      // ── 신규 카카오 회원 → [1단계] 약관 동의 모달 ──
+      // 동의 완료 시 [2단계] 추가정보 모달로 이어짐.
+      _csNickname = nickname || '';
+      openAgreementModal();
     } else {
       showToast(`다시 오셨군요, ${nickname || ''}님! 😊`, 'success');
       setTimeout(() => {
@@ -79,26 +83,105 @@ function handleAfterLogin(role) {
 }
 
 // ════════════════════════════════════════════════════════════════
-// 카카오 추가정보 입력 모달 (PENDING_PROFILE → ACTIVE)
+// [1단계] 약관 동의 모달
+//   필수: 이용약관, 개인정보처리방침 / 선택: 마케팅
+//   필수 약관(이용약관/개인정보)은 백엔드 createNewUser에서 이미 true.
+//   여기선 사용자 동의를 받는 절차 + 마케팅 동의값만 백엔드로 전달.
+// ════════════════════════════════════════════════════════════════
+function openAgreementModal() {
+  const overlay = document.getElementById('ag-modal-overlay');
+  if (!overlay) {
+    // 동의 모달 DOM 없으면 폴백 — 바로 추가정보 모달로
+    console.error('[agreement] 모달 DOM 없음 → 추가정보 모달로 폴백');
+    openCompleteSignupModal();
+    return;
+  }
+  // 초기화
+  ['ag-all', 'ag-terms', 'ag-privacy', 'ag-marketing'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = false;
+  });
+  agHideAlert();
+  overlay.classList.add('show');
+  document.body.style.overflow = 'hidden';
+}
+
+// 전체 동의 토글
+function agToggleAll(master) {
+  const checked = master.checked;
+  ['ag-terms', 'ag-privacy', 'ag-marketing'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.checked = checked;
+  });
+  agHideAlert();
+}
+
+// 개별 체크 → 전체동의 체크 동기화
+function agSyncAll() {
+  const t = document.getElementById('ag-terms')?.checked;
+  const p = document.getElementById('ag-privacy')?.checked;
+  const m = document.getElementById('ag-marketing')?.checked;
+  const all = document.getElementById('ag-all');
+  if (all) all.checked = t && p && m;
+  agHideAlert();
+}
+
+// 동의 완료 → 추가정보 모달로
+function agSubmit() {
+  const terms = document.getElementById('ag-terms')?.checked;
+  const privacy = document.getElementById('ag-privacy')?.checked;
+  const marketing = document.getElementById('ag-marketing')?.checked;
+
+  if (!terms || !privacy) {
+    agAlert('필수 약관(이용약관·개인정보처리방침)에 동의해주세요.');
+    return;
+  }
+
+  // 마케팅 동의값 보관 (추가정보 제출 시 함께 전송)
+  _csAgreeMarketing = !!marketing;
+
+  // 동의 모달 닫고 → 추가정보 모달 오픈
+  const overlay = document.getElementById('ag-modal-overlay');
+  if (overlay) overlay.classList.remove('show');
+  openCompleteSignupModal();
+}
+
+function agAlert(msg) {
+  const el = document.getElementById('ag-alert');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = 'alert-banner show error';
+}
+function agHideAlert() {
+  const el = document.getElementById('ag-alert');
+  if (el) el.classList.remove('show');
+}
+
+// ════════════════════════════════════════════════════════════════
+// [2단계] 카카오 추가정보 입력 모달 (PENDING_PROFILE → ACTIVE)
 // 입력: 이름 / 전화번호 + SMS 인증 / 주소(다음 우편번호)
-// 제출: PATCH /api/auth/complete-signup  { name, phone, address, smsCode }
+// 제출: PATCH /api/auth/complete-signup
+//        { name, phone, address, smsCode, agreeMarketing }
 //   인증: 콜백에서 받은 accessToken (saveTokens로 저장됨) 자동 사용
 // ════════════════════════════════════════════════════════════════
 let _csSmsSent = false;
 let _csSmsTimer = null;
 let _csSmsRemain = 180;
 
-function openCompleteSignupModal(nickname) {
+function openCompleteSignupModal() {
   const overlay = document.getElementById('cs-modal-overlay');
   if (!overlay) {
-    // 모달 DOM이 없으면 안전 폴백 — 홈으로 (정상 배포 시 발생하지 않음)
     console.error('[completeSignup] 모달 DOM 없음');
     window.location.href = 'index.html';
     return;
   }
   const greet = document.getElementById('cs-greeting');
-  if (greet)
-    greet.textContent = `${nickname || ''}님, 가입을 위해 정보를 입력해주세요`;
+  if (greet) {
+    // 닉네임 있으면 "○○님, ..." / 없으면 깔끔한 고정 문구
+    greet.textContent = _csNickname
+      ? `${_csNickname}님, 가입을 위해 정보를 입력해주세요`
+      : '가입을 위해 정보를 입력해주세요';
+  }
 
   overlay.classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -152,8 +235,6 @@ function csBuildAddress() {
 }
 
 // ── SMS 인증코드 발송 ──
-// ※ SMS 발송 엔드포인트는 SmsController 확인 후 정확히 맞출 것.
-//   현재 가정: POST /api/sms/send  { phone }
 async function csSendSms() {
   const phoneEl = document.getElementById('cs-phone');
   const phone = phoneEl.value.trim();
@@ -248,13 +329,13 @@ async function csSubmit() {
   csSetBtnLoading('cs-btn-submit', true);
   try {
     // PATCH /api/auth/complete-signup
-    //   인증: api.js가 저장된 accessToken을 Authorization 헤더에 자동 첨부
-    //   (백엔드 @AuthenticationPrincipal User 로 식별)
+    //   marketing: 동의 모달에서 보관한 값 함께 전송
     await api.patch('/api/auth/complete-signup', {
       name,
       phone,
       address,
       smsCode,
+      agreeMarketing: _csAgreeMarketing,
     });
 
     if (_csSmsTimer) clearInterval(_csSmsTimer);
@@ -371,10 +452,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const hasCallback = new URLSearchParams(window.location.search).get(
     'accessToken',
   );
-  const modalOpen = document
+  const agOpen = document
+    .getElementById('ag-modal-overlay')
+    ?.classList.contains('show');
+  const csOpen = document
     .getElementById('cs-modal-overlay')
     ?.classList.contains('show');
-  if (!hasCallback && !modalOpen && isLoggedIn()) {
+  if (!hasCallback && !agOpen && !csOpen && isLoggedIn()) {
     window.location.href = 'index.html';
     return;
   }
