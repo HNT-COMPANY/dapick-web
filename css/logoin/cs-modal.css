@@ -255,3 +255,11 @@
 .ag-link:hover {
   color: var(--purple, #6c3fc5);
 }
+
+/* ── SMS 인증 완료 표시 ── */
+.cs-sms-verified {
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: #2b8a3e;
+}

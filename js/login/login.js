@@ -163,8 +163,14 @@ function agHideAlert() {
 // 제출: PATCH /api/auth/complete-signup
 //        { name, phone, address, smsCode, agreeMarketing }
 //   인증: 콜백에서 받은 accessToken (saveTokens로 저장됨) 자동 사용
+//
+// SMS 인증 흐름 (확인 버튼 + 인증 강제):
+//   인증번호 받기 → 코드 입력 → [확인] 버튼(/sms/verify=peek)
+//     → 성공: "인증 완료" 표시 + 코드칸 잠금 + 가입완료 버튼 활성화
+//   가입완료 → /complete-signup → 백엔드 consumeCode(최종 소비)
 // ════════════════════════════════════════════════════════════════
 let _csSmsSent = false;
+let _csSmsVerified = false; // "확인" 버튼으로 인증 성공했는지
 let _csSmsTimer = null;
 let _csSmsRemain = 180;
 
@@ -249,7 +255,24 @@ async function csSendSms() {
     // SmsController: POST /api/auth/sms/send  { phone }
     await api.post('/api/auth/sms/send', { phone });
     _csSmsSent = true;
+    _csSmsVerified = false; // 재발송 시 인증 상태 리셋
     csAlert('인증번호가 발송되었습니다. 문자를 확인해주세요.', 'success');
+
+    // 재발송 대비 UI 초기화
+    const okEl = document.getElementById('cs-sms-verified');
+    if (okEl) okEl.style.display = 'none';
+    const codeEl = document.getElementById('cs-smscode');
+    if (codeEl) {
+      codeEl.readOnly = false;
+      codeEl.value = '';
+    }
+    const verifyBtn = document.getElementById('cs-btn-verify');
+    if (verifyBtn) {
+      verifyBtn.disabled = false;
+      verifyBtn.textContent = '확인';
+    }
+    const submitBtn = document.getElementById('cs-btn-submit');
+    if (submitBtn) submitBtn.disabled = true; // 가입완료 다시 잠금
 
     // SMS 입력칸 노출 + 타이머
     const codeGroup = document.getElementById('cs-sms-group');
@@ -264,6 +287,64 @@ async function csSendSms() {
     csAlert(e.message || 'SMS 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
   } finally {
     csSetBtnLoading('cs-btn-sms', false);
+  }
+}
+
+// ── SMS 인증코드 확인 ("확인" 버튼 → /sms/verify = peek) ──
+async function csVerifySms() {
+  const phone = document.getElementById('cs-phone').value.trim();
+  const code = document.getElementById('cs-smscode').value.trim();
+
+  if (!_csSmsSent) {
+    csAlert('인증번호를 먼저 받아주세요.');
+    return;
+  }
+  if (!/^\d{6}$/.test(code)) {
+    csAlert('인증번호 6자리를 입력해주세요.');
+    document.getElementById('cs-smscode').classList.add('err');
+    return;
+  }
+
+  csSetBtnLoading('cs-btn-verify', true);
+  try {
+    // POST /api/auth/sms/verify { phone, code }  ← peek (코드 소비 안 함)
+    await api.post('/api/auth/sms/verify', { phone, code });
+
+    // 인증 성공 처리
+    _csSmsVerified = true;
+
+    // 인증완료 표시 노출
+    const okEl = document.getElementById('cs-sms-verified');
+    if (okEl) okEl.style.display = '';
+
+    // 코드 입력칸 + 확인 버튼 잠금 (인증 후 변경 방지)
+    const codeEl = document.getElementById('cs-smscode');
+    const verifyBtn = document.getElementById('cs-btn-verify');
+    if (codeEl) codeEl.readOnly = true;
+    if (verifyBtn) {
+      verifyBtn.disabled = true;
+      verifyBtn.textContent = '인증완료';
+    }
+
+    // 타이머 정지
+    if (_csSmsTimer) {
+      clearInterval(_csSmsTimer);
+      _csSmsTimer = null;
+    }
+
+    // 가입완료 버튼 활성화
+    const submitBtn = document.getElementById('cs-btn-submit');
+    if (submitBtn) submitBtn.disabled = false;
+
+    csAlert('인증이 완료되었습니다.', 'success');
+  } catch (e) {
+    _csSmsVerified = false;
+    csAlert(e.message || '인증에 실패했습니다. 인증번호를 확인해주세요.');
+    document.getElementById('cs-smscode').classList.add('err');
+  } finally {
+    // 성공 시엔 위에서 이미 disabled=true 처리됨.
+    // 실패 시에만 로딩 해제되어 다시 누를 수 있음.
+    if (!_csSmsVerified) csSetBtnLoading('cs-btn-verify', false);
   }
 }
 
@@ -315,6 +396,10 @@ async function csSubmit() {
     document.getElementById('cs-smscode').classList.add('err');
     return;
   }
+  if (!_csSmsVerified) {
+    csAlert('인증번호 "확인" 버튼을 눌러 인증을 완료해주세요.');
+    return;
+  }
   if (!address) {
     csAlert('주소를 입력해주세요. (주소 검색 버튼을 눌러주세요)');
     document.getElementById('cs-address1').classList.add('err');
@@ -330,6 +415,7 @@ async function csSubmit() {
   try {
     // PATCH /api/auth/complete-signup
     //   marketing: 동의 모달에서 보관한 값 함께 전송
+    //   백엔드는 consumeCode로 인증코드 최종 소비
     await api.patch('/api/auth/complete-signup', {
       name,
       phone,
@@ -351,7 +437,7 @@ async function csSubmit() {
     }, 900);
   } catch (e) {
     csAlert(e.message || '가입 완료에 실패했습니다. 입력 정보를 확인해주세요.');
-  } finally {
+    // 가입완료 단계에서 인증 소비 실패(만료 등) 시 다시 인증하도록 유도
     csSetBtnLoading('cs-btn-submit', false);
   }
 }
@@ -476,5 +562,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const csPhone = document.getElementById('cs-phone');
   if (csPhone) {
     csPhone.addEventListener('input', () => csFormatPhone(csPhone));
+  }
+
+  // 5. 인증코드 입력 변경 시 인증 상태 리셋 (인증 후 코드 바꿔치기 방지)
+  const csCode = document.getElementById('cs-smscode');
+  if (csCode) {
+    csCode.addEventListener('input', () => {
+      if (_csSmsVerified) {
+        _csSmsVerified = false;
+        const okEl = document.getElementById('cs-sms-verified');
+        if (okEl) okEl.style.display = 'none';
+        const submitBtn = document.getElementById('cs-btn-submit');
+        if (submitBtn) submitBtn.disabled = true;
+      }
+    });
   }
 });
