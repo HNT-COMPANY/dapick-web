@@ -28,6 +28,7 @@ function handleOAuthCallback() {
   const role = params.get('role');
   const nickname = params.get('nickname');
   const isNewUser = params.get('isNewUser') === 'true';
+  const status = params.get('status');
   const error = params.get('error');
 
   // 에러 처리
@@ -46,7 +47,7 @@ function handleOAuthCallback() {
     // URL 파라미터 제거
     window.history.replaceState({}, document.title, '/login.html');
 
-    if (isNewUser) {
+    if (status === 'PENDING_PROFILE') {
       // ── 신규 카카오 회원 → [1단계] 약관 동의 모달 ──
       // 동의 완료 시 [2단계] 추가정보 모달로 이어짐.
       _csNickname = nickname || '';
