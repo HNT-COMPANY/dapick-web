@@ -1,26 +1,33 @@
-// ── 카카오 소셜 로그인 ────────────────────────────────────────────
+// Kakao social login
 async function socialLogin(provider) {
   if (provider === 'kakao') {
     try {
       const data = await api.get('/oauth2/kakao/url');
       window.location.href = data.url;
     } catch (e) {
-      showToast('카카오 로그인 연결에 실패했습니다.', 'error');
+      showToast(
+        '\uCE74\uCE74\uC624 \uB85C\uADF8\uC778 \uC5F0\uACB0\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4.',
+        'error',
+      );
     }
   } else {
-    const names = { naver: '네이버', apple: 'Apple' };
+    const names = { naver: '\uB124\uC774\uBC84', apple: 'Apple' };
     showToast(
-      `${names[provider]} 로그인 준비 중입니다. 곧 오픈해요! 🙏`,
+      `${names[provider]} \uB85C\uADF8\uC778 \uC900\uBE44 \uC911\uC785\uB2C8\uB2E4. \uACE7 \uC624\uD508\uD574\uC694! \uD83D\uDE4F`,
       'info',
     );
   }
 }
 
-// ── 카카오 가입 진행 중 보관 값 ──────────────────────────────────
+// kakao signup temp values
 let _csNickname = '';
 let _csAgreeMarketing = false;
 
-// ── 카카오 OAuth 콜백 처리 ───────────────────────────────────────
+// Pending lock flag - true while the user MUST complete signup.
+// When true: modal cannot be escaped (back button blocked).
+let _csPendingLock = false;
+
+// Kakao OAuth callback handler
 function handleOAuthCallback() {
   const params = new URLSearchParams(window.location.search);
   const accessToken = params.get('accessToken');
@@ -31,29 +38,31 @@ function handleOAuthCallback() {
   const status = params.get('status');
   const error = params.get('error');
 
-  // 에러 처리
   if (error) {
-    showToast('카카오 로그인에 실패했습니다. 다시 시도해주세요.', 'error');
+    showToast(
+      '\uCE74\uCE74\uC624 \uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.',
+      'error',
+    );
     window.history.replaceState({}, document.title, '/login.html');
     return;
   }
 
-  // 로그인 성공
   if (accessToken && refreshToken) {
-    // 토큰 저장 (신규/기존 공통 — 신규 유저는 PENDING_PROFILE이지만
-    // complete-signup 호출에 이 accessToken이 필요하므로 저장한다)
-    saveTokens(accessToken, refreshToken, role, nickname);
-
-    // URL 파라미터 제거
+    // save tokens incl. status (PENDING_PROFILE user also needs accessToken)
+    saveTokens(accessToken, refreshToken, role, nickname, status);
     window.history.replaceState({}, document.title, '/login.html');
 
+    // Show signup modal when profile is incomplete (PENDING_PROFILE),
+    // regardless of new/returning. Back-button re-login resumes the
+    // existing PENDING account (prevents duplicate accounts).
     if (status === 'PENDING_PROFILE') {
-      // ── 신규 카카오 회원 → [1단계] 약관 동의 모달 ──
-      // 동의 완료 시 [2단계] 추가정보 모달로 이어짐.
       _csNickname = nickname || '';
       openAgreementModal();
     } else {
-      showToast(`다시 오셨군요, ${nickname || ''}님! 😊`, 'success');
+      showToast(
+        `\uB2E4\uC2DC \uC624\uC168\uAD70\uC694, ${nickname || ''}\uB2D8! \uD83D\uDE0A`,
+        'success',
+      );
       setTimeout(() => {
         handleAfterLogin(role);
       }, 1000);
@@ -61,15 +70,13 @@ function handleOAuthCallback() {
   }
 }
 
-// ── 로그인 성공 후 처리 (공통) ───────────────────────────────────
+// after-login routing
 function handleAfterLogin(role) {
-  // 1. 어드민이면 어드민 페이지로
   if (role === 'LV4_ADMIN') {
     window.location.href = 'https://admin.dapick.co.kr';
     return;
   }
 
-  // 2. pending 카카오 상담 있으면 처리
   const pendingConsult = sessionStorage.getItem('pending_kakao_consult');
   if (pendingConsult) {
     const redirect =
@@ -79,25 +86,54 @@ function handleAfterLogin(role) {
     return;
   }
 
-  // 3. 그냥 홈으로
   window.location.href = 'index.html';
 }
 
-// ════════════════════════════════════════════════════════════════
-// [1단계] 약관 동의 모달
-//   필수: 이용약관, 개인정보처리방침 / 선택: 마케팅
-//   필수 약관(이용약관/개인정보)은 백엔드 createNewUser에서 이미 true.
-//   여기선 사용자 동의를 받는 절차 + 마케팅 동의값만 백엔드로 전달.
-// ════════════════════════════════════════════════════════════════
+// ============================================================
+// PENDING LOCK - trap the user in the signup modal.
+// No close button exists in the modal HTML, so we only need to
+// block the browser back button while pending. Combined with the
+// page guard in gnb-user.js (which bounces any other page back to
+// login.html), the user cannot leave until signup completes.
+// ============================================================
+function engagePendingLock() {
+  if (_csPendingLock) return;
+  _csPendingLock = true;
+
+  // Push a sentinel history entry so the first "back" lands here,
+  // then re-push on every popstate to keep the user pinned.
+  history.pushState({ csLock: true }, document.title, location.href);
+  window.addEventListener('popstate', onPendingPopstate);
+}
+
+function onPendingPopstate() {
+  if (!_csPendingLock) return;
+  // Re-pin: undo the back navigation by pushing the sentinel again.
+  history.pushState({ csLock: true }, document.title, location.href);
+  csAlert(
+    '\uAC00\uC785\uC744 \uC644\uB8CC\uD574\uC57C \uC11C\uBE44\uC2A4\uB97C \uC774\uC6A9\uD560 \uC218 \uC788\uC2B5\uB2C8\uB2E4.',
+  );
+}
+
+function releasePendingLock() {
+  _csPendingLock = false;
+  window.removeEventListener('popstate', onPendingPopstate);
+}
+
+// ============================================================
+// [Step 1] agreement modal
+// ============================================================
 function openAgreementModal() {
+  engagePendingLock(); // lock as soon as the signup flow starts
+
   const overlay = document.getElementById('ag-modal-overlay');
   if (!overlay) {
-    // 동의 모달 DOM 없으면 폴백 — 바로 추가정보 모달로
-    console.error('[agreement] 모달 DOM 없음 → 추가정보 모달로 폴백');
+    console.error(
+      '[agreement] modal DOM missing -> fallback to complete-signup modal',
+    );
     openCompleteSignupModal();
     return;
   }
-  // 초기화
   ['ag-all', 'ag-terms', 'ag-privacy', 'ag-marketing'].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.checked = false;
@@ -107,7 +143,6 @@ function openAgreementModal() {
   document.body.style.overflow = 'hidden';
 }
 
-// 전체 동의 토글
 function agToggleAll(master) {
   const checked = master.checked;
   ['ag-terms', 'ag-privacy', 'ag-marketing'].forEach((id) => {
@@ -117,7 +152,6 @@ function agToggleAll(master) {
   agHideAlert();
 }
 
-// 개별 체크 → 전체동의 체크 동기화
 function agSyncAll() {
   const t = document.getElementById('ag-terms')?.checked;
   const p = document.getElementById('ag-privacy')?.checked;
@@ -127,21 +161,20 @@ function agSyncAll() {
   agHideAlert();
 }
 
-// 동의 완료 → 추가정보 모달로
 function agSubmit() {
   const terms = document.getElementById('ag-terms')?.checked;
   const privacy = document.getElementById('ag-privacy')?.checked;
   const marketing = document.getElementById('ag-marketing')?.checked;
 
   if (!terms || !privacy) {
-    agAlert('필수 약관(이용약관·개인정보처리방침)에 동의해주세요.');
+    agAlert(
+      '\uD544\uC218 \uC57D\uAD00(\uC774\uC6A9\uC57D\uAD00\u00B7\uAC1C\uC778\uC815\uBCF4\uCC98\uB9AC\uBC29\uCE68)\uC5D0 \uB3D9\uC758\uD574\uC8FC\uC138\uC694.',
+    );
     return;
   }
 
-  // 마케팅 동의값 보관 (추가정보 제출 시 함께 전송)
   _csAgreeMarketing = !!marketing;
 
-  // 동의 모달 닫고 → 추가정보 모달 오픈
   const overlay = document.getElementById('ag-modal-overlay');
   if (overlay) overlay.classList.remove('show');
   openCompleteSignupModal();
@@ -158,43 +191,34 @@ function agHideAlert() {
   if (el) el.classList.remove('show');
 }
 
-// ════════════════════════════════════════════════════════════════
-// [2단계] 카카오 추가정보 입력 모달 (PENDING_PROFILE → ACTIVE)
-// 입력: 이름 / 전화번호 + SMS 인증 / 주소(다음 우편번호)
-// 제출: PATCH /api/auth/complete-signup
-//        { name, phone, address, smsCode, agreeMarketing }
-//   인증: 콜백에서 받은 accessToken (saveTokens로 저장됨) 자동 사용
-//
-// SMS 인증 흐름 (확인 버튼 + 인증 강제):
-//   인증번호 받기 → 코드 입력 → [확인] 버튼(/sms/verify=peek)
-//     → 성공: "인증 완료" 표시 + 코드칸 잠금 + 가입완료 버튼 활성화
-//   가입완료 → /complete-signup → 백엔드 consumeCode(최종 소비)
-// ════════════════════════════════════════════════════════════════
+// ============================================================
+// [Step 2] complete-signup modal (PENDING_PROFILE -> ACTIVE)
+// ============================================================
 let _csSmsSent = false;
-let _csSmsVerified = false; // "확인" 버튼으로 인증 성공했는지
+let _csSmsVerified = false;
 let _csSmsTimer = null;
 let _csSmsRemain = 180;
 
 function openCompleteSignupModal() {
+  engagePendingLock(); // ensure lock even if this modal is entered directly
+
   const overlay = document.getElementById('cs-modal-overlay');
   if (!overlay) {
-    console.error('[completeSignup] 모달 DOM 없음');
-    window.location.href = 'index.html';
+    console.error('[completeSignup] modal DOM missing');
     return;
   }
   const greet = document.getElementById('cs-greeting');
   if (greet) {
-    // 닉네임 있으면 "○○님, ..." / 없으면 깔끔한 고정 문구
     greet.textContent = _csNickname
-      ? `${_csNickname}님, 가입을 위해 정보를 입력해주세요`
-      : '가입을 위해 정보를 입력해주세요';
+      ? `${_csNickname}\uB2D8, \uAC00\uC785\uC744 \uC704\uD574 \uC815\uBCF4\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694`
+      : '\uAC00\uC785\uC744 \uC704\uD574 \uC815\uBCF4\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694';
   }
 
   overlay.classList.add('show');
   document.body.style.overflow = 'hidden';
 }
 
-// 전화번호 자동 포맷 (010-XXXX-XXXX)
+// phone auto-format (010-XXXX-XXXX)
 function csFormatPhone(input) {
   let v = input.value.replace(/\D/g, '');
   if (v.length > 11) v = v.slice(0, 11);
@@ -206,11 +230,11 @@ function csFormatPhone(input) {
   input.value = v;
 }
 
-// 다음 우편번호 검색
+// daum postcode search
 function csOpenPostcode() {
   if (typeof daum === 'undefined' || !daum.Postcode) {
     csAlert(
-      '주소 검색 서비스를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.',
+      '\uC8FC\uC18C \uAC80\uC0C9 \uC11C\uBE44\uC2A4\uB97C \uBD88\uB7EC\uC624\uC9C0 \uBABB\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.',
     );
     return;
   }
@@ -241,25 +265,28 @@ function csBuildAddress() {
   return a2 ? `${a1} (${a2})` : a1;
 }
 
-// ── SMS 인증코드 발송 ──
+// send SMS verification code
 async function csSendSms() {
   const phoneEl = document.getElementById('cs-phone');
   const phone = phoneEl.value.trim();
   if (!/^010-\d{4}-\d{4}$/.test(phone)) {
-    csAlert('전화번호 형식이 올바르지 않습니다. (010-XXXX-XXXX)');
+    csAlert(
+      '\uC804\uD654\uBC88\uD638 \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. (010-XXXX-XXXX)',
+    );
     phoneEl.classList.add('err');
     return;
   }
 
   csSetBtnLoading('cs-btn-sms', true);
   try {
-    // SmsController: POST /api/auth/sms/send  { phone }
     await api.post('/api/auth/sms/send', { phone });
     _csSmsSent = true;
-    _csSmsVerified = false; // 재발송 시 인증 상태 리셋
-    csAlert('인증번호가 발송되었습니다. 문자를 확인해주세요.', 'success');
+    _csSmsVerified = false;
+    csAlert(
+      '\uC778\uC99D\uBC88\uD638\uAC00 \uBC1C\uC1A1\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uBB38\uC790\uB97C \uD655\uC778\uD574\uC8FC\uC138\uC694.',
+      'success',
+    );
 
-    // 재발송 대비 UI 초기화
     const okEl = document.getElementById('cs-sms-verified');
     if (okEl) okEl.style.display = 'none';
     const codeEl = document.getElementById('cs-smscode');
@@ -270,12 +297,11 @@ async function csSendSms() {
     const verifyBtn = document.getElementById('cs-btn-verify');
     if (verifyBtn) {
       verifyBtn.disabled = false;
-      verifyBtn.textContent = '확인';
+      verifyBtn.textContent = '\uD655\uC778';
     }
     const submitBtn = document.getElementById('cs-btn-submit');
-    if (submitBtn) submitBtn.disabled = true; // 가입완료 다시 잠금
+    if (submitBtn) submitBtn.disabled = true;
 
-    // SMS 입력칸 노출 + 타이머
     const codeGroup = document.getElementById('cs-sms-group');
     if (codeGroup) codeGroup.style.display = '';
     csStartSmsTimer();
@@ -285,66 +311,71 @@ async function csSendSms() {
       if (c) c.focus();
     }, 200);
   } catch (e) {
-    csAlert(e.message || 'SMS 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+    csAlert(
+      e.message ||
+        'SMS \uBC1C\uC1A1\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC7A0\uC2DC \uD6C4 \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.',
+    );
   } finally {
     csSetBtnLoading('cs-btn-sms', false);
   }
 }
 
-// ── SMS 인증코드 확인 ("확인" 버튼 → /sms/verify = peek) ──
+// verify SMS code ("verify" button -> /sms/verify = peek, does NOT consume)
 async function csVerifySms() {
   const phone = document.getElementById('cs-phone').value.trim();
   const code = document.getElementById('cs-smscode').value.trim();
 
   if (!_csSmsSent) {
-    csAlert('인증번호를 먼저 받아주세요.');
+    csAlert(
+      '\uC778\uC99D\uBC88\uD638\uB97C \uBA3C\uC800 \uBC1B\uC544\uC8FC\uC138\uC694.',
+    );
     return;
   }
   if (!/^\d{6}$/.test(code)) {
-    csAlert('인증번호 6자리를 입력해주세요.');
+    csAlert(
+      '\uC778\uC99D\uBC88\uD638 6\uC790\uB9AC\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694.',
+    );
     document.getElementById('cs-smscode').classList.add('err');
     return;
   }
 
   csSetBtnLoading('cs-btn-verify', true);
   try {
-    // POST /api/auth/sms/verify { phone, code }  ← peek (코드 소비 안 함)
     await api.post('/api/auth/sms/verify', { phone, code });
 
-    // 인증 성공 처리
     _csSmsVerified = true;
 
-    // 인증완료 표시 노출
     const okEl = document.getElementById('cs-sms-verified');
     if (okEl) okEl.style.display = '';
 
-    // 코드 입력칸 + 확인 버튼 잠금 (인증 후 변경 방지)
     const codeEl = document.getElementById('cs-smscode');
     const verifyBtn = document.getElementById('cs-btn-verify');
     if (codeEl) codeEl.readOnly = true;
     if (verifyBtn) {
       verifyBtn.disabled = true;
-      verifyBtn.textContent = '인증완료';
+      verifyBtn.textContent = '\uC778\uC99D\uC644\uB8CC';
     }
 
-    // 타이머 정지
     if (_csSmsTimer) {
       clearInterval(_csSmsTimer);
       _csSmsTimer = null;
     }
 
-    // 가입완료 버튼 활성화
     const submitBtn = document.getElementById('cs-btn-submit');
     if (submitBtn) submitBtn.disabled = false;
 
-    csAlert('인증이 완료되었습니다.', 'success');
+    csAlert(
+      '\uC778\uC99D\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4.',
+      'success',
+    );
   } catch (e) {
     _csSmsVerified = false;
-    csAlert(e.message || '인증에 실패했습니다. 인증번호를 확인해주세요.');
+    csAlert(
+      e.message ||
+        '\uC778\uC99D\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC778\uC99D\uBC88\uD638\uB97C \uD655\uC778\uD574\uC8FC\uC138\uC694.',
+    );
     document.getElementById('cs-smscode').classList.add('err');
   } finally {
-    // 성공 시엔 위에서 이미 disabled=true 처리됨.
-    // 실패 시에만 로딩 해제되어 다시 누를 수 있음.
     if (!_csSmsVerified) csSetBtnLoading('cs-btn-verify', false);
   }
 }
@@ -359,7 +390,9 @@ function csStartSmsTimer() {
     if (_csSmsRemain <= 0) {
       clearInterval(_csSmsTimer);
       _csSmsTimer = null;
-      csAlert('인증번호가 만료되었습니다. 다시 발송해주세요.');
+      csAlert(
+        '\uC778\uC99D\uBC88\uD638\uAC00 \uB9CC\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uBC1C\uC1A1\uD574\uC8FC\uC138\uC694.',
+      );
     }
   }, 1000);
 }
@@ -371,7 +404,7 @@ function csUpdateSmsTimer() {
   if (el) el.textContent = `${mm}:${ss}`;
 }
 
-// ── 추가정보 제출 (complete-signup) ──
+// submit complete-signup
 async function csSubmit() {
   const name = document.getElementById('cs-name').value.trim();
   const phone = document.getElementById('cs-phone').value.trim();
@@ -379,35 +412,49 @@ async function csSubmit() {
   const address = csBuildAddress();
 
   if (!name || name.length < 2 || name.length > 10) {
-    csAlert('이름은 2~10자 사이여야 합니다.');
+    csAlert(
+      '\uC774\uB984\uC740 2~10\uC790 \uC0AC\uC774\uC5EC\uC57C \uD569\uB2C8\uB2E4.',
+    );
     document.getElementById('cs-name').classList.add('err');
     return;
   }
   if (!/^010-\d{4}-\d{4}$/.test(phone)) {
-    csAlert('전화번호 형식이 올바르지 않습니다. (010-XXXX-XXXX)');
+    csAlert(
+      '\uC804\uD654\uBC88\uD638 \uD615\uC2DD\uC774 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4. (010-XXXX-XXXX)',
+    );
     document.getElementById('cs-phone').classList.add('err');
     return;
   }
   if (!_csSmsSent) {
-    csAlert('휴대폰 인증을 먼저 진행해주세요.');
+    csAlert(
+      '\uD734\uB300\uD3F0 \uC778\uC99D\uC744 \uBA3C\uC800 \uC9C4\uD589\uD574\uC8FC\uC138\uC694.',
+    );
     return;
   }
   if (!/^\d{6}$/.test(smsCode)) {
-    csAlert('인증번호 6자리를 입력해주세요.');
+    csAlert(
+      '\uC778\uC99D\uBC88\uD638 6\uC790\uB9AC\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694.',
+    );
     document.getElementById('cs-smscode').classList.add('err');
     return;
   }
   if (!_csSmsVerified) {
-    csAlert('인증번호 "확인" 버튼을 눌러 인증을 완료해주세요.');
+    csAlert(
+      '\uC778\uC99D\uBC88\uD638 "\uD655\uC778" \uBC84\uD2BC\uC744 \uB20C\uB7EC \uC778\uC99D\uC744 \uC644\uB8CC\uD574\uC8FC\uC138\uC694.',
+    );
     return;
   }
   if (!address) {
-    csAlert('주소를 입력해주세요. (주소 검색 버튼을 눌러주세요)');
+    csAlert(
+      '\uC8FC\uC18C\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694. (\uC8FC\uC18C \uAC80\uC0C9 \uBC84\uD2BC\uC744 \uB20C\uB7EC\uC8FC\uC138\uC694)',
+    );
     document.getElementById('cs-address1').classList.add('err');
     return;
   }
   if (address.length > 500) {
-    csAlert('주소가 너무 깁니다. (상세주소를 줄여주세요)');
+    csAlert(
+      '\uC8FC\uC18C\uAC00 \uB108\uBB34 \uAE41\uB2C8\uB2E4. (\uC0C1\uC138\uC8FC\uC18C\uB97C \uC904\uC5EC\uC8FC\uC138\uC694)',
+    );
     document.getElementById('cs-address2').classList.add('err');
     return;
   }
@@ -415,8 +462,7 @@ async function csSubmit() {
   csSetBtnLoading('cs-btn-submit', true);
   try {
     // PATCH /api/auth/complete-signup
-    //   marketing: 동의 모달에서 보관한 값 함께 전송
-    //   백엔드는 consumeCode로 인증코드 최종 소비
+    // backend uses consumeCode for final SMS code consumption
     await api.patch('/api/auth/complete-signup', {
       name,
       phone,
@@ -426,9 +472,17 @@ async function csSubmit() {
     });
 
     if (_csSmsTimer) clearInterval(_csSmsTimer);
-    showToast('가입이 완료되었습니다! 환영해요 🎉', 'success');
 
-    // 모달 닫고 후속 처리
+    // Signup complete -> mark ACTIVE and release the pending lock,
+    // so the guard / back-button block no longer apply.
+    if (typeof markActive === 'function') markActive();
+    releasePendingLock();
+
+    showToast(
+      '\uAC00\uC785\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4! \uD658\uC601\uD574\uC694 \uD83C\uDF89',
+      'success',
+    );
+
     const overlay = document.getElementById('cs-modal-overlay');
     if (overlay) overlay.classList.remove('show');
     document.body.style.overflow = '';
@@ -437,13 +491,15 @@ async function csSubmit() {
       handleAfterLogin(getRole());
     }, 900);
   } catch (e) {
-    csAlert(e.message || '가입 완료에 실패했습니다. 입력 정보를 확인해주세요.');
-    // 가입완료 단계에서 인증 소비 실패(만료 등) 시 다시 인증하도록 유도
+    csAlert(
+      e.message ||
+        '\uAC00\uC785 \uC644\uB8CC\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uC785\uB825 \uC815\uBCF4\uB97C \uD655\uC778\uD574\uC8FC\uC138\uC694.',
+    );
     csSetBtnLoading('cs-btn-submit', false);
   }
 }
 
-// ── 모달 헬퍼 ──
+// modal helpers
 function csAlert(msg, type = 'error') {
   const el = document.getElementById('cs-alert');
   if (!el) return;
@@ -460,7 +516,7 @@ function csSetBtnLoading(btnId, on) {
   if (btn) btn.disabled = on;
 }
 
-// ── 이메일 패널 토글 ─────────────────────────────────────────────
+// email panel toggle
 let emailOpen = false;
 
 function toggleEmail(e) {
@@ -468,26 +524,30 @@ function toggleEmail(e) {
   emailOpen = !emailOpen;
   document.getElementById('email-panel').classList.toggle('open', emailOpen);
   document.getElementById('email-toggle').textContent = emailOpen
-    ? '이메일 로그인 닫기'
-    : '이메일로 로그인';
+    ? '\uC774\uBA54\uC77C \uB85C\uADF8\uC778 \uB2EB\uAE30'
+    : '\uC774\uBA54\uC77C\uB85C \uB85C\uADF8\uC778';
   if (emailOpen) {
     setTimeout(() => document.getElementById('input-email').focus(), 350);
   }
 }
 
-// ── 이메일 로그인 제출 ────────────────────────────────────────────
+// email login submit
 async function submitEmailLogin() {
   const email = document.getElementById('input-email').value.trim();
   const pw = document.getElementById('input-pw').value;
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
     document.getElementById('input-email').classList.add('err');
-    showEmailAlert('올바른 이메일 형식을 입력해주세요.');
+    showEmailAlert(
+      '\uC62C\uBC14\uB978 \uC774\uBA54\uC77C \uD615\uC2DD\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.',
+    );
     return;
   }
   if (!pw) {
     document.getElementById('input-pw').classList.add('err');
-    showEmailAlert('비밀번호를 입력해주세요.');
+    showEmailAlert(
+      '\uBE44\uBC00\uBC88\uD638\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694.',
+    );
     return;
   }
 
@@ -496,19 +556,27 @@ async function submitEmailLogin() {
 
   try {
     const data = await api.post('/api/auth/login', { email, password: pw });
-    saveTokens(data.accessToken, data.refreshToken, data.role, data.nickname);
-    showToast('로그인 성공!', 'success');
+    saveTokens(
+      data.accessToken,
+      data.refreshToken,
+      data.role,
+      data.nickname,
+      data.status,
+    );
+    showToast('\uB85C\uADF8\uC778 \uC131\uACF5!', 'success');
     setTimeout(() => {
       handleAfterLogin(data.role);
     }, 700);
   } catch (e) {
-    showEmailAlert(e.message || '로그인에 실패했습니다. 다시 시도해주세요.');
+    showEmailAlert(
+      e.message ||
+        '\uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.',
+    );
   } finally {
     setEmailLoading(false);
   }
 }
 
-// ── 로딩 토글 ────────────────────────────────────────────────────
 function setEmailLoading(on) {
   document.getElementById('btn-email-submit').disabled = on;
   document.getElementById('email-btn-text').style.display = on
@@ -519,7 +587,6 @@ function setEmailLoading(on) {
     : 'none';
 }
 
-// ── 에러 알림 배너 ───────────────────────────────────────────────
 function showEmailAlert(msg) {
   const el = document.getElementById('email-alert');
   el.textContent = msg;
@@ -529,16 +596,24 @@ function hideEmailAlert() {
   document.getElementById('email-alert').classList.remove('show');
 }
 
-// ── 초기화 ───────────────────────────────────────────────────────
+// init
 document.addEventListener('DOMContentLoaded', () => {
-  // 1. 카카오 콜백 파라미터 먼저 처리
+  // 1) Handle Kakao callback params first.
   handleOAuthCallback();
 
-  // 2. 이미 로그인된 상태면 홈으로
-  //    단, 카카오 콜백(신규 모달 표시 중)이면 리다이렉트 금지
+  // 2) Re-entry guard: if the user lands on login.html (refresh,
+  //    direct URL, or bounced here by the page guard) and is still
+  //    PENDING_PROFILE, re-open the signup modal and lock again.
+  //    This covers the "site closed mid-signup" case with no callback.
   const hasCallback = new URLSearchParams(window.location.search).get(
     'accessToken',
   );
+  if (!hasCallback && typeof isPending === 'function' && isPending()) {
+    _csNickname = localStorage.getItem('dapick_nick') || '';
+    openAgreementModal();
+  }
+
+  // 3) If already logged in AND not pending, leave login.html.
   const agOpen = document
     .getElementById('ag-modal-overlay')
     ?.classList.contains('show');
@@ -550,7 +625,7 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
-  // 3. 입력 시 에러 스타일 자동 제거
+  // 4) clear error style on input
   document.querySelectorAll('.form-input').forEach((el) => {
     el.addEventListener('input', function () {
       this.classList.remove('err');
@@ -559,13 +634,13 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 
-  // 4. 모달 전화번호 자동 포맷
+  // 5) phone auto-format
   const csPhone = document.getElementById('cs-phone');
   if (csPhone) {
     csPhone.addEventListener('input', () => csFormatPhone(csPhone));
   }
 
-  // 5. 인증코드 입력 변경 시 인증 상태 리셋 (인증 후 코드 바꿔치기 방지)
+  // 6) reset verification when code input changes
   const csCode = document.getElementById('cs-smscode');
   if (csCode) {
     csCode.addEventListener('input', () => {

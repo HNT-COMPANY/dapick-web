@@ -1,61 +1,90 @@
-// ════════════════════════════════════════════════════════
-// auth.js — 다픽 웹 인증 관리
-// ────────────────────────────────────────────────────────
-// 책임: 토큰 저장/삭제, 로그인 상태 확인, 토큰 갱신
-// GNB 렌더링은 gnb-user.js가 담당 (책임 분리 박음)
-// ════════════════════════════════════════════════════════
+// ============================================================
+// auth.js - dapick web auth manager
+// ------------------------------------------------------------
+// Responsibility: token save/clear, login state, token refresh.
+// GNB rendering is handled by gnb-user.js (separation of concerns).
+//
+// status: User account status ('PENDING_PROFILE' | 'ACTIVE' | ...)
+//   - PENDING_PROFILE: Kakao auth done but extra info not filled.
+//     Must complete signup before using the site.
+//   - isPending() is the single source of truth used by the
+//     page guard (gnb-user.js) and the login modal (login.js).
+// ============================================================
 
 const TOKEN_KEY = 'dapick_token';
 const REFRESH_KEY = 'dapick_refresh';
 const ROLE_KEY = 'dapick_role';
 const NICK_KEY = 'dapick_nick';
+const STATUS_KEY = 'dapick_status';
 
-// ── 토큰 저장 ────────────────────────────────────────────────────
-function saveTokens(accessToken, refreshToken, role, nickname) {
+// -- save tokens -------------------------------------------------
+// status added (5th param). Optional so existing 4-arg calls still work,
+// but Kakao callback / email login should pass it.
+function saveTokens(accessToken, refreshToken, role, nickname, status) {
   localStorage.setItem(TOKEN_KEY, accessToken);
   localStorage.setItem(REFRESH_KEY, refreshToken);
   if (role) localStorage.setItem(ROLE_KEY, role);
   if (nickname) localStorage.setItem(NICK_KEY, nickname);
+  if (status) localStorage.setItem(STATUS_KEY, status);
 }
 
-// ── 토큰 삭제 (로그아웃) ─────────────────────────────────────────
+// -- clear tokens (logout) ---------------------------------------
 function clearTokens() {
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(REFRESH_KEY);
   localStorage.removeItem(ROLE_KEY);
   localStorage.removeItem(NICK_KEY);
+  localStorage.removeItem(STATUS_KEY);
 }
 
-// ── 로그인 여부 확인 ─────────────────────────────────────────────
+// -- login state -------------------------------------------------
 function isLoggedIn() {
   return !!localStorage.getItem(TOKEN_KEY);
 }
 
-// ── 현재 역할 반환 ───────────────────────────────────────────────
+// -- current role ------------------------------------------------
 function getRole() {
   return localStorage.getItem(ROLE_KEY);
 }
 
-// ── 어드민 여부 확인 ─────────────────────────────────────────────
+// -- admin check -------------------------------------------------
 function isAdmin() {
   return getRole() === 'LV4_ADMIN';
 }
 
-// ── 로그아웃 ─────────────────────────────────────────────────────
+// -- current status ----------------------------------------------
+function getStatus() {
+  return localStorage.getItem(STATUS_KEY);
+}
+
+// -- pending check (signup not completed) ------------------------
+// True only when logged in AND status is PENDING_PROFILE.
+// Used to lock the user into the signup modal everywhere.
+function isPending() {
+  return isLoggedIn() && getStatus() === 'PENDING_PROFILE';
+}
+
+// -- mark active (call after complete-signup succeeds) -----------
+// Lifts the pending lock immediately without needing a re-login.
+function markActive() {
+  localStorage.setItem(STATUS_KEY, 'ACTIVE');
+}
+
+// -- logout ------------------------------------------------------
 async function logout() {
   const token = localStorage.getItem(TOKEN_KEY);
   if (token) {
     try {
       await api.post('/api/auth/logout', null);
     } catch (e) {
-      console.warn('[auth] 로그아웃 API 실패:', e.message);
+      console.warn('[auth] logout API failed:', e.message);
     }
   }
   clearTokens();
   window.location.href = 'index.html';
 }
 
-// ── Access Token 갱신 ────────────────────────────────────────────
+// -- access token refresh ----------------------------------------
 async function refreshAccessToken() {
   const refreshToken = localStorage.getItem(REFRESH_KEY);
   if (!refreshToken) {
@@ -75,7 +104,7 @@ async function refreshAccessToken() {
       return data.accessToken;
     }
   } catch (e) {
-    console.warn('[auth] 토큰 갱신 실패:', e.message);
+    console.warn('[auth] token refresh failed:', e.message);
   }
   clearTokens();
   return null;
