@@ -1,6 +1,8 @@
 // ════════════════════════════════════════════════════
 // water.js — 정수기 페이지 렌더링 / 다이얼로그 / 즐겨찾기
 // 데이터는 /api/water/products 에서 로드됩니다
+// 5/27: 상담 신청(consultation) 연결 — openWaterApply() 추가
+//        DapickApplication.apply() 공통 모달 호출 (통일)
 // ════════════════════════════════════════════════════
 
 // ── 공통 상수 ──
@@ -557,6 +559,51 @@ function openKakaoWithProduct() {
 }
 
 // ════════════════════════════════════════════════════
+// 상담 신청 — DapickApplication.apply() 공통 모달 호출 (통일)
+//   현재 다이얼로그에서 고른 약정/관리주기/타사보상/색상을
+//   selectedOptions(jsonb)에 담아 넘김.
+//   monthly가 0이면 백엔드 @Positive 위반 → 카카오로 폴백.
+// ════════════════════════════════════════════════════
+function openWaterApply() {
+  if (!dialogProd) return;
+
+  const contract = document.getElementById('wDContract').value;
+  const cycle = document.getElementById('wDCycle').value;
+  const type = document.getElementById('wDType').value;
+  const d = dialogProd.pricing[contract]?.[cycle]?.[type];
+  const monthly = d?.monthly || 0;
+
+  // 월 요금 0 → 온라인 신청 불가 (DTO monthlyPrice @Positive). 카카오 폴백.
+  if (!monthly || monthly <= 0) {
+    alert(
+      '이 옵션은 월 요금이 책정되어 있지 않아 온라인 신청이 어렵습니다.\n카카오 상담으로 연결해드릴게요.',
+    );
+    openKakaoWithProduct();
+    return;
+  }
+
+  if (typeof DapickApplication === 'undefined' || !DapickApplication.apply) {
+    console.error('[water] application.js 미로드');
+    alert('신청 모듈을 불러올 수 없습니다. 페이지를 새로고침해주세요.');
+    return;
+  }
+
+  DapickApplication.apply({
+    category: 'WATER',
+    productId: dialogProd.id,
+    productName: dialogProd.name,
+    brand: WATER_PRODUCTS[dialogBrandKey]?.name || '',
+    selectedOptions: {
+      color: dialogColor,
+      contract: CONTRACT_LABELS[contract] || contract,
+      cycle: `${cycle} 방문 관리`,
+      type: type,
+    },
+    monthlyPrice: monthly,
+  });
+}
+
+// ════════════════════════════════════════════════════
 // 공통 유틸
 // ════════════════════════════════════════════════════
 function goPage(page) {
@@ -594,7 +641,15 @@ loadWaterProducts().catch(() => {
 
 // 로그인 후 복귀 시 pending 상담 자동 처리
 document.addEventListener('DOMContentLoaded', () => {
+  // 카카오 폴백 복귀
   if (typeof resumePendingKakaoConsult === 'function') {
     resumePendingKakaoConsult();
+  }
+  // 공통 신청 모달 복귀 (로그인 후 이어서 신청)
+  if (
+    typeof DapickApplication !== 'undefined' &&
+    DapickApplication.resumeIfPending
+  ) {
+    DapickApplication.resumeIfPending();
   }
 });
