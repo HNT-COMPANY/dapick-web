@@ -1,0 +1,268 @@
+/* ── 렌탈 전용 보강 스타일 (water.css 위에 덧입힘) ───────── */
+
+/* 품목(brand) 선택 그리드 - 아정당 스타일 아이콘 그리드 */
+.r-item-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  gap: 14px;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 16px 40px;
+}
+.r-item-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  padding: 22px 12px 18px;
+  background: #fff;
+  border: 1px solid #eceef1;
+  border-radius: 16px;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+  min-height: 150px;
+}
+.r-item-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
+  border-color: #d7dbe0;
+}
+.r-item-thumb {
+  width: 84px;
+  height: 84px;
+  border-radius: 14px;
+  background: #f5f6f8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.r-item-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+.r-item-thumb .r-item-emoji {
+  font-size: 38px;
+  line-height: 1;
+}
+.r-item-name {
+  font-size: 15px;
+  font-weight: 600;
+  color: #222;
+  text-align: center;
+}
+
+/* 신청 폼 모달 */
+.r-apply-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 1200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.r-apply-overlay.show {
+  display: flex;
+}
+@media (min-width: 600px) {
+  .r-apply-overlay {
+    align-items: center;
+  }
+}
+.r-apply-modal {
+  width: 100%;
+  max-width: 480px;
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  max-height: 92vh;
+  overflow-y: auto;
+  padding: 0 0 24px;
+}
+@media (min-width: 600px) {
+  .r-apply-modal {
+    border-radius: 20px;
+  }
+}
+.r-apply-head {
+  position: sticky;
+  top: 0;
+  background: #fff;
+  padding: 20px 20px 14px;
+  border-bottom: 1px solid #f0f1f3;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  z-index: 1;
+}
+.r-apply-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1a1a1a;
+}
+.r-apply-close {
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f3f4f6;
+  border-radius: 50%;
+  font-size: 16px;
+  cursor: pointer;
+  color: #555;
+}
+.r-apply-prod {
+  margin: 14px 20px 0;
+  padding: 12px 14px;
+  background: #f7f8fa;
+  border-radius: 12px;
+  font-size: 14px;
+  color: #444;
+}
+.r-apply-prod b {
+  color: #1a1a1a;
+}
+.r-apply-body {
+  padding: 16px 20px 0;
+}
+.r-field {
+  margin-bottom: 14px;
+}
+.r-field label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: #333;
+  margin-bottom: 6px;
+}
+.r-field label .req {
+  color: #e23;
+  margin-left: 2px;
+}
+.r-field input[type='text'],
+.r-field input[type='email'],
+.r-field input[type='tel'],
+.r-field input[type='date'],
+.r-field textarea {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #d9dce1;
+  border-radius: 10px;
+  font-size: 15px;
+  font-family: inherit;
+  box-sizing: border-box;
+  background: #fff;
+}
+.r-field input:focus,
+.r-field textarea:focus {
+  outline: none;
+  border-color: #2b6ef2;
+}
+.r-field textarea {
+  resize: vertical;
+  min-height: 64px;
+}
+.r-agree {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #444;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.r-agree input {
+  margin-top: 2px;
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+.r-agree a {
+  color: #2b6ef2;
+  text-decoration: underline;
+}
+.r-apply-submit {
+  width: 100%;
+  margin-top: 8px;
+  padding: 16px;
+  background: #2b6ef2;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  min-height: 44px;
+}
+.r-apply-submit:disabled {
+  background: #aebfdc;
+  cursor: not-allowed;
+}
+.r-apply-err {
+  color: #e23;
+  font-size: 13px;
+  margin: 8px 0 0;
+  text-align: center;
+  min-height: 18px;
+}
+
+/* 신청 완료 화면 */
+.r-done {
+  text-align: center;
+  padding: 40px 24px;
+}
+.r-done-emoji {
+  font-size: 52px;
+  margin-bottom: 12px;
+}
+.r-done-title {
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-bottom: 8px;
+}
+.r-done-num {
+  display: inline-block;
+  margin: 10px 0 4px;
+  padding: 8px 18px;
+  background: #eef3fe;
+  color: #2b6ef2;
+  border-radius: 999px;
+  font-size: 18px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+.r-done-sub {
+  font-size: 14px;
+  color: #666;
+  margin-top: 10px;
+  line-height: 1.5;
+}
+.r-done-btn {
+  margin-top: 24px;
+  padding: 14px 32px;
+  background: #1a1a1a;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.r-empty {
+  text-align: center;
+  color: #999;
+  padding: 60px 20px;
+  font-size: 15px;
+}
+.r-loading {
+  text-align: center;
+  color: #aaa;
+  padding: 60px 20px;
+  font-size: 14px;
+}
