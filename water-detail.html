@@ -1,0 +1,255 @@
+
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>다픽 정수기 상세 | 코웨이·SK매직·청호나이스·쿠쿠</title>
+  <meta name="description" content="정수기 상세 정보 — 약정·관리주기·색상 선택 후 월 렌탈료 확인 및 상담 신청."/>
+  <meta name="robots" content="index, follow"/>
+
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="다픽"/>
+  <meta property="og:title" content="다픽 정수기 상세"/>
+  <meta property="og:image" content="https://dapick.co.kr/assets/og-water.png"/>
+  <meta property="og:locale" content="ko_KR"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/reset.css"/>
+  <link rel="stylesheet" href="css/common/common.css"/>
+  <link rel="stylesheet" href="css/common/components.css"/>
+  <link rel="stylesheet" href="css/common/footer.css"/>
+  <link rel="stylesheet" href="css/common/gnb-user.css"/>
+  <link rel="stylesheet" href="css/warterpage/water.css"/>
+  <link rel="stylesheet" href="css/warterpage/water-detail.css"/>
+  <link rel="stylesheet" href="css/icon.css"/>
+</head>
+<body>
+
+<!-- 공지바 -->
+<div class="notice-bar" onclick="goPage('internet')">
+  🎁 가만히 두면 <em>152만원 손해!</em> 지금 바로 지원금 확인하세요 ›
+</div>
+
+<!-- 공통 NAV -->
+<nav class="gnb">
+<div class="gnb-top">
+  <a href="index.html" class="logo-wrap">
+    <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
+  </a>
+  <nav class="gnb-extras">
+    <a href="contact.html">고객센터</a>
+    <a href="events.html" class="has-new">이벤트</a>
+    <a href="reviews.html">후기</a>
+    <a href="faq.html">자주묻는질문</a>
+  </nav>
+  <div class="gnb-right">
+    <button class="btn-login">로그인/회원가입</button>
+  </div>
+</div>
+  <div class="cat-bar">
+    <div class="cat-inner">
+      <div class="cat-item" onclick="goPage('mobile')">휴대폰</div>
+      <div class="cat-item" onclick="goPage('internet')">인터넷</div>
+      <div class="cat-item" onclick="goPage('card')">카드</div>
+      <div class="cat-item" onclick="goPage('water')">정수기</div>
+      <div class="cat-item" onclick="goPage('rental')">렌탈</div>
+    </div>
+  </div>
+</nav>
+
+<!-- ══════════════════════════════════════
+     상세 본문 (id 로 동적 렌더)
+══════════════════════════════════════ -->
+<div class="wd-wrap" id="wdRoot">
+  <button class="wd-back" onclick="wdGoBack()"><span id="wdBackText">‹ 상품 목록</span></button>
+
+  <div class="wd-top">
+    <!-- 좌: 이미지 -->
+    <div class="wd-gallery" id="wdGallery"></div>
+
+    <!-- 우: 선택 패널 -->
+    <div class="wd-panel">
+      <span class="wd-brand-tag" id="wdBrandTag"></span>
+      <div class="wd-name" id="wdName"></div>
+      <div class="wd-desc" id="wdDesc"></div>
+
+      <div class="wd-pricebox">
+        <div>
+          <div class="wd-pb-label">월 렌탈료</div>
+          <div class="wd-pb-price" id="wdPrice">-</div>
+        </div>
+        <div class="wd-pb-total" id="wdTotal">-</div>
+      </div>
+
+      <div class="wd-opt">
+        <div class="wd-opt-label">📅 약정 기간</div>
+        <select class="wd-select" id="wdContract"></select>
+      </div>
+      <div class="wd-opt">
+        <div class="wd-opt-label">🔧 관리 주기</div>
+        <select class="wd-select" id="wdCycle"></select>
+      </div>
+      <div class="wd-opt">
+        <div class="wd-opt-label">🏷️ 타사보상 여부</div>
+        <select class="wd-select" id="wdType"></select>
+      </div>
+      <div class="wd-opt">
+        <div class="wd-opt-label">🎨 색상 선택</div>
+        <div class="wd-colors" id="wdColors"></div>
+      </div>
+
+      <div class="wd-specs">
+        <div class="wd-spec"><div class="wd-spec-label">가입 조건</div><div class="wd-spec-val" id="wdSpecType">-</div></div>
+        <div class="wd-spec"><div class="wd-spec-label">카드할인 시</div><div class="wd-spec-val" id="wdSpecCard">-</div></div>
+        <div class="wd-spec"><div class="wd-spec-label">최대 지원금</div><div class="wd-spec-val" id="wdSpecSupport">-</div></div>
+        <div class="wd-spec"><div class="wd-spec-label">결제 안내</div><div class="wd-spec-val" style="font-size:12px;">렌탈 약정 기준</div></div>
+      </div>
+
+      <div class="wd-actions">
+        <button class="wd-btn-apply" onclick="wdApply()">신청하기 →</button>
+        <button class="wd-btn-kakao" onclick="wdKakao()">카카오 상담</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 하단 상세 -->
+  <div class="wd-detail-section">
+    <div class="wd-detail-tabbar">
+      <div class="wd-tab">상품 상세</div>
+    </div>
+    <div class="wd-detail-body" id="wdDetailBody"></div>
+  </div>
+</div>
+
+<!-- 다이얼로그 (water.html 과 동일 — 신청 시 출력) -->
+<div class="w-dialog-overlay" id="wDialogOverlay" onclick="closeDialogOutside(event)">
+  <div class="w-dialog">
+    <div class="w-dialog-header">
+      <div class="w-dialog-handle"></div>
+      <div class="w-dialog-header-row">
+        <div>
+          <span id="wDTag" class="w-dialog-brand-tag"></span>
+          <div id="wDName" class="w-dialog-name"></div>
+        </div>
+        <button class="w-dialog-close" onclick="closeDialog()">✕</button>
+      </div>
+    </div>
+    <div class="w-dialog-body">
+      <div class="w-price-box">
+        <div class="w-price-left">
+          <div class="wpl-label">월 렌탈료</div>
+          <div class="w-price-val" id="wDPrice">-<span>/월</span></div>
+        </div>
+        <div class="w-price-right">
+          <div class="w-total-label">총 렌탈료</div>
+          <div class="w-total-val" id="wDTotal">-</div>
+        </div>
+      </div>
+      <div class="w-option-group">
+        <div class="w-option-label">📅 약정 기간</div>
+        <select class="w-select" id="wDContract"></select>
+      </div>
+      <div class="w-option-group">
+        <div class="w-option-label">🔧 관리 주기</div>
+        <select class="w-select" id="wDCycle"></select>
+      </div>
+      <div class="w-option-group">
+        <div class="w-option-label">🏷️ 타사보상 여부</div>
+        <select class="w-select" id="wDType"></select>
+      </div>
+      <div class="w-option-group">
+        <div class="w-option-label">🎨 색상 선택</div>
+        <div class="w-color-chips" id="wDColors"></div>
+      </div>
+      <div class="w-spec-grid" id="wDSpecs"></div>
+      <div class="w-desc-box" id="wDDesc"></div>
+      <div class="w-actions">
+        <button class="w-btn-kakao" style="background:#5b5bd6;color:#fff;" onclick="openWaterApply()">상담 신청하기 →</button>
+        <button class="w-btn-kakao" onclick="openKakaoWithProduct()">카카오로 상담하기 →</button>
+        <button class="w-btn-heart" id="wDHeart" onclick="toggleFavInDialog()">🤍</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 카카오 플로팅 -->
+<div class="kakao-float" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
+  <button class="kakao-btn" title="카카오톡 상담">
+    <svg viewBox="0 0 48 48" fill="none"><path d="M24 6C13.507 6 5 13.134 5 21.9c0 5.466 3.187 10.271 8.013 13.18L11.1 42l8.52-4.44C20.99 37.84 22.48 38 24 38c10.493 0 19-7.134 19-15.9S34.493 6 24 6z" fill="#3A1D1D"/></svg>
+  </button>
+  <span class="kakao-label">카카오 상담</span>
+</div>
+<button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">∧</button>
+
+<!-- 푸터 -->
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-wrap">
+      <img src="assets/logos/dapicklogo.png" alt="다픽" class="logo-wrap__img" />
+      <div class="footer-app-btns">
+        <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div><div class="app-btn-sub">Download on the</div><div class="app-btn-main">App Store</div></div>
+        </a>
+        <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3.18 23.76c.3.17.65.19.97.08l11.1-6.41-2.39-2.39-9.68 8.72zm-1.1-19.7C2.03 4.3 2 4.57 2 4.86v14.28c0 .29.03.57.08.83l9.96-9.96-9.96-9.95zM20.1 10.24l-2.41-1.39-2.71 2.71 2.71 2.71 2.43-1.4c.69-.4.69-1.22-.02-1.63zM4.15.23C3.83.12 3.48.14 3.18.31L13.04 10.18l2.39-2.39L4.15.23z"/></svg>
+          <div><div class="app-btn-sub">GET IT ON</div><div class="app-btn-main">Google Play</div></div>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-nav-wrap">
+    <div class="footer-wrap">
+      <nav class="footer-nav">
+        <a href="#">회사소개</a><a href="#">공지사항</a><a href="#">이벤트</a><a href="https://daphone.ai.kr/">제휴/가맹문의</a>
+      </nav>
+    </div>
+  </div>
+  <div class="footer-info-wrap">
+    <div class="footer-wrap">
+      <div class="footer-info">
+        <p><span>사이트명</span> 다픽(pick) &nbsp;|&nbsp; <span>대표자</span> 강성현</p>
+        <p><span>사업자명</span> 주식회사 다커넥트</p>
+        <p><span>사업자등록번호</span> 365-81-03029 &nbsp;|&nbsp; <span>통신판매</span> 222-15-94039</p>
+        <p><span>대표번호</span> 1899-8478 &nbsp;|&nbsp; <span>주소</span> 울산 중구 병영로 13</p>
+        <p><span>이메일</span> wwh3218@gmail.com &nbsp;|&nbsp; <span>책임관리자</span> 장지혁</p>
+        <p class="footer-disclaimer">다픽은 통신판매중개자이며 통신판매의 당사자가 아닙니다.<br>상품, 상품정보, 거래에 관한 의무와 책임은 거래당사자에게 있습니다.</p>
+      </div>
+      <div class="footer-side">
+        <div class="footer-sns">
+          <a class="footer-sns-btn" href="https://blog.naver.com/daphone_kor"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M16.273 12.845L7.376 0H0v24h7.727V11.155L16.624 24H24V0h-7.727z"/></svg></a>
+          <a class="footer-sns-btn" href="https://pf.kakao.com/_LxifxmG/"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 3C6.477 3 2 6.477 2 10.8c0 2.7 1.6 5.1 4 6.6l-.9 3.3 3.8-2.5c.9.2 1.9.3 2.9.3 5.523 0 10-3.477 10-7.8S17.523 3 12 3z"/></svg></a>
+          <a class="footer-sns-btn" href="https://www.youtube.com/@daphone_kor"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg></a>
+          <a class="footer-sns-btn" href="https://www.instagram.com/daphone_official"><svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zM12 0C8.741 0 8.333.014 7.053.072 2.695.272.273 2.69.073 7.052.014 8.333 0 8.741 0 12c0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98C8.333 23.986 8.741 24 12 24c3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98C15.668.014 15.259 0 12 0zm0 5.838a6.162 6.162 0 1 0 0 12.324 6.162 6.162 0 0 0 0-12.324zM12 16a4 4 0 1 1 0-8 4 4 0 0 1 0 8zm6.406-11.845a1.44 1.44 0 1 0 0 2.881 1.44 1.44 0 0 0 0-2.881z"/></svg></a>
+        </div>
+      </div>
+    </div>
+  </div>
+ <div class="footer-bottom">
+    <div class="footer-wrap">
+      <div class="footer-policies">
+        <a href="privacy.html">개인정보처리방침</a>
+        <a href="terms.html">이용약관</a>
+        <a href="marketing.html">정보수신 동의</a>
+        <a href="email-policy.html">이메일 무단수집 거부</a>
+      </div>
+      <p class="footer-copy">Copyright © 2026 다픽. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- 스크립트: water.js 먼저(공통함수/다이얼로그) → water-detail.js -->
+<script src="js/common/config.js"></script>
+<script src="js/common/api.js"></script>
+<script src="js/common/auth.js"></script>
+<script src="js/common/utils.js"></script>
+<script src="js/common/gnb-user.js"></script>
+<script src="js/common/application.js"></script>
+<script src="js/water/water.js"></script>
+<script src="js/water/water-detail.js"></script>
+
+</body>
+</html>

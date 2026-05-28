@@ -3,6 +3,8 @@
 // 데이터는 /api/water/products 에서 로드됩니다
 // 5/27: 상담 신청(consultation) 연결 — openWaterApply() 추가
 //        DapickApplication.apply() 공통 모달 호출 (통일)
+// 5/28: 카드/리스트 클릭 → 상세 페이지(water-detail.html?id=)로 이동
+//        (openDialog 는 상세 페이지 "신청하기"가 호출하므로 함수 보존)
 // ════════════════════════════════════════════════════
 
 // ── 공통 상수 ──
@@ -191,7 +193,7 @@ async function renderBrand(brand) {
         best.length > 1 ? `BEST ${best.length}` : 'BEST';
     }
 
-    // 베스트 카드
+    // 베스트 카드 — 클릭 시 상세 페이지로 이동
     bestGridEl.innerHTML = best
       .map((p) => {
         const minPrice = getMinPrice(p.pricing);
@@ -208,7 +210,7 @@ async function renderBrand(brand) {
           .join('');
 
         return `
-    <div class="water-card is-best" onclick="openDialog('${p.id}','${brand}')">
+    <div class="water-card is-best" onclick="location.href='water-detail.html?id=${p.id}'">
       <button class="water-card-heart ${favorites[p.id] ? 'active' : ''}" onclick="quickFav(event,'${p.id}','${brand}')">♥</button>
       <div class="water-card-badges">
         <span class="wbadge wbadge-best">BEST</span>
@@ -230,14 +232,14 @@ async function renderBrand(brand) {
       .join('');
   }
 
-  // ── 전체 리스트 ──
+  // ── 전체 리스트 — 클릭 시 상세 페이지로 이동 ──
   if (listTitleEl) listTitleEl.textContent = `${data.name} 전체 상품`;
 
   listGridEl.innerHTML = data.products
     .map((p) => {
       const minPrice = getMinPrice(p.pricing);
       return `
-    <div class="water-list-item" onclick="openDialog('${p.id}','${brand}')">
+    <div class="water-list-item" onclick="location.href='water-detail.html?id=${p.id}'">
       <div class="water-list-icon">
         ${
           p.image
@@ -311,6 +313,8 @@ function renderEmpty(brand) {
 
 // ════════════════════════════════════════════════════
 // 다이얼로그
+//   ※ water.html 에서는 카드클릭(X) — 이제 카드클릭=상세이동.
+//      이 다이얼로그는 water-detail.html 의 "신청하기"가 openDialog() 로 호출.
 // ════════════════════════════════════════════════════
 function openDialog(productId, brand) {
   const data = WATER_PRODUCTS[brand];
@@ -480,7 +484,13 @@ function toggleFavInDialog() {
   document.getElementById('wDHeart').classList.toggle('active', isFav);
   document.getElementById('wDHeart').textContent = isFav ? '❤️' : '🤍';
   updateBottomBar();
-  renderBrand(currentBrand);
+  // 상세 페이지에는 카드 그리드가 없으므로 renderBrand 는 water.html 에서만 의미.
+  if (
+    document.getElementById('bestGrid') ||
+    document.getElementById('listGrid')
+  ) {
+    renderBrand(currentBrand);
+  }
 }
 
 function quickFav(e, productId, brand) {
@@ -521,15 +531,17 @@ function quickFav(e, productId, brand) {
 
 function updateBottomBar() {
   const ids = Object.keys(favorites);
+  const priceEl = document.getElementById('wbbPrice');
+  const countEl = document.getElementById('wbbCount');
+  if (!priceEl || !countEl) return; // 상세 페이지엔 없음 — 안전 가드
   if (!ids.length) {
-    document.getElementById('wbbPrice').textContent = '상품을 찜해주세요';
-    document.getElementById('wbbCount').textContent = '';
+    priceEl.textContent = '상품을 찜해주세요';
+    countEl.textContent = '';
     return;
   }
   const total = ids.reduce((s, id) => s + (favorites[id].monthly || 0), 0);
-  document.getElementById('wbbPrice').textContent =
-    `월 ${total.toLocaleString()}원`;
-  document.getElementById('wbbCount').textContent = `(${ids.length}개 상품)`;
+  priceEl.textContent = `월 ${total.toLocaleString()}원`;
+  countEl.textContent = `(${ids.length}개 상품)`;
 }
 
 // ════════════════════════════════════════════════════
