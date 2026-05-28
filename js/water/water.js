@@ -4,7 +4,7 @@
 // 5/27: 상담 신청(consultation) 연결 — openWaterApply() 추가
 //        DapickApplication.apply() 공통 모달 호출 (통일)
 // 5/28: 카드/리스트 클릭 → 상세 페이지(water-detail.html?id=)로 이동
-//        (openDialog 는 상세 페이지 "신청하기"가 호출하므로 함수 보존)
+//        전체 상품 = 아정당식 카드 그리드 (water-prod-card)
 // ════════════════════════════════════════════════════
 
 // ── 공통 상수 ──
@@ -46,14 +46,13 @@ function loadWaterProducts() {
       return res.json();
     })
     .then((json) => {
-      // ApiResponse 래퍼 방어 — { data: [...] } 또는 [...] 모두 허용
       const list = Array.isArray(json) ? json : json?.data || [];
       WATER_PRODUCTS = groupByBrand(list);
       return WATER_PRODUCTS;
     })
     .catch((err) => {
       console.error('[water] 상품 로드 실패:', err);
-      _productsPromise = null; // 재시도 허용
+      _productsPromise = null;
       throw err;
     });
 
@@ -89,7 +88,6 @@ function groupByBrand(list) {
     });
   });
 
-  // sortOrder 기준 정렬
   Object.values(groups).forEach((g) => {
     g.products.sort((a, b) => a.sortOrder - b.sortOrder);
   });
@@ -124,6 +122,21 @@ function getMinByContract(pricing, contractKey) {
   return min === Infinity ? null : min;
 }
 
+// 최저가 옵션의 {monthly, cardDiscount} 반환 (카드 표시용)
+function getBestPriceInfo(pricing) {
+  let best = null;
+  Object.values(pricing).forEach((cycles) => {
+    Object.values(cycles).forEach((types) => {
+      Object.values(types).forEach((d) => {
+        if (d.monthly > 0 && (!best || d.monthly < best.monthly)) {
+          best = { monthly: d.monthly, cardDiscount: d.cardDiscount || 0 };
+        }
+      });
+    });
+  });
+  return best;
+}
+
 // ════════════════════════════════════════════════════
 // 상태
 // ════════════════════════════════════════════════════
@@ -148,7 +161,6 @@ async function switchBrand(brand) {
 // 렌더링
 // ════════════════════════════════════════════════════
 async function renderBrand(brand) {
-  // 로딩 표시
   renderLoading();
 
   try {
@@ -167,7 +179,6 @@ async function renderBrand(brand) {
   const best = data.products.filter((p) => p.best);
   const contractKeys = Object.keys(CONTRACT_LABELS);
 
-  // ── 섹션 참조 ──
   const bestSection = document.getElementById('bestSection');
   const bestTitleEl = document.getElementById('bestTitle');
   const bestSubEl = document.getElementById('bestSub');
@@ -176,7 +187,6 @@ async function renderBrand(brand) {
   const listTitleEl = document.getElementById('listTitle');
   const listGridEl = document.getElementById('listGrid');
 
-  // ── 베스트 섹션: 개수 0이면 숨김 ──
   if (best.length === 0) {
     if (bestSection) bestSection.style.display = 'none';
     if (bestGridEl) bestGridEl.innerHTML = '';
@@ -187,13 +197,11 @@ async function renderBrand(brand) {
     if (bestSubEl)
       bestSubEl.textContent = `다픽 고객이 가장 많이 선택한 ${data.name} 정수기 TOP ${best.length}`;
 
-    // BEST 뱃지 — 1개면 "BEST", 여러 개면 "BEST N"
     if (bestBadgeEl) {
       bestBadgeEl.textContent =
         best.length > 1 ? `BEST ${best.length}` : 'BEST';
     }
 
-    // 베스트 카드 — 클릭 시 상세 페이지로 이동
     bestGridEl.innerHTML = best
       .map((p) => {
         const minPrice = getMinPrice(p.pricing);
@@ -232,29 +240,37 @@ async function renderBrand(brand) {
       .join('');
   }
 
-  // ── 전체 리스트 — 클릭 시 상세 페이지로 이동 ──
+  // ── 전체 상품 — 아정당식 카드 그리드 ──
   if (listTitleEl) listTitleEl.textContent = `${data.name} 전체 상품`;
 
   listGridEl.innerHTML = data.products
     .map((p) => {
-      const minPrice = getMinPrice(p.pricing);
+      const info = getBestPriceInfo(p.pricing);
+      const hasPrice = !!info;
+      const orig = hasPrice ? info.monthly : 0;
+      const discounted = hasPrice ? Math.max(orig - info.cardDiscount, 0) : 0;
+      const hasDiscount = hasPrice && info.cardDiscount > 0;
+
+      const priceHtml = hasPrice
+        ? `
+        ${hasDiscount ? `<span class="wpg-orig">월 ${orig.toLocaleString()}원</span>` : ''}
+        <div class="wpg-price-line">
+          ${hasDiscount ? '<span class="wpg-tag">카드할인</span>' : ''}
+          <span class="wpg-price">월 ${discounted.toLocaleString()}원~</span>
+        </div>`
+        : `<div class="wpg-price-line"><span class="wpg-price wpg-ask">가격 문의</span></div>`;
+
       return `
-    <div class="water-list-item" onclick="location.href='water-detail.html?id=${p.id}'">
-      <div class="water-list-icon">
-        ${
-          p.image
-            ? `<img src="${p.image}" alt="${p.name}">`
-            : `<span>${data.emoji}</span>`
-        }
+    <div class="water-prod-card" onclick="location.href='water-detail.html?id=${p.id}'">
+      <div class="wpg-img">
+        ${p.best ? '<span class="wpg-badge-best">인기</span>' : ''}
+        ${p.new ? '<span class="wpg-badge-new">NEW</span>' : ''}
+        ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<span class="wpg-emoji">${data.emoji}</span>`}
       </div>
-      <div class="water-list-info">
-        <div class="water-list-name">${p.name}${p.new ? ' 🆕' : ''}</div>
-        <div class="water-list-price">
-          ${minPrice ? '월 ' + minPrice.toLocaleString() + '원~' : '가격 문의'}
-          <span> · 약정·관리주기 선택 가능</span>
-        </div>
+      <div class="wpg-body">
+        <div class="wpg-name">${p.name}</div>
+        ${priceHtml}
       </div>
-      <div class="water-list-arrow">›</div>
     </div>`;
     })
     .join('');
@@ -271,7 +287,6 @@ function renderLoading() {
   const bg = document.getElementById('bestGrid');
   const lg = document.getElementById('listGrid');
 
-  // 로딩 중에는 베스트 섹션 보이도록 (빈 상태 아니니까)
   if (bestSection) bestSection.style.display = '';
   if (bg) bg.innerHTML = html;
   if (lg) lg.innerHTML = '';
@@ -301,7 +316,6 @@ function renderEmpty(brand) {
       ${name} 브랜드 상품이 등록되어 있지 않습니다.
     </div>`;
 
-  // 빈 상태: 베스트 섹션 숨김
   const bestSection = document.getElementById('bestSection');
   const bg = document.getElementById('bestGrid');
   const lg = document.getElementById('listGrid');
@@ -313,8 +327,6 @@ function renderEmpty(brand) {
 
 // ════════════════════════════════════════════════════
 // 다이얼로그
-//   ※ water.html 에서는 카드클릭(X) — 이제 카드클릭=상세이동.
-//      이 다이얼로그는 water-detail.html 의 "신청하기"가 openDialog() 로 호출.
 // ════════════════════════════════════════════════════
 function openDialog(productId, brand) {
   const data = WATER_PRODUCTS[brand];
@@ -331,7 +343,6 @@ function openDialog(productId, brand) {
     `${data.emoji} ${data.name}${p.new ? '  🆕 NEW' : ''}`;
   document.getElementById('wDName').textContent = p.name;
 
-  // 약정 드롭다운
   const contractKeys = Object.keys(p.pricing);
   const defaultContract =
     prev.contract || contractKeys[contractKeys.length - 1];
@@ -484,7 +495,6 @@ function toggleFavInDialog() {
   document.getElementById('wDHeart').classList.toggle('active', isFav);
   document.getElementById('wDHeart').textContent = isFav ? '❤️' : '🤍';
   updateBottomBar();
-  // 상세 페이지에는 카드 그리드가 없으므로 renderBrand 는 water.html 에서만 의미.
   if (
     document.getElementById('bestGrid') ||
     document.getElementById('listGrid')
@@ -496,7 +506,6 @@ function toggleFavInDialog() {
 function quickFav(e, productId, brand) {
   e.stopPropagation();
 
-  // Null 안전
   const data = WATER_PRODUCTS[brand];
   if (!data || !data.products) return;
 
@@ -533,7 +542,7 @@ function updateBottomBar() {
   const ids = Object.keys(favorites);
   const priceEl = document.getElementById('wbbPrice');
   const countEl = document.getElementById('wbbCount');
-  if (!priceEl || !countEl) return; // 상세 페이지엔 없음 — 안전 가드
+  if (!priceEl || !countEl) return;
   if (!ids.length) {
     priceEl.textContent = '상품을 찜해주세요';
     countEl.textContent = '';
@@ -571,10 +580,7 @@ function openKakaoWithProduct() {
 }
 
 // ════════════════════════════════════════════════════
-// 상담 신청 — DapickApplication.apply() 공통 모달 호출 (통일)
-//   현재 다이얼로그에서 고른 약정/관리주기/타사보상/색상을
-//   selectedOptions(jsonb)에 담아 넘김.
-//   monthly가 0이면 백엔드 @Positive 위반 → 카카오로 폴백.
+// 상담 신청 — DapickApplication.apply() 공통 모달 호출
 // ════════════════════════════════════════════════════
 function openWaterApply() {
   if (!dialogProd) return;
@@ -585,7 +591,6 @@ function openWaterApply() {
   const d = dialogProd.pricing[contract]?.[cycle]?.[type];
   const monthly = d?.monthly || 0;
 
-  // 월 요금 0 → 온라인 신청 불가 (DTO monthlyPrice @Positive). 카카오 폴백.
   if (!monthly || monthly <= 0) {
     alert(
       '이 옵션은 월 요금이 책정되어 있지 않아 온라인 신청이 어렵습니다.\n카카오 상담으로 연결해드릴게요.',
@@ -645,19 +650,12 @@ window.addEventListener(
 // ════════════════════════════════════════════════════
 // 초기 실행
 // ════════════════════════════════════════════════════
+loadWaterProducts().catch(() => {});
 
-// 상품 데이터 프리로드 (boardView → productView 전환 시 대기 없이 렌더)
-loadWaterProducts().catch(() => {
-  // 에러는 renderBrand 호출 시점에 UI로 표시됨
-});
-
-// 로그인 후 복귀 시 pending 상담 자동 처리
 document.addEventListener('DOMContentLoaded', () => {
-  // 카카오 폴백 복귀
   if (typeof resumePendingKakaoConsult === 'function') {
     resumePendingKakaoConsult();
   }
-  // 공통 신청 모달 복귀 (로그인 후 이어서 신청)
   if (
     typeof DapickApplication !== 'undefined' &&
     DapickApplication.resumeIfPending

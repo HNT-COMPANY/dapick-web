@@ -1033,3 +1033,139 @@
     grid-template-columns: 1fr;
   }
 }
+/* ════════════════════════════════════════════════════
+   [추가] water.css 맨 아래 — 전체 상품 카드 그리드 (아정당식)
+   기존 .water-list-* 는 그대로 두고 새 .water-prod-card 사용
+   ════════════════════════════════════════════════════ */
+
+/* 그리드 컨테이너 — listGrid 가 이 클래스도 갖게 하거나,
+   기존 .water-list-grid 를 그대로 쓰되 카드용으로 컬럼만 조정 */
+.water-list-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.water-prod-card {
+  background: var(--white);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius);
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+}
+.water-prod-card:hover {
+  border-color: var(--purple-soft);
+  box-shadow: var(--shadow-h);
+  transform: translateY(-3px);
+}
+
+/* 이미지 영역 (정사각) */
+.wpg-img {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+.wpg-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 16px;
+}
+.wpg-emoji {
+  font-size: 3rem;
+}
+
+/* 뱃지 */
+.wpg-badge-best {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: var(--purple);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 10px;
+  border-radius: 999px;
+  z-index: 1;
+}
+.wpg-badge-new {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: #dcfce7;
+  color: #166534;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 999px;
+  z-index: 1;
+}
+
+/* 본문 */
+.wpg-body {
+  padding: 14px 16px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+.wpg-name {
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1.4;
+  color: var(--text-main);
+  min-height: 2.8em; /* 2줄 높이 확보 — 카드 높이 균일 */
+}
+
+/* 가격 */
+.wpg-orig {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: line-through;
+}
+.wpg-price-line {
+  display: flex;
+  align-items: baseline;
+  gap: 5px;
+  flex-wrap: wrap;
+}
+.wpg-tag {
+  font-size: 11px;
+  color: var(--text-sub);
+}
+.wpg-price {
+  font-size: 18px;
+  font-weight: 900;
+  color: var(--purple);
+}
+.wpg-ask {
+  font-size: 16px;
+  color: var(--text-sub);
+}
+
+/* 반응형 */
+@media (max-width: 768px) {
+  .water-list-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+  .wpg-name {
+    font-size: 13px;
+  }
+  .wpg-price {
+    font-size: 16px;
+  }
+}
+@media (max-width: 360px) {
+  .water-list-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+}
