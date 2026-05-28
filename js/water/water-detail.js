@@ -4,7 +4,7 @@
 // ?id={상품UUID} 로 진입 → /api/water-products/{id} 조회
 // 우 패널에서 약정·관리주기·타사보상·색상 선택 → 가격 갱신
 // "신청하기" → 기존 다이얼로그(water.js openDialog)에 선택값 전달
-// 5/28: 하단 상세에 detailImages(쿠팡식 세로 나열) 추가
+// 5/28: 하단 상세에 detailImages(쿠팡식 세로 나열) + 펼쳐보기 토글
 //   ※ water.js 가 먼저 로드되어 있어야 함
 //     (CONTRACT_LABELS / BRAND_META / openDialog / openKakaoConsult 재사용)
 // ════════════════════════════════════════════════════
@@ -119,6 +119,7 @@ function renderDetail() {
   fillType();
   renderColors();
   calc();
+  renderDetailBody(); // 하단 상세는 한 번만 렌더 (calc 와 분리)
 }
 
 function fillCycle() {
@@ -198,35 +199,76 @@ function calc() {
   document.getElementById('wdSpecSupport').innerHTML = d.maxSupport
     ? `<span style="color:var(--purple);">₩ ${d.maxSupport.toLocaleString()}</span>`
     : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
-
-  // 하단 상세: 상세이미지(쿠팡식) + 텍스트
-  renderDetailBody();
 }
 
-// 하단 상세: 상세이미지 세로 나열(쿠팡식) + 텍스트 설명
+// 하단 상세: 상세이미지 세로 나열(쿠팡식) + 텍스트 설명 + 펼쳐보기 토글
 function renderDetailBody() {
   const body = document.getElementById('wdDetailBody');
   if (!body) return;
   const p = WD_PRODUCT;
-  let html = '';
 
+  let inner = '';
   if (p.detailImages && p.detailImages.length) {
-    html += '<div class="wd-detail-images">';
+    inner += '<div class="wd-detail-images">';
     for (let i = 0; i < p.detailImages.length; i++) {
-      html += `<img src="${p.detailImages[i]}" alt="상세 이미지 ${i + 1}" loading="lazy" />`;
+      inner += `<img src="${p.detailImages[i]}" alt="상세 이미지 ${i + 1}" loading="lazy" />`;
     }
-    html += '</div>';
+    inner += '</div>';
   }
-
   if (p.desc) {
-    html += `<div class="wd-detail-text">${escapeHtml(p.desc)}</div>`;
+    inner += `<div class="wd-detail-text">${escapeHtml(p.desc)}</div>`;
   }
 
-  if (!html) {
-    html =
+  if (!inner) {
+    body.innerHTML =
       '<div style="color:#8a8a99;text-align:center;padding:40px;">상세 정보가 등록되지 않았습니다.</div>';
+    return;
   }
-  body.innerHTML = html;
+
+  // 접기 컨테이너(처음 1000px만) + 펼쳐보기 버튼
+  body.innerHTML = `
+    <div class="wd-collapse" id="wdCollapse">
+      ${inner}
+      <div class="wd-collapse-fade" id="wdFade"></div>
+    </div>
+    <button type="button" class="wd-expand-btn" id="wdExpandBtn" onclick="wdToggleDetail()">
+      상품정보 펼쳐보기 ▼
+    </button>
+  `;
+
+  // 콘텐츠가 접힘 높이보다 짧으면 버튼/그라데이션 숨김
+  requestAnimationFrame(() => {
+    const wrap = document.getElementById('wdCollapse');
+    const btn = document.getElementById('wdExpandBtn');
+    const fade = document.getElementById('wdFade');
+    if (!wrap || !btn) return;
+    const COLLAPSED = 1000; // 처음 보이는 높이(px)
+    if (wrap.scrollHeight <= COLLAPSED + 60) {
+      // 짧으면 그냥 다 보여주고 버튼 제거
+      wrap.style.maxHeight = 'none';
+      if (fade) fade.style.display = 'none';
+      btn.style.display = 'none';
+    }
+  });
+}
+
+// 펼쳐보기/접기 토글
+function wdToggleDetail() {
+  const wrap = document.getElementById('wdCollapse');
+  const btn = document.getElementById('wdExpandBtn');
+  const fade = document.getElementById('wdFade');
+  if (!wrap || !btn) return;
+  const expanded = wrap.classList.toggle('expanded');
+  if (expanded) {
+    btn.textContent = '접기 ▲';
+    if (fade) fade.style.display = 'none';
+  } else {
+    btn.textContent = '상품정보 펼쳐보기 ▼';
+    if (fade) fade.style.display = 'block';
+    // 접을 때 상세 섹션 상단으로 스크롤
+    const sec = document.getElementById('wdDetailBody');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
 
 function escapeHtml(s) {

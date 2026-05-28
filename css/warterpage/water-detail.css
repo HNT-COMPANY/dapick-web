@@ -263,3 +263,75 @@
   color: #444;
   white-space: pre-wrap;
 }
+
+/* ════════════════════════════════════════════════════
+   [추가 5/28] 상세 이미지 세로 나열(쿠팡식) + 펼쳐보기 토글
+   water-detail.css 맨 아래에 추가
+   ════════════════════════════════════════════════════ */
+.wd-detail-images {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0; /* 상세컷은 딱 붙여서 */
+}
+.wd-detail-images img {
+  display: block;
+  width: 100%;
+  max-width: 860px;
+  height: auto;
+}
+.wd-detail-text {
+  max-width: 860px;
+  margin: 24px auto 0;
+  font-size: 14px;
+  line-height: 1.9;
+  color: #444;
+  white-space: pre-wrap;
+}
+
+/* 접기 컨테이너 — 처음 1000px만 보임 */
+.wd-collapse {
+  position: relative;
+  max-height: 1000px;
+  overflow: hidden;
+  transition: max-height 0.1s ease;
+}
+.wd-collapse.expanded {
+  max-height: none;
+}
+/* 하단 그라데이션(접힌 상태에서만) */
+.wd-collapse-fade {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 160px;
+  background: linear-gradient(to bottom, rgba(255, 255, 255, 0), #fff 90%);
+  pointer-events: none;
+}
+.wd-collapse.expanded .wd-collapse-fade {
+  display: none;
+}
+
+/* 펼쳐보기 버튼 */
+.wd-expand-btn {
+  display: block;
+  width: 100%;
+  max-width: 400px;
+  margin: 16px auto 0;
+  padding: 15px;
+  background: #fff;
+  border: 1.5px solid var(--border-card, #e8e6f3);
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--purple, #5b5bd6);
+  cursor: pointer;
+  transition:
+    background 0.15s,
+    border-color 0.15s;
+}
+.wd-expand-btn:hover {
+  background: #f7f6fe;
+  border-color: var(--purple, #5b5bd6);
+}
