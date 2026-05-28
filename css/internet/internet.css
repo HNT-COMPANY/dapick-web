@@ -1005,3 +1005,132 @@
     font-size: 24px;
   }
 }
+
+/* 메인 배너 css */
+:root {
+  --purple: #5b5bd6;
+  --max-w: 1180px;
+}
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+body {
+  font-family: 'Noto Sans KR', sans-serif;
+  background: #f4f3fa;
+}
+
+/* ===== 캐러셀 ===== */
+.i-carousel {
+  width: 100%;
+  position: relative;
+  overflow: hidden;
+  background: #0e0a24;
+}
+.i-carousel__track {
+  display: flex;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.i-carousel__slide {
+  flex: 0 0 100%;
+  aspect-ratio: 2160/750;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 42px;
+  font-weight: 900;
+  color: #fff;
+}
+.s1 {
+  background: linear-gradient(135deg, #5b5bd6, #8f7ff0);
+}
+.s2 {
+  background: linear-gradient(135deg, #241a52, #5b5bd6);
+}
+.s3 {
+  background: linear-gradient(135deg, #3a2d7a, #1a1340);
+}
+
+/* 화살표 */
+.i-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  transition: background 0.2s;
+}
+.i-carousel__arrow:hover {
+  background: rgba(255, 255, 255, 0.45);
+}
+.i-carousel__arrow.prev {
+  left: 18px;
+}
+.i-carousel__arrow.next {
+  right: 18px;
+}
+
+/* 점 */
+.i-carousel__dots {
+  position: absolute;
+  bottom: 16px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  z-index: 3;
+}
+.i-carousel__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.45);
+  transition: all 0.25s;
+}
+.i-carousel__dot.active {
+  background: #fff;
+  width: 26px;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .i-carousel__arrow {
+    width: 38px;
+    height: 38px;
+    font-size: 20px;
+  }
+}
+.note {
+  max-width: var(--max-w);
+  margin: 24px auto;
+  padding: 0 40px;
+  font-size: 13px;
+  color: #888;
+  line-height: 1.7;
+}
+.i-carousel,
+.i-carousel__viewport,
+.i-carousel__track,
+.i-carousel__slide {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.i-carousel__slide img {
+  background: transparent !important;
+}

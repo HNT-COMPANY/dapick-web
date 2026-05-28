@@ -1,0 +1,114 @@
+/* ════════════════════════════════════════════════════
+   [교체] internet.css — 캐러셀 (코웨이 스타일: 박스 없이 자연스럽게)
+   · 둥근 카드/배경/그림자 전부 없음
+   · 이미지가 섹션에 자연스럽게 깔림
+   · 화살표는 이미지 양옆 바깥 여백에
+   ════════════════════════════════════════════════════ */
+
+/* 바깥 컨테이너 — 화살표 둘 양옆 여백 확보 */
+.i-carousel {
+  max-width: 1180px;
+  margin: 28px auto;
+  padding: 0 64px; /* 좌우 여백 = 화살표 자리 */
+  position: relative;
+}
+
+.i-carousel__viewport {
+  position: relative;
+  overflow: hidden; /* 옆 슬라이드 삐져나옴 방지 */
+  background: transparent; /* 박스 배경 없음 */
+  border-radius: 0; /* 둥근 카드 없음 */
+  box-shadow: none; /* 그림자 없음 */
+}
+.i-carousel__track {
+  display: flex;
+  transition: transform 0.55s cubic-bezier(0.4, 0, 0.2, 1);
+}
+.i-carousel__slide {
+  background: transparent !important;
+  box-shadow: none !important;
+  border-radius: 0 !important;
+}
+.i-carousel__slide img {
+  background: transparent !important;
+}
+
+/* 화살표 — 이미지 바깥 좌우 여백에 (코웨이처럼) */
+.i-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  border: 1px solid #ece9f7;
+  cursor: pointer;
+  background: #fff;
+  color: #5b5bd6;
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 3;
+  box-shadow: 0 4px 14px rgba(91, 91, 214, 0.18);
+  transition:
+    background 0.2s,
+    color 0.2s,
+    transform 0.2s,
+    box-shadow 0.2s;
+}
+.i-carousel__arrow:hover {
+  background: #5b5bd6;
+  color: #fff;
+  box-shadow: 0 6px 18px rgba(91, 91, 214, 0.35);
+}
+.i-carousel__arrow:active {
+  transform: translateY(-50%) scale(0.94);
+}
+.i-carousel__arrow.prev {
+  left: 20px;
+}
+.i-carousel__arrow.next {
+  right: 20px;
+}
+/* 점 — 이미지 위 하단 중앙 */
+.i-carousel__dots {
+  position: absolute;
+  bottom: 14px;
+  left: 0;
+  right: 0;
+  display: flex;
+  justify-content: center;
+  gap: 9px;
+  z-index: 3;
+}
+.i-carousel__dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  border: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.6);
+  transition: all 0.25s;
+  padding: 0;
+}
+.i-carousel__dot.active {
+  background: #fff;
+  width: 26px;
+  border-radius: 5px;
+}
+
+@media (max-width: 768px) {
+  .i-carousel__arrow {
+    width: 36px;
+    height: 36px;
+    font-size: 18px;
+  }
+  .i-carousel__arrow.prev {
+    left: -4px;
+  }
+  .i-carousel__arrow.next {
+    right: -4px;
+  }
+}

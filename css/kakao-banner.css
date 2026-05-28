@@ -12,8 +12,8 @@
 .kakao-banner__link {
   display: block;
   width: 100%;
-  aspect-ratio: 1920 / 300;
-  max-height: 300px;
+  aspect-ratio: 1920 / 500;
+  max-height: 350px;
   text-decoration: none;
   position: relative;
 }

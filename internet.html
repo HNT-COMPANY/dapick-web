@@ -44,6 +44,8 @@
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
   <link rel="stylesheet" href="css/internet/internet.css"/>
+    <link rel="stylesheet" href="css/internet/internet-banner.css"/>
+
 
   <script src="js/seo/structured-data-internet.js" defer></script>
 </head>
@@ -84,13 +86,24 @@
      화면: 메인보드 (통신사 선택만)
      클릭 시 통신사별 별도 페이지로 이동
 ══════════════════════════════════════ -->
-<div id="boardView">
-  <div class="i-board-hero">
-    <div class="i-board-hero-inner">
-      <h1>숨은 지원금 최대 00만원<br><em>통신사 선택</em>부터 시작하세요</h1>
-      <p><br>원하는 통신사를 선택하면 전체 요금제와 사은품을 비교할 수 있어요</p>
+<section class="i-carousel" id="iCarousel" aria-label="인터넷 혜택 배너">
+  <div class="i-carousel__viewport">
+    <div class="i-carousel__track" id="iTrack">
+      <div class="i-carousel__slide">
+        <img src="assets/internet/interntTvbanner-02.png" alt="통신사별 혜택 차이 비교" />
+      </div>
+      <div class="i-carousel__slide">
+        <img src="assets/internet/interntTvbanner-01.png" alt="숨은 인터넷 지원금 한 번에 비교" />
+      </div>
+      <div class="i-carousel__slide">
+        <img src="assets/internet/interntTvbanner-03.png" alt="오늘 상담하고 빠르게 설치" />
+      </div>
     </div>
+    <button class="i-carousel__arrow prev" id="iPrev" aria-label="이전 배너">‹</button>
+    <button class="i-carousel__arrow next" id="iNext" aria-label="다음 배너">›</button>
+    <div class="i-carousel__dots" id="iDots"></div>
   </div>
+</section>
 
   <div class="i-board-section">
     <div class="i-board-section-title">통신사를 선택해주세요</div>
@@ -229,7 +242,7 @@
 
 
 <!-- 페이지 전용 JS -->
-<script src="js/internet.js"></script>
+<script src="js/internet/internet.js"></script>
 
 </body>
 </html>

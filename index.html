@@ -111,10 +111,29 @@
         <button class="btn-cta-sub"  onclick="goPage('mobile')">휴대폰 가격 비교하기</button>
       </div>
     </div>
+ 
+    <!-- ★ 추가: 우측 둥둥 이미지 (src만 본인 이미지로) -->
+    <div class="hero-visual">
+      <img src="assets/main/main-152.png" alt="최대 지원금 152만원" />
+    </div>
   </div>
 </div>
 
-<!-- 브랜드 로고 띠 (히어로 아래 독립 섹션) -->
+<!-- 카카오 배너 -->
+<section class="kakao-banner">
+  <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-banner__link" aria-label="다픽 카카오톡 플러스친구 추가">
+    <img
+      src="assets/kakaobanner/kakaobanner-01.png"
+      alt="다픽 카카오톡 플러스친구 추가"
+      class="kakao-banner__image"
+      width="1920"
+      height="500"
+      loading="lazy"
+    />
+  </a>
+</section>
+
+<!-- 브랜드 로고 띠 (히어로 아래 독립 섹션) 
 <section class="brand-marquee" aria-label="다픽 제휴 브랜드">
   <div class="brand-marquee-head">
     <span class="brand-marquee-title">이 모든 브랜드를 한 곳에서 비교</span>
@@ -124,73 +143,92 @@
     <div class="hm-row hm-left">
       <div class="hm-track">
         <img src="assets/main/main-01.png" alt="" class="hm-img hm-01" />
+        <img src="assets/main/main-02.png" alt="" class="hm-img hm-01" />
         <img src="assets/main/main-01.png" alt="" class="hm-img hm-01" />
+        <img src="assets/main/main-02.png" alt="" class="hm-img hm-01" />
       </div>
     </div>
     <div class="hm-row hm-right">
       <div class="hm-track">
-        <img src="assets/main/main-02.png" alt="" class="hm-img hm-02" />
-        <img src="assets/main/main-02.png" alt="" class="hm-img hm-02" />
-      </div>
-    </div>
-    <div class="hm-row hm-left">
-      <div class="hm-track">
-        <img src="assets/main/main-03.png" alt="" class="hm-img hm-03" />
-        <img src="assets/main/main-03.png" alt="" class="hm-img hm-03" />
-      </div>
-    </div>
-    <div class="hm-row hm-right">
-      <div class="hm-track">
-        <img src="assets/main/main-04.png" alt="" class="hm-img hm-04" />
-        <img src="assets/main/main-04.png" alt="" class="hm-img hm-04" />
+        <img src="assets/main/main-03.png" alt="" class="hm-img hm-02" />
+        <img src="assets/main/main-04.png" alt="" class="hm-img hm-02" />
+        <img src="assets/main/main-03.png" alt="" class="hm-img hm-02" />
+        <img src="assets/main/main-04.png" alt="" class="hm-img hm-02" />
       </div>
     </div>
   </div>
 </section>
-
+-->
 <!-- 서비스 바로가기 -->
-<div class="section">
-  <div class="wrap">
-    <div class="sec-head sec-head--tight">
-      <span class="sec-title">서비스 바로가기</span>
+<div class="wrap">
+  <br><div class="sec-title">현명한 선택, 최대한의 혜택</div><br>
+  <div class="svc-grid">
+
+    <div class="svc-card" onclick="goPage('mobile')">
+      <div class="svc-top">
+        <div class="svc-info">
+          <div class="svc-name">휴대폰</div>
+          <div class="svc-desc">최신 스마트폰을<br>최저가로 비교하세요</div>
+        </div>
+        <div class="svc-thumb">
+          <img src="assets/icons/phone-01.png" alt="휴대폰">
+        </div>
+      </div>
+      <div class="svc-cta">최대 50만원 기기값 할인받기 <span class="arr">›</span></div>
     </div>
-    <div class="cat-grid">
-      <div class="cat-block" onclick="goPage('mobile')">
-        <div class="cat-block-icon phone">
-          <img src="assets/icons/phone.png" alt="휴대폰">
+
+    <div class="svc-card" onclick="goPage('internet')">
+      <div class="svc-top">
+        <div class="svc-info">
+          <div class="svc-name">인터넷 / TV</div>
+          <div class="svc-desc">알뜰한 당신을 위해 최소 요금,<br>최대 사은품을 소개해요</div>
         </div>
-        <div class="cat-block-name">휴대폰</div>
-        <div class="cat-block-desc">최신 스마트폰<br>최저가 비교</div>
-      </div>
-      <div class="cat-block" onclick="goPage('internet')">
-        <div class="cat-block-icon internet">
-          <img src="assets/icons/internet.png" alt="인터넷/TV">
+        <div class="svc-thumb">
+          <img src="assets/icons/internetTv-01.png" alt="인터넷/TV">
         </div>
-        <div class="cat-block-name">인터넷/TV</div>
-        <div class="cat-block-desc">통신사별 지원금<br>한눈에 비교</div>
       </div>
-      <div class="cat-block" onclick="goPage('card')">
-        <div class="cat-block-icon card">
-          <img src="assets/icons/card.png" alt="카드">
-        </div>
-        <div class="cat-block-name">카드</div>
-        <div class="cat-block-desc">혜택별 카드<br>맞춤 추천</div>
-      </div>
-      <div class="cat-block" onclick="goPage('water')">
-        <div class="cat-block-icon water">
-          <img src="assets/icons/water.png" alt="정수기">
-        </div>
-        <div class="cat-block-name">정수기</div>
-        <div class="cat-block-desc">브랜드별 렌탈료<br>비교 신청</div>
-      </div>
-      <div class="cat-block" onclick="goPage('rental')">
-        <div class="cat-block-icon rental">
-          <img src="assets/icons/rental.png" alt="렌탈">
-        </div>
-        <div class="cat-block-name">렌탈</div>
-        <div class="cat-block-desc">가전·가구<br>렌탈 최저가</div>
-      </div>
+      <div class="svc-cta">최대 지원금 52만원 확인하기 <span class="arr">›</span></div>
     </div>
+
+    <div class="svc-card" onclick="goPage('water')">
+      <div class="svc-top">
+        <div class="svc-info">
+          <div class="svc-name">정수기</div>
+          <div class="svc-desc">브랜드별 렌탈료를 한눈에,<br>최저가로 비교 신청하세요</div>
+        </div>
+        <div class="svc-thumb">
+          <img src="assets/icons/water-01.png" alt="정수기">
+        </div>
+      </div>
+      <div class="svc-cta">최대 지원금 30만원 확인하기 <span class="arr">›</span></div>
+    </div>
+
+    <div class="svc-card" onclick="goPage('rental')">
+      <div class="svc-top">
+        <div class="svc-info">
+          <div class="svc-name">렌탈</div>
+          <div class="svc-desc">가전·가구 렌탈을<br>최저가로 비교하세요</div>
+        </div>
+        <div class="svc-thumb">
+          <img src="assets/icons/rental-01.png" alt="렌탈">
+        </div>
+      </div>
+      <div class="svc-cta">추가금 0원! 비교 신청하기 <span class="arr">›</span></div>
+    </div>
+
+    <div class="svc-card" onclick="goPage('card')">
+      <div class="svc-top">
+        <div class="svc-info">
+          <div class="svc-name">카드</div>
+          <div class="svc-desc">혜택 많은 카드 찾고,<br>신규 발급 캐시백 혜택까지!</div>
+        </div>
+        <div class="svc-thumb">
+          <img src="assets/icons/card-01.png" alt="카드">
+        </div>
+      </div>
+      <div class="svc-cta">최대 월 2만원 추가 할인 <span class="arr">›</span></div>
+    </div>
+
   </div>
 </div>
 
@@ -203,20 +241,6 @@
       class="event-banner-img"
       width="1920"
       height="500"
-      loading="lazy"
-    />
-  </a>
-</section>
-
-<!-- 카카오 배너 -->
-<section class="kakao-banner">
-  <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-banner__link" aria-label="다픽 카카오톡 플러스친구 추가">
-    <img
-      src="assets/kakaobanner/kakaobanner-01.png"
-      alt="다픽 카카오톡 플러스친구 추가"
-      class="kakao-banner__image"
-      width="1920"
-      height="300"
       loading="lazy"
     />
   </a>
@@ -361,7 +385,7 @@
     <div class="faq-list">
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 인터넷·TV 가입 시 설치비가 있나요?</span><span class="faq-icon">∨</span></div>
-        <div class="faq-a"><div class="faq-a-inner">대부분의 경우 설치비는 무료입니다. 일부 특수 환경에서는 별도 비용이 발생할 수 있으며, 상담 시 미리 확인해드립니다.</div></div>
+        <div class="faq-a"><div class="faq-a-inner">주말 및 야간 할증: 평일 야간(18시 이후)이나 토요일, 일요일, 공휴일에 방문 설치를 요청할 경우 기본 설치비의 25% 할증 요금이 추가로 부과됩니다.</div></div>
       </div>
       <div class="faq-item">
         <div class="faq-q" onclick="toggleFaq(this)"><span>Q. 지원금(사은품)은 어떻게 받나요?</span><span class="faq-icon">∨</span></div>

@@ -551,3 +551,27 @@
     gap: 8px;
   }
 }
+
+.ip-banner {
+  max-width: 1180px;
+  margin: 20px auto 0;
+  padding: 0 40px;
+}
+.ip-banner img {
+  display: block;
+  width: 100%;
+  max-width: 400px; /* 정사각 이미지가 너무 커지지 않게 상한 */
+  height: auto;
+  margin: 0 auto; /* 가운데 정렬 */
+  border-radius: 16px; /* 살짝 둥근 배너 (이미지가 직각일 때만 보임) */
+}
+
+@media (max-width: 768px) {
+  .ip-banner {
+    padding: 0 16px;
+    margin-top: 14px;
+  }
+  .ip-banner img {
+    border-radius: 12px;
+  }
+}
