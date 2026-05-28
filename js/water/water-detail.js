@@ -4,6 +4,7 @@
 // ?id={상품UUID} 로 진입 → /api/water-products/{id} 조회
 // 우 패널에서 약정·관리주기·타사보상·색상 선택 → 가격 갱신
 // "신청하기" → 기존 다이얼로그(water.js openDialog)에 선택값 전달
+// 5/28: 하단 상세에 detailImages(쿠팡식 세로 나열) 추가
 //   ※ water.js 가 먼저 로드되어 있어야 함
 //     (CONTRACT_LABELS / BRAND_META / openDialog / openKakaoConsult 재사용)
 // ════════════════════════════════════════════════════
@@ -54,6 +55,7 @@ async function loadDetail(id) {
       image: p.imageUrl || '',
       colors: Array.isArray(p.colors) && p.colors.length ? p.colors : ['기본'],
       pricing: p.pricing || {},
+      detailImages: Array.isArray(p.detailImages) ? p.detailImages : [],
       best: !!p.best,
       new: !!p.new,
     };
@@ -197,9 +199,41 @@ function calc() {
     ? `<span style="color:var(--purple);">₩ ${d.maxSupport.toLocaleString()}</span>`
     : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
 
-  // 하단 상세설명
-  document.getElementById('wdDetailBody').textContent =
-    p.desc || '상세 설명이 등록되지 않았습니다.';
+  // 하단 상세: 상세이미지(쿠팡식) + 텍스트
+  renderDetailBody();
+}
+
+// 하단 상세: 상세이미지 세로 나열(쿠팡식) + 텍스트 설명
+function renderDetailBody() {
+  const body = document.getElementById('wdDetailBody');
+  if (!body) return;
+  const p = WD_PRODUCT;
+  let html = '';
+
+  if (p.detailImages && p.detailImages.length) {
+    html += '<div class="wd-detail-images">';
+    for (let i = 0; i < p.detailImages.length; i++) {
+      html += `<img src="${p.detailImages[i]}" alt="상세 이미지 ${i + 1}" loading="lazy" />`;
+    }
+    html += '</div>';
+  }
+
+  if (p.desc) {
+    html += `<div class="wd-detail-text">${escapeHtml(p.desc)}</div>`;
+  }
+
+  if (!html) {
+    html =
+      '<div style="color:#8a8a99;text-align:center;padding:40px;">상세 정보가 등록되지 않았습니다.</div>';
+  }
+  body.innerHTML = html;
+}
+
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;');
 }
 
 // "신청하기" → 기존 다이얼로그를 선택값 그대로 열기
