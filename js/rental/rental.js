@@ -10,21 +10,20 @@
   var KAKAO_CHAT_URL = 'https://pf.kakao.com/_exaRjX/chat';
 
   // brand 공개 조회 API가 아직 없어, 품목은 코드로 관리.
-  // brand 공개 API 정비 후 fetchItems()를 API 호출로 교체하면 동적 전환됨.
   var ITEMS = [
     {
       brandId: '283c3f71-8daa-4383-a8b0-726652703c9a',
       name: '공기청정기',
       emoji: '🌬️',
-      logoUrl: '', // 관리자가 brands.logo_url 채우면 이미지로 표시
+      logoUrl: '',
     },
     // 품목 추가 시 여기에 { brandId, name, emoji, logoUrl } 추가
   ];
 
   // ── 상태 ─────────────────────────────────────────────
-  var currentItem = null; // 선택된 품목
-  var currentProducts = []; // 현재 품목의 상품 목록
-  var selectedProduct = null; // 다이얼로그/신청 대상 상품
+  var currentItem = null;
+  var currentProducts = [];
+  var selectedProduct = null;
   var selectedColor = null;
 
   // ── 유틸 ─────────────────────────────────────────────
@@ -127,6 +126,7 @@
       });
   }
 
+  // ── 상품 목록 렌더 — 정수기식 카드 그리드 (.water-prod-card) ──
   function renderProducts() {
     var grid = document.getElementById('listGrid');
     if (!currentProducts.length) {
@@ -137,37 +137,41 @@
     for (var i = 0; i < currentProducts.length; i++) {
       var p = currentProducts[i];
       var m = monthlyOf(p);
-      var priceLine =
+
+      var priceHtml =
         m != null
-          ? '<div class="wl-price">월 <b>' + won(m) + '</b></div>'
-          : '<div class="wl-price">상담 시 안내</div>';
-      var img = p.imageUrl
-        ? '<div class="wl-thumb"><img src="' +
+          ? '<div class="wpg-price-line"><span class="wpg-price">월 ' +
+            won(m) +
+            '~</span></div>'
+          : '<div class="wpg-price-line"><span class="wpg-price wpg-ask">가격 문의</span></div>';
+
+      var imgInner = p.imageUrl
+        ? '<img src="' +
           esc(p.imageUrl) +
           '" alt="' +
           esc(p.name) +
-          '" loading="lazy"></div>'
-        : '<div class="wl-thumb"><span style="font-size:40px;">' +
-          esc(p.emoji || '📦') +
-          '</span></div>';
+          '" loading="lazy">'
+        : '<span class="wpg-emoji">' + esc(p.emoji || '📦') + '</span>';
+
       html +=
-        '<div class="water-list-card" data-idx="' +
+        '<div class="water-prod-card" data-idx="' +
         i +
         '">' +
-        img +
-        '<div class="wl-body">' +
-        '<div class="wl-name">' +
+        '<div class="wpg-img">' +
+        (p.best ? '<span class="wpg-badge-best">인기</span>' : '') +
+        (p.new ? '<span class="wpg-badge-new">NEW</span>' : '') +
+        imgInner +
+        '</div>' +
+        '<div class="wpg-body">' +
+        '<div class="wpg-name">' +
         esc(p.name) +
         '</div>' +
-        (p.contractMonths
-          ? '<div class="wl-meta">약정 ' + esc(p.contractMonths) + '개월</div>'
-          : '') +
-        priceLine +
+        priceHtml +
         '</div>' +
         '</div>';
     }
     grid.innerHTML = html;
-    var cards = grid.querySelectorAll('.water-list-card');
+    var cards = grid.querySelectorAll('.water-prod-card');
     for (var j = 0; j < cards.length; j++) {
       cards[j].addEventListener('click', function () {
         openDialog(
@@ -252,7 +256,6 @@
   window.openApplyForm = function () {
     if (!selectedProduct) return;
 
-    // 로그인 필수
     if (typeof isLoggedIn === 'function' && !isLoggedIn()) {
       alert(
         '상담 신청은 로그인 후 이용할 수 있어요. 로그인 페이지로 이동합니다.',
@@ -292,12 +295,6 @@
   };
 
   // ── 신청 제출 → POST /api/consultations ─────────────
-  // [수정] applications → consultations 전환
-  //   - birthDate 제거 (백엔드에서 뺌)
-  //   - monthlyPrice 추가 (consultation DTO @NotNull @Positive 필수)
-  //   - selectedOptions에 color/inquiry 보존 (전용 컬럼 없이 jsonb)
-  //   - confirmedFirstWarning: 화면 체크만 강제, 전송 안 함
-  //   - 응답 파싱: consultationNumber (ApiResponse 래퍼)
   window.submitApplication = function () {
     var errEl = document.getElementById('rApplyErr');
     errEl.textContent = '';
@@ -313,7 +310,6 @@
     var agreeMarketing = document.getElementById('fMarketing').checked;
     var agreeEmailInfo = document.getElementById('fEmailInfo').checked;
 
-    // ── 프론트 검증 (백엔드 DTO 규칙과 일치) ──
     if (!name) {
       errEl.textContent = '신청자 이름을 입력해주세요.';
       return;
@@ -350,7 +346,6 @@
       return;
     }
 
-    // ── 월 렌탈료: consultation DTO는 monthlyPrice @NotNull @Positive ──
     var monthly = monthlyOf(selectedProduct);
     if (monthly == null || isNaN(monthly) || Number(monthly) <= 0) {
       errEl.textContent =
@@ -358,7 +353,6 @@
       return;
     }
 
-    // ── selectedOptions: 색상/문의사항을 jsonb에 보존 (전용 컬럼 없이) ──
     var selectedOptions = {};
     if (selectedColor) selectedOptions.color = selectedColor;
     if (memo) selectedOptions.inquiry = memo;
@@ -399,7 +393,6 @@
         submitBtn.disabled = false;
         submitBtn.textContent = '상담 신청하기';
 
-        // ApiResponse 래퍼: { success, data: { consultationNumber, ... }, message }
         var data = res.body && res.body.data ? res.body.data : null;
         var num = data ? data.consultationNumber : '';
 
@@ -426,7 +419,7 @@
       });
   };
 
-  // ── goPage 폴백 (utils.js에 있으면 그걸 사용) ────────
+  // ── goPage 폴백 ────────
   if (typeof window.goPage !== 'function') {
     window.goPage = function (key) {
       var map = {

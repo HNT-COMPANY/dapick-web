@@ -1169,3 +1169,49 @@
     grid-template-columns: 1fr 1fr;
   }
 }
+
+/* ════════════════════════════════════════════════════
+   [추가] water.css 맨 아래 — 메인/브랜드 배너 (가로 긴 배너)
+   둥근 모서리는 컨테이너 overflow:hidden 으로 자름 (이미지엔 radius X)
+   ════════════════════════════════════════════════════ */
+
+/* 메인 배너 (boardView 히어로 대체) */
+.water-main-banner {
+  max-width: var(--max-w, 1180px);
+  margin: 24px auto 0;
+  padding: 0 40px;
+}
+.water-main-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 16px; /* 배너 자체가 단독이라 직접 radius OK */
+}
+
+/* 브랜드 배너 (bestSection 안, 베스트 카드 위) */
+.brand-banner {
+  margin: 0 0 24px;
+  border-radius: 16px;
+  overflow: hidden; /* 둥근 모서리로 이미지 자름 */
+}
+.brand-banner img {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+@media (max-width: 1024px) {
+  .water-main-banner {
+    padding: 0 24px;
+  }
+}
+@media (max-width: 480px) {
+  .water-main-banner {
+    padding: 0 16px;
+    margin-top: 16px;
+  }
+  .water-main-banner img,
+  .brand-banner {
+    border-radius: 12px;
+  }
+}

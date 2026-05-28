@@ -3,30 +3,30 @@ const BRAND_INFO = {
   coway: {
     name: '코웨이',
     logo: '/assets/coway/logos/coway_logo.png',
-    tag: '💧 코웨이 정수기',
+    tag: '코웨이 정수기',
     title: '코웨이 정수기<br><em>인기 모델 전체 비교</em>',
-    sub: '아이콘·노블·한뼘 시리즈 — 약정·관리주기 선택 후 월 렌탈료 확인',
+    sub: '아이콘·노블·한뼘 시리즈 약정·관리주기 선택 후 월 렌탈료 확인',
   },
   sk: {
     name: 'SK매직',
     logo: '/assets/skmagic/logos/skmagic.png',
-    tag: '⚡ SK매직 정수기',
+    tag: 'SK매직 정수기',
     title: 'SK매직 정수기<br><em>올인원 자동세척 라인업</em>',
-    sub: '올인원·스파클링·올클린 시리즈 — 약정·관리주기 선택 후 월 렌탈료 확인',
+    sub: '올인원·스파클링·올클린 시리즈 약정·관리주기 선택 후 월 렌탈료 확인',
   },
   chungho: {
     name: '청호나이스',
     logo: '/assets/chungho/logos/chungho.png',
-    tag: '🌊 청호나이스 정수기',
+    tag: '청호나이스 정수기',
     title: '청호나이스 정수기<br><em>합리적 가격 고성능</em>',
-    sub: 'SLIM·에코·MAISON 시리즈 — 약정·관리주기 선택 후 월 렌탈료 확인',
+    sub: 'SLIM·에코·MAISON 시리즈 약정·관리주기 선택 후 월 렌탈료 확인',
   },
   cuckoo: {
     name: '쿠쿠',
     logo: '/assets/cuckoo/logos/cuckoo.png',
-    tag: '🍃 쿠쿠 정수기',
+    tag: '쿠쿠 정수기',
     title: '쿠쿠 정수기<br><em>나노필터 자연살균</em>',
-    sub: 'CP 시리즈 전체 라인업 — 약정·관리주기 선택 후 월 렌탈료 확인',
+    sub: 'CP 시리즈 전체 라인업 약정·관리주기 선택 후 월 렌탈료 확인',
   },
 };
 

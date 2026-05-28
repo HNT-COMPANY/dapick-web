@@ -5,6 +5,7 @@
 //        DapickApplication.apply() 공통 모달 호출 (통일)
 // 5/28: 카드/리스트 클릭 → 상세 페이지(water-detail.html?id=)로 이동
 //        전체 상품 = 아정당식 카드 그리드 (water-prod-card)
+//        브랜드 배너 자동 삽입 (renderBrandBanner)
 // ════════════════════════════════════════════════════
 
 // ── 공통 상수 ──
@@ -240,6 +241,9 @@ async function renderBrand(brand) {
       .join('');
   }
 
+  // ── 브랜드 배너 (현재 브랜드에 맞게) ──
+  renderBrandBanner(brand);
+
   // ── 전체 상품 — 아정당식 카드 그리드 ──
   if (listTitleEl) listTitleEl.textContent = `${data.name} 전체 상품`;
 
@@ -274,6 +278,15 @@ async function renderBrand(brand) {
     </div>`;
     })
     .join('');
+}
+
+// ── 브랜드 배너: assets/{brand}/{brand}-01.png 시도, 없으면 숨김 ──
+function renderBrandBanner(brand) {
+  const el = document.getElementById('brandBanner');
+  if (!el) return;
+  const src = `assets/${brand}/${brand}-01.png`;
+  el.innerHTML = `<img src="${src}" alt="${brand} 배너" onerror="this.parentElement.style.display='none'">`;
+  el.style.display = ''; // 일단 표시, 이미지 로드 실패 시 onerror 가 숨김
 }
 
 // ── 로딩/에러/빈 상태 표시 ──
