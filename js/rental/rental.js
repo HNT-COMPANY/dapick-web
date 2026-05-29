@@ -8,8 +8,11 @@
   // - ITEMS 하드코딩 제거 → GET /api/categories 동적 로드
   // - RENTAL(type) 1depth 카테고리의 children을 품목으로 사용
   // - imageUrl 있으면 이미지 표시, 없으면 emoji fallback
+  // - [5/29 추가] 상품 카드 클릭 → 다이얼로그(openDialog) 대신
+  //   rental-detail.html 페이지 이동 (정수기와 동일 UX)
   // 보존:
-  // - 상품 조회, 다이얼로그, 신청 폼 등 모든 후속 로직
+  // - openDialog / openApplyForm / submitApplication 등은 그대로 둠
+  //   (즉시 죽은 코드가 되지만, 향후 빠른 신청 흐름 복원 가능성 대비)
   // ══════════════════════════════════════════════════════
 
   // ── 설정 ─────────────────────────────────────────────
@@ -21,7 +24,6 @@
   var RENTAL_TYPE = 'RENTAL'; // 1depth Category.type
 
   // ── 상태 ─────────────────────────────────────────────
-  // ★ ITEMS는 이제 서버에서 채워짐 (loadItems에서)
   var ITEMS = [];
   var currentItem = null;
   var currentProducts = [];
@@ -51,21 +53,7 @@
         : null;
   }
 
-  // ★★★ 신규: 품목(=RENTAL 2depth 카테고리) 동적 로드 ★★★
-  // GET /api/categories → 활성 카테고리 트리 반환
-  // 응답 구조 예시:
-  // {
-  //   data: [
-  //     { id, name:'렌탈', type:'RENTAL', isActive:true, imageUrl:null,
-  //       children: [
-  //         { id, name:'공기청정기', isActive:true, imageUrl:'https://...' },
-  //         { id, name:'안마의자',   isActive:true, imageUrl:null },
-  //         { id, name:'비데',       isActive:true, imageUrl:null }
-  //       ]
-  //     },
-  //     ...
-  //   ]
-  // }
+  // ── 품목(=RENTAL 2depth 카테고리) 동적 로드 ─────────
   function loadItems() {
     var grid = document.getElementById('itemGrid');
     grid.innerHTML = '<div class="r-loading">품목을 불러오는 중...</div>';
@@ -75,11 +63,9 @@
         return r.json();
       })
       .then(function (res) {
-        // ApiResponse 래퍼 / 평면 응답 모두 대응
         var data = res && res.data ? res.data : res;
         var list = Array.isArray(data) ? data : [];
 
-        // RENTAL 1depth 찾기
         var rental = null;
         for (var i = 0; i < list.length; i++) {
           if (list[i] && list[i].type === RENTAL_TYPE) {
@@ -94,9 +80,6 @@
           return;
         }
 
-        // 활성 children만 추출하여 ITEMS 구성
-        // ※ 백엔드 API(/api/rental-products?brandId=...)는 brandId 파라미터를 사용하지만
-        //    실제 값은 2depth 카테고리 ID. 변수명만 호환 유지.
         ITEMS = rental.children
           .filter(function (c) {
             return c && c.isActive !== false;
@@ -104,10 +87,10 @@
           .map(function (c) {
             return {
               brandId: c.id, // 기존 API 호환 (값은 categoryId)
-              categoryId: c.id, // 명확성 별칭
+              categoryId: c.id,
               name: c.name,
               imageUrl: c.imageUrl || '',
-              emoji: '📦', // imageUrl 없을 때 fallback
+              emoji: '📦',
             };
           });
 
@@ -131,7 +114,6 @@
     var html = '';
     for (var i = 0; i < ITEMS.length; i++) {
       var it = ITEMS[i];
-      // ★ imageUrl 있으면 이미지, 없으면 emoji
       var thumb = it.imageUrl
         ? '<div class="r-item-thumb"><img src="' +
           esc(it.imageUrl) +
@@ -244,17 +226,28 @@
         '</div>';
     }
     grid.innerHTML = html;
+
+    // ★★★★★ [5/29 변경] 카드 클릭 → 다이얼로그 대신 상세페이지 이동 ★★★★★
     var cards = grid.querySelectorAll('.water-prod-card');
     for (var j = 0; j < cards.length; j++) {
       cards[j].addEventListener('click', function () {
-        openDialog(
-          currentProducts[parseInt(this.getAttribute('data-idx'), 10)],
-        );
+        var p = currentProducts[parseInt(this.getAttribute('data-idx'), 10)];
+        if (p && p.id) {
+          window.location.href =
+            'rental-detail.html?id=' + encodeURIComponent(p.id);
+        }
       });
     }
+    // ─────────────────────────────────────────────────────────────────
+    // (이전: openDialog(p) 호출 — 다이얼로그 띄움. 정수기와 UX 통일 위해 페이지 이동으로 변경)
   }
 
-  // ── 상품 다이얼로그 ─────────────────────────────────
+  // ══════════════════════════════════════════════════════
+  // 아래는 보존된 다이얼로그/신청 폼 로직 (5/29 현재 카드 클릭에서 호출 안 됨)
+  //   - 즉시 죽은 코드지만, 향후 "다이얼로그 빠른 신청" 경로 복원 가능성 대비
+  //   - submitApplication 은 다른 곳(예: 상세페이지)에서 호출될 가능성 있어 그대로 둠
+  // ══════════════════════════════════════════════════════
+
   function openDialog(p) {
     selectedProduct = p;
     selectedColor = null;
@@ -269,7 +262,6 @@
       ? p.contractMonths + '개월'
       : '-';
 
-    // 색상
     var colorsGroup = document.getElementById('wDColorsGroup');
     var colorsBox = document.getElementById('wDColors');
     var colors = p.colors || [];
@@ -299,7 +291,6 @@
       colorsGroup.style.display = 'none';
     }
 
-    // 관리주기
     var careGroup = document.getElementById('wDCareGroup');
     if (p.careInterval) {
       document.getElementById('wDCare').textContent = p.careInterval;
@@ -367,7 +358,6 @@
       window.closeApplyForm();
   };
 
-  // ── 신청 제출 → POST /api/consultations ─────────────
   window.submitApplication = function () {
     var errEl = document.getElementById('rApplyErr');
     errEl.textContent = '';
@@ -508,6 +498,6 @@
 
   // ── 초기화 ──────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
-    loadItems(); // ★ renderItems() → loadItems()로 교체 (fetch 후 자동 렌더)
+    loadItems();
   });
 })();
