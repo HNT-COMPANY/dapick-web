@@ -1,11 +1,12 @@
 
+
 <!DOCTYPE html>
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>다픽 렌탈 상세 | 공기청정기·안마의자·비데</title>
-  <meta name="description" content="렌탈 상품 상세 — 색상 선택 후 월 렌탈료 확인 및 상담 신청."/>
+  <meta name="description" content="렌탈 상품 상세 — 약정·관리주기·색상 선택 후 월 렌탈료 확인 및 상담 신청."/>
   <meta name="robots" content="index, follow"/>
 
   <meta property="og:type" content="website"/>
@@ -22,9 +23,10 @@
   <link rel="stylesheet" href="css/common/components.css"/>
   <link rel="stylesheet" href="css/common/footer.css"/>
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
-  <!-- ★ 정수기 상세 CSS 그대로 재사용 (wd-* 클래스). 폴더 다르면 path 조정 -->
+  <!-- ★ 정수기 페이지 CSS 그대로 재사용: water.css(다이얼로그 .w-*) + water-detail.css(.wd-*) -->
+  <link rel="stylesheet" href="css/warterpage/water.css"/>
   <link rel="stylesheet" href="css/warterpage/water-detail.css"/>
-  <!-- ★ [5/29 신청 흐름 통합] rental.css 추가 — 신청 폼 모달(.r-apply-*) 스타일 사용 -->
+  <!-- ★ 신청 폼 모달(.r-apply-*) 스타일 -->
   <link rel="stylesheet" href="css/rental/rental.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
 </head>
@@ -63,9 +65,7 @@
 </nav>
 
 <!-- ══════════════════════════════════════
-     상세 본문 (id 로 동적 렌더)
-     ※ 정수기와 같은 wd-* 클래스 사용 → water-detail.css 그대로 동작
-     ※ 다이얼로그 제거(렌탈은 옵션 단순), 약정/관리주기/타사보상 select 제거
+     상세 본문 — 정수기 water-detail 과 동일 구조
 ══════════════════════════════════════ -->
 <div class="wd-wrap" id="wdRoot">
   <button class="wd-back" onclick="rdGoBack()"><span id="wdBackText">‹ 상품 목록</span></button>
@@ -74,7 +74,7 @@
     <!-- 좌: 이미지 -->
     <div class="wd-gallery" id="wdGallery"></div>
 
-    <!-- 우: 선택 패널 -->
+    <!-- 우: 선택 패널 (정수기와 동일: 약정/관리주기/타사보상/색상) -->
     <div class="wd-panel">
       <span class="wd-brand-tag" id="wdCategoryTag"></span>
       <div class="wd-name" id="wdName"></div>
@@ -88,16 +88,27 @@
         <div class="wd-pb-total" id="wdTotal">-</div>
       </div>
 
-      <!-- 색상 선택 (등록된 색상이 있을 때만 JS 가 표시) -->
+      <div class="wd-opt" id="wdContractWrap">
+        <div class="wd-opt-label">📅 약정 기간</div>
+        <select class="wd-select" id="wdContract"></select>
+      </div>
+      <div class="wd-opt" id="wdCycleWrap">
+        <div class="wd-opt-label">🔧 관리 주기</div>
+        <select class="wd-select" id="wdCycle"></select>
+      </div>
+      <div class="wd-opt" id="wdTypeWrap">
+        <div class="wd-opt-label">🏷️ 타사보상 여부</div>
+        <select class="wd-select" id="wdType"></select>
+      </div>
       <div class="wd-opt" id="wdColorWrap" style="display:none;">
         <div class="wd-opt-label">🎨 색상 선택</div>
         <div class="wd-colors" id="wdColors"></div>
       </div>
 
       <div class="wd-specs">
-        <div class="wd-spec"><div class="wd-spec-label">약정 개월</div><div class="wd-spec-val" id="wdSpecContract">-</div></div>
-        <div class="wd-spec"><div class="wd-spec-label">등록비</div><div class="wd-spec-val" id="wdSpecRegister">-</div></div>
-        <div class="wd-spec"><div class="wd-spec-label">관리 주기</div><div class="wd-spec-val" id="wdSpecCare">-</div></div>
+        <div class="wd-spec"><div class="wd-spec-label">가입 조건</div><div class="wd-spec-val" id="wdSpecType">-</div></div>
+        <div class="wd-spec"><div class="wd-spec-label">카드할인 시</div><div class="wd-spec-val" id="wdSpecCard">-</div></div>
+        <div class="wd-spec"><div class="wd-spec-label">최대 지원금</div><div class="wd-spec-val" id="wdSpecSupport">-</div></div>
         <div class="wd-spec"><div class="wd-spec-label">결제 안내</div><div class="wd-spec-val" style="font-size:12px;">렌탈 약정 기준</div></div>
       </div>
 
@@ -118,12 +129,63 @@
 </div>
 
 <!-- ══════════════════════════════════════
-     신청 폼 모달  [5/29 신청 흐름 통합 — rental.html 에서 복제]
-     ※ rental-detail.js 의 openApplyForm / submitApplication 이 제어
+     상품 상세 다이얼로그 — 정수기 water.html 과 동일 (3단 + 색상)
+     "신청하기" 클릭 시 출력. 여기서 다시 자체 신청 폼으로 연결.
+══════════════════════════════════════ -->
+<div class="w-dialog-overlay" id="wDialogOverlay" onclick="closeDialogOutside(event)">
+  <div class="w-dialog">
+    <div class="w-dialog-header">
+      <div class="w-dialog-handle"></div>
+      <div class="w-dialog-header-row">
+        <div>
+          <span id="wDTag" class="w-dialog-brand-tag"></span>
+          <div id="wDName" class="w-dialog-name"></div>
+        </div>
+        <button class="w-dialog-close" onclick="closeDialog()">✕</button>
+      </div>
+    </div>
+    <div class="w-dialog-body">
+      <div class="w-price-box">
+        <div class="w-price-left">
+          <div class="wpl-label">월 렌탈료</div>
+          <div class="w-price-val" id="wDPrice">-<span>/월</span></div>
+        </div>
+        <div class="w-price-right">
+          <div class="w-total-label">총 렌탈료</div>
+          <div class="w-total-val" id="wDTotal">-</div>
+        </div>
+      </div>
+      <div class="w-option-group" id="wDContractGroup">
+        <div class="w-option-label">📅 약정 기간</div>
+        <select class="w-select" id="wDContract"></select>
+      </div>
+      <div class="w-option-group" id="wDCycleGroup">
+        <div class="w-option-label">🔧 관리 주기</div>
+        <select class="w-select" id="wDCycle"></select>
+      </div>
+      <div class="w-option-group" id="wDTypeGroup">
+        <div class="w-option-label">🏷️ 타사보상 여부</div>
+        <select class="w-select" id="wDType"></select>
+      </div>
+      <div class="w-option-group" id="wDColorsGroup">
+        <div class="w-option-label">🎨 색상 선택</div>
+        <div class="w-color-chips" id="wDColors"></div>
+      </div>
+      <div class="w-spec-grid" id="wDSpecs"></div>
+      <div class="w-desc-box" id="wDDesc"></div>
+      <div class="w-actions">
+        <button class="w-btn-kakao" style="background:#5b5bd6;color:#fff;" onclick="openApplyForm()">상담 신청하기 →</button>
+        <button class="w-btn-kakao" onclick="rdKakao()">카카오로 상담하기 →</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════════
+     신청 폼 모달 (자체 구현 — consultations POST)
 ══════════════════════════════════════ -->
 <div class="r-apply-overlay" id="rApplyOverlay" onclick="closeApplyOutside(event)">
   <div class="r-apply-modal">
-    <!-- 입력 단계 -->
     <div id="rApplyStepForm">
       <div class="r-apply-head">
         <span class="r-apply-title">상담 신청</span>
@@ -138,10 +200,6 @@
         <div class="r-field">
           <label>연락처<span class="req">*</span></label>
           <input type="tel" id="fPhone" placeholder="010-1234-5678" autocomplete="tel"/>
-        </div>
-        <div class="r-field" style="display:none">
-          <label>생년월일<span class="req">*</span></label>
-          <input type="date" id="fBirth"/>
         </div>
         <div class="r-field">
           <label>이메일<span class="req">*</span></label>
@@ -182,7 +240,6 @@
       </div>
     </div>
 
-    <!-- 완료 단계 -->
     <div id="rApplyStepDone" style="display:none;">
       <div class="r-done">
         <div class="r-done-emoji">🎉</div>
@@ -204,7 +261,7 @@
 </div>
 <button class="scroll-top" id="scroll-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">∧</button>
 
-<!-- 푸터 (정수기와 동일) -->
+<!-- 푸터 -->
 <footer class="site-footer">
   <div class="footer-top">
     <div class="footer-wrap">
@@ -261,7 +318,7 @@
   </div>
 </footer>
 
-<!-- 스크립트: 공통 → rental-detail (rental.js 의존 X — 신청 폼은 rental-detail.js 자체 구현) -->
+<!-- 스크립트: 공통 → rental-detail (자기완결, water.js 의존 X) -->
 <script src="js/common/config.js"></script>
 <script src="js/common/api.js"></script>
 <script src="js/common/auth.js"></script>
