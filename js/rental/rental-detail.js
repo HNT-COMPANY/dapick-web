@@ -3,18 +3,34 @@
 // ────────────────────────────────────────────────────
 // ?id={상품UUID} 로 진입 → /api/rental-products/{id} 조회
 // 우 패널: 색상 선택 + 가격/스펙 표시 (정수기와 달리 약정/주기/타사보상 옵션 없음)
-// "신청하기" → 기존 렌탈 신청 흐름 호출 (openRentalApply / DapickApplication / 카카오 fallback)
+//
+// [5/29 신청 흐름 통합]
+//   - rdApply() 의 카카오 fallback 제거
+//   - rental.html 의 신청 폼 모달(#rApplyOverlay)을 이 페이지에 복제
+//   - rental.js 의 submitApplication 로직을 이식 (자기완결)
+//   - 토큰 키는 dapick_token → accessToken fallback (소비자 키 불일치 대비)
+//
 // 5/29: detailImages 세로 나열 + 펼쳐보기 토글 (정수기와 동일 패턴)
 //
 // ※ 의존:
 //   - water-detail.css (wd-* 클래스 그대로 사용)
+//   - rental.css (신청 폼 모달 .r-apply-* 스타일)
 //   - common/config.js (DAPICK_CONFIG.API_BASE_URL)
-//   - common/application.js (선택)
-//   - rental.js 불필요 (다이얼로그 없음)
+//   - rental.js 불필요
 // ════════════════════════════════════════════════════
 
 let RD_PRODUCT = null;
 let RD_COLOR = '';
+
+// API_BASE — config.js 의 DAPICK_CONFIG 우선, 없으면 도메인 분기
+const RD_API_BASE =
+  typeof DAPICK_CONFIG !== 'undefined' && DAPICK_CONFIG.API_BASE_URL
+    ? DAPICK_CONFIG.API_BASE_URL
+    : typeof BASE_URL !== 'undefined' && BASE_URL
+      ? BASE_URL
+      : 'https://api.dapick.co.kr';
+
+const RD_KAKAO_URL = 'https://pf.kakao.com/_exaRjX/chat';
 
 document.addEventListener('DOMContentLoaded', () => {
   const id = new URLSearchParams(location.search).get('id');
@@ -23,14 +39,6 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
   loadDetail(id);
-
-  // 로그인 후 복귀 시 신청 모달 이어서
-  if (
-    typeof DapickApplication !== 'undefined' &&
-    DapickApplication.resumeIfPending
-  ) {
-    DapickApplication.resumeIfPending();
-  }
 });
 
 function showStatus(msg) {
@@ -38,9 +46,18 @@ function showStatus(msg) {
   if (el) el.innerHTML = `<div class="wd-status">${msg}</div>`;
 }
 
+// 소비자 토큰: dapick_token 우선, 없으면 accessToken (키 불일치 대비)
+function rdGetToken() {
+  return (
+    localStorage.getItem('dapick_token') ||
+    localStorage.getItem('accessToken') ||
+    ''
+  );
+}
+
 async function loadDetail(id) {
   try {
-    const url = `${DAPICK_CONFIG.API_BASE_URL}/api/rental-products/${id}`;
+    const url = `${RD_API_BASE}/api/rental-products/${id}`;
     const res = await fetch(url, {
       headers: { 'Content-Type': 'application/json' },
     });
@@ -77,7 +94,6 @@ async function loadDetail(id) {
 function renderDetail() {
   const p = RD_PRODUCT;
 
-  // 카테고리(품목) 태그 — 정수기의 brand-tag 자리에
   const tagEl = document.getElementById('wdCategoryTag');
   if (tagEl) {
     tagEl.textContent = p.categoryName
@@ -91,17 +107,13 @@ function renderDetail() {
     ? `‹ ${p.categoryName} 상품 목록`
     : '‹ 상품 목록';
 
-  // 좌: 이미지 (없으면 emoji)
   const gal = document.getElementById('wdGallery');
   gal.innerHTML = p.image
     ? `<img src="${p.image}" alt="${escapeHtml(p.name)}">`
     : `<span class="wd-emoji">${p.emoji || '📦'}</span>`;
 
-  // 우: 색상 + 가격/스펙
   renderColors();
   calc();
-
-  // 하단 상세 (세로 이미지 + 펼쳐보기)
   renderDetailBody();
 }
 
@@ -111,7 +123,6 @@ function renderColors() {
   const colorsEl = document.getElementById('wdColors');
   if (!wrap || !colorsEl) return;
 
-  // 색상 없으면 영역 숨김
   if (!p.colors || !p.colors.length) {
     wrap.style.display = 'none';
     return;
@@ -152,7 +163,6 @@ function calc() {
       ? `총 ${(monthly * months).toLocaleString()}원<br>(${months}개월)`
       : '-';
 
-  // 스펙 그리드
   document.getElementById('wdSpecContract').textContent = months
     ? `${months}개월`
     : '-';
@@ -162,8 +172,6 @@ function calc() {
   document.getElementById('wdSpecCare').textContent = p.careInterval || '-';
 }
 
-// 하단 상세: 상세이미지 세로 나열(쿠팡식) + 텍스트 설명 + 펼쳐보기 토글
-// (water-detail.js renderDetailBody 와 완전 동일 패턴)
 function renderDetailBody() {
   const body = document.getElementById('wdDetailBody');
   if (!body) return;
@@ -187,7 +195,6 @@ function renderDetailBody() {
     return;
   }
 
-  // 접기 컨테이너(처음 1000px만) + 펼쳐보기 버튼
   body.innerHTML = `
     <div class="wd-collapse" id="wdCollapse">
       ${inner}
@@ -198,7 +205,6 @@ function renderDetailBody() {
     </button>
   `;
 
-  // 콘텐츠가 접힘 높이보다 짧으면 버튼/그라데이션 숨김
   requestAnimationFrame(() => {
     const wrap = document.getElementById('wdCollapse');
     const btn = document.getElementById('wdExpandBtn');
@@ -213,7 +219,6 @@ function renderDetailBody() {
   });
 }
 
-// 펼쳐보기/접기 토글
 function rdToggleDetail() {
   const wrap = document.getElementById('wdCollapse');
   const btn = document.getElementById('wdExpandBtn');
@@ -238,68 +243,191 @@ function escapeHtml(s) {
     .replace(/>/g, '&gt;');
 }
 
-// "신청하기" — 3단계 fallback
-//   1차: openRentalApply (rental.js 전역 함수가 있다면)
-//   2차: DapickApplication.openOnboarding (공통 모듈)
-//   3차: 카카오 상담 fallback
-function rdApply() {
-  const p = RD_PRODUCT;
-  const monthly = p.pricing.monthly || 0;
-
-  // 1차: 렌탈 전용 신청 흐름
-  if (typeof openRentalApply === 'function') {
-    openRentalApply({
-      productId: p.id,
-      productName: p.name,
-      categoryId: p.categoryId,
-      categoryName: p.categoryName,
-      color: RD_COLOR,
-      monthly: monthly,
-      contractMonths: p.contractMonths,
-    });
-    return;
-  }
-
-  // 2차: 공통 신청 모달
-  if (
-    typeof DapickApplication !== 'undefined' &&
-    typeof DapickApplication.openOnboarding === 'function'
-  ) {
-    DapickApplication.openOnboarding({
-      category: 'RENTAL',
-      productId: p.id,
-      productName: p.name,
-      meta: {
-        categoryName: p.categoryName,
-        color: RD_COLOR,
-        monthly: monthly,
-        contractMonths: p.contractMonths,
-      },
-    });
-    return;
-  }
-
-  // 3차: 카카오 fallback
-  rdKakao();
+function won(n) {
+  if (n === null || n === undefined || isNaN(n)) return '-';
+  return Number(n).toLocaleString('ko-KR') + '원';
 }
 
-// 카카오 상담 (선택 컨텍스트 전달)
-function rdKakao() {
-  const p = RD_PRODUCT;
-  const monthly = p.pricing.monthly || 0;
+// ════════════════════════════════════════════════════
+// [5/29 신청 흐름 통합] — rental.js 에서 이식한 자체 신청 폼
+// ════════════════════════════════════════════════════
 
-  if (typeof openKakaoConsult === 'function') {
-    openKakaoConsult({
-      category: '렌탈',
-      brand: p.categoryName || '',
-      productName: p.name,
-      color: RD_COLOR,
-      contract: p.contractMonths ? `${p.contractMonths}개월 약정` : '',
-      monthly: monthly,
-    });
-  } else {
-    window.open('https://pf.kakao.com/_exaRjX/chat', '_blank');
+// "신청하기" → 카카오 fallback 제거. 바로 상담 신청 모달.
+function rdApply() {
+  openApplyForm();
+}
+
+window.openApplyForm = function () {
+  if (!RD_PRODUCT || !RD_PRODUCT.id) {
+    alert('상품 정보가 올바르지 않습니다. 다시 시도해주세요.');
+    return;
   }
+
+  // 로그인 가드 (auth.js 의 isLoggedIn 사용 가능 시)
+  if (typeof isLoggedIn === 'function' && !isLoggedIn()) {
+    alert(
+      '상담 신청은 로그인 후 이용할 수 있어요. 로그인 페이지로 이동합니다.',
+    );
+    const btn = document.querySelector('.btn-login');
+    if (btn) {
+      btn.click();
+    } else {
+      window.location.href = 'index.html';
+    }
+    return;
+  }
+
+  document.getElementById('rApplyStepForm').style.display = 'block';
+  document.getElementById('rApplyStepDone').style.display = 'none';
+  document.getElementById('rApplyErr').textContent = '';
+
+  const m = RD_PRODUCT.pricing.monthly || 0;
+  document.getElementById('rApplyProd').innerHTML =
+    '신청 상품: <b>' +
+    escapeHtml(RD_PRODUCT.name) +
+    '</b>' +
+    (m ? ' · 월 ' + won(m) : '') +
+    (RD_COLOR ? ' · ' + escapeHtml(RD_COLOR) : '');
+
+  document.getElementById('rApplyOverlay').classList.add('show');
+  document.body.style.overflow = 'hidden';
+};
+
+window.closeApplyForm = function () {
+  document.getElementById('rApplyOverlay').classList.remove('show');
+  document.body.style.overflow = '';
+};
+
+window.closeApplyOutside = function (e) {
+  if (e.target === document.getElementById('rApplyOverlay'))
+    window.closeApplyForm();
+};
+
+window.submitApplication = function () {
+  const errEl = document.getElementById('rApplyErr');
+  errEl.textContent = '';
+
+  const name = document.getElementById('fName').value.trim();
+  const phone = document.getElementById('fPhone').value.trim();
+  const email = document.getElementById('fEmail').value.trim();
+  const bank = document.getElementById('fBank').value.trim();
+  const addr = document.getElementById('fAddr').value.trim();
+  const memo = document.getElementById('fMemo').value.trim();
+  const agreePrivacy = document.getElementById('fPrivacy').checked;
+  const agreeWarning = document.getElementById('fWarning').checked;
+  const agreeMarketing = document.getElementById('fMarketing').checked;
+  const agreeEmailInfo = document.getElementById('fEmailInfo').checked;
+
+  if (!name) {
+    errEl.textContent = '신청자 이름을 입력해주세요.';
+    return;
+  }
+  if (!/^01[016789]-?\d{3,4}-?\d{4}$/.test(phone)) {
+    errEl.textContent = '올바른 휴대폰 번호를 입력해주세요.';
+    return;
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    errEl.textContent = '올바른 이메일을 입력해주세요.';
+    return;
+  }
+  if (!bank) {
+    errEl.textContent = '지원금 입금받을 계좌를 입력해주세요.';
+    return;
+  }
+  if (!agreePrivacy) {
+    errEl.textContent = '개인정보 처리방침 동의는 필수입니다.';
+    return;
+  }
+  if (!agreeWarning) {
+    errEl.textContent = '주의사항 확인은 필수입니다.';
+    return;
+  }
+
+  if (!RD_PRODUCT || !RD_PRODUCT.id) {
+    errEl.textContent = '상품 정보가 올바르지 않습니다. 다시 시도해주세요.';
+    return;
+  }
+
+  const token = rdGetToken();
+  if (!token) {
+    errEl.textContent = '로그인이 필요합니다.';
+    return;
+  }
+
+  const monthly = RD_PRODUCT.pricing.monthly || 0;
+  if (!monthly || isNaN(monthly) || Number(monthly) <= 0) {
+    errEl.textContent =
+      '이 상품은 월 요금이 설정되어 있지 않아 온라인 신청이 어렵습니다. 카카오 상담을 이용해주세요.';
+    return;
+  }
+
+  const selectedOptions = {};
+  if (RD_COLOR) selectedOptions.color = RD_COLOR;
+  if (memo) selectedOptions.inquiry = memo;
+
+  const payload = {
+    productId: RD_PRODUCT.id,
+    selectedOptions: selectedOptions,
+    monthlyPrice: Number(monthly),
+    applicantName: name,
+    applicantPhone: phone,
+    applicantEmail: email,
+    bankAccount: bank,
+    zipcode: null,
+    address: addr || null,
+    agreePrivacy: true,
+    agreeMarketing: agreeMarketing,
+    agreeEmailInfo: agreeEmailInfo,
+  };
+
+  const submitBtn = document.getElementById('rApplySubmit');
+  submitBtn.disabled = true;
+  submitBtn.textContent = '신청 중...';
+
+  fetch(RD_API_BASE + '/api/consultations', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: 'Bearer ' + token,
+    },
+    body: JSON.stringify(payload),
+  })
+    .then((r) =>
+      r.json().then((body) => ({ ok: r.ok, status: r.status, body })),
+    )
+    .then((res) => {
+      submitBtn.disabled = false;
+      submitBtn.textContent = '상담 신청하기';
+
+      const data = res.body && res.body.data ? res.body.data : null;
+      const num = data ? data.consultationNumber : '';
+
+      if (res.ok && num) {
+        document.getElementById('rDoneNum').textContent = num;
+        document.getElementById('rApplyStepForm').style.display = 'none';
+        document.getElementById('rApplyStepDone').style.display = 'block';
+      } else {
+        let msg =
+          res.body && res.body.message
+            ? res.body.message
+            : '신청에 실패했습니다. 잠시 후 다시 시도해주세요.';
+        if (res.status === 401)
+          msg = '로그인이 만료되었습니다. 다시 로그인해주세요.';
+        errEl.textContent = msg;
+      }
+    })
+    .catch((e) => {
+      console.error('[rental-detail] submit failed', e);
+      submitBtn.disabled = false;
+      submitBtn.textContent = '상담 신청하기';
+      errEl.textContent =
+        '네트워크 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
+    });
+};
+
+// 카카오 상담 (보조 버튼)
+function rdKakao() {
+  window.open(RD_KAKAO_URL, '_blank');
 }
 
 function rdGoBack() {

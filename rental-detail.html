@@ -24,6 +24,8 @@
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <!-- ★ 정수기 상세 CSS 그대로 재사용 (wd-* 클래스). 폴더 다르면 path 조정 -->
   <link rel="stylesheet" href="css/warterpage/water-detail.css"/>
+  <!-- ★ [5/29 신청 흐름 통합] rental.css 추가 — 신청 폼 모달(.r-apply-*) 스타일 사용 -->
+  <link rel="stylesheet" href="css/rental/rental.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
 </head>
 <body>
@@ -115,6 +117,84 @@
   </div>
 </div>
 
+<!-- ══════════════════════════════════════
+     신청 폼 모달  [5/29 신청 흐름 통합 — rental.html 에서 복제]
+     ※ rental-detail.js 의 openApplyForm / submitApplication 이 제어
+══════════════════════════════════════ -->
+<div class="r-apply-overlay" id="rApplyOverlay" onclick="closeApplyOutside(event)">
+  <div class="r-apply-modal">
+    <!-- 입력 단계 -->
+    <div id="rApplyStepForm">
+      <div class="r-apply-head">
+        <span class="r-apply-title">상담 신청</span>
+        <button class="r-apply-close" onclick="closeApplyForm()">✕</button>
+      </div>
+      <div class="r-apply-prod" id="rApplyProd">상품 정보</div>
+      <div class="r-apply-body">
+        <div class="r-field">
+          <label>신청자 이름<span class="req">*</span></label>
+          <input type="text" id="fName" placeholder="홍길동" autocomplete="name"/>
+        </div>
+        <div class="r-field">
+          <label>연락처<span class="req">*</span></label>
+          <input type="tel" id="fPhone" placeholder="010-1234-5678" autocomplete="tel"/>
+        </div>
+        <div class="r-field" style="display:none">
+          <label>생년월일<span class="req">*</span></label>
+          <input type="date" id="fBirth"/>
+        </div>
+        <div class="r-field">
+          <label>이메일<span class="req">*</span></label>
+          <input type="email" id="fEmail" placeholder="example@dapick.co.kr" autocomplete="email"/>
+        </div>
+        <div class="r-field">
+          <label>지원금 입금받을 계좌<span class="req">*</span></label>
+          <input type="text" id="fBank" placeholder="은행명 + 계좌번호 (직접 입력)"/>
+        </div>
+        <div class="r-field">
+          <label>주소</label>
+          <input type="text" id="fAddr" placeholder="설치 희망 주소 (선택)"/>
+        </div>
+        <div class="r-field">
+          <label>문의사항</label>
+          <textarea id="fMemo" placeholder="궁금한 점이나 요청사항 (선택)"></textarea>
+        </div>
+
+        <label class="r-agree">
+          <input type="checkbox" id="fPrivacy"/>
+          <span>[필수] <a href="privacy.html" target="_blank">개인정보 처리방침</a>에 동의합니다.</span>
+        </label>
+        <label class="r-agree">
+          <input type="checkbox" id="fWarning"/>
+          <span>[필수] 다픽은 통신판매중개자이며, 상담 신청 시 위탁사로 정보가 전달됨을 확인했습니다.</span>
+        </label>
+        <label class="r-agree">
+          <input type="checkbox" id="fMarketing"/>
+          <span>[선택] 마케팅 정보 수신에 동의합니다.</span>
+        </label>
+        <label class="r-agree">
+          <input type="checkbox" id="fEmailInfo"/>
+          <span>[선택] 이메일 정보 수신에 동의합니다.</span>
+        </label>
+
+        <p class="r-apply-err" id="rApplyErr"></p>
+        <button class="r-apply-submit" id="rApplySubmit" onclick="submitApplication()">상담 신청하기</button>
+      </div>
+    </div>
+
+    <!-- 완료 단계 -->
+    <div id="rApplyStepDone" style="display:none;">
+      <div class="r-done">
+        <div class="r-done-emoji">🎉</div>
+        <div class="r-done-title">상담 신청이 접수되었어요!</div>
+        <div class="r-done-num" id="rDoneNum">-</div>
+        <div class="r-done-sub">담당 상담사가 순차적으로 연락드릴 예정입니다.<br>마이페이지에서 신청 내역을 확인할 수 있어요.</div>
+        <button class="r-done-btn" onclick="closeApplyForm()">확인</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- 카카오 플로팅 -->
 <div class="kakao-float" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
   <button class="kakao-btn" title="카카오톡 상담">
@@ -181,13 +261,12 @@
   </div>
 </footer>
 
-<!-- 스크립트: 공통 → rental-detail (rental.js 의존 X — 정수기와 달리 다이얼로그 없음) -->
+<!-- 스크립트: 공통 → rental-detail (rental.js 의존 X — 신청 폼은 rental-detail.js 자체 구현) -->
 <script src="js/common/config.js"></script>
 <script src="js/common/api.js"></script>
 <script src="js/common/auth.js"></script>
 <script src="js/common/utils.js"></script>
 <script src="js/common/gnb-user.js"></script>
-<script src="js/common/application.js"></script>
 <script src="js/rental/rental-detail.js"></script>
 
 </body>
