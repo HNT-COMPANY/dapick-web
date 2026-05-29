@@ -1,7 +1,16 @@
 // ════════════════════════════════════════════════════
-// internet-product-base.js v7 — 인터넷·TV 빌더 (아정당식 카드)
+// internet-product-base.js v8 — 인터넷·TV 빌더 (아정당식 카드)
 // ────────────────────────────────────────────────────
-// 사용: InternetProductBase.init({ provider })
+// 사용(통합):  InternetProductBase.initFromUrl()
+//   - URL ?carrier=SKT 를 읽어 자동 설정 (통합 페이지 internet-detail.html)
+// 사용(레거시): InternetProductBase.init({ provider })  ← 기존 6개 페이지 호환
+//
+// v8 변경점 (5/29):
+//   - 통신사별 6개 HTML 페이지 → 1개 통합(internet-detail.html?carrier=)
+//   - CARRIER_MAP 내장: carrier 값 → 표시명/로고/컬러 (DB carrier 는 표시명 그대로)
+//   - 헤더 로고·히어로·테마컬러를 carrier 에 맞춰 동적 렌더
+//
+// (이전) v7 — provider 하드코딩 방식
 //   - provider.key = 'SKT' / 'KT' / ... (carrier 필터)
 //
 // 백엔드: GET /api/internet-tv-products (전체 활성 조회 → carrier 필터)
@@ -24,6 +33,48 @@
 window.InternetProductBase = (function () {
   'use strict';
 
+  // ── 통신사 매핑 (DB carrier 값 = 표시명 그대로) ──────────
+  //   key = 실제 carrier 값, logo/color/desc = 화면 표시용
+  //   ※ assets 경로/컬러는 internet.html 메인보드 기준으로 맞춤
+  const CARRIER_MAP = {
+    SKT: {
+      name: 'SKT',
+      logo: 'assets/logos/SKTLOGO.png',
+      color: '#3617CE',
+      hero: '500MB / 1Gbps · 휴대폰 결합 시 추가 할인',
+    },
+    KT: {
+      name: 'KT',
+      logo: 'assets/logos/KT.png',
+      color: '#E31837',
+      hero: '기가 인터넷 안정성 · 지니TV 다양한 채널',
+    },
+    'LG U+': {
+      name: 'LG U+',
+      logo: 'assets/logos/LG.png',
+      color: '#E5007D',
+      hero: '실속있는 가격 · 4K UHD 화질',
+    },
+    'LG HelloVision': {
+      name: 'LG HelloVision',
+      logo: 'assets/logos/LGhello.png',
+      color: '#7B2D8B',
+      hero: '케이블 TV 전문 · 지역 채널 + 합리적 가격',
+    },
+    'SK broadband': {
+      name: 'SK broadband',
+      logo: 'assets/logos/SKTLOGO1.png',
+      color: '#0078C8',
+      hero: '기가 인터넷 + BTv · 스포츠·예능 풍부',
+    },
+    'KT Skylife': {
+      name: 'KT Skylife',
+      logo: 'assets/logos/KTSkyLife.png',
+      color: '#003087',
+      hero: '위성 TV 전문 · HD 화질 + 다양한 채널',
+    },
+  };
+
   let _provider = null;
   let _product = null;
   let _internets = [];
@@ -38,7 +89,62 @@ window.InternetProductBase = (function () {
   let _toggles = { tv: false, router: false, phone: false };
 
   // ════════════════════════════════════════════════════
-  // 초기화
+  // 초기화 (통합 페이지: URL ?carrier= 에서 통신사 자동 설정)
+  // ════════════════════════════════════════════════════
+  function initFromUrl() {
+    const params = new URLSearchParams(window.location.search);
+    const carrier = params.get('carrier');
+    if (!carrier) {
+      showError('통신사 정보가 없습니다. 통신사 선택 페이지로 돌아가 주세요.');
+      return;
+    }
+    const meta = CARRIER_MAP[carrier];
+    if (!meta) {
+      // 매핑에 없어도 carrier 자체로 동작은 시도 (로고/컬러만 기본값)
+      console.warn('[InternetProductBase] CARRIER_MAP 미등록:', carrier);
+    }
+    init({
+      provider: {
+        key: carrier,
+        name: meta ? meta.name : carrier,
+        color: meta ? meta.color : '#3617CE',
+        logo: meta ? meta.logo : '',
+        hero: meta ? meta.hero : '',
+      },
+    });
+  }
+
+  // ── 헤더/히어로/테마컬러 동적 렌더 ───────────────────
+  function renderCarrierChrome() {
+    if (!_provider) return;
+    // 테마 컬러
+    if (_provider.color) {
+      document.documentElement.style.setProperty(
+        '--ip-brand-color',
+        _provider.color,
+      );
+      const themeMeta = document.querySelector('meta[name="theme-color"]');
+      if (themeMeta) themeMeta.setAttribute('content', _provider.color);
+    }
+    // 헤더 로고
+    const logoImg = document.querySelector('.ip-header-logo img');
+    if (logoImg && _provider.logo) {
+      logoImg.src = _provider.logo;
+      logoImg.alt = _provider.name;
+    }
+    // 히어로 텍스트
+    const heroH1 = document.querySelector('.ip-hero h1');
+    if (heroH1) {
+      heroH1.innerHTML = `${escapeHtml(_provider.name)} 인터넷 사은품<br><em>최대 00만원 + 결합 할인</em>`;
+    }
+    const heroP = document.querySelector('.ip-hero p');
+    if (heroP && _provider.hero) heroP.textContent = _provider.hero;
+    // 문서 타이틀
+    document.title = `다픽 ${_provider.name} 인터넷·TV 지원금 | 결합 사은품 비교`;
+  }
+
+  // ════════════════════════════════════════════════════
+  // 초기화 (레거시: provider 직접 전달)
   // ════════════════════════════════════════════════════
   function init(config) {
     if (!config || !config.provider) {
@@ -65,6 +171,7 @@ window.InternetProductBase = (function () {
     };
 
     ready(async () => {
+      renderCarrierChrome();
       try {
         const list = await api.get('/api/internet-tv-products');
 
@@ -201,16 +308,39 @@ window.InternetProductBase = (function () {
 
   // ════════════════════════════════════════════════════
   // 렌더 — 인터넷
+  //   시안 동작: 인터넷 카드 가격 = 인터넷 결합가
+  //              + 현재 체크된 부가옵션(공유기/TV/전화) 결합가 합
+  //   → 체크하면 인터넷 카드 가격이 즉시 합산되어 바뀜
   // ════════════════════════════════════════════════════
+  function extrasBundleSum() {
+    let sum = 0;
+    if (_toggles.tv && _selectedTv) sum += bundleOf(_selectedTv);
+    if (_toggles.router && _selectedRouter) sum += bundleOf(_selectedRouter);
+    if (_toggles.phone && _selectedPhone) sum += bundleOf(_selectedPhone);
+    return sum;
+  }
+
   function renderInternets() {
     const el = document.getElementById('ipInternetGrid');
     if (!el) return;
+
+    const extras = extrasBundleSum();
 
     el.innerHTML = _internets
       .map((opt) => {
         const isActive = opt === _selectedInternet;
         const { num, unit } = parseSpeed(opt.name);
         const { grade, sub } = parseDesc(opt.desc);
+
+        // 이 인터넷 + 체크된 부가옵션 합산 (결합가 기준)
+        const total = bundleOf(opt) + extras;
+        const priceHtml =
+          '<div class="ip-opt-price">' +
+          '<span class="ip-opt-price-prefix">월</span>' +
+          formatPrice(total) +
+          '원' +
+          '</div>';
+
         return `
           <button class="ip-opt-card ${isActive ? 'active' : ''}"
                   data-internet="${escapeAttr(opt.name)}" type="button">
@@ -220,7 +350,7 @@ window.InternetProductBase = (function () {
             </div>
             ${grade ? `<div class="ip-opt-grade">${escapeHtml(grade)}</div>` : ''}
             ${sub ? `<div class="ip-opt-tier">${escapeHtml(sub)}</div>` : ''}
-            ${priceBlock(opt)}
+            ${priceHtml}
           </button>`;
       })
       .join('');
@@ -463,6 +593,9 @@ window.InternetProductBase = (function () {
   }
 
   function updatePricebar() {
+    // 부가옵션 합산이 바뀌면 인터넷 카드 표시가도 갱신 (시안: 카드 가격이 바뀜)
+    refreshInternetPrices();
+
     const calc = calculate();
     setText('ipPbBase', `${formatPrice(calc.basePrice)}원`);
     setText('ipPbPhoneCombo', `${formatPrice(calc.bundlePrice)}원`);
@@ -479,6 +612,25 @@ window.InternetProductBase = (function () {
 
     const btn = document.getElementById('ipApplyBtn');
     if (btn) btn.disabled = !_selectedInternet;
+  }
+
+  // 인터넷 카드의 가격 텍스트만 갱신 (재렌더 없이 — 클릭 상태 보존)
+  function refreshInternetPrices() {
+    const grid = document.getElementById('ipInternetGrid');
+    if (!grid) return;
+    const extras = extrasBundleSum();
+    grid.querySelectorAll('[data-internet]').forEach((card) => {
+      const opt = _internets.find((o) => o.name === card.dataset.internet);
+      if (!opt) return;
+      const total = bundleOf(opt) + extras;
+      const priceEl = card.querySelector('.ip-opt-price');
+      if (priceEl) {
+        priceEl.innerHTML =
+          '<span class="ip-opt-price-prefix">월</span>' +
+          formatPrice(total) +
+          '원';
+      }
+    });
   }
 
   // ════════════════════════════════════════════════════
@@ -569,7 +721,7 @@ window.InternetProductBase = (function () {
     window.location.href = map[page] || 'index.html';
   }
 
-  return { init, goPage };
+  return { init, initFromUrl, goPage };
 })();
 
 function goPage(page) {
