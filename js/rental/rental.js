@@ -1,26 +1,28 @@
 (function () {
   'use strict';
 
+  // ══════════════════════════════════════════════════════
+  // 렌탈 페이지 - 2026-05-29 개편
+  // ──────────────────────────────────────────────────────
+  // 변경:
+  // - ITEMS 하드코딩 제거 → GET /api/categories 동적 로드
+  // - RENTAL(type) 1depth 카테고리의 children을 품목으로 사용
+  // - imageUrl 있으면 이미지 표시, 없으면 emoji fallback
+  // 보존:
+  // - 상품 조회, 다이얼로그, 신청 폼 등 모든 후속 로직
+  // ══════════════════════════════════════════════════════
+
   // ── 설정 ─────────────────────────────────────────────
   var API_BASE =
     typeof BASE_URL !== 'undefined' && BASE_URL
       ? BASE_URL
       : 'https://api.dapick.co.kr';
-  var RENTAL_CATEGORY_ID = '1922524f-6eb4-4129-acd7-5982d77e80cc';
   var KAKAO_CHAT_URL = 'https://pf.kakao.com/_exaRjX/chat';
-
-  // brand 공개 조회 API가 아직 없어, 품목은 코드로 관리.
-  var ITEMS = [
-    {
-      brandId: '283c3f71-8daa-4383-a8b0-726652703c9a',
-      name: '공기청정기',
-      emoji: '🌬️',
-      logoUrl: '',
-    },
-    // 품목 추가 시 여기에 { brandId, name, emoji, logoUrl } 추가
-  ];
+  var RENTAL_TYPE = 'RENTAL'; // 1depth Category.type
 
   // ── 상태 ─────────────────────────────────────────────
+  // ★ ITEMS는 이제 서버에서 채워짐 (loadItems에서)
+  var ITEMS = [];
   var currentItem = null;
   var currentProducts = [];
   var selectedProduct = null;
@@ -49,22 +51,93 @@
         : null;
   }
 
+  // ★★★ 신규: 품목(=RENTAL 2depth 카테고리) 동적 로드 ★★★
+  // GET /api/categories → 활성 카테고리 트리 반환
+  // 응답 구조 예시:
+  // {
+  //   data: [
+  //     { id, name:'렌탈', type:'RENTAL', isActive:true, imageUrl:null,
+  //       children: [
+  //         { id, name:'공기청정기', isActive:true, imageUrl:'https://...' },
+  //         { id, name:'안마의자',   isActive:true, imageUrl:null },
+  //         { id, name:'비데',       isActive:true, imageUrl:null }
+  //       ]
+  //     },
+  //     ...
+  //   ]
+  // }
+  function loadItems() {
+    var grid = document.getElementById('itemGrid');
+    grid.innerHTML = '<div class="r-loading">품목을 불러오는 중...</div>';
+
+    fetch(API_BASE + '/api/categories')
+      .then(function (r) {
+        return r.json();
+      })
+      .then(function (res) {
+        // ApiResponse 래퍼 / 평면 응답 모두 대응
+        var data = res && res.data ? res.data : res;
+        var list = Array.isArray(data) ? data : [];
+
+        // RENTAL 1depth 찾기
+        var rental = null;
+        for (var i = 0; i < list.length; i++) {
+          if (list[i] && list[i].type === RENTAL_TYPE) {
+            rental = list[i];
+            break;
+          }
+        }
+
+        if (!rental || !rental.children || !rental.children.length) {
+          ITEMS = [];
+          renderItems();
+          return;
+        }
+
+        // 활성 children만 추출하여 ITEMS 구성
+        // ※ 백엔드 API(/api/rental-products?brandId=...)는 brandId 파라미터를 사용하지만
+        //    실제 값은 2depth 카테고리 ID. 변수명만 호환 유지.
+        ITEMS = rental.children
+          .filter(function (c) {
+            return c && c.isActive !== false;
+          })
+          .map(function (c) {
+            return {
+              brandId: c.id, // 기존 API 호환 (값은 categoryId)
+              categoryId: c.id, // 명확성 별칭
+              name: c.name,
+              imageUrl: c.imageUrl || '',
+              emoji: '📦', // imageUrl 없을 때 fallback
+            };
+          });
+
+        renderItems();
+      })
+      .catch(function (e) {
+        console.error('[rental] load items failed', e);
+        grid.innerHTML =
+          '<div class="r-empty">품목을 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</div>';
+      });
+  }
+
   // ── 품목 그리드 렌더 ────────────────────────────────
   function renderItems() {
     var grid = document.getElementById('itemGrid');
     if (!ITEMS.length) {
-      grid.innerHTML = '<div class="r-empty">준비된 품목이 없습니다.</div>';
+      grid.innerHTML =
+        '<div class="r-empty">등록된 품목이 없습니다. 어드민에서 추가해주세요.</div>';
       return;
     }
     var html = '';
     for (var i = 0; i < ITEMS.length; i++) {
       var it = ITEMS[i];
-      var thumb = it.logoUrl
+      // ★ imageUrl 있으면 이미지, 없으면 emoji
+      var thumb = it.imageUrl
         ? '<div class="r-item-thumb"><img src="' +
-          esc(it.logoUrl) +
+          esc(it.imageUrl) +
           '" alt="' +
           esc(it.name) +
-          '"></div>'
+          '" onerror="this.parentNode.innerHTML=\'<span class=&quot;r-item-emoji&quot;>📦</span>\'"></div>'
         : '<div class="r-item-thumb"><span class="r-item-emoji">' +
           esc(it.emoji || '📦') +
           '</span></div>';
@@ -435,6 +508,6 @@
 
   // ── 초기화 ──────────────────────────────────────────
   document.addEventListener('DOMContentLoaded', function () {
-    renderItems();
+    loadItems(); // ★ renderItems() → loadItems()로 교체 (fetch 후 자동 렌더)
   });
 })();
