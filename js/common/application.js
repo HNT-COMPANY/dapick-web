@@ -424,7 +424,16 @@ window.DapickApplication = (function () {
       for (var k in payload.selectedOptions) {
         if (Object.prototype.hasOwnProperty.call(payload.selectedOptions, k)) {
           var v = payload.selectedOptions[k];
-          if (v) optBits.push(esc(v));
+          if (!v) continue;
+          // 금액류(숫자/숫자문자열)는 요약에 표시하지 않음 (데이터엔 유지).
+          // 월 요금은 별도로 "월 OOO원" 으로 이미 표기됨.
+          if (typeof v === 'number') continue;
+          if (
+            typeof v === 'string' &&
+            /^\d{1,3}(,\d{3})*$|^\d+$/.test(v.trim())
+          )
+            continue;
+          optBits.push(esc(v));
         }
       }
     }
