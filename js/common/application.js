@@ -159,6 +159,9 @@ window.DapickApplication = (function () {
       '.da-btn-sub{flex:0 0 auto;padding:11px 14px;border:1px solid #5b5bd6;background:#fff;color:#5b5bd6;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap;}',
       '.da-btn-sub:hover{background:#eef0ff;}',
       '.da-readonly{background:#f7f7fa !important;color:#555;}',
+      '.da-agree-all{display:flex;align-items:center;gap:8px;margin-bottom:10px;padding:12px 14px;background:#f5f4fb;border:1px solid #ddd;border-radius:8px;font-size:14px;font-weight:700;color:#222;cursor:pointer;}',
+      '.da-agree-all input{margin:0;flex-shrink:0;width:auto !important;}',
+      '.da-agree-divider{border:none;border-top:1px solid #eee;margin:0 0 10px;}',
       '.da-agree{display:flex;align-items:flex-start;gap:8px;margin-bottom:10px;font-size:12.5px;color:#555;line-height:1.5;cursor:pointer;}',
       '.da-agree input{margin-top:2px;flex-shrink:0;width:auto !important;}',
       '.da-agree a{color:#5b5bd6;text-decoration:underline;}',
@@ -231,6 +234,8 @@ window.DapickApplication = (function () {
       '      </div>',
 
       '      <div class="da-field"><label>문의사항</label><textarea id="daMemo" placeholder="궁금한 점이나 요청사항 (선택)"></textarea></div>',
+      '      <label class="da-agree-all"><input type="checkbox" id="daAgreeAll"/><span>전체 동의</span></label>',
+      '      <hr class="da-agree-divider"/>',
       '      <label class="da-agree"><input type="checkbox" id="daPrivacy"/><span>[필수] <a href="privacy.html" target="_blank">개인정보 처리방침</a>에 동의합니다.</span></label>',
       '      <label class="da-agree"><input type="checkbox" id="daWarning"/><span>[필수] 다픽은 통신판매중개자이며, 상담 신청 시 위탁사로 정보가 전달됨을 확인했습니다.</span></label>',
       '      <label class="da-agree"><input type="checkbox" id="daMarketing"/><span>[선택] 마케팅 정보 수신에 동의합니다.</span></label>',
@@ -263,6 +268,38 @@ window.DapickApplication = (function () {
     document
       .getElementById('daApplySubmit')
       .addEventListener('click', submitForm);
+
+    // ── 전체 동의 연동 ──
+    var agreeAllEl = document.getElementById('daAgreeAll');
+    var agreeChildIds = [
+      'daPrivacy',
+      'daWarning',
+      'daMarketing',
+      'daEmailInfo',
+    ];
+    function getChildEls() {
+      return agreeChildIds
+        .map(function (id) {
+          return document.getElementById(id);
+        })
+        .filter(Boolean);
+    }
+    // 전체 동의 클릭 → 하위 전부 체크/해제
+    agreeAllEl.addEventListener('change', function () {
+      var checked = agreeAllEl.checked;
+      getChildEls().forEach(function (el) {
+        el.checked = checked;
+      });
+    });
+    // 하위 하나라도 변하면 전체 동의 상태 동기화
+    getChildEls().forEach(function (el) {
+      el.addEventListener('change', function () {
+        var all = getChildEls();
+        agreeAllEl.checked = all.every(function (c) {
+          return c.checked;
+        });
+      });
+    });
 
     // 연락처 자동 하이픈
     var phoneEl = document.getElementById('daPhone');
