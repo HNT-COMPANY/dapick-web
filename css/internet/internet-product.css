@@ -575,3 +575,27 @@
     border-radius: 12px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   [추가] 취소선 정상가 — internet-product.css 끝에 붙여넣기
+   결합가가 있을 때 "정상가(회색 취소선) + 월 결합가" 로 표시
+   ══════════════════════════════════════════════════════ */
+
+/* 가격 블록을 한 줄에 정렬 (취소선가 + 결합가) */
+.ip-opt-price {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 2px;
+}
+
+/* 취소선 정상가 (앞쪽, 회색, 줄긋기) */
+.ip-opt-price-was {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted, #9aa0b4);
+  text-decoration: line-through;
+  margin-right: 4px;
+  order: -1; /* 항상 맨 앞 */
+  flex-basis: 100%; /* 윗줄에 단독 배치 (정상가 위 / 결합가 아래) */
+}
