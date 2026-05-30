@@ -487,12 +487,13 @@ window.InternetProductBase = (function () {
     const cardDiscount = Number(_meta.cardDiscount || 0);
     const gift = Number(_meta.gift || 0);
     const bundleDiscount = Number(_meta.bundleDiscount || 0);
-    const cardPrice = Math.max(0, combo - cardDiscount); // 카드 할인시 요금
+    // 최종 혜택가 = 휴대폰 결합 요금 - 유무선 결합 할인 - 카드 할인
+    const cardPrice = Math.max(0, combo - bundleDiscount - cardDiscount);
 
     return {
       basePrice: base, // 결합 전 요금
       bundlePrice: combo, // 휴대폰 결합 요금
-      cardPrice: cardPrice, // 카드 할인시 (최종)
+      cardPrice: cardPrice, // 유무선+카드 할인 적용 (최종)
       finalPrice: cardPrice, // 신청에 넘길 최종가
       cardDiscount: cardDiscount,
       gift: gift,
@@ -514,14 +515,15 @@ window.InternetProductBase = (function () {
         calc.gift > 0 ? `${formatPrice(calc.gift)}원` : '상담 시 안내';
     }
 
-    // 할인 힌트
+    // 할인 힌트 (유무선 + 카드 할인 내역)
     const hint = document.getElementById('ipSettopHint');
     if (hint) {
-      const totalDiscount = Math.max(0, calc.basePrice - calc.cardPrice);
-      hint.textContent =
-        totalDiscount > 0
-          ? `정상가 대비 월 ${formatPrice(totalDiscount)}원 할인 적용`
-          : '';
+      const bits = [];
+      if (calc.bundleDiscount > 0)
+        bits.push(`유무선 결합 -${formatPrice(calc.bundleDiscount)}원`);
+      if (calc.cardDiscount > 0)
+        bits.push(`카드 할인 -${formatPrice(calc.cardDiscount)}원`);
+      hint.textContent = bits.length ? bits.join(' · ') + ' 적용' : '';
     }
 
     const btn = document.getElementById('ipApplyBtn');
