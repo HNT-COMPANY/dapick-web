@@ -1,11 +1,11 @@
 // ============================================================
 // gnb-user.js - GNB right-side user dropdown + PENDING guard
 // ------------------------------------------------------------
+// 5/30: GNB 우상단 버튼 라벨 "OO 님" → "마이페이지" (드롭다운 유지)
+//   - 드롭다운 패널 헤더에는 닉네임 유지(인사용)
+// ------------------------------------------------------------
 // Responsibilities:
-//   1) PENDING guard: if logged in but signup not completed
-//      (status === PENDING_PROFILE), force the user back to
-//      login.html so the signup modal re-appears. Runs on every
-//      page (this script is included site-wide).
+//   1) PENDING guard
 //   2) Render GNB right area by login state.
 // Depends on: auth.js (isLoggedIn, isAdmin, isPending, logout)
 // localStorage keys: dapick_token / dapick_nick / dapick_role / dapick_status
@@ -14,17 +14,11 @@
 (function () {
   'use strict';
 
-  // Returns true if current page is the login page.
-  // The guard must NOT redirect login.html to itself (infinite loop).
   function isLoginPage() {
     var path = window.location.pathname;
     return /(^|\/)login\.html$/.test(path) || path === '/login';
   }
 
-  // PENDING guard - the core lock.
-  // If the user is logged in but hasn't completed signup,
-  // every page except login.html bounces them to login.html.
-  // Returns true if a redirect happened (caller should stop).
   function enforcePendingGuard() {
     var pending =
       typeof isPending === 'function'
@@ -33,14 +27,12 @@
           localStorage.getItem('dapick_status') === 'PENDING_PROFILE';
 
     if (pending && !isLoginPage()) {
-      // Send back to login.html; login.js will auto-open the modal.
       window.location.replace('login.html');
       return true;
     }
     return false;
   }
 
-  // Strip kakao nickname suffix _xxxx (e.g. "jihyuk_5891" -> "jihyuk")
   function cleanNickname(raw) {
     if (!raw) return '\uD68C\uC6D0';
     return raw.replace(/_[0-9]{4}$/, '').replace(/\s+/g, '');
@@ -101,7 +93,6 @@
       .replace(/'/g, '&#039;');
   }
 
-  // not-logged-in GNB
   function renderLoginButton() {
     var gnbRight = document.querySelector('.gnb-right');
     if (!gnbRight) return;
@@ -124,12 +115,11 @@
         '</button>'
       : '';
 
+    // 우상단 버튼 라벨: "마이페이지" (드롭다운 토글)
     gnbRight.innerHTML =
       '<div class="gnb-user" id="gnbUserDrop">' +
       '<button class="gnb-user-btn" type="button">' +
-      '<span class="gnb-user-name">' +
-      cleanName +
-      ' \uB2D8</span>' +
+      '<span class="gnb-user-name">\uB9C8\uC774\uD398\uC774\uC9C0</span>' +
       '<span class="gnb-user-arrow">\u25BE</span>' +
       '</button>' +
       '<div class="gnb-user-panel">' +
@@ -183,8 +173,6 @@
   }
 
   function init() {
-    // 1) PENDING guard FIRST - before any GNB rendering.
-    //    If it redirects, stop here (page is navigating away).
     if (enforcePendingGuard()) return;
 
     var gnbRight = document.querySelector('.gnb-right');

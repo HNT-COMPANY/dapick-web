@@ -725,3 +725,186 @@ body {
     text-align: left;
   }
 }
+/* ════════════════════════════════════════════════════
+   [추가] 마이페이지 — 신청 카드 클릭형 + 자세히 보기 모달
+   mypage.css 끝에 붙여넣기
+   ════════════════════════════════════════════════════ */
+
+/* ── 신청 카드: 클릭 가능한 버튼형 ── */
+.app-card--btn {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  text-align: left;
+  background: #fff;
+  border: 1px solid #ececf1;
+  border-radius: 14px;
+  padding: 18px 20px;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.16s;
+}
+.app-card--btn:hover {
+  border-color: var(--brand, #5b3fbe);
+  box-shadow: 0 4px 16px rgba(91, 63, 190, 0.1);
+  transform: translateY(-1px);
+}
+.app-card--btn .app-card__main {
+  min-width: 0;
+  flex: 1;
+}
+.app-card__no {
+  font-size: 12px;
+  color: #9a9aa8;
+  margin: 0 0 4px;
+  font-family: monospace;
+}
+.app-card__title {
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c1b22;
+  margin: 0 0 6px;
+  line-height: 1.4;
+}
+.app-card__meta {
+  font-size: 12.5px;
+  color: #8a8a96;
+  margin: 0;
+}
+.app-card__price {
+  color: var(--brand, #5b3fbe);
+  font-weight: 700;
+}
+.app-card__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.app-card__chevron {
+  font-size: 22px;
+  color: #c5c5d0;
+  line-height: 1;
+}
+
+/* 거절 박스 (카드 내부) */
+.app-card__reject {
+  margin-top: 12px;
+  padding: 10px 12px;
+  background: #fff3cd;
+  border-radius: 8px;
+  border-left: 3px solid #dc3545;
+  font-size: 13px;
+}
+.app-card__reject-title {
+  color: #856404;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.app-card__reject-body {
+  color: #5a4a08;
+  line-height: 1.5;
+}
+.app-card__reject-date {
+  color: #999;
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+/* 상태 배지 */
+.app-card__status {
+  font-size: 12px;
+  font-weight: 700;
+  padding: 5px 12px;
+  border-radius: 999px;
+  white-space: nowrap;
+}
+.app-status--pending {
+  background: #fff4e0;
+  color: #b8730a;
+}
+.app-status--in-progress {
+  background: #e3f0ff;
+  color: #1366d6;
+}
+.app-status--done {
+  background: #e4f7ec;
+  color: #1a9b54;
+}
+.app-status--cancelled {
+  background: #f1f1f4;
+  color: #8a8a96;
+}
+
+/* ── 자세히 보기 모달 ── */
+.modal__content--detail {
+  max-width: 460px;
+  width: calc(100% - 40px);
+}
+.detail-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.detail-close {
+  border: none;
+  background: none;
+  font-size: 18px;
+  color: #9a9aa8;
+  cursor: pointer;
+  padding: 4px 8px;
+}
+.detail-body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 11px 0;
+  border-bottom: 1px solid #f0f0f4;
+  font-size: 14px;
+}
+.detail-row:last-child {
+  border-bottom: none;
+}
+.detail-row__label {
+  color: #8a8a96;
+  flex-shrink: 0;
+}
+.detail-row__value {
+  color: #1c1b22;
+  font-weight: 500;
+  text-align: right;
+  word-break: break-word;
+}
+.detail-reject {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: #fff3cd;
+  border-radius: 8px;
+  border-left: 3px solid #dc3545;
+  font-size: 13px;
+}
+.detail-reject__title {
+  color: #856404;
+  font-weight: 600;
+  margin-bottom: 4px;
+}
+.detail-reject__body {
+  color: #5a4a08;
+  line-height: 1.5;
+}
+.detail-reject__date {
+  color: #999;
+  font-size: 11px;
+  margin-top: 6px;
+}
