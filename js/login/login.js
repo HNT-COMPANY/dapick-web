@@ -64,19 +64,16 @@ function handleOAuthCallback() {
         'success',
       );
       setTimeout(() => {
-        handleAfterLogin(role);
+        handleAfterLogin();
       }, 1000);
     }
   }
 }
 
 // after-login routing
-function handleAfterLogin(role) {
-  if (role === 'LV4_ADMIN') {
-    window.location.href = 'https://admin.dapick.co.kr';
-    return;
-  }
-
+// Design: everyone (LV1~LV5) stays on web after login. No forced admin
+// redirect. Role no longer affects routing, so it's not a parameter.
+function handleAfterLogin() {
   const pendingConsult = sessionStorage.getItem('pending_kakao_consult');
   if (pendingConsult) {
     const redirect =
@@ -488,7 +485,7 @@ async function csSubmit() {
     document.body.style.overflow = '';
 
     setTimeout(() => {
-      handleAfterLogin(getRole());
+      handleAfterLogin();
     }, 900);
   } catch (e) {
     csAlert(
@@ -565,7 +562,7 @@ async function submitEmailLogin() {
     );
     showToast('\uB85C\uADF8\uC778 \uC131\uACF5!', 'success');
     setTimeout(() => {
-      handleAfterLogin(data.role);
+      handleAfterLogin();
     }, 700);
   } catch (e) {
     showEmailAlert(
