@@ -652,7 +652,7 @@ function goPage(page) {
 }
 
 function openKakao() {
-  window.open('http://pf.kakao.com/_LxifxmG/chat', '_blank');
+  window.open('https://pf.kakao.com/_exaRjX/chat', '_blank');
 }
 
 window.addEventListener(
