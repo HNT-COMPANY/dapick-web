@@ -234,6 +234,7 @@
         '<div class="wpg-name">' +
         esc(p.name) +
         '</div>' +
+        ratingHtml(p.averageRating, p.reviewCount) +
         priceHtml +
         '</div>' +
         '</div>';

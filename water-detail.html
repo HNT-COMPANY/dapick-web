@@ -118,9 +118,13 @@
   <!-- 하단 상세 -->
   <div class="wd-detail-section">
     <div class="wd-detail-tabbar">
-      <div class="wd-tab">상품 상세</div>
+      <div class="wd-tab active" data-tab="detail">상품 상세</div>
+      <div class="wd-tab" data-tab="review">리뷰</div>
     </div>
+    <!-- 상품 상세 패널 -->
     <div class="wd-detail-body" id="wdDetailBody"></div>
+    <!-- 리뷰 패널 (공용 js/common/reviews.js 가 렌더, 기본 숨김) -->
+    <section id="reviewSection" style="display:none;"></section>
   </div>
 </div>
 
@@ -250,6 +254,31 @@
 <script src="js/common/application.js"></script>
 <script src="js/water/water.js"></script>
 <script src="js/water/water-detail.js"></script>
+<script src="js/common/reviews.js"></script>
+<script>
+  // 후기 모듈 초기화 — productId는 URL ?id= (= WD_PRODUCT.id 와 동일 UUID)
+  document.addEventListener('DOMContentLoaded', function () {
+    var pid = new URLSearchParams(location.search).get('id');
+    if (pid && typeof initReviews === 'function') initReviews(pid);
+
+    // 상세/리뷰 탭 전환 — 패널은 미리 렌더, 보이기/숨기기만
+    var tabbar = document.querySelector('.wd-detail-tabbar');
+    var detailPanel = document.getElementById('wdDetailBody');
+    var reviewPanel = document.getElementById('reviewSection');
+    if (tabbar && detailPanel && reviewPanel) {
+      tabbar.addEventListener('click', function (e) {
+        var tab = e.target.closest('.wd-tab');
+        if (!tab) return;
+        tabbar.querySelectorAll('.wd-tab').forEach(function (t) {
+          t.classList.toggle('active', t === tab);
+        });
+        var isReview = tab.getAttribute('data-tab') === 'review';
+        detailPanel.style.display = isReview ? 'none' : '';
+        reviewPanel.style.display = isReview ? '' : 'none';
+      });
+    }
+  });
+</script>
 
 </body>
 </html>

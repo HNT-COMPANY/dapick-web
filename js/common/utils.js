@@ -43,6 +43,30 @@ function switchCat(el, cat) {
 }
 
 // ════════════════════════════════════════════════════
+// 상품 카드 평점 요약 (목록 카드 공용) — ★ 4.5 (12)
+// ────────────────────────────────────────────────────
+// avg=0/falsy → '' 반환(평점 영역 자체를 안 그림 = 리뷰 없는 상품 숨김).
+// 숫자만 출력하므로 escape 불필요. reviews.js(.dpr-*)와 독립 —
+// 목록 페이지엔 그 CSS가 없으므로 인라인 스타일로 자기완결.
+// @param {number} avg - 평균 평점(double)
+// @param {number} cnt - 리뷰 수(long)
+function ratingHtml(avg, cnt) {
+  var n = Number(avg);
+  if (!n || n <= 0) return '';
+  var count = Number(cnt) || 0;
+  return (
+    '<div class="prod-rating" style="display:flex;align-items:center;gap:3px;' +
+    'font-size:12px;line-height:1.2;margin:2px 0 4px;color:#8a8a99;">' +
+    '<span style="color:#ffb400;">★</span>' +
+    '<span style="font-weight:700;color:#444;">' +
+    n.toFixed(1) +
+    '</span>' +
+    (count > 0 ? '<span>(' + count.toLocaleString() + ')</span>' : '') +
+    '</div>'
+  );
+}
+
+// ════════════════════════════════════════════════════
 // 카카오 상담 — 모든 페이지 공통
 // ════════════════════════════════════════════════════
 const KAKAO_CHANNEL_URL = 'https://pf.kakao.com/_exaRjX/chat';

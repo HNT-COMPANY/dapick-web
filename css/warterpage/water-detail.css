@@ -213,9 +213,23 @@
   padding: 14px 24px;
   font-size: 15px;
   font-weight: 700;
-  color: var(--purple, #5b5bd6);
-  border-bottom: 2px solid var(--purple, #5b5bd6);
+  color: var(--text-muted, #8a8a99); /* 기본: 비활성(연한 색) */
+  border-bottom: 2px solid transparent; /* 기본: 밑줄 투명 */
   margin-bottom: -2px;
+  cursor: pointer;
+  transition:
+    color 0.15s,
+    border-color 0.15s;
+}
+.wd-tab.active {
+  color: var(--purple, #5b5bd6); /* 활성: 진한 퍼플 */
+  border-bottom-color: var(--purple, #5b5bd6); /* 활성: 퍼플 밑줄 */
+}
+/* 리뷰 패널: 탭 안에서는 상세 패널 폭에 맞춰 정합 (.dpr 자체 max-width 무력화) */
+#reviewSection .dpr {
+  max-width: none;
+  margin: 0;
+  padding: 0;
 }
 .wd-detail-body {
   font-size: 14px;

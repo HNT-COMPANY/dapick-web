@@ -86,6 +86,8 @@ function groupByBrand(list) {
       colors: Array.isArray(p.colors) && p.colors.length ? p.colors : ['기본'],
       pricing: p.pricing || {},
       sortOrder: p.sortOrder ?? 999,
+      averageRating: p.averageRating ?? 0,
+      reviewCount: p.reviewCount ?? 0,
     });
   });
 
@@ -230,6 +232,7 @@ async function renderBrand(brand) {
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<span>${data.emoji}</span>`}
       </div>
       <div class="water-card-name">${p.name}</div>
+      ${ratingHtml(p.averageRating, p.reviewCount)}
       <div class="water-card-price-row">
         <span class="water-card-price">${minPrice ? '월 ' + minPrice.toLocaleString() + '원~' : '가격 문의'}</span>
         <span class="water-card-price-unit">${minPrice ? '최저가' : ''}</span>
@@ -273,6 +276,7 @@ async function renderBrand(brand) {
       </div>
       <div class="wpg-body">
         <div class="wpg-name">${p.name}</div>
+        ${ratingHtml(p.averageRating, p.reviewCount)}
         ${priceHtml}
       </div>
     </div>`;
