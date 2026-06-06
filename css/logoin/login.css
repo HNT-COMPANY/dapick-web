@@ -373,3 +373,128 @@ body {
 .signup-link:hover {
   color: var(--purple);
 }
+
+/* ── 계정 복구 (아이디/비밀번호 찾기) ── */
+/* hidden 보장: section 등 기본 display 가 [hidden]을 덮어쓰지 않도록 카드 내부에 한해 강제 */
+.login-card [hidden] {
+  display: none !important;
+}
+
+/* 진입 링크 행 (이메일 패널 아래) */
+.recovery-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin-top: 16px;
+}
+.recovery-links a {
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+  padding: 4px;
+}
+.recovery-links a:hover {
+  color: var(--purple);
+}
+.recovery-sep {
+  color: var(--border);
+  font-size: 12px;
+}
+
+/* 패널 헤더 */
+.recovery-head {
+  text-align: center;
+  margin-bottom: 4px;
+}
+.recovery-title {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main);
+}
+.recovery-desc {
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+/* 로그인으로 돌아가기 (back-home 패턴 미러링) */
+.back-to-login {
+  display: block;
+  text-align: center;
+  margin-top: 20px;
+  font-size: 13px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.2s;
+}
+.back-to-login:hover {
+  color: var(--purple);
+}
+
+/* 비번찾기 2단계 — 타이머 + 재발송 행 */
+.reset-timer-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 8px;
+}
+.reset-timer {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--purple);
+}
+.reset-resend {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-decoration: underline;
+  background: none;
+  transition: color 0.2s;
+}
+.reset-resend:hover {
+  color: var(--purple);
+}
+
+/* 비번찾기 3단계 — 정책 힌트 */
+.reset-pw-hint {
+  margin-top: 8px;
+  font-size: 11px;
+  color: var(--text-muted);
+  line-height: 1.5;
+}
+
+/* 성공 알림(보냈음/변경완료 등) — 기존 .error 와 짝 */
+.alert-banner.success {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #16a34a;
+}
+
+/* 아이디 찾기 결과 박스 */
+.recovery-result {
+  margin-top: 14px;
+  padding: 16px 14px;
+  border-radius: 10px;
+  background: #f5f3ff;
+  border: 1px solid var(--border-card);
+  text-align: center;
+}
+.find-id-result-text {
+  font-size: 13px;
+  color: var(--text-main);
+  line-height: 1.6;
+}
+.find-id-result-text strong {
+  color: var(--purple);
+  font-weight: 700;
+}
+.find-id-go-login {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--purple);
+  text-decoration: underline;
+  cursor: pointer;
+}

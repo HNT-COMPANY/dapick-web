@@ -44,6 +44,9 @@
       <p class="login-tagline">휴대폰 · 인터넷 · 카드 · 가전렌탈<br>다픽의 생활 플랫폼</p>
     </div>
 
+    <!-- ── 기본 로그인 뷰 (소셜/이메일/계정찾기 진입) ── -->
+    <div id="auth-default" class="auth-view">
+
     <!-- ── 소셜 버튼 그룹 ── -->
     <div class="social-group">
 
@@ -114,6 +117,107 @@
         <div class="btn-spinner" id="email-spinner"></div>
       </button>
     </div><!-- /email-panel -->
+
+      <!-- 계정 복구 진입 링크 -->
+      <div class="recovery-links">
+        <a href="#" onclick="showAuthPanel('find-id'); return false;">아이디 찾기</a>
+        <span class="recovery-sep" aria-hidden="true">·</span>
+        <a href="#" onclick="showAuthPanel('reset-pw'); return false;">비밀번호 찾기</a>
+      </div>
+
+    </div><!-- /auth-default -->
+
+    <!-- ── 아이디(이메일) 찾기 패널 (검증·실제호출은 W4) ── -->
+    <section class="auth-view recovery-panel" id="find-id-panel" hidden>
+      <div class="recovery-head">
+        <h2 class="recovery-title">아이디 찾기</h2>
+        <p class="recovery-desc">가입 시 등록한 이름과 휴대폰 번호를 입력해주세요.</p>
+      </div>
+
+      <div class="alert-banner" id="find-id-alert"></div>
+
+      <div class="form-group">
+        <label class="form-label" for="find-name">이름</label>
+        <input type="text" id="find-name" class="form-input" placeholder="이름을 입력하세요" autocomplete="name"
+          onkeydown="if(event.key==='Enter') document.getElementById('find-phone').focus()">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="find-phone">휴대폰 번호</label>
+        <input type="tel" id="find-phone" class="form-input" placeholder="010-0000-0000" maxlength="13" autocomplete="tel"
+          oninput="csFormatPhone(this)" onkeydown="if(event.key==='Enter') handleFindId()">
+      </div>
+
+      <button class="btn-email-submit" id="btn-find-id" type="button" onclick="handleFindId()">
+        <span id="find-id-btn-text">아이디 찾기</span>
+        <div class="btn-spinner" id="find-id-spinner"></div>
+      </button>
+
+      <!-- 찾기 결과 표시 자리 -->
+      <div class="recovery-result" id="find-id-result" hidden></div>
+
+      <a href="#" class="back-to-login" onclick="showAuthPanel('default'); return false;">← 로그인으로 돌아가기</a>
+    </section>
+
+    <!-- ── 비밀번호 찾기 패널 (3단계 컨테이너, 전환·실제호출은 W4) ── -->
+    <section class="auth-view recovery-panel" id="reset-pw-panel" hidden>
+      <div class="recovery-head">
+        <h2 class="recovery-title">비밀번호 찾기</h2>
+        <p class="recovery-desc">가입한 이메일로 인증 후 새 비밀번호를 설정합니다.</p>
+      </div>
+
+      <div class="alert-banner" id="reset-alert"></div>
+
+      <!-- [1단계] 이메일 입력 -->
+      <div class="reset-step" id="reset-step-1">
+        <div class="form-group">
+          <label class="form-label" for="reset-email">이메일</label>
+          <input type="email" id="reset-email" class="form-input" placeholder="가입한 이메일을 입력하세요" autocomplete="email"
+            onkeydown="if(event.key==='Enter') handleResetSend()">
+        </div>
+        <button class="btn-email-submit" id="btn-reset-send" type="button" onclick="handleResetSend()">
+          <span id="reset-send-text">인증코드 받기</span>
+          <div class="btn-spinner" id="reset-send-spinner"></div>
+        </button>
+      </div>
+
+      <!-- [2단계] 인증코드 입력 -->
+      <div class="reset-step" id="reset-step-2" hidden>
+        <div class="form-group">
+          <label class="form-label" for="reset-code">인증코드</label>
+          <input type="text" id="reset-code" class="form-input" placeholder="6자리 숫자" maxlength="6" inputmode="numeric" autocomplete="one-time-code"
+            onkeydown="if(event.key==='Enter') handleResetVerify()">
+        </div>
+        <div class="reset-timer-row">
+          <span class="reset-timer" id="reset-timer">05:00</span>
+          <button type="button" class="reset-resend" onclick="handleResetSend()">재발송</button>
+        </div>
+        <button class="btn-email-submit" id="btn-reset-verify" type="button" onclick="handleResetVerify()">
+          <span id="reset-verify-text">코드 확인</span>
+          <div class="btn-spinner" id="reset-verify-spinner"></div>
+        </button>
+      </div>
+
+      <!-- [3단계] 새 비밀번호 -->
+      <div class="reset-step" id="reset-step-3" hidden>
+        <div class="form-group">
+          <label class="form-label" for="reset-newpw">새 비밀번호</label>
+          <input type="password" id="reset-newpw" class="form-input" placeholder="새 비밀번호" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="reset-newpw2">새 비밀번호 확인</label>
+          <input type="password" id="reset-newpw2" class="form-input" placeholder="새 비밀번호를 다시 입력하세요" autocomplete="new-password"
+            onkeydown="if(event.key==='Enter') handleResetConfirm()">
+        </div>
+        <p class="reset-pw-hint">8~64자, 영문과 숫자 포함 (특수문자 ~!@#$%^&amp;*()_+-=., 사용 가능)</p>
+        <button class="btn-email-submit" id="btn-reset-confirm" type="button" onclick="handleResetConfirm()">
+          <span id="reset-confirm-text">비밀번호 변경</span>
+          <div class="btn-spinner" id="reset-confirm-spinner"></div>
+        </button>
+      </div>
+
+      <a href="#" class="back-to-login" onclick="showAuthPanel('default'); return false;">← 로그인으로 돌아가기</a>
+    </section>
 
     <!-- 홈으로 -->
     <a href="index.html" class="back-home">메인으로 돌아가기</a>

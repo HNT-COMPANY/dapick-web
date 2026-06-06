@@ -528,6 +528,337 @@ function toggleEmail(e) {
   }
 }
 
+// ============================================================
+// auth panel routing (login <-> find-id <-> reset-pw)
+// 기존 패널 show/hide 패턴과 동일하게 단순 표시 전환.
+// 입력 검증/실제 API 호출/단계 전환은 W4에서 채운다.
+// ============================================================
+function showAuthPanel(name) {
+  const views = {
+    default: document.getElementById('auth-default'),
+    'find-id': document.getElementById('find-id-panel'),
+    'reset-pw': document.getElementById('reset-pw-panel'),
+  };
+  if (!views.default || !views['find-id'] || !views['reset-pw']) return;
+
+  Object.keys(views).forEach((key) => {
+    views[key].hidden = key !== name;
+  });
+
+  // 패널 전환 시 이전 알림 잔상 제거
+  ['email-alert', 'find-id-alert', 'reset-alert'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.classList.remove('show');
+  });
+
+  // 비밀번호 찾기 패널 진입 시 1단계부터 깨끗하게 시작
+  if (name === 'reset-pw' && typeof resetPwToStep1 === 'function') {
+    resetPwToStep1(false);
+  }
+}
+
+// ============================================================
+// 비밀번호 찾기 3단계 (send-code -> verify-code -> confirm)
+// 모든 호출은 미로그인 상태 → {skipAuthRefresh:true} (W2 옵션) 필수.
+// resetToken 은 메모리 변수로만 보관(localStorage 저장 금지 — 단기 토큰).
+// ============================================================
+let _resetEmail = '';
+let _resetToken = '';
+let _resetRemain = 300;
+let _resetTimer = null;
+
+// ※ 백엔드 PasswordPolicy.REGEX 와 동일하게 유지할 것.
+//    (프론트는 UX 즉시안내용, 최종 검증은 백엔드. 하드코딩 중복이므로 동기화 필요)
+const RESET_PW_REGEX =
+  /^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d~!@#$%^&*()_+\-=.,]{8,64}$/;
+const RESET_PW_MSG = '비밀번호는 8~64자, 영문과 숫자를 포함해야 합니다.';
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+function showResetAlert(msg, type = 'error') {
+  const el = document.getElementById('reset-alert');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `alert-banner show ${type}`;
+  if (type === 'success') setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+function setResetBtnLoading(btnId, textId, spinnerId, on) {
+  const btn = document.getElementById(btnId);
+  const txt = document.getElementById(textId);
+  const spn = document.getElementById(spinnerId);
+  if (btn) btn.disabled = on;
+  if (txt) txt.style.visibility = on ? 'hidden' : 'visible';
+  if (spn) spn.style.display = on ? 'block' : 'none';
+}
+
+function showResetStep(n) {
+  for (let i = 1; i <= 3; i++) {
+    const el = document.getElementById('reset-step-' + i);
+    if (el) el.hidden = i !== n;
+  }
+}
+
+// 1단계로 되돌리기. keepEmail=true 면 이메일은 보존(만료/초과 후 재시도 편의).
+function resetPwToStep1(keepEmail) {
+  _resetToken = '';
+  stopResetTimer();
+  ['reset-code', 'reset-newpw', 'reset-newpw2'].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  if (!keepEmail) {
+    _resetEmail = '';
+    const e = document.getElementById('reset-email');
+    if (e) e.value = '';
+  }
+  showResetStep(1);
+}
+
+// ── 코드 타이머 (5분) — signup.js 패턴 참고 ──────────────────────
+function startResetTimer() {
+  _resetRemain = 300;
+  updateResetTimer();
+  stopResetTimer();
+  _resetTimer = setInterval(() => {
+    _resetRemain--;
+    updateResetTimer();
+    if (_resetRemain <= 0) {
+      stopResetTimer();
+      showResetAlert('인증코드가 만료되었습니다. 재발송 버튼을 눌러주세요.');
+    }
+  }, 1000);
+}
+function stopResetTimer() {
+  if (_resetTimer) {
+    clearInterval(_resetTimer);
+    _resetTimer = null;
+  }
+}
+function updateResetTimer() {
+  const mm = String(Math.floor(_resetRemain / 60)).padStart(2, '0');
+  const ss = String(_resetRemain % 60).padStart(2, '0');
+  const el = document.getElementById('reset-timer');
+  if (el) el.textContent = `${mm}:${ss}`;
+}
+
+// ── [1단계] 인증코드 발송 ────────────────────────────────────────
+async function handleResetSend() {
+  const emailEl = document.getElementById('reset-email');
+  const email = (emailEl?.value || '').trim();
+  if (!EMAIL_REGEX.test(email)) {
+    showResetAlert('올바른 이메일 형식을 입력해주세요.');
+    if (emailEl) emailEl.classList.add('err');
+    return;
+  }
+
+  setResetBtnLoading('btn-reset-send', 'reset-send-text', 'reset-send-spinner', true);
+  try {
+    // 계정 존재 여부 비노출: 백엔드는 항상 200 → 성공 처리 통일
+    await api.post(
+      '/api/auth/password/reset/send-code',
+      { email },
+      { skipAuthRefresh: true },
+    );
+    _resetEmail = email;
+    showResetStep(2);
+    startResetTimer();
+    showResetAlert('인증코드를 보냈습니다. 이메일을 확인해주세요.', 'success');
+    setTimeout(() => document.getElementById('reset-code')?.focus(), 200);
+  } catch (e) {
+    showResetAlert(e.message || '인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
+  } finally {
+    setResetBtnLoading('btn-reset-send', 'reset-send-text', 'reset-send-spinner', false);
+  }
+}
+
+// ── [2단계] 인증코드 검증 → resetToken 발급 ──────────────────────
+async function handleResetVerify() {
+  const codeEl = document.getElementById('reset-code');
+  const code = (codeEl?.value || '').trim();
+  if (!/^\d{6}$/.test(code)) {
+    showResetAlert('인증코드 6자리를 입력해주세요.');
+    if (codeEl) codeEl.classList.add('err');
+    return;
+  }
+
+  setResetBtnLoading('btn-reset-verify', 'reset-verify-text', 'reset-verify-spinner', true);
+  try {
+    const data = await api.post(
+      '/api/auth/password/reset/verify-code',
+      { email: _resetEmail, code },
+      { skipAuthRefresh: true },
+    );
+    const token = data?.resetToken;
+    if (!token) throw new Error('인증에 실패했습니다. 다시 시도해주세요.');
+
+    _resetToken = token;
+    stopResetTimer();
+    showResetStep(3);
+    showResetAlert('인증되었습니다. 새 비밀번호를 설정해주세요.', 'success');
+    setTimeout(() => document.getElementById('reset-newpw')?.focus(), 200);
+  } catch (e) {
+    const msg = e.message || '인증에 실패했습니다.';
+    // 만료(EM002)/시도초과(PR004) → 1단계로 돌려 재발송 유도(이메일은 보존)
+    if (e.status === 400 && (msg.includes('만료') || msg.includes('초과') || msg.includes('횟수'))) {
+      resetPwToStep1(true);
+      showResetAlert(msg + ' 처음부터 다시 진행해주세요.');
+    } else {
+      // 코드 틀림(EM001) 등 → 2단계 유지하고 재입력
+      showResetAlert(msg);
+      if (codeEl) codeEl.classList.add('err');
+    }
+  } finally {
+    setResetBtnLoading('btn-reset-verify', 'reset-verify-text', 'reset-verify-spinner', false);
+  }
+}
+
+// ── [3단계] 새 비밀번호 확정 ─────────────────────────────────────
+async function handleResetConfirm() {
+  const pwEl = document.getElementById('reset-newpw');
+  const pw2El = document.getElementById('reset-newpw2');
+  const pw = pwEl?.value || '';
+  const pw2 = pw2El?.value || '';
+
+  if (!RESET_PW_REGEX.test(pw)) {
+    showResetAlert(RESET_PW_MSG);
+    if (pwEl) pwEl.classList.add('err');
+    return;
+  }
+  if (pw !== pw2) {
+    showResetAlert('비밀번호가 일치하지 않습니다.');
+    if (pw2El) pw2El.classList.add('err');
+    return;
+  }
+  if (!_resetToken) {
+    resetPwToStep1(true);
+    showResetAlert('인증이 만료되었습니다. 처음부터 다시 진행해주세요.');
+    return;
+  }
+
+  setResetBtnLoading('btn-reset-confirm', 'reset-confirm-text', 'reset-confirm-spinner', true);
+  try {
+    await api.post(
+      '/api/auth/password/reset/confirm',
+      { resetToken: _resetToken, newPassword: pw },
+      { skipAuthRefresh: true },
+    );
+    const em = _resetEmail;
+    _resetToken = '';
+    _resetEmail = '';
+    showToast('비밀번호가 변경되었습니다. 다시 로그인해주세요.', 'success');
+    showAuthPanel('default');
+    // 편의: 이메일 자동 채우고 이메일 로그인 패널 열기
+    const ie = document.getElementById('input-email');
+    if (ie && em) ie.value = em;
+    const ep = document.getElementById('email-panel');
+    if (ep && !ep.classList.contains('open')) {
+      ep.classList.add('open');
+      emailOpen = true;
+      const tg = document.getElementById('email-toggle');
+      if (tg) tg.textContent = '이메일 로그인 닫기';
+    }
+  } catch (e) {
+    // 토큰 무효/만료(401 PR001/PR002) 또는 이미 사용됨(400 PR003) → 처음부터
+    if (e.status === 401 || e.status === 400) {
+      resetPwToStep1(true);
+      showResetAlert('인증이 만료되었습니다. 처음부터 다시 진행해주세요.');
+    } else {
+      showResetAlert(e.message || '비밀번호 변경에 실패했습니다.');
+    }
+  } finally {
+    setResetBtnLoading('btn-reset-confirm', 'reset-confirm-text', 'reset-confirm-spinner', false);
+  }
+}
+
+// ============================================================
+// 아이디(이메일) 찾기 — 이름 + 전화 동시 일치 시 마스킹 이메일 표시.
+// 공개 엔드포인트 → {skipAuthRefresh:true}. 전화는 csFormatPhone(재사용)으로
+// 입력 중 자동 포맷되며, 백엔드가 숫자만 추출해 정규화한다.
+// ============================================================
+function showFindIdAlert(msg, type = 'error') {
+  const el = document.getElementById('find-id-alert');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `alert-banner show ${type}`;
+}
+
+async function handleFindId() {
+  const nameEl = document.getElementById('find-name');
+  const phoneEl = document.getElementById('find-phone');
+  const realName = (nameEl?.value || '').trim();
+  const phone = (phoneEl?.value || '').trim();
+
+  // 이전 결과/알림 초기화
+  const result = document.getElementById('find-id-result');
+  if (result) {
+    result.hidden = true;
+    result.textContent = '';
+  }
+  document.getElementById('find-id-alert')?.classList.remove('show');
+
+  if (!realName) {
+    showFindIdAlert('이름을 입력해주세요.');
+    nameEl?.classList.add('err');
+    return;
+  }
+  if (!phone) {
+    showFindIdAlert('휴대폰 번호를 입력해주세요.');
+    phoneEl?.classList.add('err');
+    return;
+  }
+
+  setResetBtnLoading('btn-find-id', 'find-id-btn-text', 'find-id-spinner', true);
+  try {
+    const data = await api.post(
+      '/api/auth/find-id',
+      { realName, phone },
+      { skipAuthRefresh: true },
+    );
+    const masked = data?.maskedEmail;
+    if (!masked) throw new Error('일치하는 계정이 없습니다.');
+
+    if (result) {
+      // 백엔드가 이미 마스킹해서 줌 → 추가 가공 없이 표시만 (textContent 안전 삽입)
+      result.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'find-id-result-text';
+      p.appendChild(document.createTextNode('회원님의 이메일은 '));
+      const strong = document.createElement('strong');
+      strong.textContent = masked;
+      p.appendChild(strong);
+      p.appendChild(document.createTextNode(' 입니다.'));
+
+      const go = document.createElement('a');
+      go.href = '#';
+      go.className = 'find-id-go-login';
+      go.textContent = '로그인하러 가기';
+      go.onclick = function () {
+        showAuthPanel('default');
+        const ep = document.getElementById('email-panel');
+        if (ep && !ep.classList.contains('open')) {
+          ep.classList.add('open');
+          emailOpen = true;
+          const tg = document.getElementById('email-toggle');
+          if (tg) tg.textContent = '이메일 로그인 닫기';
+        }
+        return false;
+      };
+
+      result.appendChild(p);
+      result.appendChild(go);
+      result.hidden = false;
+    }
+  } catch (e) {
+    if (e.status === 404) {
+      showFindIdAlert('일치하는 계정이 없습니다. 이름과 휴대폰 번호를 확인해주세요.');
+    } else {
+      showFindIdAlert(e.message || '아이디 찾기에 실패했습니다.');
+    }
+  } finally {
+    setResetBtnLoading('btn-find-id', 'find-id-btn-text', 'find-id-spinner', false);
+  }
+}
+
 // email login submit
 async function submitEmailLogin() {
   const email = document.getElementById('input-email').value.trim();
@@ -552,7 +883,13 @@ async function submitEmailLogin() {
   hideEmailAlert();
 
   try {
-    const data = await api.post('/api/auth/login', { email, password: pw });
+    // skipAuthRefresh: \uB85C\uADF8\uC778 401(\uC790\uACA9\uC99D\uBA85 \uBD88\uC77C\uCE58)\uC744 silentRefresh \uAC00 \uAC00\uB85C\uCC44\uC9C0
+    // \uBABB\uD558\uAC8C \uD558\uC5EC, \uC5D0\uB7EC \uBA54\uC2DC\uC9C0\uAC00 \uD654\uBA74\uC5D0 \uC815\uC0C1 \uD45C\uC2DC\uB418\uB3C4\uB85D \uD55C\uB2E4.
+    const data = await api.post(
+      '/api/auth/login',
+      { email, password: pw },
+      { skipAuthRefresh: true },
+    );
     saveTokens(
       data.accessToken,
       data.refreshToken,
@@ -565,10 +902,18 @@ async function submitEmailLogin() {
       handleAfterLogin();
     }, 700);
   } catch (e) {
-    showEmailAlert(
-      e.message ||
-        '\uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.',
-    );
+    // 401(\uC790\uACA9\uC99D\uBA85 \uBD88\uC77C\uCE58) \u2192 web/admin \uACF5\uD1B5 \uACE0\uC815 \uBB38\uAD6C.
+    // \uADF8 \uC678(403 \uBE44\uD65C\uC131 \uACC4\uC815 \uB4F1) \u2192 \uBC31\uC5D4\uB4DC \uBA54\uC2DC\uC9C0 \uC720\uC9C0.
+    if (e.status === 401) {
+      showEmailAlert(
+        '\uC774\uBA54\uC77C \uB610\uB294 \uBE44\uBC00\uBC88\uD638\uAC00 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.',
+      );
+    } else {
+      showEmailAlert(
+        e.message ||
+          '\uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.',
+      );
+    }
   } finally {
     setEmailLoading(false);
   }

@@ -78,7 +78,10 @@ async function silentRefresh() {
 
 const api = {
   // ── 공통 요청 처리 (Silent Refresh 포함) ──────────────────────
-  async request(method, path, body = null, retry = true) {
+  // opts.skipAuthRefresh=true 면 401 이 와도 silentRefresh 를 타지 않고
+  // 백엔드 에러를 그대로 throw. 공개/미인증 엔드포인트(login, find-id,
+  // password/reset/*)에서 사용 — 이들은 401=토큰만료가 아니라 비즈니스 에러.
+  async request(method, path, body = null, retry = true, opts = {}) {
     const token = localStorage.getItem('dapick_token');
 
     const options = {
@@ -92,13 +95,13 @@ const api = {
 
     const res = await fetch(`${BASE_URL}${path}`, options);
 
-    // ── 401 응답 → Silent Refresh 시도 ─────────────────────────
-    if (res.status === 401 && retry) {
+    // ── 401 응답 → Silent Refresh 시도 (skipAuthRefresh 면 건너뜀) ──
+    if (res.status === 401 && retry && !opts.skipAuthRefresh) {
       // 이미 갱신 중이면 완료까지 대기
       if (isRefreshing) {
         await new Promise((resolve) => refreshQueue.push(resolve));
         // 새 토큰으로 원래 요청 재시도
-        return api.request(method, path, body, false);
+        return api.request(method, path, body, false, opts);
       }
 
       // 갱신 시작
@@ -109,7 +112,7 @@ const api = {
       if (newToken) {
         resolveQueue(newToken);
         // 새 토큰으로 원래 요청 재시도 (retry=false 로 무한루프 방지)
-        return api.request(method, path, body, false);
+        return api.request(method, path, body, false, opts);
       }
 
       return null; // 갱신 실패 시 (이미 로그인 페이지로 이동됨)
@@ -128,18 +131,21 @@ const api = {
     }
 
     if (!res.ok) {
-      throw new Error((data && data.message) || `요청 실패 (${res.status})`);
+      const err = new Error((data && data.message) || `요청 실패 (${res.status})`);
+      err.status = res.status; // 호출부에서 401/403 등 구분 가능 (하위호환: 기존은 e.message만 사용)
+      throw err;
     }
 
     // 백엔드 응답 = ApiResponse 래퍼 박은 박음 = data.data 박음 추출, 박지 않으면 그대로 박음
     return data?.data ?? data;
   },
 
-  get: (path) => api.request('GET', path),
-  post: (path, body) => api.request('POST', path, body),
-  put: (path, body) => api.request('PUT', path, body),
-  patch: (path, body) => api.request('PATCH', path, body),
-  delete: (path) => api.request('DELETE', path),
+  // opts(예: {skipAuthRefresh:true})는 선택. 미전달 시 기존 동작 그대로(하위호환).
+  get: (path, opts = {}) => api.request('GET', path, null, true, opts),
+  post: (path, body, opts = {}) => api.request('POST', path, body, true, opts),
+  put: (path, body, opts = {}) => api.request('PUT', path, body, true, opts),
+  patch: (path, body, opts = {}) => api.request('PATCH', path, body, true, opts),
+  delete: (path, opts = {}) => api.request('DELETE', path, null, true, opts),
 };
 
 // ── 상담 신청 API ──────────────────────────────────────────────
