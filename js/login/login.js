@@ -662,7 +662,10 @@ async function handleResetSend() {
     _resetEmail = email;
     showResetStep(2);
     startResetTimer();
-    showResetAlert('인증코드를 보냈습니다. 이메일을 확인해주세요.', 'success');
+    showResetAlert(
+      "입력하신 이메일로 가입된 계정이 있다면 인증코드를 보냈습니다. 메일이 오지 않으면 스팸함을 확인하거나, 가입한 이메일이 맞는지 '아이디 찾기'로 확인해주세요.",
+      'success',
+    );
     setTimeout(() => document.getElementById('reset-code')?.focus(), 200);
   } catch (e) {
     showResetAlert(e.message || '인증코드 발송에 실패했습니다. 잠시 후 다시 시도해주세요.');
