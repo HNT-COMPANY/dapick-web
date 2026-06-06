@@ -1,15 +1,19 @@
 # 다픽 (dapick.co.kr) robots.txt
-# 최종 정정: 2026-05-12
+# 최종 정정: 2026-06-06
 
 # ── 일반 검색 크롤러 (구글, 네이버 등) ──
 User-agent: *
 Allow: /
 
-# 색인 차단 페이지
+# 색인 차단 페이지 (개인정보·기능 페이지 — AI 크롤러에도 동일 적용)
 Disallow: /login.html
+Disallow: /login
 Disallow: /signup.html
+Disallow: /signup
 Disallow: /application-success.html
+Disallow: /application-success
 Disallow: /mypage.html
+Disallow: /mypage
 Disallow: /admin/
 Disallow: /api/
 
@@ -17,9 +21,13 @@ Disallow: /api/
 User-agent: Yeti
 Allow: /
 Disallow: /login.html
+Disallow: /login
 Disallow: /signup.html
+Disallow: /signup
 Disallow: /application-success.html
+Disallow: /application-success
 Disallow: /mypage.html
+Disallow: /mypage
 Disallow: /admin/
 Disallow: /api/
 
@@ -27,28 +35,18 @@ Disallow: /api/
 User-agent: Daum
 Allow: /
 Disallow: /login.html
+Disallow: /login
 Disallow: /signup.html
+Disallow: /signup
 Disallow: /application-success.html
+Disallow: /application-success
 Disallow: /mypage.html
+Disallow: /mypage
 
-# ── AI 학습 크롤러 차단 ──
-User-agent: GPTBot
-Disallow: /
-
-User-agent: ClaudeBot
-Disallow: /
-
-User-agent: CCBot
-Disallow: /
-
-User-agent: anthropic-ai
-Disallow: /
-
-User-agent: Google-Extended
-Disallow: /
-
-User-agent: PerplexityBot
-Disallow: /
+# ── AI 크롤러 (챗봇/AI검색 노출 허용) ──
+# 2026-06-06: 전체 차단(Disallow:/) 해제 — AI 답변에 다픽이 노출되도록 허용.
+# 별도 그룹을 두지 않으므로 위 'User-agent: *' 규칙(Allow:/ + 비공개 경로 차단)을 그대로 따른다.
+# (이전: GPTBot/ClaudeBot/CCBot/anthropic-ai/Google-Extended/PerplexityBot 전체 차단)
 
 # ── 사이트맵 ──
 Sitemap: https://dapick.co.kr/sitemap.xml
