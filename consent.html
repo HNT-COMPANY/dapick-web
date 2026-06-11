@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>다픽 지원금 지급 및 환수 동의서</title>
+  <link rel="icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <link rel="stylesheet" href="css/consent.css" />
+</head>
+<body>
+  <main class="consent" id="consent-root">
+
+    <!-- 로딩 -->
+    <section class="state" id="state-loading">
+      <p class="state__text">불러오는 중입니다…</p>
+    </section>
+
+    <!-- 유효하지 않은 접근 / 만료 / 오류 -->
+    <section class="state state--error is-hidden" id="state-invalid">
+      <h1 class="state__title" id="invalid-title">유효하지 않은 접근입니다</h1>
+      <p class="state__text" id="invalid-desc">올바른 링크로 다시 접속해 주세요.</p>
+    </section>
+
+    <!-- 이미 서명 완료 -->
+    <section class="state is-hidden" id="state-signed">
+      <h1 class="state__title">이미 서명 완료된 동의서입니다</h1>
+      <p class="state__text">추가로 진행하실 내용은 없습니다.</p>
+    </section>
+
+    <!-- 제출 완료 -->
+    <section class="state is-hidden" id="state-done">
+      <h1 class="state__title">서명이 완료되었습니다</h1>
+      <p class="state__text">동의해 주셔서 감사합니다.</p>
+    </section>
+
+    <!-- 본문 (정상 진입) -->
+    <section class="doc is-hidden" id="state-form">
+
+      <!-- 헤더 -->
+      <header class="cs-header">
+        <p class="cs-header__company">다픽</p>
+        <h1 class="cs-header__title">다픽(DaPick) 지원금 지급 및 환수 동의서</h1>
+        <p class="cs-header__no">상담번호 <span id="consultation-no">-</span></p>
+      </header>
+
+      <!-- 도입 -->
+      <p class="doc__intro">본 동의서는 다픽(이하 "회사")이 운영하는 다픽(DaPick) 플랫폼을 통해 상품을 신청한 계약자(이하 "계약자")와 체결하는 지원금 지급 및 환수에 관한 약정서입니다. 계약자는 본 동의서의 내용을 충분히 이해하고 자유로운 의사에 따라 동의함으로써 법적 구속력을 인정합니다.</p>
+
+      <!-- 제1조 -->
+      <article class="clause">
+        <h2 class="clause__title">제1조 (지원금 지급)</h2>
+        <ol class="clause__list">
+          <li>계약자가 다픽 플랫폼을 통해 상품을 신청하고 정상 설치 또는 개통이 완료된 경우, 회사는 사전에 안내한 지원금(현금)을 지급할 수 있습니다.</li>
+          <li>계약자가 선택한 상품에 대한 지원금은 본 상품 계약서에 명시된 계약사항들이 정상적으로 유지되는 것을 전제로 지급됩니다.</li>
+          <li>지원금의 지급 시기 및 방법은 상품별 계약서 또는 회사의 사전 안내에 따릅니다.</li>
+        </ol>
+      </article>
+
+      <!-- 제2조 -->
+      <article class="clause">
+        <h2 class="clause__title">제2조 (지원금 환수 사유)</h2>
+        <p class="clause__lead">다음 각 호에 해당하는 사유가 발생한 경우, 회사는 지급된 지원금을 환수할 권리를 가집니다.</p>
+        <ol class="clause__list">
+          <li>설치일 또는 개통일로부터 12개월 이내 제품 반환 또는 계약 해지</li>
+          <li>상품별 이용요금(렌탈료, 통신료 등) 12회 미납으로 인한 계약 해지</li>
+          <li>이용요금 3회 연속 연체로 인한 직권 해지</li>
+          <li>기타 계약자의 귀책사유로 상품 공급사 또는 회사가 지급 수수료를 환수하는 경우</li>
+          <li>본 동의서 제3조에 해당하는 넣고빼기 및 불량영업이 확인된 경우</li>
+        </ol>
+      </article>
+
+      <!-- 제3조 -->
+      <article class="clause">
+        <h2 class="clause__title">제3조 (넣고빼기 및 불량영업에 따른 환수)</h2>
+        <p class="clause__lead">다음 각 호에 해당하는 행위는 불량영업으로 간주하며, 회사는 지급된 지원금 전액을 환수하고 민·형사상 책임을 물을 수 있습니다.</p>
+        <ol class="clause__list">
+          <li>동일 명의로 사용 중인 동일 브랜드나 통신사의 기존 제품을 신규 계약 후 1년 이내 반환하는 경우</li>
+          <li>다른 장소에 설치 또는 개통된 제품도 포함</li>
+          <li>의무사용기간 종료 제품도 포함</li>
+          <li>소유권 이전 후라도 본사 환수 요청 시 포함</li>
+          <li>소유권 이전 제품을 자체 폐기하는 경우는 제외</li>
+        </ol>
+      </article>
+
+      <!-- 제4조 -->
+      <article class="clause">
+        <h2 class="clause__title">제4조 (환수금 반환 및 미납 시 조치)</h2>
+
+        <h3 class="clause__sub">① 환수금 반환 의무</h3>
+        <p class="clause__text">제2조 및 제3조 소정의 환수 사유 발생 시, 계약자는 회사로부터 지급받은 지원금 전액을 지체 없이 반환할 법적 의무를 부담합니다.</p>
+
+        <h3 class="clause__sub">② 환수금 납부 절차</h3>
+        <ul class="clause__bullets">
+          <li>회사는 환수 사유 확인 후 7영업일 이내 문자 · 이메일 등으로 환수 통보</li>
+          <li>계약자는 통보일로부터 14일 이내 지정 계좌로 납부</li>
+          <li>기한 내 미납 시 연 15% 지연손해금 부과 가능 (민법 제397조 제1항 준용)</li>
+        </ul>
+
+        <h3 class="clause__sub">③ 미납 시 법적 조치</h3>
+        <ul class="clause__bullets">
+          <li>지급명령 신청 (민사소송법 제462조)</li>
+          <li>민사상 손해배상 청구 (민법 제750조, 제390조)</li>
+          <li>채권회수 절차 진행 (강제집행 포함)</li>
+          <li>불량영업 확인 시 형사고발 (사기죄·배임죄 등 관련 법령 적용)</li>
+          <li>기타 관련 법령에 따른 일체의 법적 조치</li>
+        </ul>
+        <p class="clause__note">※ 인지대, 송달료, 변호사 선임비용 및 강제집행 비용 등 일체의 법적 비용은 관련 법령 범위 내에서 계약자가 부담합니다.</p>
+
+        <h3 class="clause__sub">④ 관할 법원</h3>
+        <p class="clause__text">본 동의서와 관련한 분쟁은 회사 본점 소재지 관할 법원을 전속 관할 법원으로 합니다.</p>
+      </article>
+
+      <!-- 제5조 -->
+      <article class="clause">
+        <h2 class="clause__title">제5조 (기타 사항)</h2>
+        <ol class="clause__list">
+          <li>본 동의서에 명시되지 아니한 사항은 관련 법령, 상품별 계약서 및 일반 상관례에 따릅니다.</li>
+          <li>본 동의서는 2부 작성하여 회사와 계약자가 각 1부씩 보관합니다.</li>
+          <li>계약자는 본 동의서 내용을 회사의 사전 서면 동의 없이 제3자에게 임의로 양도하거나 공개할 수 없으며, 이를 위반할 경우 민·형사상 책임을 집니다.</li>
+        </ol>
+      </article>
+
+      <!-- 제6조 -->
+      <article class="clause">
+        <h2 class="clause__title">제6조 (계약 내용 확인 및 동의)</h2>
+        <ol class="clause__list">
+          <li>계약자는 본 동의서의 모든 내용을 충분히 읽고 이해하였으며 자유로운 의사에 따라 동의합니다.</li>
+          <li>지원금 지급 및 환수 조건에 대한 충분한 설명을 듣고 동의합니다.</li>
+          <li>전자서명, 문자메시지, 녹취, 전자문서를 통한 동의는 자필 서명과 동일한 법적 효력을 가집니다. (전자서명법 제3조, 전자문서 및 전자거래 기본법 제4조)</li>
+        </ol>
+      </article>
+
+      <!-- 계약 내용 확인 및 서명 -->
+      <div class="doc__affirm">
+        <h2 class="doc__affirm-title">[계약 내용 확인 및 서명]</h2>
+        <p class="doc__affirm-text">본인은 본 동의서의 모든 내용을 충분히 읽고 이해하였으며 이에 자유 의사로 동의하여 서명합니다.</p>
+      </div>
+
+      <!-- 갑/을 계약 당사자 (하나의 표 — 좌:갑 / 우:을, 행 높이 정렬) -->
+      <table class="ctable">
+        <caption class="ctable__cap">계약 당사자</caption>
+        <thead>
+          <tr>
+            <th class="ctable__head" colspan="2" scope="colgroup">갑 <span class="ctable__sub">(회사 / 다픽)</span></th>
+            <th class="ctable__head ctable__head--eul" colspan="2" scope="colgroup">을 <span class="ctable__sub">(계약자)</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- 1행: 상호명 | 성명 -->
+          <tr>
+            <th class="ctable__label" scope="row">상호명</th>
+            <td class="ctable__val">다픽</td>
+            <th class="ctable__label" scope="row">성명</th>
+            <td class="ctable__val ctable__val--input">
+              <input type="text" id="signerName" class="ctable__input"
+                     autocomplete="name" placeholder="고객성함" />
+            </td>
+          </tr>
+          <!-- 2행: 대표자(+도장) | 연락처 -->
+          <tr>
+            <th class="ctable__label" scope="row">대표자</th>
+            <td class="ctable__val">
+              <span class="rep-cell">
+                <span class="rep-cell__name">강 성 현</span>
+                <span class="rep-cell__seal-slot">
+                  <span class="rep-cell__mark">(인)</span>
+                  <img class="company-seal" src="assets/consent/company-seal.png"
+                       alt="법인 인감" onerror="this.style.display='none'" />
+                </span>
+              </span>
+            </td>
+            <th class="ctable__label" scope="row">연락처</th>
+            <td class="ctable__val ctable__val--input">
+              <input type="tel" id="signerPhone" class="ctable__input"
+                     inputmode="numeric" autocomplete="tel" placeholder="고객연락처" />
+            </td>
+          </tr>
+          <!-- 3행: 서명일 | 서명 -->
+          <tr>
+            <th class="ctable__label" scope="row">서명일</th>
+            <td class="ctable__val"><span class="auto-fill" id="gap-date">(자동입력)</span></td>
+            <th class="ctable__label" scope="row">서명</th>
+            <td class="ctable__val ctable__val--input">
+              <button type="button" class="sign-cell" id="sign-cell">
+                <span class="sign-cell__placeholder" id="sign-cell-placeholder">여기를 눌러 서명</span>
+                <img class="sign-cell__img is-hidden" id="sign-cell-img" alt="서명" />
+              </button>
+            </td>
+          </tr>
+          <!-- 4행: (갑 빈칸 병합) | 서명일 -->
+          <tr>
+            <td class="ctable__val ctable__empty" colspan="2"></td>
+            <th class="ctable__label" scope="row">서명일</th>
+            <td class="ctable__val"><span class="auto-fill" id="eul-date">(자동입력)</span></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- 하단 고지 -->
+      <p class="doc__footer-note">※ 본 동의서는 전자서명법, 전자문서 및 전자거래 기본법에 의거하여 전자적 방식으로도 유효하게 체결될 수 있습니다.</p>
+
+      <!-- 오류 메시지 -->
+      <p class="form-error is-hidden" id="form-error"></p>
+
+      <!-- 제출 -->
+      <button type="button" class="btn-submit" id="btn-submit">동의 후 제출</button>
+    </section>
+
+  </main>
+
+  <!-- 서명 캔버스 모달 -->
+  <div class="sign-overlay is-hidden" id="sign-overlay" role="dialog" aria-modal="true" aria-label="서명 입력">
+    <div class="sign-overlay__panel">
+      <p class="sign-overlay__title">아래 칸에 손가락으로 서명해 주세요</p>
+      <div class="sign-overlay__box">
+        <canvas id="sign-canvas" class="sign-canvas"></canvas>
+        <span class="sign-overlay__hint" id="sign-hint">이곳에 서명</span>
+      </div>
+      <div class="sign-overlay__actions">
+        <button type="button" class="btn-ghost" id="sign-clear">다시 그리기</button>
+        <button type="button" class="btn-ghost" id="sign-cancel">취소</button>
+        <button type="button" class="btn-primary" id="sign-confirm">서명 완료</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/common/config.js"></script>
+  <script src="js/common/api.js"></script>
+  <script src="js/consent.js"></script>
+</body>
+</html>

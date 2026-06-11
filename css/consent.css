@@ -1,0 +1,396 @@
+/* ════════════════════════════════════════════════════
+   consent.css — 다픽 지원금 지급 및 환수 동의서
+   정식 법률 계약서 룩 (흰 종이 카드 + 검정 본문 + 남색 표 헤더)
+   기능/입력 로직(v3)은 그대로, 디자인만 계약서답게.
+   ════════════════════════════════════════════════════ */
+
+:root {
+  --ink: #222222;          /* 본문 검정 */
+  --ink-soft: #444444;
+  --muted: #6b6b6b;
+  --consent-navy: #2E4A7B; /* 헤드(제목·조항제목) 네이비 = 표 헤더 톤 */
+  --navy: #2e4a7b;         /* 표 헤더 남색 */
+  --navy-dark: #25395f;
+  --eul-navy: #345089;
+  --paper: #ffffff;        /* 종이 */
+  --bg: #e9eaec;           /* 종이 밖 배경(책상 느낌) */
+  --grid: #b9b9b9;         /* 표 얇은 회색 선 */
+  --grid-soft: #d8d8d8;
+  --input-bg: #f7f9fc;     /* 을 입력칸 강조 */
+  --input-border: #b7c4da;
+  --accent: #2e4a7b;
+  --danger: #c0392b;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: "Apple SD Gothic Neo", "Malgun Gothic", "맑은 고딕",
+    -apple-system, BlinkMacSystemFont, "Noto Sans KR", sans-serif;
+  line-height: 1.65;
+  -webkit-text-size-adjust: 100%;
+}
+
+.is-hidden { display: none !important; }
+
+/* 종이 밖 외곽 여백 */
+.consent {
+  max-width: 820px;
+  margin: 0 auto;
+  padding: 24px 16px 56px;
+}
+
+/* ── 상태 화면 ─────────────────────────────────────── */
+.state {
+  text-align: center;
+  padding: 80px 24px;
+  background: var(--paper);
+  border-radius: 4px;
+  max-width: 640px;
+  margin: 24px auto;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.08);
+}
+.state__title { margin: 0 0 12px; font-size: 20px; font-weight: 700; color: var(--ink); }
+.state__text { margin: 0; font-size: 15px; color: var(--muted); }
+.state--error .state__title { color: var(--danger); }
+
+/* ════════════════════════════════════════════════════
+   문서 카드 (A4 종이 느낌)
+   ════════════════════════════════════════════════════ */
+.doc {
+  background: var(--paper);
+  border: 1px solid #d3d3d3;
+  border-radius: 2px;
+  box-shadow: 0 3px 18px rgba(0, 0, 0, 0.1);
+  padding: 48px 56px 52px;
+  color: var(--ink);
+}
+
+/* ── 헤더 / 제목 ───────────────────────────────────── */
+.cs-header {
+  text-align: center;
+  margin-bottom: 26px;
+}
+.cs-header__company {
+  margin: 0 0 10px;
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  color: var(--muted);
+  font-weight: 600;
+}
+.cs-header__title {
+  margin: 0 0 12px;
+  font-size: 25px;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  color: var(--consent-navy);   /* 대제목 네이비 */
+  line-height: 1.35;
+}
+.cs-header__no { margin: 0; font-size: 13px; color: var(--muted); }
+.cs-header__no span { font-weight: 700; color: var(--ink); }
+
+/* ── 도입문 ───────────────────────────────────────── */
+.doc__intro {
+  margin: 0 0 30px;
+  font-size: 14.5px;
+  color: var(--ink);
+  text-align: justify;
+  text-justify: inter-character;
+}
+
+/* ── 조항 ─────────────────────────────────────────── */
+.clause { margin: 0 0 26px; }
+.clause__title {
+  margin: 0 0 12px;
+  font-size: 16.5px;
+  font-weight: 800;
+  color: var(--consent-navy);      /* 조항 제목 네이비 */
+  padding-bottom: 7px;
+  border-bottom: 1px solid #555;   /* ★ 워드처럼 조항 제목 밑줄 */
+}
+.clause__lead { margin: 0 0 9px; font-size: 14.5px; color: var(--ink); }
+.clause__text { margin: 0 0 9px; font-size: 14.5px; color: var(--ink); text-align: justify; }
+.clause__sub {
+  margin: 16px 0 7px;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--navy-dark);
+}
+.clause__note {
+  margin: 10px 0 0;
+  font-size: 13px;
+  color: var(--ink-soft);
+  background: #f4f6f9;
+  border-left: 3px solid var(--navy);
+  padding: 9px 12px;
+  text-align: justify;
+}
+
+/* 번호 목록 (각 호) */
+.clause__list {
+  margin: 0;
+  padding-left: 1.5em;
+  font-size: 14.5px;
+}
+.clause__list > li { margin-bottom: 7px; text-align: justify; padding-left: 0.15em; }
+
+/* 불릿 목록 */
+.clause__bullets {
+  margin: 0;
+  padding-left: 1.3em;
+  font-size: 14.5px;
+  list-style: none;
+}
+.clause__bullets > li { position: relative; margin-bottom: 6px; text-align: justify; }
+.clause__bullets > li::before {
+  content: "–";
+  position: absolute;
+  left: -1.1em;
+  color: var(--navy);
+}
+
+/* ── 확인/서명 안내 ───────────────────────────────── */
+.doc__affirm {
+  margin: 30px 0 18px;
+  padding: 16px 16px;
+  background: #f6f8fb;
+  border: 1px solid #d6deea;
+  border-radius: 4px;
+}
+.doc__affirm-title { margin: 0 0 7px; font-size: 15px; font-weight: 800; color: var(--consent-navy); }
+.doc__affirm-text { margin: 0; font-size: 14px; color: var(--ink-soft); }
+
+/* ════════════════════════════════════════════════════
+   갑/을 계약 당사자 (하나의 표 — 좌:갑 / 우:을, 행 높이 정렬)
+   ════════════════════════════════════════════════════ */
+.ctable {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;             /* 4열 폭 고정 → 좌우 행/선 정렬 */
+  border: 1px solid var(--grid);
+  margin: 0 0 18px;
+}
+.ctable__cap {
+  caption-side: top;
+  text-align: left;
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #333;
+  padding: 0 0 8px;
+}
+.ctable th, .ctable td {
+  border: 1px solid var(--grid-soft);
+  vertical-align: middle;
+}
+
+/* 남색 헤더 (갑 | 을) */
+.ctable__head {
+  background: var(--navy);
+  color: #fff;
+  font-size: 15px;
+  font-weight: 800;
+  text-align: center;
+  padding: 11px 10px;
+  letter-spacing: 0.02em;
+  border-color: var(--navy-dark);
+}
+.ctable__head--eul { background: var(--eul-navy); }
+.ctable__sub { font-size: 12px; font-weight: 600; color: #d7e1f1; }
+
+/* 라벨 칸 (왼쪽 회색) */
+.ctable__label {
+  width: 76px;
+  background: #f3f5f8;
+  font-size: 13px;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  white-space: nowrap;
+  padding: 10px 8px;
+}
+/* 값 칸 — height 고정으로 좌우 행 높이 통일 */
+.ctable__val {
+  padding: 9px 12px;
+  font-size: 14px;
+  color: var(--ink);
+  height: 56px;
+  word-break: break-all;
+}
+.ctable__val--input { background: var(--input-bg); padding: 7px 9px; }
+.ctable__empty { background: #fafafa; }   /* 갑 4행 빈칸(병합) */
+
+/* (자동입력) 회색 안내 → 저장 성공 시 진한 글씨 */
+.auto-fill { color: var(--muted); font-size: 13px; }
+.auto-fill.is-filled { color: var(--ink); font-size: 14px; font-weight: 600; }
+
+/* 을 입력 필드 */
+.ctable__input {
+  width: 100%;
+  min-height: 44px;
+  padding: 9px 11px;
+  font-size: 16px;          /* iOS 자동 줌 방지 */
+  color: var(--ink);
+  background: #fff;
+  border: 1px solid var(--input-border);
+  border-radius: 6px;
+  outline: none;
+}
+.ctable__input:focus {
+  border-color: var(--navy);
+  box-shadow: 0 0 0 2px rgba(46, 74, 123, 0.18);
+}
+
+/* 갑 대표자 칸 — 이름 + 법인 인감(고정 이미지) 슬롯 */
+.rep-cell { display: inline-flex; align-items: center; gap: 8px; }
+.rep-cell__name { white-space: nowrap; }
+.rep-cell__seal-slot {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  min-height: 52px;
+}
+.rep-cell__mark { font-size: 13.5px; color: var(--muted); }
+/* 도장 이미지: (인) 위치에 겹쳐 보이게(종이 도장 느낌). 파일 없으면 onerror로 숨김. */
+.company-seal {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 58px;
+  height: auto;
+  opacity: 0.9;
+  pointer-events: none;     /* 표시 전용 */
+}
+
+/* 서명 칸 (클릭 → 모달) */
+.sign-cell {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 64px;
+  padding: 6px;
+  background: #fff;
+  border: 1px dashed var(--input-border);
+  border-radius: 6px;
+  cursor: pointer;
+}
+.sign-cell:active { background: #eef2f8; }
+.sign-cell__placeholder { font-size: 13.5px; font-weight: 700; color: var(--navy); }
+.sign-cell__img { max-width: 100%; max-height: 80px; }
+
+/* ── 하단 고지 ────────────────────────────────────── */
+.doc__footer-note { margin: 0 0 22px; font-size: 13px; color: var(--muted); text-align: justify; }
+
+/* ── 오류 메시지 ──────────────────────────────────── */
+.form-error { margin: 0 0 14px; font-size: 14px; color: var(--danger); font-weight: 600; }
+
+/* ── 제출 버튼 ────────────────────────────────────── */
+.btn-submit {
+  width: 100%;
+  min-height: 54px;
+  font-size: 17px;
+  font-weight: 800;
+  color: #fff;
+  background: var(--navy);
+  border: 0;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+.btn-submit:active { background: var(--navy-dark); }
+.btn-submit:disabled { background: #9aa6bb; cursor: not-allowed; }
+
+/* ════════════════════════════════════════════════════
+   서명 모달
+   ════════════════════════════════════════════════════ */
+.sign-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(20, 28, 45, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+}
+.sign-overlay__panel {
+  width: 100%;
+  max-width: 560px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 18px 16px;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.3);
+}
+.sign-overlay__title { margin: 0 0 12px; font-size: 15px; font-weight: 700; color: var(--ink); text-align: center; }
+.sign-overlay__box {
+  position: relative;
+  width: 100%;
+  height: 260px;
+  background: #fff;
+  border: 1px solid var(--grid);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.sign-canvas {
+  display: block;
+  width: 100%;
+  height: 100%;
+  touch-action: none;   /* ★ 터치 스크롤 방지 */
+  cursor: crosshair;
+}
+.sign-overlay__hint {
+  position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 14px; color: #aab2c2;
+  pointer-events: none; user-select: none;
+}
+.sign-overlay__actions { display: flex; gap: 8px; margin-top: 14px; }
+.btn-ghost, .btn-primary {
+  flex: 1 1 0;
+  min-height: 48px;
+  font-size: 15px;
+  font-weight: 700;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn-ghost { color: var(--ink); background: #fff; border: 1px solid var(--grid); }
+.btn-ghost:active { background: #eef1f6; }
+.btn-primary { color: #fff; background: var(--navy); border: 0; }
+.btn-primary:active { background: var(--navy-dark); }
+
+/* ════════════════════════════════════════════════════
+   반응형
+   ════════════════════════════════════════════════════ */
+
+/* 태블릿 이하 — 종이 여백 축소 */
+@media (max-width: 680px) {
+  .consent { padding: 12px 10px 40px; }
+  .doc { padding: 28px 20px 32px; }
+  .cs-header__title { font-size: 21px; }
+  .clause__title { font-size: 15.5px; }
+  .doc__intro, .clause__lead, .clause__text,
+  .clause__list, .clause__bullets { font-size: 14px; }
+
+  /* 갑/을 2열 유지하되 폰트/여백 축소 (계약서 형태 보존) */
+  .ctable__head { font-size: 13px; padding: 9px 6px; }
+  .ctable__sub { display: block; margin-top: 2px; }
+  .ctable__label { width: 58px; font-size: 11.5px; padding: 8px 5px; }
+  .ctable__val { font-size: 12.5px; padding: 7px 7px; height: 52px; }
+  .ctable__val--input { padding: 6px 6px; }
+  .company-seal { width: 48px; }
+}
+
+/* 초협폭 — 표는 2열 유지(행 정렬 우선), 폰트/여백 더 축소 */
+@media (max-width: 400px) {
+  .ctable__label { width: 50px; font-size: 11px; padding: 7px 4px; }
+  .ctable__val { font-size: 12px; padding: 6px 5px; }
+  .ctable__input { padding: 8px 8px; }
+  .company-seal { width: 42px; }
+}

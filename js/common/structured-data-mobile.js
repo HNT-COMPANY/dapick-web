@@ -13,14 +13,14 @@
         '@type': 'Organization',
         '@id': 'https://dapick.co.kr/#organization',
         name: '다픽',
-        legalName: '주식회사 다커넥트',
+        legalName: '다픽',
         url: 'https://dapick.co.kr/',
         logo: {
           '@type': 'ImageObject',
           url: 'https://dapick.co.kr/assets/logos/dapick.png',
         },
-        telephone: '1899-8478',
-        email: 'wwh3218@gmail.com',
+        telephone: '+82-52-1899-8478',
+        email: 'daconnect33@gmail.com',
       },
       {
         '@type': 'WebPage',
