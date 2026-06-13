@@ -565,9 +565,10 @@
 .hero-visual {
   flex-shrink: 0;
   width: 500px;
-  height: 500px;
+  height: auto; /* 고정 500px → auto: 이미지 아래 캡션이 잘리지 않도록 (정사각 이미지라 크기 동일) */
   position: relative;
   display: flex;
+  flex-direction: column; /* 이미지 위 / 캡션 아래 세로 정렬 */
   align-items: center;
   justify-content: center;
   animation: heroFloat 4.5s ease-in-out infinite;
@@ -624,8 +625,24 @@
   }
 }
 
+/* ── 지원금 산정 근거 캡션 (152 이미지 바로 아래 중앙, 합계 미표기) ── */
+.hero-support-note {
+  width: max-content;
+  max-width: 100%;
+  text-align: center;
+  font-size: 13px;
+  color: rgba(255, 255, 255, 0.5); /* 기존 .event-sub 톤 — 남보라 배경용 반투명 흰색 */
+  line-height: 1.5;
+  margin-top: 16px;
+  white-space: nowrap; /* 가로 한 줄 강제 — 세로 깨짐 방지 */
+  position: relative;
+  z-index: 1;
+}
+
 @media (max-width: 1024px) {
   .hero-visual {
-    display: none;
+    display: none; /* 이미지 숨김 → 그 안의 캡션도 함께 숨음 */
   }
+  /* ★ 모바일 캡션 노출이 필요하면 캡션을 .hero-text 밑으로 분리해야 함.
+     우선 데스크톱 위치부터 확정, 모바일은 화면 확인 후 별도 처리. */
 }
