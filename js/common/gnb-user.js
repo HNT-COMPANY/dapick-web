@@ -123,26 +123,38 @@
       '<span class="gnb-user-arrow">\u25BE</span>' +
       '</button>' +
       '<div class="gnb-user-panel">' +
-      '<div class="gnb-user-panel-head">' +
-      '<span class="gnb-user-panel-name">' +
+      // \uD504\uB85C\uD544 \uD5E4\uB354 (\uD074\uB9AD \u2192 \uB9C8\uC774\uD398\uC774\uC9C0)
+      '<a class="gnb-user-profile" href="mypage.html">' +
+      '<span class="gnb-user-avatar"><svg viewBox="0 0 24 24" fill="none" stroke="#9aa0b4" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="22" height="22"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>' +
+      '<span class="gnb-user-profile-name">' +
       cleanName +
-      ' \uB2D8</span>' +
-      '</div>' +
-      '<div class="gnb-user-section">' +
-      '<div class="gnb-user-section-title">\uD83D\uDCB0 \uC6D4\uB81B</div>' +
-      '<div class="gnb-user-row">' +
-      '<span>\uB2E4\uD53D \uD3EC\uC778\uD2B8</span>' +
-      '<strong>0P</strong>' +
-      '</div>' +
-      '</div>' +
-      '<div class="gnb-user-section">' +
-      '<div class="gnb-user-section-title">\u2699\uFE0F \uACC4\uC815</div>' +
-      '<button class="gnb-user-link" type="button" data-action="mypage">' +
-      '<span>\uB9C8\uC774\uD398\uC774\uC9C0</span>' +
+      '\uB2D8</span>' +
       '<span class="gnb-user-arrow-r">\u203A</span>' +
-      '</button>' +
+      '</a>' +
+      // \uB2E4\uD53D \uD3EC\uC778\uD2B8 (\uC900\uBE44\uC911)
+      '<div class="gnb-user-section">' +
+      '<div class="gnb-user-section-title">\uB2E4\uD53D \uD3EC\uC778\uD2B8</div>' +
+      '<div class="gnb-user-row gnb-user-row--soon">' +
+      '<span><span class="gnb-user-ico">\uD83E\uDE99</span>\uD3EC\uC778\uD2B8</span>' +
+      '<span class="gnb-user-soonwrap"><span class="gnb-user-badge">\uC900\uBE44\uC911</span><strong>0 P</strong></span>' +
+      '</div>' +
+      '</div>' +
+      // \uC11C\uBE44\uC2A4 \uC774\uC6A9
+      '<div class="gnb-user-section">' +
+      '<div class="gnb-user-section-title">\uC11C\uBE44\uC2A4 \uC774\uC6A9</div>' +
+      '<div class="gnb-user-link is-soon"><span><span class="gnb-user-ico">\uD83D\uDD50</span>\uCD5C\uADFC \uBCF8 \uAC8C\uC2DC\uAE00</span><span class="gnb-user-badge">\uC900\uBE44\uC911</span></div>' +
+      '<div class="gnb-user-link is-soon"><span><span class="gnb-user-ico">\u2661</span>\uAD00\uC2EC \uBAA9\uB85D</span><span class="gnb-user-badge">\uC900\uBE44\uC911</span></div>' +
+      '<a class="gnb-user-link" href="mypage.html"><span><span class="gnb-user-ico">\uD83D\uDCC4</span>\uC2E0\uCCAD \uB0B4\uC5ED</span><span class="gnb-user-arrow-r">\u203A</span></a>' +
+      '</div>' +
+      // \uB9C8\uC774\uD398\uC774\uC9C0 \u00B7 \uACE0\uAC1D\uC13C\uD130
+      '<div class="gnb-user-section">' +
+      '<div class="gnb-user-section-title">\uB9C8\uC774\uD398\uC774\uC9C0 \u00B7 \uACE0\uAC1D\uC13C\uD130</div>' +
+      '<a class="gnb-user-link" href="mypage.html"><span><span class="gnb-user-ico">\uD83D\uDC64</span>\uB9C8\uC774\uD398\uC774\uC9C0</span><span class="gnb-user-arrow-r">\u203A</span></a>' +
+      '<a class="gnb-user-link" href="support-inquiry.html"><span><span class="gnb-user-ico">\uD83D\uDCAC</span>\uBB38\uC758\uD558\uAE30</span><span class="gnb-user-arrow-r">\u203A</span></a>' +
+      '<a class="gnb-user-link" href="support-complaint.html"><span><span class="gnb-user-ico">\u26A0\uFE0F</span>\uBD88\uD3B8\uC0AC\uD56D</span><span class="gnb-user-arrow-r">\u203A</span></a>' +
       adminLink +
       '</div>' +
+      // \uB85C\uADF8\uC544\uC6C3 (\uAE30\uC874 \uB3D9\uC791 \uC720\uC9C0)
       '<div class="gnb-user-foot">' +
       '<button class="gnb-user-logout" type="button" data-action="logout">' +
       '\uB85C\uADF8\uC544\uC6C3' +

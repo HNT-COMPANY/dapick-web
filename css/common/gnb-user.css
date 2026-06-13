@@ -210,3 +210,87 @@
     right: -8px;
   }
 }
+
+/* ════════════════════════════════════════════════════════
+   드롭다운 개편 — 프로필 헤더 / 메뉴 아이콘 / 준비중 뱃지
+   ════════════════════════════════════════════════════════ */
+
+/* 활성/링크 행 — 터치 44px, a 태그 밑줄 제거 */
+.gnb-user-link {
+  text-decoration: none;
+  min-height: 44px;
+}
+
+/* 프로필 헤더 (클릭 → 마이페이지) */
+.gnb-user-profile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 18px;
+  border-bottom: 1px solid #f4f4f4;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+.gnb-user-profile:hover {
+  background: #faf9ff;
+}
+.gnb-user-avatar {
+  width: 36px;
+  height: 36px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: #f1f1f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.gnb-user-profile-name {
+  flex: 1;
+  min-width: 0;
+  font-size: 15px;
+  font-weight: 800;
+  color: #1a1a1a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 메뉴 아이콘 (이모지 정렬용) */
+.gnb-user-ico {
+  display: inline-block;
+  width: 20px;
+  margin-right: 8px;
+  text-align: center;
+}
+
+/* 준비중 뱃지 (mp-menu 패턴 동일 톤) */
+.gnb-user-badge {
+  font-size: 10px;
+  background: #ececec;
+  color: #8a8a8a;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+/* 준비중 항목 — 클릭 비활성(회색), hover 이동 효과 제거 */
+.gnb-user-link.is-soon {
+  color: #b0b0b0;
+  cursor: default;
+}
+.gnb-user-link.is-soon:hover {
+  color: #b0b0b0;
+  font-weight: 500;
+  padding-left: 0;
+}
+
+/* 포인트 행 (준비중) */
+.gnb-user-row--soon,
+.gnb-user-row--soon strong {
+  color: #b0b0b0;
+}
+.gnb-user-soonwrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
