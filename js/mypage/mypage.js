@@ -73,9 +73,14 @@ async function loadProfile() {
 function renderProfile(p) {
   const nick = p.nickname || '다픽 회원';
   const email = p.email || '-';
-  const initial = (nick[0] || 'D').toUpperCase();
 
-  document.getElementById('sidebar-avatar').textContent = initial;
+  // 프로필 이미지가 있으면 표시, 없으면 HTML의 기본 사람 아이콘 유지
+  const avatarEl = document.getElementById('sidebar-avatar');
+  if (avatarEl && p.profileImageUrl) {
+    avatarEl.innerHTML =
+      '<img class="mp-sidebar__avatar-img" src="' + p.profileImageUrl + '" alt="" />';
+  }
+
   document.getElementById('sidebar-nick').textContent = nick;
   document.getElementById('sidebar-email').textContent = email;
   document.getElementById('greeting-nick').textContent = nick;
