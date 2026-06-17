@@ -1,0 +1,56 @@
+.ip-notice { max-width: 1080px; margin: 40px auto 120px; padding: 0 20px; }
+.ip-notice-head { margin-bottom: 28px; }
+.ip-notice-head h2 { font-size: 22px; font-weight: 900; color: #18172b; margin: 0 0 6px; }
+.ip-notice-head p { font-size: 14px; color: #6b6a80; margin: 0; }
+.ip-point { margin-bottom: 48px; }
+.ip-point-tag {
+  display: inline-block; font-size: 13px; font-weight: 800; letter-spacing: .04em;
+  color: var(--ip-brand-color, #ea002c);
+  border: 1.5px solid var(--ip-brand-color, #ea002c);
+  border-radius: 999px; padding: 4px 14px; margin-bottom: 14px;
+}
+.ip-point-title { font-size: 18px; font-weight: 800; color: #18172b; margin: 0 0 16px; }
+.ip-fee-block { margin-bottom: 22px; }
+.ip-fee-caption {
+  font-size: 14px; font-weight: 800; color: #18172b;
+  background: #f4f3fb; border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;
+}
+.ip-fee-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.ip-fee-table th, .ip-fee-table td {
+  border: 1px solid #ececf3; padding: 12px 10px; text-align: center; vertical-align: middle;
+}
+.ip-fee-table thead th { background: #fafafe; font-weight: 700; color: #18172b; }
+.ip-fee-table .ip-fee-speed { font-weight: 800; color: #18172b; }
+.ip-fee-table .ip-fee-grade { font-size: 12px; color: #6b6a80; display: block; margin-top: 2px; }
+.ip-fee-table .ip-fee-month { font-weight: 800; color: #18172b; }
+.ip-fee-table .ip-fee-combo { color: var(--ip-brand-color, #ea002c); font-weight: 800; }
+.ip-fee-table .ip-fee-combo small { display: block; font-size: 11px; color: #9897ab; font-weight: 500; }
+.ip-fee-highlight {
+  margin-top: 12px; font-size: 14px; font-weight: 800;
+  color: var(--ip-brand-color, #ea002c); text-align: right;
+}
+.ip-point-list { list-style: none; margin: 0; padding: 0; }
+.ip-point-list li {
+  display: flex; gap: 14px; align-items: flex-start;
+  padding: 14px 0; border-bottom: 1px solid #f0eff6; font-size: 14px; color: #3a3950; line-height: 1.6;
+}
+.ip-point-list li:last-child { border-bottom: none; }
+.ip-point-num {
+  flex: none; width: 26px; height: 26px; border-radius: 50%;
+  background: var(--ip-brand-color, #ea002c); color: #fff;
+  font-size: 13px; font-weight: 800; display: flex; align-items: center; justify-content: center;
+}
+.ip-tip-sub { font-size: 15px; font-weight: 800; color: #18172b; margin: 22px 0 12px; }
+.ip-tip-table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 8px; }
+.ip-tip-table th, .ip-tip-table td {
+  border: 1px solid #ececf3; padding: 11px 12px; text-align: left; vertical-align: top; line-height: 1.6;
+}
+.ip-tip-table thead th { background: #fafafe; font-weight: 700; text-align: center; }
+.ip-tip-note { font-size: 13px; color: #6b6a80; line-height: 1.7; margin: 8px 0 0; }
+.ip-tip-note a { color: var(--ip-brand-color, #ea002c); word-break: break-all; }
+@media (max-width: 768px) {
+  .ip-notice { margin: 28px auto 110px; }
+  .ip-fee-table, .ip-tip-table { font-size: 12px; }
+  .ip-fee-table th, .ip-fee-table td { padding: 9px 5px; }
+  .ip-fee-table .ip-fee-combo small { font-size: 10px; }
+}

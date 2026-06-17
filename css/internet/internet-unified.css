@@ -1,0 +1,83 @@
+/* ══════════════════════════════════════════════════════
+   internet-unified.css — 통합 페이지 상단 통신사 선택 바
+   ──────────────────────────────────────────────────────
+   internet.html 의 .i-provider-select-card 구조를 재사용하되,
+   페이지 이동이 아니라 같은 페이지에서 carrier 전환용 버튼으로 사용.
+   활성 카드는 --ip-brand-color 로 강조 (carrier별 색은 JS가 set).
+   ══════════════════════════════════════════════════════ */
+
+.iu-carrier-bar {
+  max-width: var(--max-w, 1080px);
+  margin: 0 auto;
+  padding: 20px 40px 4px;
+}
+.iu-carrier-head {
+  font-size: 15px;
+  font-weight: 800;
+  color: var(--text-main, #18172b);
+  margin: 0 0 14px;
+}
+
+.iu-carrier-bar .i-provider-select-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 10px;
+}
+
+.iu-carrier-bar .i-provider-select-card {
+  background: var(--white, #fff);
+  border: 1.5px solid var(--border-card, #e6e5ef);
+  border-radius: 14px;
+  padding: 16px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: inherit;
+  text-align: center;
+}
+.iu-carrier-bar .i-provider-select-card:hover {
+  border-color: var(--ip-brand-color, #3617CE);
+  transform: translateY(-2px);
+}
+.iu-carrier-bar .i-provider-select-card.is-active {
+  border-color: var(--ip-brand-color, #3617CE);
+  box-shadow: 0 0 0 1px var(--ip-brand-color, #3617CE);
+  background: rgba(54, 23, 206, 0.03);
+}
+
+.iu-carrier-bar .i-provider-select-logo {
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.iu-carrier-bar .i-provider-select-logo img {
+  max-height: 30px;
+  max-width: 100%;
+  object-fit: contain;
+}
+.iu-carrier-bar .i-provider-select-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-main, #18172b);
+  line-height: 1.3;
+}
+/* 선택 바에서는 설명문 숨김(공간 절약) — 마크업은 유지 */
+.iu-carrier-bar .i-provider-select-desc {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .iu-carrier-bar {
+    padding: 14px 16px 2px;
+  }
+  .iu-carrier-bar .i-provider-select-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .iu-carrier-bar .i-provider-select-name {
+    font-size: 12px;
+  }
+}

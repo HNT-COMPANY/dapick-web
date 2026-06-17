@@ -10,7 +10,7 @@
 function goPage(page) {
   const map = {
     mobile: 'mobile.html',
-    internet: 'internet.html',
+    internet: 'internet-unified.html',
     card: 'card.html',
     water: 'water.html',
     rental: 'rental.html',

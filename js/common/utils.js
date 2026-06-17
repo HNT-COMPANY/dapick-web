@@ -3,7 +3,7 @@
 // ── 페이지 이동 ──
 function goPage(cat) {
   const pages = {
-    internet: 'internet.html',
+    internet: 'internet-unified.html',
     mobile: 'mobile.html',
     card: 'card.html',
     water: 'water.html',

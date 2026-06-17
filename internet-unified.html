@@ -5,11 +5,11 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="naver-site-verification" content="915416fea52343dca0655e46b44dcf0c0f35c044" />
-  <title>다픽 LG U+ 인터넷·TV 지원금 | 4K UHD · U+tv 결합 사은품</title>
-  <meta name="description" content="LG U+ 인터넷·TV 실제 정책 기준 지원금 비교. 4K UHD 화질·U+tv 결합 사은품 최대 50만원. 무료 상담 신청까지."/>
-  <meta name="keywords" content="LG U+ 인터넷, LG 사은품, LG 기가, U+tv, LG 결합 할인, LG 인터넷 지원금, 다픽"/>
+  <title>다픽 인터넷·TV 지원금 | SK·KT·LG 통신사 통합 견적</title>
+  <meta name="description" content="SK·KT·LG 인터넷·TV 통신사를 한 페이지에서 비교. 통신사 선택 시 요금·결합·사은품을 바로 확인하고 무료 상담 신청까지."/>
+  <meta name="keywords" content="인터넷 지원금, 인터넷 사은품, SK 인터넷, KT 인터넷, LG 인터넷, 인터넷TV 비교, 통신사 통합, 다픽"/>
 
-  <link rel="canonical" href="https://dapick.co.kr/internet-lg" />
+  <link rel="canonical" href="https://dapick.co.kr/internet-unified" />
 
   <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
   <meta name="googlebot" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"/>
@@ -19,13 +19,13 @@
   <link rel="icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
   <link rel="shortcut icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
   <link rel="apple-touch-icon" sizes="180x180" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
-  <meta name="theme-color" content="#E6007E" />
+  <meta name="theme-color" content="#3617CE" />
 
   <meta property="og:type" content="website"/>
   <meta property="og:site_name" content="다픽"/>
-  <meta property="og:title" content="다픽 LG U+ 인터넷·TV 지원금 | 4K UHD · U+tv 결합 사은품"/>
-  <meta property="og:description" content="LG U+ 인터넷·TV 실제 정책 기준 지원금 비교. 사은품 최대 50만원."/>
-  <meta property="og:url" content="https://dapick.co.kr/internet-lg"/>
+  <meta property="og:title" content="다픽 인터넷·TV 지원금 | SK·KT·LG 통신사 통합 견적"/>
+  <meta property="og:description" content="통신사를 한 페이지에서 비교. 요금·결합·사은품을 바로 확인."/>
+  <meta property="og:url" content="https://dapick.co.kr/internet-unified"/>
   <meta property="og:image" content="https://dapick.co.kr/assets/logos/dapick.png"/>
   <meta property="og:locale" content="ko_KR"/>
 
@@ -39,13 +39,13 @@
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
   <link rel="stylesheet" href="css/internet/internet-product.css"/>
+  <link rel="stylesheet" href="css/internet/internet-notice.css">
+  <link rel="stylesheet" href="css/internet/internet-unified.css">
 
-  <!-- SKT 통신사 컬러 -->
+  <!-- 기본 브랜드 컬러(폴백) — carrier 선택 시 JS(CARRIER_MAP)가 덮어씀 -->
   <style>
-    :root { --ip-brand-color: #E6007E; }
+    :root { --ip-brand-color: #3617CE; }
   </style>
-
-  <script src="js/internet/structured-data-lg.js" defer></script>
 </head>
 <body>
 
@@ -70,7 +70,61 @@
   </div>
 </nav>
 
-<!-- 통신사 헤더 -->
+<!-- 통신사 선택 바 (카드 클릭 = 같은 페이지에서 carrier 전환, internet-unified.js) -->
+<section class="iu-carrier-bar">
+  <h2 class="iu-carrier-head">통신사를 선택하세요</h2>
+  <div class="i-provider-select-grid">
+    <button class="i-provider-select-card" data-carrier="SKT" type="button">
+      <div class="i-provider-select-logo"><img src="assets/logos/SKTLOGO.png" alt="SKT"></div>
+      <div class="i-provider-select-info">
+        <div class="i-provider-select-name">SKT</div>
+        <div class="i-provider-select-desc">국내 통신 1위<br>최대 사은품 + 결합 할인</div>
+      </div>
+    </button>
+
+    <button class="i-provider-select-card" data-carrier="KT" type="button">
+      <div class="i-provider-select-logo"><img src="assets/logos/KT.png" alt="KT"></div>
+      <div class="i-provider-select-info">
+        <div class="i-provider-select-name">KT</div>
+        <div class="i-provider-select-desc">기가 인터넷 안정성<br>지니TV 다양한 채널</div>
+      </div>
+    </button>
+
+    <button class="i-provider-select-card" data-carrier="LG U+" type="button">
+      <div class="i-provider-select-logo"><img src="assets/logos/LG.png" alt="LG U+"></div>
+      <div class="i-provider-select-info">
+        <div class="i-provider-select-name">LG U+</div>
+        <div class="i-provider-select-desc">실속있는 가격<br>4K UHD 화질</div>
+      </div>
+    </button>
+
+    <button class="i-provider-select-card" data-carrier="LG HelloVision" type="button">
+      <div class="i-provider-select-logo"><img src="assets/logos/LGhello.png" alt="LG HelloVision"></div>
+      <div class="i-provider-select-info">
+        <div class="i-provider-select-name">LG HelloVision</div>
+        <div class="i-provider-select-desc">케이블 TV 전문<br>지역 채널 + 합리적 가격</div>
+      </div>
+    </button>
+
+    <button class="i-provider-select-card" data-carrier="SK broadband" type="button">
+      <div class="i-provider-select-logo"><img src="assets/logos/SKTLOGO1.png" alt="SK broadband"></div>
+      <div class="i-provider-select-info">
+        <div class="i-provider-select-name">SK broadband</div>
+        <div class="i-provider-select-desc">기가 인터넷 + BTv<br>스포츠·예능 풍부</div>
+      </div>
+    </button>
+
+    <button class="i-provider-select-card" data-carrier="KT Skylife" type="button">
+      <div class="i-provider-select-logo"><img src="assets/logos/KTSkyLife.png" alt="KT Skylife"></div>
+      <div class="i-provider-select-info">
+        <div class="i-provider-select-name">KT Skylife</div>
+        <div class="i-provider-select-desc">위성 TV 전문<br>HD 화질 + 다양한 채널</div>
+      </div>
+    </button>
+  </div>
+</section>
+
+<!-- 통신사 헤더 (로고는 JS가 carrier 기준으로 교체) -->
 <div class="ip-header">
   <a class="ip-back" href="internet.html">
     <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
@@ -79,15 +133,15 @@
     통신사 선택
   </a>
   <div class="ip-header-logo">
-    <img src="assets/logos/LG.png" alt="LG U+">
+    <img src="assets/logos/SKTLOGO.png" alt="SKT">
   </div>
 </div>
 
-<!-- 페이지 히어로 -->
+<!-- 페이지 히어로 (텍스트는 JS가 carrier 기준으로 교체) -->
 <div class="ip-hero">
   <div class="ip-hero-inner">
-    <h1>LG U+ 인터넷 사은품<br><em>최대 00만원 + 결합 할인</em></h1>
-    <p>4K UHD · U+tv · 휴대폰 결합 시 추가 할인</p>
+    <h1>인터넷 사은품<br><em>최대 00만원 + 결합 할인</em></h1>
+    <p>통신사를 선택하면 요금·결합·사은품이 표시됩니다</p>
   </div>
 </div>
 
@@ -119,7 +173,7 @@
   <div class="ip-pricebar-inner">
     <div class="ip-pb-prices">
       <div class="ip-pb-row">
-        <span class="ip-pb-row-label">기본 요금</span>
+        <span class="ip-pb-row-label">결합 전 요금</span>
         <span class="ip-pb-row-val" id="ipPbBase">-</span>
       </div>
       <div class="ip-pb-row">
@@ -127,7 +181,7 @@
         <span class="ip-pb-row-val" id="ipPbPhoneCombo">-</span>
       </div>
       <div class="ip-pb-row is-final">
-        <span class="ip-pb-row-label">휴대폰 결합 + 카드할인 혜택가</span>
+        <span class="ip-pb-row-label">카드 할인시 혜택가</span>
         <span class="ip-pb-row-val">
           <span id="ipPbFinal">-</span>원<small>/월 (부가세 포함)</small>
         </span>
@@ -135,7 +189,7 @@
       <div class="ip-pb-row ip-pb-settop-hint" id="ipSettopHint" style="font-size:12px;color:#888;margin-top:4px;"></div>
     </div>
     <div class="ip-pb-gift">
-      <div class="ip-pb-gift-label">사은품</div>
+      <div class="ip-pb-gift-label">현금 사은품</div>
       <div class="ip-pb-gift-val" id="ipPbGift">상담 시 안내</div>
     </div>
     <button class="ip-pb-apply" id="ipApplyBtn" type="button" disabled>신청하기</button>
@@ -211,7 +265,7 @@
   </div>
 </footer>
 
-<!-- 공통 JS (api.js → application.js → base → 데이터 순) -->
+<!-- 공통 JS (api.js → application.js → base → 통합 전환 순) -->
 <script src="js/common/api.js"></script>
 <script src="js/common/auth.js"></script>
 <script src="js/common/utils.js"></script>
@@ -219,7 +273,7 @@
 <script src="js/common/gnb-user.js"></script>
 <script src="js/internet/internet-calc.js"></script>
 <script src="js/internet/internet-product-base.js"></script>
-<script src="js/internet/internet-lg.js"></script>
+<script src="js/internet/internet-unified.js"></script>
 
 </body>
 </html>

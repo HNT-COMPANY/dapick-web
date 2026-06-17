@@ -1,5 +1,10 @@
 // ════════════════════════════════════════════════════
-// internet-product-base.js v9 — 인터넷·TV 빌더 (아정당식 카드)
+// internet-product-base.js v10 — 인터넷·TV 빌더 (아정당식 카드)
+// ────────────────────────────────────────────────────
+// v10 변경점 (6/17):
+//   - 지원금(gift/cardDiscount/bundleDiscount) 출처를 "선택된 인터넷 옵션 우선,
+//     없으면 상품 discountMeta 폴백"으로 변경 (calculate). 계산식 자체는 v9 그대로.
+//     → 속도 옵션마다 다른 지원금 표시 가능. 기존 상품(옵션 지원금 없음)은 폴백으로 유지.
 // ────────────────────────────────────────────────────
 // v9 변경점 (5/30):
 //   - 가격 단계화(아정당 우측 패널 구조):
@@ -72,6 +77,9 @@ window.InternetProductBase = (function () {
   let _selectedRouter = null;
   let _selectedPhone = null;
   let _toggles = { tv: false, router: false, phone: false };
+  let _scrollBound = false; // 통합 페이지 carrier 전환 시 scroll 리스너 중복 등록 방지
+  let _initSeq = 0; // init 세대 토큰 — carrier 전환 시 stale 콜백 폐기용
+  let _builderSkeleton = null; // 최초 pristine .ip-builder 골격 (showError 파괴 후 복원용)
 
   function initFromUrl() {
     const params = new URLSearchParams(window.location.search);
@@ -122,16 +130,27 @@ window.InternetProductBase = (function () {
       console.error('[InternetProductBase] init: provider 필수');
       return;
     }
-    _provider = config.provider;
+    // 최초 1회: pristine .ip-builder 골격 캡처 (어떤 렌더/showError보다 먼저)
+    if (_builderSkeleton == null) {
+      const b0 = document.querySelector('.ip-builder');
+      if (b0) _builderSkeleton = b0.innerHTML;
+    }
 
-    window.addEventListener(
-      'scroll',
-      () => {
-        const btn = document.getElementById('scroll-top');
-        if (btn) btn.classList.toggle('show', window.scrollY > 300);
-      },
-      { passive: true },
-    );
+    _provider = config.provider; // 전역 유지(applyConsult 등 콜백 외부 참조용)
+    const provider = config.provider; // 이번 init 콜백이 볼 carrier (지역 캡처)
+    const mySeq = ++_initSeq; // 이번 init의 세대 번호
+
+    if (!_scrollBound) {
+      _scrollBound = true;
+      window.addEventListener(
+        'scroll',
+        () => {
+          const btn = document.getElementById('scroll-top');
+          if (btn) btn.classList.toggle('show', window.scrollY > 300);
+        },
+        { passive: true },
+      );
+    }
 
     const ready = (cb) => {
       if (document.readyState === 'loading')
@@ -143,6 +162,7 @@ window.InternetProductBase = (function () {
       renderCarrierChrome();
       try {
         const list = await api.get('/api/internet-tv-products');
+        if (mySeq !== _initSeq) return; // 더 새 init이 시작됨 → 이 콜백 폐기(stale)
         if (!Array.isArray(list) || list.length === 0) {
           showError(
             '상품 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.',
@@ -150,12 +170,12 @@ window.InternetProductBase = (function () {
           return;
         }
 
-        _product = list.find((p) => p.carrier === _provider.key) || null;
+        _product = list.find((p) => p.carrier === provider.key) || null;
         if (!_product) {
-          showError(`${_provider.name} 상품이 준비 중입니다.`);
+          showError(`${provider.name} 상품이 준비 중입니다.`);
           console.warn(
             '[InternetProductBase] carrier 매칭 없음:',
-            _provider.key,
+            provider.key,
             list.map((p) => p.carrier),
           );
           return;
@@ -180,6 +200,16 @@ window.InternetProductBase = (function () {
 
         _selectedInternet = _internets[0];
 
+        // 이전 showError가 .ip-builder 골격을 파괴했으면 캡처본으로 복원 후 렌더
+        const builderEl = document.querySelector('.ip-builder');
+        if (
+          builderEl &&
+          !document.getElementById('ipInternetGrid') &&
+          _builderSkeleton != null
+        ) {
+          builderEl.innerHTML = _builderSkeleton;
+        }
+
         ensureSections();
         renderInternets();
         renderToggles();
@@ -195,6 +225,7 @@ window.InternetProductBase = (function () {
         )
           DapickApplication.resumeIfPending();
       } catch (e) {
+        if (mySeq !== _initSeq) return; // stale 콜백은 에러도 표시하지 않음
         console.error('[InternetProductBase] 상품 로드 실패:', e);
         showError('상품 정보를 불러오는 중 오류가 발생했습니다.');
       }
@@ -260,11 +291,12 @@ window.InternetProductBase = (function () {
   }
 
   function extrasBundleSum() {
-    let sum = 0;
-    if (_toggles.tv && _selectedTv) sum += bundleOf(_selectedTv);
-    if (_toggles.router && _selectedRouter) sum += bundleOf(_selectedRouter);
-    if (_toggles.phone && _selectedPhone) sum += bundleOf(_selectedPhone);
-    return sum;
+    return InternetCalc.extrasBundleSum({
+      tv: _selectedTv,
+      router: _selectedRouter,
+      phone: _selectedPhone,
+      toggles: _toggles,
+    });
   }
 
   function renderInternets() {
@@ -442,63 +474,25 @@ window.InternetProductBase = (function () {
     if (sec) sec.classList.toggle('is-hidden', !show);
   }
 
+  // ── 가격 계산/접근자: 공유 코어(InternetCalc)에 위임 (조각3-1 추출) ──
+  // 시그니처는 그대로 유지 → 기존 DOM 호출부(refreshInternetPrices/renderOptionCards 등) 무영향.
   function bundleOf(opt) {
-    if (!opt) return 0;
-    const normal = Number(opt.normalPrice || 0);
-    const bundle =
-      opt.bundlePrice != null && opt.bundlePrice !== ''
-        ? Number(opt.bundlePrice)
-        : null;
-    return bundle != null ? bundle : normal;
+    return InternetCalc.bundleOf(opt);
   }
   function normalOf(opt) {
-    return opt ? Number(opt.normalPrice || 0) : 0;
+    return InternetCalc.normalOf(opt);
   }
 
-  // ── 가격 계산 (v9: 카드할인 단계 추가) ──────────────
+  // ── 가격 계산 (v9: 카드할인 단계 추가) — 계산식은 InternetCalc로 이동, 여기선 선택 상태만 전달 ──
   function calculate() {
-    const it = _selectedInternet;
-    if (!it)
-      return {
-        basePrice: 0,
-        bundlePrice: 0,
-        cardPrice: 0,
-        finalPrice: 0,
-        cardDiscount: 0,
-        gift: 0,
-        bundleDiscount: 0,
-      };
-
-    let base = normalOf(it);
-    let combo = bundleOf(it);
-    if (_toggles.tv && _selectedTv) {
-      base += normalOf(_selectedTv);
-      combo += bundleOf(_selectedTv);
-    }
-    if (_toggles.router && _selectedRouter) {
-      base += normalOf(_selectedRouter);
-      combo += bundleOf(_selectedRouter);
-    }
-    if (_toggles.phone && _selectedPhone) {
-      base += normalOf(_selectedPhone);
-      combo += bundleOf(_selectedPhone);
-    }
-
-    const cardDiscount = Number(_meta.cardDiscount || 0);
-    const gift = Number(_meta.gift || 0);
-    const bundleDiscount = Number(_meta.bundleDiscount || 0);
-    // 최종 혜택가 = 휴대폰 결합 요금 - 유무선 결합 할인 - 카드 할인
-    const cardPrice = Math.max(0, combo - bundleDiscount - cardDiscount);
-
-    return {
-      basePrice: base, // 결합 전 요금
-      bundlePrice: combo, // 휴대폰 결합 요금
-      cardPrice: cardPrice, // 유무선+카드 할인 적용 (최종)
-      finalPrice: cardPrice, // 신청에 넘길 최종가
-      cardDiscount: cardDiscount,
-      gift: gift,
-      bundleDiscount: bundleDiscount,
-    };
+    return InternetCalc.calculate({
+      internet: _selectedInternet,
+      tv: _selectedTv,
+      router: _selectedRouter,
+      phone: _selectedPhone,
+      toggles: _toggles,
+      meta: _meta,
+    });
   }
 
   function updatePricebar() {
@@ -618,11 +612,17 @@ window.InternetProductBase = (function () {
       builder.innerHTML = `<div class="ip-error" style="padding:40px 16px;text-align:center;color:#a00;">${escapeHtml(msg)}</div>`;
     const btn = document.getElementById('ipApplyBtn');
     if (btn) btn.disabled = true;
+    // 가격바도 carrier 전환 일관성 위해 HTML 초기값(placeholder)으로 리셋
+    setText('ipPbBase', '-');
+    setText('ipPbPhoneCombo', '-');
+    setText('ipPbFinal', '-');
+    setText('ipPbGift', '상담 시 안내');
+    setText('ipSettopHint', '');
   }
   function goPage(page) {
     const map = {
       mobile: 'mobile.html',
-      internet: 'internet.html',
+      internet: 'internet-unified.html',
       card: 'card.html',
       water: 'water.html',
       rental: 'rental.html',
