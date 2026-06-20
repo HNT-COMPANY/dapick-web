@@ -117,6 +117,22 @@ function releasePendingLock() {
   window.removeEventListener('popstate', onPendingPopstate);
 }
 
+// 가입 취소 (A안): PENDING_PROFILE 계정 삭제 후 모달/락에서 탈출.
+// 순서 중요 — API 호출 → releasePendingLock → clearTokens → 이동.
+// (락을 먼저 풀지 않으면 popstate 리스너가 이동을 방해할 수 있음)
+async function cancelSignup() {
+  if (!confirm('가입을 취소하시겠어요? 입력한 정보는 저장되지 않습니다.')) return;
+  try {
+    await api.delete('/api/auth/cancel-signup'); // 기존 공통 래퍼 재사용
+  } catch (e) {
+    // 서버에서 이미 지워졌거나 실패해도 클라이언트는 탈출시킨다(안 그러면 또 갇힘)
+    console.warn('[cancelSignup] API failed:', e.message);
+  }
+  releasePendingLock(); // 기존 함수 — 락 해제
+  clearTokens(); // 기존 함수 — 토큰 정리(페이지 가드 무력화)
+  location.href = 'index.html';
+}
+
 // ============================================================
 // [Step 1] agreement modal
 // ============================================================
