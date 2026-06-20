@@ -106,7 +106,7 @@
 }
 .best-tag {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--dark);
   margin-bottom: 10px;
 }
 
@@ -139,6 +139,11 @@
   object-fit: contain;
 }
 
+.best-brand {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+}
 .best-name {
   font-size: 14px;
   font-weight: 700;
@@ -156,31 +161,31 @@
 }
 .gift-label {
   font-size: 10px;
-  color: #e8547a;
+  color: var(--dark);
   font-weight: 600;
   margin-bottom: 3px;
 }
 .gift-amt {
   font-size: 18px;
   font-weight: 800;
-  color: #d03060;
+  color: var(--purple-soft);
 }
 
 .best-before {
   font-size: 11px;
-  color: var(--text-muted);
+  color: var(--dark);
   text-align: right;
   margin-bottom: 2px;
 }
 .best-after {
   font-size: 12px;
-  color: var(--text-sub);
+  color: var(--dark);
   text-align: right;
 }
 .best-after strong {
   font-size: 16px;
   font-weight: 800;
-  color: #e8547a;
+  color: #2563eb;
 }
 
 /* 슬라이드 인디케이터 점 [추가] */

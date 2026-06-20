@@ -57,31 +57,8 @@
 </div>
 
 <!-- 공통 NAV -->
-<nav class="gnb">
-<div class="gnb-top">
-  <a href="index.html" class="logo-wrap">
-    <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
-  </a>
-  <nav class="gnb-extras">
-    <a href="support.html">고객센터</a>
-    <a href="events.html" class="has-new">이벤트</a>
-    <a href="reviews.html">후기</a>
-    <a href="faq.html">자주묻는질문</a>
-  </nav>
-  <div class="gnb-right">
-    <button class="btn-login">로그인/회원가입</button>
-  </div>
-</div>
-  <div class="cat-bar">
-    <div class="cat-inner">
-      <div class="cat-item" onclick="goPage('mobile')">휴대폰</div>
-      <div class="cat-item" onclick="goPage('internet')">인터넷</div>
-      <div class="cat-item" onclick="goPage('card')">카드</div>
-      <div class="cat-item" onclick="goPage('water')">정수기</div>
-      <div class="cat-item" onclick="goPage('rental')">렌탈</div>
-    </div>
-  </div>
-</nav>
+<!-- 공통 NAV (gnb.js가 주입) -->
+<nav class="gnb"></nav>
 <!-- ══════════════════════════════════════
      화면: 메인보드 (통신사 선택만)
      클릭 시 통신사별 별도 페이지로 이동
@@ -238,6 +215,7 @@
 <script src="js/common/auth.js"></script>
 <script src="js/common/utils.js"></script>
 <script src="js/common/application.js"></script>
+<script src="js/common/gnb.js"></script>
 <script src="js/common/gnb-user.js"></script>
 
 

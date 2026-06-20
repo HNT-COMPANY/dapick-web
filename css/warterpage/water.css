@@ -822,7 +822,7 @@
   border: 1.5px solid var(--border-card);
   border-radius: var(--radius-sm);
   background: var(--white);
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   font-size: 14px;
   font-weight: 600;
   color: var(--text-main);
@@ -913,7 +913,7 @@
   font-size: 15px;
   font-weight: 700;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   transition: all 0.2s;
   text-decoration: none;
   text-align: center;

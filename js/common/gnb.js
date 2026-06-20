@@ -1,0 +1,113 @@
+// ── 공통 헤더(GNB) 주입 ──────────────────────────────────
+// gnb-user.js보다 먼저 실행되어야 함 (gnb-user.js가 .gnb-right를 찾으므로)
+// ※ 마크업은 internet-unified.html의 기존 gnb-top을 그대로 미러링
+//   (gnb-extras 바는 이 헤더에 없음 — 원본과 동일하게 유지)
+
+// 통신사 6사 (하드코딩 — 백엔드 무수정. 페이지 파일명은 CARRIER_MAP과 일치)
+const GNB_CARRIERS = [
+  { label: 'SKT', page: 'internet-skt.html' },
+  { label: 'SK브로드밴드', page: 'internet-sk-broadband.html' },
+  { label: 'KT', page: 'internet-kt.html' },
+  { label: 'KT스카이라이프', page: 'internet-kt-skylife.html' },
+  { label: 'LG U+', page: 'internet-lg.html' },
+  { label: 'LG헬로비전', page: 'internet-lg-hello.html' },
+];
+
+const GNB_CATS = [
+  { cat: 'mobile', label: '휴대폰' },
+  { cat: 'internet', label: '인터넷', dropdown: GNB_CARRIERS },
+  { cat: 'card', label: '카드' },
+  { cat: 'water', label: '정수기' },
+  { cat: 'rental', label: '렌탈' },
+];
+
+function buildGnbHtml() {
+  const path = location.pathname.split('/').pop() || 'index.html';
+
+  const catItems = GNB_CATS.map((c) => {
+    // 현재 페이지가 이 카테고리에 속하면 active
+    const isActive = gnbIsActiveCat(c.cat, path);
+    const activeCls = isActive ? ' is-active' : '';
+
+    if (c.dropdown) {
+      const subLinks = c.dropdown
+        .map(
+          (s) => `<a class="cat-sub-item" href="${s.page}">${s.label}</a>`
+        )
+        .join('');
+      return `
+        <div class="cat-item has-dropdown${activeCls}" data-cat="${c.cat}">
+          <span class="cat-label" onclick="goPage('${c.cat}')">${c.label}</span>
+          <div class="cat-dropdown">${subLinks}</div>
+        </div>`;
+    }
+    return `<div class="cat-item${activeCls}" onclick="goPage('${c.cat}')">${c.label}</div>`;
+  }).join('');
+
+  // ↓ internet-unified.html 원본 gnb-top 그대로 (로고 경로/클래스, gnb-right onclick 포함)
+  return `
+    <div class="gnb-top">
+      <a href="index.html" class="logo-wrap">
+        <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
+      </a>
+      <nav class="gnb-extras">
+        <a href="support.html">고객센터</a>
+        <a href="events.html" class="has-new">이벤트</a>
+        <a href="reviews.html">후기</a>
+        <a href="faq.html">자주묻는질문</a>
+      </nav>
+      <div class="gnb-right">
+        <button class="btn-login" onclick="window.location.href='login.html'">로그인/회원가입</button>
+      </div>
+    </div>
+    <div class="cat-bar">
+      <div class="cat-inner">${catItems}</div>
+    </div>`;
+}
+
+// 현재 URL이 어느 카테고리인지 판정 (active 표시용)
+function gnbIsActiveCat(cat, path) {
+  if (cat === 'internet') return path.startsWith('internet');
+  if (cat === 'mobile') return path.startsWith('mobile');
+  if (cat === 'card') return path.startsWith('card');
+  if (cat === 'water') return path.startsWith('water');
+  if (cat === 'rental') return path.startsWith('rental');
+  return false;
+}
+
+// 모바일: 드롭다운 클릭 토글 (데스크탑은 CSS hover)
+function setupGnbDropdownToggle() {
+  document
+    .querySelectorAll('.cat-item.has-dropdown .cat-label')
+    .forEach((label) => {
+      label.addEventListener('click', (e) => {
+        // 모바일(터치/좁은 화면)에서만 토글, 데스크탑은 hover라 이동 우선
+        if (
+          window.matchMedia('(hover: none)').matches ||
+          window.innerWidth <= 768
+        ) {
+          e.stopPropagation();
+          const item = label.closest('.cat-item');
+          const wasOpen = item.classList.contains('is-open');
+          document
+            .querySelectorAll('.cat-item.has-dropdown')
+            .forEach((i) => i.classList.remove('is-open'));
+          if (!wasOpen) item.classList.add('is-open');
+        }
+      });
+    });
+  // 바깥 클릭 시 닫힘
+  document.addEventListener('click', () => {
+    document
+      .querySelectorAll('.cat-item.has-dropdown.is-open')
+      .forEach((i) => i.classList.remove('is-open'));
+  });
+}
+
+// 헤더 주입 실행 (gnb-user.js보다 먼저)
+(function injectGnb() {
+  const nav = document.querySelector('nav.gnb');
+  if (!nav) return; // login/signup 등 nav.gnb 없으면 스킵
+  nav.innerHTML = buildGnbHtml();
+  setupGnbDropdownToggle();
+})();

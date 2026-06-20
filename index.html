@@ -171,31 +171,8 @@
   🎁 가만히 두면 <em>152만원 손해!</em> 지금 바로 지원금 확인하세요
 </div>
 
-<nav class="gnb">
-<div class="gnb-top">
-  <a href="index.html" class="logo-wrap">
-    <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
-  </a>
-  <nav class="gnb-extras">
-    <a href="support.html">고객센터</a>
-    <a href="events.html" class="has-new">이벤트</a>
-    <a href="reviews.html">후기</a>
-    <a href="faq.html">자주묻는질문</a>
-  </nav>
-  <div class="gnb-right">
-    <button class="btn-login">로그인/회원가입</button>
-  </div>
-</div>
-  <div class="cat-bar">
-    <div class="cat-inner">
-      <div class="cat-item" onclick="goPage('mobile')">휴대폰</div>
-      <div class="cat-item" onclick="goPage('internet')">인터넷</div>
-      <div class="cat-item" onclick="goPage('card')">카드</div>
-      <div class="cat-item" onclick="goPage('water')">정수기</div>
-      <div class="cat-item" onclick="goPage('rental')">렌탈</div>
-    </div>
-  </div>
-</nav>
+<!-- 공통 NAV (gnb.js가 주입) -->
+<nav class="gnb"></nav>
 
 <!-- 히어로 (배경 깨끗 — 로고 띠는 아래 별도 섹션으로 분리) -->
 <div class="hero">
@@ -360,77 +337,7 @@
     <p class="sec-sub">카드를 밀어서 더 보세요 · 클릭하면 지원금 계산기로 이동합니다</p>
 
     <div class="best-scroll-wrap">
-      <div class="best-grid" id="bestGrid">
-
-        <div class="best-card top" onclick="goPage('internet')">
-          <div class="best-rank r1">1</div>
-          <div class="best-cat-tag">인터넷/TV</div>
-          <div class="best-tag">합리적 | 3~4인 가구</div>
-          <div class="best-title-row">
-            <span class="plogo sk">SK</span>
-            <span class="best-name">500MB 기가라이트</span>
-            <span class="best-ch">[263채널]</span>
-          </div>
-          <div class="gift-box">
-            <div class="gift-label">최대 지원금</div>
-            <div class="gift-amt">최대 0만원 + @</div>
-          </div>
-          <div class="best-before">결합 전 43,950원</div>
-          <div class="best-after">휴대폰 결합 후 <strong>월 24,750원</strong></div>
-        </div>
-
-        <div class="best-card" onclick="goPage('internet')">
-          <div class="best-rank r2">2</div>
-          <div class="best-cat-tag">인터넷/TV</div>
-          <div class="best-tag">고속 | 라이브·재택근무</div>
-          <div class="best-title-row">
-            <span class="plogo sk">SK</span>
-            <span class="best-name">1Gbps 기가인터넷</span>
-            <span class="best-ch">[263채널]</span>
-          </div>
-          <div class="gift-box">
-            <div class="gift-label">최대 지원금</div>
-            <div class="gift-amt">최대 0만원 + @</div>
-          </div>
-          <div class="best-before">결합 전 50,050원</div>
-          <div class="best-after">휴대폰 결합 후 <strong>월 28,050원</strong></div>
-        </div>
-
-        <div class="best-card" onclick="goPage('internet')">
-          <div class="best-rank r3">3</div>
-          <div class="best-cat-tag">인터넷/TV</div>
-          <div class="best-tag">경제적 | 3~4인 가구</div>
-          <div class="best-title-row">
-            <span class="plogo lg">U⁺</span>
-            <span class="best-name">500MB 기가라이트</span>
-            <span class="best-ch">[238채널]</span>
-          </div>
-          <div class="gift-box">
-            <div class="gift-label">최대 지원금</div>
-            <div class="gift-amt">최대 0만원 + @</div>
-          </div>
-          <div class="best-before">결합 전 44,000원</div>
-          <div class="best-after">휴대폰 결합 후 <strong>월 24,200원</strong></div>
-        </div>
-
-        <div class="best-card" onclick="goPage('internet')">
-          <div class="best-rank r3">4</div>
-          <div class="best-cat-tag">인터넷/TV</div>
-          <div class="best-tag">고화질 | VOD 즐기는 가구</div>
-          <div class="best-title-row">
-            <span class="plogo kt">KT</span>
-            <span class="best-name">기가 인터넷</span>
-            <span class="best-ch">[230채널]</span>
-          </div>
-          <div class="gift-box">
-            <div class="gift-label">🎁 사은품</div>
-            <div class="gift-amt">최대 0만원 + @</div>
-          </div>
-          <div class="best-before">결합 전 46,200원</div>
-          <div class="best-after">휴대폰 결합 후 <strong>월 26,400원</strong></div>
-        </div>
-
-      </div>
+      <div class="best-grid" id="bestGrid"></div>
     </div>
 
     <div class="best-dots">
@@ -609,9 +516,12 @@
 <script src="js/common/api.js"></script>
 <script src="js/common/utils.js"></script>
 <script src="js/common/auth.js"></script>
+<script src="js/common/gnb.js"></script>
 <script src="js/common/gnb-user.js"></script>
 <script src="js/internet/structured-data-skt.js"></script>
 <script src="js/common/application.js"></script>
+<script src="js/internet/internet-calc.js"></script>
+<script src="js/internet/best-grid.js"></script>
 
 </body>
 </html>

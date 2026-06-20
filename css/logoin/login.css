@@ -5,7 +5,7 @@
 /* ── 레이아웃 ── */
 body {
   background: var(--bg);
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   min-height: 100vh;
   display: flex;
   flex-direction: column;
@@ -123,7 +123,7 @@ body {
   border-radius: 14px;
   font-size: 15px;
   font-weight: 700;
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   transition: all 0.18s;
   position: relative;
   letter-spacing: -0.2px;
@@ -241,7 +241,7 @@ body {
   border-radius: 10px;
   padding: 12px 14px;
   font-size: 14px;
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   outline: none;
   transition:
     border-color 0.2s,
@@ -270,7 +270,7 @@ body {
   padding: 13px;
   font-size: 14px;
   font-weight: 700;
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   margin-top: 10px;
   transition: all 0.2s;
   box-shadow: 0 4px 14px rgba(108, 63, 197, 0.22);

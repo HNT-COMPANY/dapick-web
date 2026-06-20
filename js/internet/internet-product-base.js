@@ -467,6 +467,32 @@ window.InternetProductBase = (function () {
     document
       .getElementById('ipApplyBtn')
       ?.addEventListener('click', applyConsult);
+    document
+      .getElementById('ipDetailBtn')
+      ?.addEventListener('click', goDetail);
+  }
+
+  // [상세요금] → 현재 선택 상태를 URL로 만들어 상세페이지로 이동 (계산/렌더 무관, 읽기만)
+  function goDetail() {
+    if (!_selectedInternet) {
+      alert('인터넷 상품을 선택해주세요.');
+      return;
+    }
+    const params = new URLSearchParams();
+    params.set('carrier', _provider.key);
+    params.set('net', _selectedInternet.name || '');
+    if (_toggles.tv && _selectedTv) params.set('tv', _selectedTv.name || '');
+    if (_toggles.router && _selectedRouter)
+      params.set('router', _selectedRouter.name || '');
+    if (_toggles.phone && _selectedPhone)
+      params.set('phone', _selectedPhone.name || '');
+    const on = [];
+    if (_toggles.tv && _selectedTv) on.push('tv');
+    if (_toggles.router && _selectedRouter) on.push('router');
+    if (_toggles.phone && _selectedPhone) on.push('phone');
+    if (on.length) params.set('with', on.join(','));
+
+    window.location.href = 'internet-detail.html?' + params.toString();
   }
 
   function toggleSection(id, show) {
@@ -622,7 +648,7 @@ window.InternetProductBase = (function () {
   function goPage(page) {
     const map = {
       mobile: 'mobile.html',
-      internet: 'internet-unified.html',
+      internet: 'internet.html',
       card: 'card.html',
       water: 'water.html',
       rental: 'rental.html',

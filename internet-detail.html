@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>다픽 인터넷·TV 구성 상세</title>
+  <meta name="description" content="선택한 인터넷·TV 구성을 확인하고 변경·신청하세요."/>
+  <meta name="robots" content="noindex, follow"/>
+
+  <link rel="icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <meta name="theme-color" content="#3617CE" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&family=DM+Serif+Display:ital@0;1&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/reset.css"/>
+  <link rel="stylesheet" href="css/common/common.css"/>
+  <link rel="stylesheet" href="css/common/components.css"/>
+  <link rel="stylesheet" href="css/common/footer.css"/>
+  <link rel="stylesheet" href="css/common/gnb-user.css"/>
+  <link rel="stylesheet" href="css/icon.css"/>
+  <link rel="stylesheet" href="css/internet/internet-product.css"/>
+  <link rel="stylesheet" href="css/internet/internet-notice.css">
+  <link rel="stylesheet" href="css/internet/internet-detail.css">
+
+  <!-- 기본 브랜드 컬러(폴백) — carrier 기준으로 JS가 덮어씀 -->
+  <style>
+    :root { --ip-brand-color: #3617CE; }
+  </style>
+</head>
+<body>
+
+<!-- 공통 NAV (gnb.js가 주입) -->
+<nav class="gnb"></nav>
+
+<!-- 통신사 헤더 (로고/이름은 JS가 carrier 기준으로 교체) -->
+<div class="ip-header">
+  <a class="ip-back" href="internet-unified.html">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    구성 다시 선택
+  </a>
+  <div class="ip-header-logo">
+    <img id="idHeaderLogo" src="assets/logos/dapick.png" alt="다픽">
+  </div>
+</div>
+
+<!-- 상세 본문: 좌(할인 패널) / 우(구성요소 리스트) -->
+<main class="id-wrap">
+  <div class="id-grid">
+
+    <!-- 좌: 요금/할인 패널 -->
+    <aside class="id-panel">
+      <div class="id-panel-head">
+        <div class="id-panel-carrier" id="idCarrierName">-</div>
+        <div class="id-panel-title">내가 선택한 구성</div>
+      </div>
+      <div class="id-price-rows">
+        <div class="id-price-row">
+          <span class="id-price-label">결합 전 요금</span>
+          <span class="id-price-val" id="idPbBase">-</span>
+        </div>
+        <div class="id-price-row">
+          <span class="id-price-label">휴대폰 결합 요금</span>
+          <span class="id-price-val" id="idPbBundle">-</span>
+        </div>
+        <div class="id-price-row is-final">
+          <span class="id-price-label">카드 할인시 혜택가</span>
+          <span class="id-price-val"><b id="idPbFinal">-</b>원<small>/월 (부가세 포함)</small></span>
+        </div>
+      </div>
+      <div class="id-hint" id="idHint"></div>
+      <div class="id-gift">
+        <span class="id-gift-label">현금 사은품</span>
+        <span class="id-gift-val" id="idPbGift">상담 시 안내</span>
+      </div>
+      <div class="id-notice" id="idNotice" hidden></div>
+      <button class="id-apply" id="idApplyBtn" type="button" disabled>신청하기</button>
+    </aside>
+
+    <!-- 우: 구성요소 리스트 (JS 렌더) -->
+    <section class="id-list" id="idRightList"></section>
+
+  </div>
+</main>
+
+<!-- 공통 푸터 (통합페이지 마크업 복사) -->
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-wrap">
+      <div class="footer-logo">
+        <img src="assets/logos/dapicklogo.png" alt="다픽" class="footer-logo__img" />
+      </div>
+      <div class="footer-app-btns">
+        <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.8-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>
+          <div><div class="app-btn-sub">Download on the</div><div class="app-btn-main">App Store</div></div>
+        </a>
+        <a class="footer-app-btn" href="#" onclick="alert('앱 출시 준비 중입니다!')">
+          <svg viewBox="0 0 24 24" fill="currentColor" width="18" height="18"><path d="M3.18 23.76c.3.17.65.19.97.08l11.1-6.41-2.39-2.39-9.68 8.72zm-1.1-19.7C2.03 4.3 2 4.57 2 4.86v14.28c0 .29.03.57.08.83l9.96-9.96-9.96-9.95zM20.1 10.24l-2.41-1.39-2.71 2.71 2.71 2.71 2.43-1.4c.69-.4.69-1.22-.02-1.63zM4.15.23C3.83.12 3.48.14 3.18.31L13.04 10.18l2.39-2.39L4.15.23z"/></svg></a>
+          <div><div class="app-btn-sub">GET IT ON</div><div class="app-btn-main">Google Play</div></div>
+        </a>
+      </div>
+    </div>
+  </div>
+  <div class="footer-info-wrap">
+    <div class="footer-wrap">
+      <div class="footer-info">
+        <p><span>사이트명</span> 다픽(dapick) &nbsp;|&nbsp; <span>대표자</span> 강성현</p>
+        <p><span>사업자등록번호</span> 620-14-55188 &nbsp;|&nbsp; <span>통신판매</span> 제 2026-울산남구-0324 호</p>
+        <p class="footer-disclaimer">다픽은 통신판매중개자이며 통신판매의 당사자가 아닙니다.<br>상품, 상품정보, 거래에 관한 의무와 책임은 거래당사자에게 있습니다.</p>
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-wrap">
+      <div class="footer-policies">
+        <a href="privacy.html">개인정보처리방침</a>
+        <a href="terms.html">이용약관</a>
+        <a href="marketing.html">정보수신 동의</a>
+        <a href="email-policy.html">이메일 무단수집 거부</a>
+      </div>
+      <p class="footer-copy">Copyright © 2026 다픽. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- 공통 JS (확정 순서: api → auth → utils → application → gnb-user → calc → detail) -->
+<script src="js/common/api.js"></script>
+<script src="js/common/auth.js"></script>
+<script src="js/common/utils.js"></script>
+<script src="js/common/application.js"></script>
+<script src="js/common/gnb.js"></script>
+<script src="js/common/gnb-user.js"></script>
+<script src="js/internet/internet-calc.js"></script>
+<script src="js/internet/internet-detail.js"></script>
+</body>
+</html>

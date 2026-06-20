@@ -240,7 +240,7 @@
   text-decoration: none;
   border: none;
   cursor: pointer;
-  font-family: 'Noto Sans KR', sans-serif;
+  font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   transition: all 0.2s;
   min-height: 48px;
   white-space: nowrap;

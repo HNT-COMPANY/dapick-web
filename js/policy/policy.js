@@ -69,7 +69,7 @@ function initSmoothScroll() {
 function goPage(page) {
   const map = {
     mobile: 'mobile.html',
-    internet: 'internet-unified.html',
+    internet: 'internet.html',
     card: 'card.html',
     water: 'water.html',
     rental: 'rental.html',

@@ -643,7 +643,7 @@ function openWaterApply() {
 function goPage(page) {
   const map = {
     phone: 'phone.html',
-    internet: 'internet-unified.html',
+    internet: 'internet.html',
     card: 'card.html',
     water: 'water.html',
     rental: 'rental.html',

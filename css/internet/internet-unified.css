@@ -81,3 +81,81 @@
     font-size: 12px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   [상세요금] 버튼 — 통합페이지 전용 (조각 3-3)
+   가격바(.ip-pricebar-inner)는 공유 internet-product.css에서 3열 그리드
+   (가격 | 사은품 | 신청). 버튼이 하나 늘어 4번째 자식이 되므로,
+   통합페이지에서만 컬럼을 보정한다. (이 CSS는 통합페이지만 로드)
+   ══════════════════════════════════════════════════════ */
+.ip-pb-detail {
+  background: #fff;
+  color: var(--ip-brand-color, #3617ce);
+  border: 1.5px solid var(--ip-brand-color, #3617ce);
+  padding: 18px 28px;
+  border-radius: 12px;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.ip-pb-detail:hover {
+  background: color-mix(in srgb, var(--ip-brand-color, #3617ce) 8%, #ffffff);
+}
+
+/* 두 버튼을 .ip-pb-actions 래퍼로 묶음 → 가격바 그리드 자식은 3개(가격|사은품|버튼묶음)로
+   공유 기본 3열(1fr 1fr auto)이 그대로 맞음. 래퍼 안에서 세로 스택([상세요금] 위, [신청] 아래). */
+.ip-pb-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+/* 래퍼 안 두 버튼은 stretch로 같은 너비 정렬 (flex column 기본 align-items:stretch) */
+@media (max-width: 768px) {
+  .ip-pb-detail {
+    padding: 16px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   디자인 정비 — 통합페이지 전용 오버라이드 (조각: unified 정비)
+   ★ 출처는 전역(body)·공유(internet-product.css)지만, 이 파일은 통합페이지만
+     로드 + head 마지막이라 여기서만 덮으면 레거시 6개 페이지는 무영향.
+     공유 CSS(internet-product/reset/common)는 미변경.
+   ══════════════════════════════════════════════════════ */
+
+/* 1) 연보라 배경 제거 — 전역 body(#f8f7fd) → 통합만 흰색 */
+body {
+  background: #fff;
+}
+
+/* 2) 카드·텍스트 시원하게 (크기만 조정, 폰트/색 미변경) */
+.ip-card-grid {
+  gap: 16px; /* 12 → 16: 카드 간격만 */
+}
+.ip-opt-card {
+  padding: 28px 24px 24px; /* 22 20 18 → */
+}
+.ip-opt-num {
+  font-size: 34px; /* 28 → */
+}
+.ip-opt-unit {
+  font-size: 16px; /* 14 → */
+}
+.ip-opt-grade {
+  font-size: 17px; /* 14 → */
+}
+.ip-opt-tier {
+  font-size: 13px; /* 12 → */
+}
+.ip-opt-price {
+  font-size: 20px; /* 16 → */
+}
+.ip-section-label {
+  font-size: 18px; /* 16 → */
+}
+
+/* 3) 현금사은품 — 골드 박스 유지, 금액만 파랑 (상세페이지와 동일 #2563eb) */
+.ip-pb-gift-val {
+  color: #2563eb; /* #8a6d28(골드) → */
+}
