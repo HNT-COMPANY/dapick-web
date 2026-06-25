@@ -1215,3 +1215,153 @@
     border-radius: 12px;
   }
 }
+
+/* ══════════════════════════════════════════════════════
+   리모컨 필터 사이드바 (조각1: UI만 / #productView 스코프 한정)
+   ⚠️ 전역 .wrap·.section·common.css 미변경. 신규 클래스만.
+   보라톤: 메인 #7F77DD, 섹션 라벨 #534AB7, 선택=보라 테두리
+   ══════════════════════════════════════════════════════ */
+#productView .water-layout {
+  display: flex;
+  gap: 24px;
+  align-items: flex-start;
+  /* 중앙정렬 이관: .wrap 이 갖던 거터/최대폭을 2단 래퍼 레벨로 (전역변수 참조만) */
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+}
+/* 우측 컬럼: 기존 .wrap 을 flex 자식으로 — 스코프 한정(전역 .wrap 무변경) */
+#productView .water-layout > .wrap {
+  flex: 1 1 auto;
+  min-width: 0; /* flex 자식 내부 grid 축소 허용(auto-fill 자동 컬럼 감소) */
+  padding: 0;      /* 이중 패딩 방지 — 거터는 .water-layout 담당 */
+  max-width: none; /* flex 우측 컬럼 꽉 채움 */
+}
+
+/* ② 배경 흰색 (상품뷰 스코프만 — 전역 body{background:--bg} 무변경) */
+#productView {
+  background: var(--white);
+}
+/* ③ 카드 연보라 (목록 전용 클래스 + #productView 스코프 → 상세/타 페이지 무영향) */
+#productView .water-card,
+#productView .water-prod-card {
+  background: var(--purple-pale);
+}
+
+.water-filter {
+  width: 260px;
+  flex: none;
+  align-self: stretch;
+  background: #fff;
+  border: 1px solid #ece9fb;
+  border-radius: 12px;
+  padding: 16px;
+  position: sticky;
+  top: 16px;
+  max-height: calc(100vh - 32px);
+  overflow-y: auto;
+}
+.wf-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #ece9fb;
+}
+.wf-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: #534AB7;
+}
+.wf-reset {
+  font-size: 12px;
+  color: #7F77DD;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 4px 6px;
+  border-radius: 4px;
+}
+.wf-reset:hover {
+  background: #f3f1fc;
+}
+.wf-section {
+  margin-bottom: 16px;
+}
+.wf-section-label {
+  display: flex;
+  align-items: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: #534AB7;
+  margin-bottom: 8px;
+}
+.wf-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.wf-opt {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: #444;
+  cursor: pointer;
+  padding: 5px 8px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+.wf-opt:hover {
+  background: #f7f6fd;
+}
+.wf-opt input {
+  accent-color: #7F77DD;
+  flex: none;
+}
+/* 선택 시 보라 테두리 강조 (체크 상태) */
+.wf-opt:has(input:checked) {
+  border-color: #7F77DD;
+  background: #f3f1fc;
+  color: #534AB7;
+  font-weight: 600;
+}
+.wf-search {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 7px 10px;
+  font-size: 13px;
+  border: 1px solid #ddd9f0;
+  border-radius: 6px;
+}
+.wf-search:focus {
+  outline: none;
+  border-color: #7F77DD;
+}
+/* 비활성 슬롯 3개 (준비중) */
+.wf-section.wf-disabled {
+  opacity: 0.45;
+  pointer-events: none;
+}
+.wf-badge-soon {
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+  background: #eee;
+  border-radius: 4px;
+  padding: 1px 5px;
+  margin-left: 6px;
+}
+
+/* 모바일(≤768): 사이드바 → 상단 전폭 패널. 토글 드로어는 조각2(JS) 몫 */
+@media (max-width: 768px) {
+  #productView .water-layout {
+    flex-direction: column;
+  }
+  .water-filter {
+    width: 100%;
+    position: static;
+    max-height: none;
+  }
+}

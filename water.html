@@ -169,6 +169,111 @@
 
   <!-- 상품 컨텐츠 -->
   <div class="section">
+    <!-- 조각1: 리모컨 필터 2단 레이아웃 (UI만 — 동작은 조각2). 기존 .wrap 은 우측 컬럼으로 그대로 유지 -->
+    <div class="water-layout">
+      <aside class="water-filter">
+        <div class="wf-header">
+          <span class="wf-title">필터</span>
+          <button type="button" class="wf-reset" id="wfReset">초기화</button>
+        </div>
+
+        <!-- 1. 브랜드 (다중) -->
+        <div class="wf-section">
+          <div class="wf-section-label">브랜드</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="brand" data-value="coway"><span>코웨이</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="brand" data-value="sk"><span>SK매직</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="brand" data-value="chungho"><span>청호나이스</span></label>
+          </div>
+        </div>
+
+        <!-- 2. 모델명 (검색) -->
+        <div class="wf-section">
+          <div class="wf-section-label">모델명</div>
+          <input type="text" class="wf-search" data-filter="modelName" placeholder="모델명 검색">
+        </div>
+
+        <!-- 3. 제품명 (검색) -->
+        <div class="wf-section">
+          <div class="wf-section-label">제품명</div>
+          <input type="text" class="wf-search" data-filter="name" placeholder="제품명 검색">
+        </div>
+
+        <!-- 4. 정수 기능 (다중) -->
+        <div class="wf-section">
+          <div class="wf-section-label">정수 기능</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="PURIFIED"><span>정수</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD"><span>냉/정</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="HOT"><span>온/정</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD_HOT"><span>냉/온/정</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD_HOT_ICE"><span>냉/온/정/얼음</span></label>
+          </div>
+        </div>
+
+        <!-- 5. 월 렌탈료 (다중) -->
+        <div class="wf-section">
+          <div class="wf-section-label">월 렌탈료</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="UNDER_10K"><span>1만원 미만</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_10K"><span>1만원대</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_20K"><span>2만원대</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_30K"><span>3만원대</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_40K"><span>4만원대</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="OVER_50K"><span>5만원 이상</span></label>
+          </div>
+        </div>
+
+        <!-- 6. 설치 형태 (다중) -->
+        <div class="wf-section">
+          <div class="wf-section-label">설치 형태</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="DESK"><span>데스크형</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="BUILT_IN"><span>빌트인</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="STAND"><span>스탠드형</span></label>
+          </div>
+        </div>
+
+        <!-- 7. 필터 방식 (다중) -->
+        <div class="wf-section">
+          <div class="wf-section-label">필터 방식</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="RO"><span>RO필터</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="NANO"><span>나노필터</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="HOLLOW_FIBER"><span>중공사막필터</span></label>
+          </div>
+        </div>
+
+        <!-- 8. 추출 방식 (다중) -->
+        <div class="wf-section">
+          <div class="wf-section-label">추출 방식</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="extractType" data-value="DIRECT"><span>직수</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="extractType" data-value="TANK"><span>저수조형</span></label>
+          </div>
+        </div>
+
+        <!-- 9. 직수관 재질 (다중) -->
+        <div class="wf-section">
+          <div class="wf-section-label">직수관 재질</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="pipeMaterial" data-value="STAINLESS"><span>스테인리스</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="pipeMaterial" data-value="TRITAN"><span>트라이탄</span></label>
+          </div>
+        </div>
+
+        <!-- 10~12. 비활성 슬롯 (데이터 없음 — data 속성 없이 회색/준비중) -->
+        <div class="wf-section wf-disabled">
+          <div class="wf-section-label">관리 주기<span class="wf-badge-soon">준비중</span></div>
+        </div>
+        <div class="wf-section wf-disabled">
+          <div class="wf-section-label">위생 기능<span class="wf-badge-soon">준비중</span></div>
+        </div>
+        <div class="wf-section wf-disabled">
+          <div class="wf-section-label">기능<span class="wf-badge-soon">준비중</span></div>
+        </div>
+      </aside>
+
     <div class="wrap">
       <!-- 베스트 섹션: 상품 0개일 때 JS에서 숨김 처리 -->
       <div id="bestSection">
@@ -188,6 +293,7 @@
       <p class="sec-sub">클릭하면 약정·색상·관리주기를 직접 선택하고 월 렌탈료를 바로 확인할 수 있어요</p>
       <div class="water-list-grid" id="listGrid"></div>
     </div>
+    </div><!-- /.water-layout -->
   </div>
 </div>
 

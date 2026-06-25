@@ -315,7 +315,81 @@ function openDetailModal(app) {
     app.productName || getCategoryLabel(app.categoryType) || '신청 상세';
   body.innerHTML = rows.join('');
 
+  // 환수동의서 다운로드 버튼 — 모달 열 때 status 조회해 SIGNED+pdf 보유 시 노출.
+  // 어느 신청 모달인지 추적(빠른 연속 오픈 시 비동기 응답 뒤섞임 방지).
+  modal.dataset.appId = app.id;
+  const dlBtn = document.getElementById('btn-consent-download');
+  if (dlBtn) {
+    dlBtn.hidden = true;
+    dlBtn.onclick = null;
+    loadConsentStatus(app.id, app.consultationNumber);
+  }
+
   modal.hidden = false;
+}
+
+// 모달 진입 시 동의서 상태 조회 → 다운로드 버튼 노출 결정 (JWT 자동: api 래퍼)
+async function loadConsentStatus(consultationId, consultationNumber) {
+  const dlBtn = document.getElementById('btn-consent-download');
+  if (!dlBtn) return;
+  try {
+    const status = await api.get(
+      `/api/consultations/${consultationId}/consent/status`,
+    );
+    // 응답 도착 사이 다른 신청으로 모달이 바뀌었으면 무시
+    const modal = document.getElementById('modal-detail');
+    if (!modal || modal.dataset.appId !== String(consultationId)) return;
+
+    if (status && status.downloadable === true) {
+      dlBtn.hidden = false;
+      dlBtn.onclick = () => downloadConsentPdf(consultationId, consultationNumber);
+    } else {
+      dlBtn.hidden = true;
+      dlBtn.onclick = null;
+    }
+  } catch (e) {
+    // 조회 실패 시 버튼 숨김(안전) — 목록/모달은 정상 유지
+    console.error('[mypage] consent status load failed:', e);
+    dlBtn.hidden = true;
+    dlBtn.onclick = null;
+  }
+}
+
+// ── 환수동의서 PDF 다운로드 ──────────────────────────
+// api 래퍼는 응답을 text/JSON 으로 읽어 바이너리에 부적합 → 원시 fetch + blob.
+// 인증 헤더는 기존 /my 호출과 동일하게 dapick_token(Bearer) 사용.
+async function downloadConsentPdf(consultationId, consultationNumber) {
+  const token = localStorage.getItem('dapick_token');
+  try {
+    const res = await fetch(
+      `${BASE_URL}/api/consultations/${consultationId}/consent/pdf`,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
+    if (!res.ok) {
+      if (res.status === 401) {
+        showToast('로그인이 만료되었습니다. 다시 로그인해 주세요.');
+      } else if (res.status === 404) {
+        showToast('서명된 동의서를 찾을 수 없습니다.');
+      } else if (res.status === 403) {
+        showToast('본인의 동의서만 받을 수 있습니다.');
+      } else {
+        showToast('다운로드에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+      }
+      return;
+    }
+    const blob = await res.blob();
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `환수동의서-${consultationNumber || consultationId}.pdf`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  } catch (e) {
+    console.error('[mypage] consent pdf download failed:', e);
+    showToast('다운로드 중 오류가 발생했습니다.');
+  }
 }
 
 function detailRow(label, value, isHtml) {
