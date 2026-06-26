@@ -536,6 +536,8 @@ window.InternetProductBase = (function () {
     params.set('carrier', _provider.key);
     params.set('net', _selectedInternet.name || '');
     if (_toggles.tv && _selectedTv) params.set('tv', _selectedTv.name || '');
+    if (_toggles.tv && _selectedTv && _selectedSetTop)
+      params.set('settop', _selectedSetTop.name || '');
     if (_toggles.router && _selectedRouter)
       params.set('router', _selectedRouter.name || '');
     if (_toggles.phone && _selectedPhone)
