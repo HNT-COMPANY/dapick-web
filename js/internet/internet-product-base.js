@@ -70,15 +70,13 @@ window.InternetProductBase = (function () {
   let _tvs = [];
   let _setTops = [];
   let _routers = [];
-  let _phones = [];
   let _meta = {}; // discountMeta
 
   let _selectedInternet = null;
   let _selectedTv = null;
   let _selectedSetTop = null;
   let _selectedRouter = null;
-  let _selectedPhone = null;
-  let _toggles = { tv: false, router: false, phone: false };
+  let _toggles = { tv: false, router: false };
   let _scrollBound = false; // 통합 페이지 carrier 전환 시 scroll 리스너 중복 등록 방지
   let _initSeq = 0; // init 세대 토큰 — carrier 전환 시 stale 콜백 폐기용
   let _builderSkeleton = null; // 최초 pristine .ip-builder 골격 (showError 파괴 후 복원용)
@@ -193,9 +191,6 @@ window.InternetProductBase = (function () {
         _routers = Array.isArray(_product.routerOptions)
           ? _product.routerOptions
           : [];
-        _phones = Array.isArray(_product.phoneOptions)
-          ? _product.phoneOptions
-          : [];
         _meta = _product.discountMeta || {};
 
         if (_internets.length === 0) {
@@ -221,7 +216,6 @@ window.InternetProductBase = (function () {
         renderTvOptions();
         renderSetTopOptions();
         renderRouterOptions();
-        renderPhoneOptions();
         bindEvents();
         updatePricebar();
 
@@ -249,16 +243,7 @@ window.InternetProductBase = (function () {
         '<div class="ip-section-label">공유기</div><div class="ip-card-grid" id="ipRouterGrid"></div>';
       tvSection.insertAdjacentElement('afterend', sec);
     }
-    if (!document.getElementById('ipPhoneSection')) {
-      const sec = document.createElement('div');
-      sec.className = 'ip-section is-hidden';
-      sec.id = 'ipPhoneSection';
-      sec.innerHTML =
-        '<div class="ip-section-label">전화</div><div class="ip-card-grid" id="ipPhoneGrid"></div>';
-      const anchor = document.getElementById('ipRouterSection') || tvSection;
-      anchor.insertAdjacentElement('afterend', sec);
-    }
-    // 셋탑 섹션 — TV 종속. TV 섹션 바로 뒤(afterend)에 삽입 → [TV][셋탑][공유기][전화] 순.
+    // 셋탑 섹션 — TV 종속. TV 섹션 바로 뒤(afterend)에 삽입 → [TV][셋탑][공유기] 순.
     if (!document.getElementById('ipSetTopSection')) {
       const sec = document.createElement('div');
       sec.className = 'ip-section is-hidden';
@@ -309,7 +294,6 @@ window.InternetProductBase = (function () {
     return InternetCalc.extrasBundleSum({
       tv: _selectedTv,
       router: _selectedRouter,
-      phone: _selectedPhone,
       toggles: _toggles,
     });
   }
@@ -346,7 +330,7 @@ window.InternetProductBase = (function () {
     const el = document.getElementById('ipToggles');
     if (!el) return;
     const items = [];
-    // 표시 순서: 공유기 → TV → 전화 (TV-셋탑 종속 로직은 순서와 무관하게 유지)
+    // 표시 순서: 공유기 → TV (TV-셋탑 종속 로직은 순서와 무관하게 유지)
     if (_routers.length > 0)
       items.push(
         `<label class="ip-toggle-item"><input type="checkbox" data-toggle="router" ${_toggles.router ? 'checked' : ''}><span class="ip-toggle-label">공유기와 함께</span></label>`,
@@ -354,10 +338,6 @@ window.InternetProductBase = (function () {
     if (_tvs.length > 0)
       items.push(
         `<label class="ip-toggle-item"><input type="checkbox" data-toggle="tv" ${_toggles.tv ? 'checked' : ''}><span class="ip-toggle-label">TV와 함께</span></label>`,
-      );
-    if (_phones.length > 0)
-      items.push(
-        `<label class="ip-toggle-item"><input type="checkbox" data-toggle="phone" ${_toggles.phone ? 'checked' : ''}><span class="ip-toggle-label">전화와 함께</span></label>`,
       );
     el.innerHTML = items.join('');
   }
@@ -407,10 +387,6 @@ window.InternetProductBase = (function () {
       false,
     );
   }
-  function renderPhoneOptions() {
-    renderOptionCards('ipPhoneGrid', _phones, _selectedPhone, 'phone', false);
-  }
-
   function bindEvents() {
     document
       .getElementById('ipInternetGrid')
@@ -454,13 +430,6 @@ window.InternetProductBase = (function () {
         updatePricebar();
         return;
       }
-      const pBtn = e.target.closest('[data-phone]');
-      if (pBtn) {
-        _selectedPhone =
-          _phones.find((o) => o.name === pBtn.dataset.phone) || null;
-        renderPhoneOptions();
-        updatePricebar();
-      }
     });
     document.getElementById('ipToggles')?.addEventListener('change', (e) => {
       const input = e.target.closest('[data-toggle]');
@@ -502,19 +471,6 @@ window.InternetProductBase = (function () {
           _selectedRouter = null;
           renderRouterOptions();
         }
-      } else if (key === 'phone') {
-        _toggles.phone = input.checked;
-        toggleSection('ipPhoneSection', input.checked);
-        if (input.checked) {
-          moveSectionToEnd('ipPhoneSection');
-          if (!_selectedPhone && _phones.length) {
-            _selectedPhone = _phones[0];
-            renderPhoneOptions();
-          }
-        } else {
-          _selectedPhone = null;
-          renderPhoneOptions();
-        }
       }
       updatePricebar();
     });
@@ -540,12 +496,9 @@ window.InternetProductBase = (function () {
       params.set('settop', _selectedSetTop.name || '');
     if (_toggles.router && _selectedRouter)
       params.set('router', _selectedRouter.name || '');
-    if (_toggles.phone && _selectedPhone)
-      params.set('phone', _selectedPhone.name || '');
     const on = [];
     if (_toggles.tv && _selectedTv) on.push('tv');
     if (_toggles.router && _selectedRouter) on.push('router');
-    if (_toggles.phone && _selectedPhone) on.push('phone');
     if (on.length) params.set('with', on.join(','));
 
     window.location.href = 'internet-detail.html?' + params.toString();
@@ -577,7 +530,6 @@ window.InternetProductBase = (function () {
       tv: _selectedTv,
       setTop: _selectedSetTop,
       router: _selectedRouter,
-      phone: _selectedPhone,
       toggles: _toggles,
       meta: _meta,
     });
@@ -678,8 +630,6 @@ window.InternetProductBase = (function () {
         : '미사용';
     const routerName =
       _toggles.router && _selectedRouter ? _selectedRouter.name : '미사용';
-    const phoneName =
-      _toggles.phone && _selectedPhone ? _selectedPhone.name : '미사용';
 
     const selectedOptions = {
       통신사: _provider.name,
@@ -687,7 +637,6 @@ window.InternetProductBase = (function () {
       TV: tvName,
       셋탑: setTopName,
       공유기: routerName,
-      전화: phoneName,
       결합전요금: calc.basePrice,
       휴대폰결합요금: calc.bundlePrice,
       카드할인적용가: calc.cardPrice,
@@ -700,8 +649,6 @@ window.InternetProductBase = (function () {
       nameParts.push('+ ' + _selectedSetTop.name);
     if (_toggles.router && _selectedRouter)
       nameParts.push('+ ' + _selectedRouter.name);
-    if (_toggles.phone && _selectedPhone)
-      nameParts.push('+ ' + _selectedPhone.name);
 
     DapickApplication.apply({
       category: 'INTERNET_TV',
