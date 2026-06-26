@@ -63,6 +63,11 @@ window.InternetCalc = (function () {
     if (toggles.tv && s.tv) {
       base += normalOf(s.tv);
       combo += bundleOf(s.tv);
+      // 셋탑은 TV 종속 — TV가 있을 때만 1회 합산 (중복합산 금지)
+      if (s.setTop) {
+        base += normalOf(s.setTop);
+        combo += bundleOf(s.setTop);
+      }
     }
     if (toggles.router && s.router) {
       base += normalOf(s.router);
@@ -77,7 +82,9 @@ window.InternetCalc = (function () {
     // (?? 사용: 옵션에 0이 들어와도 0을 존중하고, null/undefined일 때만 상품값으로 폴백)
     const cardDiscount = Number(it.cardDiscount ?? meta.cardDiscount ?? 0);
     const gift = Number(it.gift ?? meta.gift ?? 0);
-    const bundleDiscount = Number(it.bundleDiscount ?? meta.bundleDiscount ?? 0);
+    const bundleDiscount = Number(
+      it.bundleDiscount ?? meta.bundleDiscount ?? 0,
+    );
     // 최종 혜택가 = 휴대폰 결합 요금 - 유무선 결합 할인 - 카드 할인
     const cardPrice = Math.max(0, combo - bundleDiscount - cardDiscount);
 
@@ -91,7 +98,7 @@ window.InternetCalc = (function () {
       bundleDiscount: bundleDiscount,
     };
   }
-
+  //
   // ── 조회/복원 헬퍼 (상세페이지용 — 통합페이지는 기존 인라인 유지) ──
   // carrier 키로 상품 찾기 — 원본 :173
   function findByCarrier(list, carrierKey) {
@@ -111,6 +118,7 @@ window.InternetCalc = (function () {
     return {
       internets: Array.isArray(p.internetOptions) ? p.internetOptions : [],
       tvs: Array.isArray(p.tvOptions) ? p.tvOptions : [],
+      setTops: Array.isArray(p.setTopOptions) ? p.setTopOptions : [],
       routers: Array.isArray(p.routerOptions) ? p.routerOptions : [],
       phones: Array.isArray(p.phoneOptions) ? p.phoneOptions : [],
       meta: p.discountMeta || {},

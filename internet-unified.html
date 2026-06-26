@@ -119,14 +119,6 @@
   </div>
 </div>
 
-<!-- 페이지 히어로 (텍스트는 JS가 carrier 기준으로 교체) -->
-<div class="ip-hero">
-  <div class="ip-hero-inner">
-    <h1>인터넷 사은품<br><em>최대 00만원 + 결합 할인</em></h1>
-    <p>통신사를 선택하면 요금·결합·사은품이 표시됩니다</p>
-  </div>
-</div>
-
 <!-- 상품 빌더 (v3: 아정당 패턴) -->
 <div class="ip-builder">
 
@@ -164,9 +156,16 @@
       </div>
       <div class="ip-pb-row ip-pb-settop-hint" id="ipSettopHint" style="font-size:12px;color:#888;margin-top:4px;"></div>
     </div>
+    <!-- 칸2: 월요금(주인공) 위 + 현금사은품(보조) 아래. 그리드 칸2(.ip-pb-gift) 자체는 유지 -->
     <div class="ip-pb-gift">
-      <div class="ip-pb-gift-label">현금 사은품</div>
-      <div class="ip-pb-gift-val" id="ipPbGift">상담 시 안내</div>
+      <div class="ip-pb-month">
+        <span class="ip-pb-month-label">월 요금</span>
+        <span class="ip-pb-month-val"><span id="ipPbFinal">-</span>원<small>/월 3년 약정 (부가세포함)</small></span>
+      </div>
+      <div class="ip-pb-giftbox">
+        <span class="ip-pb-gift-label">현금 사은품</span>
+        <span class="ip-pb-gift-val" id="ipPbGift">상담 시 안내</span>
+      </div>
     </div>
     <div class="ip-pb-actions">
       <button class="ip-pb-detail" id="ipDetailBtn" type="button">상세요금</button>

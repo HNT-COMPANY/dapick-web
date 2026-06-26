@@ -191,7 +191,7 @@
 }
 .ip-opt-num {
   font-size: 28px;
-  font-weight: 900;
+  font-weight: 800; /* 900 → 800: 강조 유지하되 톤 down (아정당식) */
   color: var(--text-main);
   line-height: 1;
 }
@@ -204,7 +204,7 @@
 /* v6: 등급명 (굵게) — 슬림/베이직/에센스 */
 .ip-opt-grade {
   font-size: 14px;
-  font-weight: 700;
+  font-weight: 600; /* 700 → 600: 이름 톤 down */
   color: var(--text-main);
   margin-bottom: 2px;
 }
@@ -224,13 +224,13 @@
 
 .ip-opt-price {
   font-size: 16px;
-  font-weight: 800;
+  font-weight: 700; /* 800 → 700: 가격 가볍게 (브랜드 컬러 유지) */
   color: var(--ip-brand-color);
 }
 .ip-opt-price-prefix {
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--text-muted);
+  font-size: inherit; /* "월"을 가격(.ip-opt-price)과 동일 크기/굵기/색으로 통일 */
+  font-weight: inherit;
+  color: inherit;
   margin-right: 2px;
 }
 

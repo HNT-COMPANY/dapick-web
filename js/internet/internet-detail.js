@@ -277,7 +277,8 @@
   // 좌: 요금/할인 패널 (InternetCalc.calculate 한 곳만)
   function renderLeft() {
     var calc = InternetCalc.calculate(selection());
-    setText('idPbBase', formatPrice(calc.basePrice) + '원');
+    // 결합 전 요금은 값과 무관하게 항상 "별도 문의" (금액 비노출). 내부 calc는 그대로 사용.
+    setText('idPbBase', '별도 문의');
     setText('idPbBundle', formatPrice(calc.bundlePrice) + '원');
     setText('idPbFinal', formatPrice(calc.finalPrice));
 
@@ -292,6 +293,23 @@
     if (calc.cardDiscount > 0)
       bits.push('카드 할인 -' + formatPrice(calc.cardDiscount) + '원');
     setText('idHint', bits.length ? bits.join(' · ') + ' 적용' : '');
+
+    // 카드 할인 값 없을 때 상담 안내 (gift 전용 슬롯 방식 미러 — 별도 줄, '적용' 미부착)
+    var giftBox = giftEl && (giftEl.closest('.id-gift') || giftEl);
+    var cardConsult = document.getElementById('idCardConsult');
+    if (!cardConsult && giftBox && giftBox.parentNode) {
+      cardConsult = document.createElement('div');
+      cardConsult.id = 'idCardConsult';
+      cardConsult.className = 'id-hint id-card-consult';
+      giftBox.parentNode.insertBefore(cardConsult, giftBox.nextSibling);
+    }
+    if (cardConsult) {
+      var showConsult = !(calc.cardDiscount > 0);
+      cardConsult.textContent = showConsult
+        ? '제휴카드 별도문의'
+        : '';
+      cardConsult.hidden = !showConsult;
+    }
 
     // ★ 안내문구는 calculate 출력이 아니라 선택 인터넷 옵션에서 직접 읽음
     var notice =
