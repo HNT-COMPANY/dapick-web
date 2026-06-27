@@ -69,14 +69,19 @@ window.InternetProductBase = (function () {
   let _internets = [];
   let _tvs = [];
   let _setTops = [];
+  let _tv2s = [];
+  let _setTop2s = [];
   let _routers = [];
   let _meta = {}; // discountMeta
 
   let _selectedInternet = null;
   let _selectedTv = null;
   let _selectedSetTop = null;
+  let _selectedTv2 = null;
+  let _selectedSetTop2 = null;
   let _selectedRouter = null;
-  let _toggles = { tv: false, router: false };
+  let _wifiMode = 'normal'; // 'normal' | 'package' (KT 와이파이 패키지)
+  let _toggles = { tv: false, router: false, tv2: false, wifi7d: false };
   let _scrollBound = false; // 통합 페이지 carrier 전환 시 scroll 리스너 중복 등록 방지
   let _initSeq = 0; // init 세대 토큰 — carrier 전환 시 stale 콜백 폐기용
   let _builderSkeleton = null; // 최초 pristine .ip-builder 골격 (showError 파괴 후 복원용)
@@ -188,6 +193,10 @@ window.InternetProductBase = (function () {
         _setTops = Array.isArray(_product.setTopOptions)
           ? _product.setTopOptions
           : [];
+        _tv2s = Array.isArray(_product.tv2Options) ? _product.tv2Options : [];
+        _setTop2s = Array.isArray(_product.setTop2Options)
+          ? _product.setTop2Options
+          : [];
         _routers = Array.isArray(_product.routerOptions)
           ? _product.routerOptions
           : [];
@@ -212,6 +221,7 @@ window.InternetProductBase = (function () {
 
         ensureSections();
         renderInternets();
+        renderWifiTabs();
         renderToggles();
         renderTvOptions();
         renderSetTopOptions();
@@ -251,6 +261,26 @@ window.InternetProductBase = (function () {
       sec.innerHTML =
         '<div class="ip-section-label">셋탑</div><div class="ip-card-grid" id="ipSetTopGrid"></div>';
       tvSection.insertAdjacentElement('afterend', sec);
+    }
+    // TV2 섹션 — TV1 종속. TV1(ipTvSection) 바로 뒤에 삽입 → [TV][TV2][셋탑][공유기] 순.
+    if (!document.getElementById('ipTv2Section')) {
+      const sec = document.createElement('div');
+      sec.className = 'ip-section is-hidden';
+      sec.id = 'ipTv2Section';
+      sec.innerHTML =
+        '<div class="ip-section-label">TV (2번째)</div><div class="ip-card-grid" id="ipTv2Grid"></div>';
+      tvSection.insertAdjacentElement('afterend', sec);
+    }
+    // 셋탑2 섹션 — TV2 종속. 셋탑1(ipSetTopSection) 바로 뒤에 삽입 → [TV][TV2][셋탑][셋탑2][공유기] 순.
+    if (!document.getElementById('ipSetTop2Section')) {
+      const setTopSection = document.getElementById('ipSetTopSection');
+      const sec = document.createElement('div');
+      sec.className = 'ip-section is-hidden';
+      sec.id = 'ipSetTop2Section';
+      sec.innerHTML =
+        '<div class="ip-section-label">셋탑 (2번째)</div><div class="ip-card-grid" id="ipSetTop2Grid"></div>';
+      if (setTopSection)
+        setTopSection.insertAdjacentElement('afterend', sec);
     }
   }
 
@@ -298,6 +328,32 @@ window.InternetProductBase = (function () {
     });
   }
 
+  // 카드 표시가 — 와이파이 패키지 모드면 인터넷 단독 가산 반영 (calc.js와 동일 규칙)
+  function internetCardPrice(opt) {
+    let p = bundleOf(opt);
+    if (_wifiMode === 'package') {
+      p += Number(opt.wifiPackageAdd ?? 0);
+      if (_toggles.wifi7d) p += Number(opt.wifi7dAdd ?? 0);
+    }
+    return p;
+  }
+
+  function renderWifiTabs() {
+    const el = document.getElementById('ipWifiTabs');
+    if (!el) return;
+    // 탭 노출 조건: 인터넷 옵션 중 하나라도 wifiPackageAdd 데이터가 있으면(=KT) 노출
+    const hasWifi = _internets.some((o) => o.wifiPackageAdd != null);
+    if (!hasWifi) {
+      el.innerHTML = '';
+      el.style.display = 'none';
+      return;
+    }
+    el.style.display = '';
+    el.innerHTML =
+      `<button class="ip-wifi-tab ${_wifiMode === 'normal' ? 'active' : ''}" data-wifimode="normal" type="button">일반</button>` +
+      `<button class="ip-wifi-tab ${_wifiMode === 'package' ? 'active' : ''}" data-wifimode="package" type="button">와이파이 패키지</button>`;
+  }
+
   function renderInternets() {
     const el = document.getElementById('ipInternetGrid');
     if (!el) return;
@@ -306,8 +362,8 @@ window.InternetProductBase = (function () {
         const isActive = opt === _selectedInternet;
         const { num, unit } = parseSpeed(opt.name);
         const { grade, sub } = parseDesc(opt.desc);
-        // 카드 가격은 인터넷 속도 결합가만 고정 표시 (옵션 합산은 하단바 월요금에서만)
-        const total = bundleOf(opt);
+        // 카드 가격은 인터넷 속도 결합가(+와이파이 패키지 모드 가산) 고정 표시
+        const total = internetCardPrice(opt);
         const priceHtml =
           '<div class="ip-opt-price"><span class="ip-opt-price-prefix">월</span>' +
           formatPrice(total) +
@@ -338,6 +394,16 @@ window.InternetProductBase = (function () {
     if (_tvs.length > 0)
       items.push(
         `<label class="ip-toggle-item"><input type="checkbox" data-toggle="tv" ${_toggles.tv ? 'checked' : ''}><span class="ip-toggle-label">TV와 함께</span></label>`,
+      );
+    // TV2 토글 — TV1 켜진 상태 + TV2 데이터 있을 때만 노출 (TV1 종속)
+    if (_toggles.tv && _tv2s.length > 0)
+      items.push(
+        `<label class="ip-toggle-item"><input type="checkbox" data-toggle="tv2" ${_toggles.tv2 ? 'checked' : ''}><span class="ip-toggle-label">TV 추가와 함께</span></label>`,
+      );
+    // 7D 광대역 WIFI 토글 — 와이파이 패키지 모드 + 7D 데이터 있을 때만 노출
+    if (_wifiMode === 'package' && _internets.some((o) => o.wifi7dAdd != null))
+      items.push(
+        `<label class="ip-toggle-item"><input type="checkbox" data-toggle="wifi7d" ${_toggles.wifi7d ? 'checked' : ''}><span class="ip-toggle-label">7D 광대역 WIFI</span></label>`,
       );
     el.innerHTML = items.join('');
   }
@@ -378,6 +444,18 @@ window.InternetProductBase = (function () {
       false,
     );
   }
+  function renderTv2Options() {
+    renderOptionCards('ipTv2Grid', _tv2s, _selectedTv2, 'tv2', true);
+  }
+  function renderSetTop2Options() {
+    renderOptionCards(
+      'ipSetTop2Grid',
+      _setTop2s,
+      _selectedSetTop2,
+      'settop2',
+      false,
+    );
+  }
   function renderRouterOptions() {
     renderOptionCards(
       'ipRouterGrid',
@@ -399,6 +477,16 @@ window.InternetProductBase = (function () {
         renderInternets();
         updatePricebar();
       });
+    document.getElementById('ipWifiTabs')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-wifimode]');
+      if (!btn) return;
+      _wifiMode = btn.dataset.wifimode;
+      if (_wifiMode === 'normal') _toggles.wifi7d = false; // 일반 모드면 7D 해제
+      renderWifiTabs();
+      renderToggles(); // 7D 토글 노출/숨김 갱신
+      renderInternets(); // 카드 가격 모드 반영
+      updatePricebar();
+    });
     document.getElementById('ipTvGrid')?.addEventListener('click', (e) => {
       const btn = e.target.closest('[data-tv]');
       if (!btn) return;
@@ -418,6 +506,33 @@ window.InternetProductBase = (function () {
       _selectedSetTop =
         _setTops.find((o) => o.name === btn.dataset.settop) || null;
       renderSetTopOptions();
+      updatePricebar();
+    });
+    document.getElementById('ipTv2Grid')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-tv2]');
+      if (!btn) return;
+      _selectedTv2 = _tv2s.find((o) => o.name === btn.dataset.tv2) || null;
+      renderTv2Options();
+      // TV2 선택 시 셋탑2 섹션 노출 + 첫 셋탑2 자동선택 (TV2 종속)
+      if (_selectedTv2) {
+        toggleSection('ipSetTop2Section', true);
+        moveSectionToEnd('ipSetTop2Section');
+        if (!_selectedSetTop2 && _setTop2s.length)
+          _selectedSetTop2 = _setTop2s[0];
+        renderSetTop2Options();
+      } else {
+        _selectedSetTop2 = null;
+        renderSetTop2Options();
+        toggleSection('ipSetTop2Section', false);
+      }
+      updatePricebar();
+    });
+    document.getElementById('ipSetTop2Grid')?.addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-settop2]');
+      if (!btn) return;
+      _selectedSetTop2 =
+        _setTop2s.find((o) => o.name === btn.dataset.settop2) || null;
+      renderSetTop2Options();
       updatePricebar();
     });
     const builder = document.querySelector('.ip-builder');
@@ -457,7 +572,16 @@ window.InternetProductBase = (function () {
           renderTvOptions();
           _selectedSetTop = null;
           renderSetTopOptions();
+          // ★TV1 OFF → TV2 토글·섹션 연쇄 해제 (종속)
+          _toggles.tv2 = false;
+          _selectedTv2 = null;
+          renderTv2Options();
+          toggleSection('ipTv2Section', false);
+          _selectedSetTop2 = null;
+          renderSetTop2Options();
+          toggleSection('ipSetTop2Section', false);
         }
+        renderToggles(); // ★TV1 상태 따라 TV2 체크박스 노출/숨김 갱신
       } else if (key === 'router') {
         _toggles.router = input.checked;
         toggleSection('ipRouterSection', input.checked);
@@ -471,6 +595,25 @@ window.InternetProductBase = (function () {
           _selectedRouter = null;
           renderRouterOptions();
         }
+      } else if (key === 'tv2') {
+        _toggles.tv2 = input.checked;
+        toggleSection('ipTv2Section', input.checked);
+        if (input.checked) {
+          moveSectionToEnd('ipTv2Section');
+          // ★TV2 자동선택 안 함 — 빈 상태 노출만 (추가 비용, 사용자 명시 선택)
+          renderTv2Options();
+        } else {
+          _selectedTv2 = null;
+          renderTv2Options();
+          // TV2 끄면 셋탑2도 연쇄 해제
+          _selectedSetTop2 = null;
+          renderSetTop2Options();
+          toggleSection('ipSetTop2Section', false);
+        }
+      } else if (key === 'wifi7d') {
+        // 7D 광대역 WIFI — 섹션 없이 가산만 (카드/하단바 가격에 반영)
+        _toggles.wifi7d = input.checked;
+        renderInternets(); // 카드 가격 갱신
       }
       updatePricebar();
     });
@@ -529,7 +672,10 @@ window.InternetProductBase = (function () {
       internet: _selectedInternet,
       tv: _selectedTv,
       setTop: _selectedSetTop,
+      tv2: _selectedTv2,
+      setTop2: _selectedSetTop2,
       router: _selectedRouter,
+      wifiMode: _wifiMode,
       toggles: _toggles,
       meta: _meta,
     });
@@ -587,7 +733,9 @@ window.InternetProductBase = (function () {
     const btn = document.getElementById('ipApplyBtn');
     if (btn)
       btn.disabled =
-        !_selectedInternet || (_toggles.tv && _selectedTv && !_selectedSetTop);
+        !_selectedInternet ||
+        (_toggles.tv && _selectedTv && !_selectedSetTop) ||
+        (_toggles.tv2 && _selectedTv2 && !_selectedSetTop2);
   }
 
   function refreshInternetPrices() {
@@ -596,8 +744,8 @@ window.InternetProductBase = (function () {
     grid.querySelectorAll('[data-internet]').forEach((card) => {
       const opt = _internets.find((o) => o.name === card.dataset.internet);
       if (!opt) return;
-      // 카드 가격은 인터넷 속도 결합가만 고정 표시 (옵션 합산은 하단바 월요금에서만)
-      const total = bundleOf(opt);
+      // 카드 가격은 인터넷 속도 결합가(+와이파이 패키지 모드 가산) 고정 표시
+      const total = internetCardPrice(opt);
       const priceEl = card.querySelector('.ip-opt-price');
       if (priceEl)
         priceEl.innerHTML =

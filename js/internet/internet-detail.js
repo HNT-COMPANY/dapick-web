@@ -42,16 +42,20 @@
     { kind: 'internet', label: '인터넷', removable: false },
     { kind: 'tv', label: 'TV', removable: true },
     { kind: 'setTop', label: '셋탑', removable: false },
+    { kind: 'tv2', label: 'TV2', removable: true },
+    { kind: 'setTop2', label: '셋탑2', removable: false },
     { kind: 'router', label: '공유기', removable: true },
   ];
 
   // ── 상태 ──
   var _carrierKey = null;
   var _product = null;
-  var _opts = { internets: [], tvs: [], setTops: [], routers: [], phones: [], meta: {} };
+  var _opts = { internets: [], tvs: [], setTops: [], tv2s: [], setTop2s: [], routers: [], phones: [], meta: {} };
   var _selectedInternet = null;
   var _selectedTv = null;
   var _selectedSetTop = null;
+  var _selectedTv2 = null;
+  var _selectedSetTop2 = null;
   var _selectedRouter = null;
   var _toggles = { tv: false, router: false };
 
@@ -90,6 +94,8 @@
       internet: _selectedInternet,
       tv: _selectedTv,
       setTop: _selectedSetTop,
+      tv2: _selectedTv2,
+      setTop2: _selectedSetTop2,
       router: _selectedRouter,
       toggles: _toggles,
       meta: _opts.meta,
@@ -102,7 +108,11 @@
         ? _selectedTv
         : kind === 'setTop'
           ? _selectedSetTop
-          : _selectedRouter;
+          : kind === 'tv2'
+            ? _selectedTv2
+            : kind === 'setTop2'
+              ? _selectedSetTop2
+              : _selectedRouter;
   }
   // 셋탑은 TV 종속 — TV 있으면 첫 셋탑 자동선택/유지, 없으면 클리어
   function syncSetTopWithTv() {
@@ -111,6 +121,15 @@
         _selectedSetTop = _opts.setTops[0];
     } else {
       _selectedSetTop = null;
+    }
+  }
+  // 셋탑2는 TV2 종속(자동선택 O) — 단 TV1 꺼지면 TV2·셋탑2 모두 풀림
+  function syncSetTop2WithTv2() {
+    if (_toggles.tv && _selectedTv && _selectedTv2) {
+      if (!_selectedSetTop2 && _opts.setTop2s && _opts.setTop2s.length)
+        _selectedSetTop2 = _opts.setTop2s[0];
+    } else {
+      _selectedSetTop2 = null;
     }
   }
 
@@ -179,7 +198,15 @@
       _opts.setTops,
       params.get('settop'),
     );
+
+    // TV2/셋탑2 복원 — TV2는 토글 아님(_selectedTv2 존재 자체가 선택 상태)
+    _selectedTv2 = InternetCalc.findOptionByName(_opts.tv2s, params.get('tv2'));
+    _selectedSetTop2 = InternetCalc.findOptionByName(
+      _opts.setTop2s,
+      params.get('settop2'),
+    );
     syncSetTopWithTv();
+    syncSetTop2WithTv2();
   }
 
   // ════════════════════════════════════════════════════
@@ -219,10 +246,18 @@
           _toggles.tv &&
           !!_selectedTv &&
           !!(_opts.setTops && _opts.setTops.length);
+      else if (c.kind === 'tv2')
+        // TV2는 TV1 종속 — TV1 켜지고 TV2 데이터 있을 때 노출(선택은 사용자)
+        on = _toggles.tv && !!_selectedTv && !!(_opts.tv2s && _opts.tv2s.length);
+      else if (c.kind === 'setTop2')
+        // 셋탑2는 TV2 종속 — TV2 선택 시만 노출
+        on = !!_selectedTv2 && !!(_opts.setTop2s && _opts.setTop2s.length);
       else on = _toggles[c.kind];
       var opt = selectedOf(c.kind);
       if (on && opt) return filledCard(c, opt);
-      if (!on && c.kind === 'setTop') return ''; // TV 없으면 셋탑 카드 자체 숨김
+      // TV1 종속(셋탑·TV2·셋탑2)은 조건 미충족 시 카드 자체 숨김
+      if (!on && (c.kind === 'setTop' || c.kind === 'tv2' || c.kind === 'setTop2'))
+        return '';
       return emptyCard(c);
     }).join('');
   }
@@ -369,7 +404,11 @@
         ? _opts.tvs
         : kind === 'setTop'
           ? _opts.setTops
-          : _opts.routers;
+          : kind === 'tv2'
+            ? _opts.tv2s
+            : kind === 'setTop2'
+              ? _opts.setTop2s
+              : _opts.routers;
   }
   function labelOf(kind) {
     for (var i = 0; i < COMPONENTS.length; i++)
@@ -380,6 +419,8 @@
     if (kind === 'internet') _selectedInternet = opt;
     else if (kind === 'tv') _selectedTv = opt;
     else if (kind === 'setTop') _selectedSetTop = opt;
+    else if (kind === 'tv2') _selectedTv2 = opt;
+    else if (kind === 'setTop2') _selectedSetTop2 = opt;
     else if (kind === 'router') _selectedRouter = opt;
   }
 
@@ -398,7 +439,13 @@
           if (kind === 'internet') return; // 인터넷은 제거 불가(필수)
           setSelected(kind, null);
           _toggles[kind] = false;
-          if (kind === 'tv') syncSetTopWithTv(); // TV 제거 → 셋탑 클리어
+          if (kind === 'tv') {
+            // TV1 제거 → 셋탑1 + TV2 + 셋탑2 모두 연쇄 해제
+            _selectedTv2 = null;
+            syncSetTopWithTv();
+            syncSetTop2WithTv2();
+          }
+          if (kind === 'tv2') syncSetTop2WithTv2(); // TV2 제거 → 셋탑2 클리어
           render();
         }
       });
@@ -431,6 +478,15 @@
       alert('셋탑을 선택해주세요.');
       return;
     }
+    if (
+      _selectedTv2 &&
+      _opts.setTop2s &&
+      _opts.setTop2s.length &&
+      !_selectedSetTop2
+    ) {
+      alert('셋탑2를 선택해주세요.');
+      return;
+    }
     if (typeof DapickApplication === 'undefined') {
       console.error('[internet-detail] DapickApplication 미로드');
       alert('신청 모듈을 불러올 수 없습니다. 페이지를 새로고침해주세요.');
@@ -447,12 +503,18 @@
         : '미사용';
     var routerName =
       _toggles.router && _selectedRouter ? _selectedRouter.name : '미사용';
+    var tv2Name =
+      _toggles.tv && _selectedTv && _selectedTv2 ? _selectedTv2.name : '미사용';
+    var setTop2Name =
+      _selectedTv2 && _selectedSetTop2 ? _selectedSetTop2.name : '미사용';
 
     var selectedOptions = {
       통신사: providerName,
       인터넷상품: (_selectedInternet && _selectedInternet.name) || '',
       TV: tvName,
       셋탑: setTopName,
+      TV2: tv2Name,
+      셋탑2: setTop2Name,
       공유기: routerName,
       결합전요금: calc.basePrice,
       휴대폰결합요금: calc.bundlePrice,
@@ -464,6 +526,10 @@
     if (_toggles.tv && _selectedTv) nameParts.push('+ ' + _selectedTv.name);
     if (_toggles.tv && _selectedTv && _selectedSetTop)
       nameParts.push('+ ' + _selectedSetTop.name);
+    if (_toggles.tv && _selectedTv && _selectedTv2)
+      nameParts.push('+ ' + _selectedTv2.name);
+    if (_selectedTv2 && _selectedSetTop2)
+      nameParts.push('+ ' + _selectedSetTop2.name);
     if (_toggles.router && _selectedRouter)
       nameParts.push('+ ' + _selectedRouter.name);
 
@@ -513,7 +579,11 @@
         if (!opt) return;
         setSelected(_dlgKind, opt);
         if (_dlgKind !== 'internet') _toggles[_dlgKind] = true; // 추가 동작 겸용
-        if (_dlgKind === 'tv') syncSetTopWithTv(); // TV 선택/변경 → 셋탑 의존성 동기화
+        if (_dlgKind === 'tv') {
+          syncSetTopWithTv(); // TV1 선택/변경 → 셋탑1 의존성 동기화
+          syncSetTop2WithTv2(); // TV1 변경 시 TV2 종속(셋탑2)도 재동기화
+        }
+        if (_dlgKind === 'tv2') syncSetTop2WithTv2(); // TV2 선택/변경 → 셋탑2 동기화
         closeDialog();
         render();
       });
@@ -521,6 +591,9 @@
 
   // 공용 열기: kind 옵션 전체를 카드 그리드로
   function openOptionDialog(kind) {
+    // TV1 종속 가드 — TV1 없으면 TV2 추가 불가, TV2 없으면 셋탑2 추가 불가 (빈카드 숨김에 더한 2차 방어)
+    if (kind === 'tv2' && (!_toggles.tv || !_selectedTv)) return;
+    if (kind === 'setTop2' && !_selectedTv2) return;
     _dlgKind = kind;
     var options = optsFor(kind) || [];
     setText('idDlgTitle', labelOf(kind) + ' 선택');

@@ -599,3 +599,58 @@
   order: -1; /* 항상 맨 앞 */
   flex-basis: 100%; /* 윗줄에 단독 배치 (정상가 위 / 결합가 아래) */
 }
+
+/* ══════════════════════════════════════════════════════
+   [추가] 와이파이 패키지 탭 (KT) — 일반 | 와이파이 패키지
+   active 색은 통신사 브랜드색(--ip-brand-color) 따름 (카드 active와 일관)
+   ══════════════════════════════════════════════════════ */
+.ip-wifi-tabs {
+  display: flex;
+  justify-content: center; /* 버튼 가운데 정렬 */
+  gap: 6px;
+  margin: 0 auto 16px; /* 좌우 auto = 카드그리드 칸(c2) 내 중앙 */
+  width: fit-content; /* 회색 박스가 내용만큼만 */
+  background: #f1f1f4;
+  padding: 5px;
+  border-radius: 12px;
+}
+.ip-wifi-tab {
+  border: none;
+  background: transparent;
+  padding: 9px 22px; /* 버튼 큼직하게 */
+  border-radius: 9px;
+  font-size: 16px; /* 14 → 16 확대 */
+  font-weight: 600;
+  color: #6b7280;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.ip-wifi-tab.active {
+  background: #fff;
+  color: var(--ip-brand-color); /* 통신사 브랜드색 (KT=#E31837) */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* ══════════════════════════════════════════════════════
+   [추가] 카드 높이 정렬 — KT 긴 이름으로 같은 행 카드 높이가 들쭉날쭉할 때.
+   .ip-card-grid는 display:grid(기본 stretch)라, 카드가 셀 높이를 채우도록 명시.
+   grid 환경이라 SKT(짧은 이름)에도 무해 — 이미 stretch이므로 100% = 동일.
+   ══════════════════════════════════════════════════════ */
+.ip-card-grid .ip-opt-card {
+  height: 100%;
+}
+
+/* ══════════════════════════════════════════════════════
+   [수정] 와이파이 탭 도입으로 인터넷 섹션 자식이 3개가 됨.
+   .ip-section은 grid(100px 1fr)라, 탭이 콘텐츠 칸(c2)을 차지하면
+   카드그리드가 다음 행 c1(100px 라벨칸)으로 밀려 찌부러진다.
+   → 탭·카드그리드를 모두 콘텐츠 칸(2열)에 명시 고정. (고유 id = 인터넷 섹션 한정)
+   탭이 display:none(비KT)이면 카드그리드는 그대로 c2 r1 → 기존과 동일(회귀 0).
+   ══════════════════════════════════════════════════════ */
+#ipWifiTabs {
+  grid-column: 2;
+}
+#ipInternetGrid {
+  grid-column: 2;
+}

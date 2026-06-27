@@ -60,6 +60,18 @@ window.InternetCalc = (function () {
 
     let base = normalOf(it);
     let combo = bundleOf(it);
+    // 와이파이 패키지 모드 — 인터넷 단독 가산 (KT). 데이터 없으면(?? 0) 영향 없음 = 비KT 안전
+    if (s.wifiMode === 'package') {
+      const wifiPkgAdd = Number(it.wifiPackageAdd ?? 0); // 1G=0 가능
+      base += wifiPkgAdd;
+      combo += wifiPkgAdd;
+      // 7D 광대역 WIFI — 패키지 모드에서만, 토글 ON 시 가산
+      if (toggles.wifi7d) {
+        const wifi7d = Number(it.wifi7dAdd ?? 0);
+        base += wifi7d;
+        combo += wifi7d;
+      }
+    }
     if (toggles.tv && s.tv) {
       base += normalOf(s.tv);
       combo += bundleOf(s.tv);
@@ -67,6 +79,16 @@ window.InternetCalc = (function () {
       if (s.setTop) {
         base += normalOf(s.setTop);
         combo += bundleOf(s.setTop);
+      }
+      // TV2는 TV1 종속 — TV1 켜진 상태에서만 합산. 가격은 이미 50% 적용된 입력값(코드 계산 X)
+      if (s.tv2) {
+        base += normalOf(s.tv2);
+        combo += bundleOf(s.tv2);
+        // 셋탑2는 TV2 종속 — TV2 선택 시에만 1회 합산
+        if (s.setTop2) {
+          base += normalOf(s.setTop2);
+          combo += bundleOf(s.setTop2);
+        }
       }
     }
     if (toggles.router && s.router) {
@@ -119,6 +141,8 @@ window.InternetCalc = (function () {
       internets: Array.isArray(p.internetOptions) ? p.internetOptions : [],
       tvs: Array.isArray(p.tvOptions) ? p.tvOptions : [],
       setTops: Array.isArray(p.setTopOptions) ? p.setTopOptions : [],
+      tv2s: Array.isArray(p.tv2Options) ? p.tv2Options : [],
+      setTop2s: Array.isArray(p.setTop2Options) ? p.setTop2Options : [],
       routers: Array.isArray(p.routerOptions) ? p.routerOptions : [],
       phones: Array.isArray(p.phoneOptions) ? p.phoneOptions : [],
       meta: p.discountMeta || {},
