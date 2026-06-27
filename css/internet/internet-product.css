@@ -606,21 +606,27 @@
    ══════════════════════════════════════════════════════ */
 .ip-wifi-tabs {
   display: flex;
-  justify-content: center; /* 버튼 가운데 정렬 */
+  flex-direction: column; /* 탭row + 가이드 세로 배치 */
+  align-items: center; /* 카드그리드 칸 내 중앙 */
   gap: 6px;
-  margin: 0 auto 16px; /* 좌우 auto = 카드그리드 칸(c2) 내 중앙 */
-  width: fit-content; /* 회색 박스가 내용만큼만 */
+  margin: 0 auto 16px;
+  width: auto;
+  background: transparent; /* 회색 박스는 tabrow로 이동 */
+}
+.ip-wifi-tabrow {
+  display: flex;
+  gap: 6px;
   background: #f1f1f4;
-  padding: 5px;
+  padding: 6px;
   border-radius: 12px;
 }
 .ip-wifi-tab {
   border: none;
   background: transparent;
-  padding: 9px 22px; /* 버튼 큼직하게 */
-  border-radius: 9px;
-  font-size: 16px; /* 14 → 16 확대 */
-  font-weight: 600;
+  padding: 12px 30px; /* 버튼 큼직하게 */
+  border-radius: 10px;
+  font-size: 17px;
+  font-weight: 700;
   color: #6b7280;
   cursor: pointer;
   font-family: inherit;
@@ -630,6 +636,12 @@
   background: #fff;
   color: var(--ip-brand-color); /* 통신사 브랜드색 (KT=#E31837) */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+.ip-wifi-guide {
+  font-size: 12px;
+  color: #9ca3af;
+  margin: 0;
+  text-align: center;
 }
 
 /* ══════════════════════════════════════════════════════

@@ -350,8 +350,11 @@ window.InternetProductBase = (function () {
     }
     el.style.display = '';
     el.innerHTML =
+      `<div class="ip-wifi-tabrow">` +
       `<button class="ip-wifi-tab ${_wifiMode === 'normal' ? 'active' : ''}" data-wifimode="normal" type="button">일반</button>` +
-      `<button class="ip-wifi-tab ${_wifiMode === 'package' ? 'active' : ''}" data-wifimode="package" type="button">와이파이 패키지</button>`;
+      `<button class="ip-wifi-tab ${_wifiMode === 'package' ? 'active' : ''}" data-wifimode="package" type="button">와이파이 패키지</button>` +
+      `</div>` +
+      `<p class="ip-wifi-guide">와이파이 패키지 상품은 [와이파이 패키지]를 눌러 확인할 수 있습니다.</p>`;
   }
 
   function renderInternets() {
@@ -386,10 +389,15 @@ window.InternetProductBase = (function () {
     const el = document.getElementById('ipToggles');
     if (!el) return;
     const items = [];
-    // 표시 순서: 공유기 → TV (TV-셋탑 종속 로직은 순서와 무관하게 유지)
-    if (_routers.length > 0)
+    // 표시 순서: (일반)공유기 → (패키지)7D → TV. 공유기와 7D는 같은 자리(상호 배타).
+    if (_routers.length > 0 && _wifiMode !== 'package')
       items.push(
         `<label class="ip-toggle-item"><input type="checkbox" data-toggle="router" ${_toggles.router ? 'checked' : ''}><span class="ip-toggle-label">공유기와 함께</span></label>`,
+      );
+    // 7D 광대역 WIFI 토글 — 와이파이 패키지 모드 + 7D 데이터 있을 때만 노출 (공유기 빠진 자리)
+    if (_wifiMode === 'package' && _internets.some((o) => o.wifi7dAdd != null))
+      items.push(
+        `<label class="ip-toggle-item"><input type="checkbox" data-toggle="wifi7d" ${_toggles.wifi7d ? 'checked' : ''}><span class="ip-toggle-label">7D 광대역 WIFI</span></label>`,
       );
     if (_tvs.length > 0)
       items.push(
@@ -399,11 +407,6 @@ window.InternetProductBase = (function () {
     if (_toggles.tv && _tv2s.length > 0)
       items.push(
         `<label class="ip-toggle-item"><input type="checkbox" data-toggle="tv2" ${_toggles.tv2 ? 'checked' : ''}><span class="ip-toggle-label">TV 추가와 함께</span></label>`,
-      );
-    // 7D 광대역 WIFI 토글 — 와이파이 패키지 모드 + 7D 데이터 있을 때만 노출
-    if (_wifiMode === 'package' && _internets.some((o) => o.wifi7dAdd != null))
-      items.push(
-        `<label class="ip-toggle-item"><input type="checkbox" data-toggle="wifi7d" ${_toggles.wifi7d ? 'checked' : ''}><span class="ip-toggle-label">7D 광대역 WIFI</span></label>`,
       );
     el.innerHTML = items.join('');
   }
@@ -481,9 +484,17 @@ window.InternetProductBase = (function () {
       const btn = e.target.closest('[data-wifimode]');
       if (!btn) return;
       _wifiMode = btn.dataset.wifimode;
-      if (_wifiMode === 'normal') _toggles.wifi7d = false; // 일반 모드면 7D 해제
+      if (_wifiMode === 'package') {
+        // 패키지 모드: 공유기 토글이 사라지므로 선택/합산 정리 (잔존 합산 방지)
+        _toggles.router = false;
+        _selectedRouter = null;
+        renderRouterOptions();
+        toggleSection('ipRouterSection', false);
+      } else {
+        _toggles.wifi7d = false; // 일반 모드면 7D 해제
+      }
       renderWifiTabs();
-      renderToggles(); // 7D 토글 노출/숨김 갱신
+      renderToggles(); // 공유기/7D 토글 노출·숨김 갱신
       renderInternets(); // 카드 가격 모드 반영
       updatePricebar();
     });
