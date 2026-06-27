@@ -648,12 +648,20 @@ window.InternetProductBase = (function () {
     if (_toggles.tv && _selectedTv) params.set('tv', _selectedTv.name || '');
     if (_toggles.tv && _selectedTv && _selectedSetTop)
       params.set('settop', _selectedSetTop.name || '');
+    // TV2/셋탑2 — TV1 종속. 상세가 복원하도록 전달 (상세 restoreSelection이 이미 읽음)
+    if (_toggles.tv && _selectedTv && _selectedTv2)
+      params.set('tv2', _selectedTv2.name || '');
+    if (_toggles.tv && _selectedTv && _selectedTv2 && _selectedSetTop2)
+      params.set('settop2', _selectedSetTop2.name || '');
     if (_toggles.router && _selectedRouter)
       params.set('router', _selectedRouter.name || '');
     const on = [];
     if (_toggles.tv && _selectedTv) on.push('tv');
     if (_toggles.router && _selectedRouter) on.push('router');
     if (on.length) params.set('with', on.join(','));
+    // 와이파이 패키지 모드/7D — 상세가 가격 가산을 동일하게 복원하도록 전달
+    if (_wifiMode === 'package') params.set('wifimode', 'package');
+    if (_toggles.wifi7d) params.set('wifi7d', '1');
 
     window.location.href = 'internet-detail.html?' + params.toString();
   }

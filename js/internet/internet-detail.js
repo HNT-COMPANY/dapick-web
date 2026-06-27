@@ -57,7 +57,8 @@
   var _selectedTv2 = null;
   var _selectedSetTop2 = null;
   var _selectedRouter = null;
-  var _toggles = { tv: false, router: false };
+  var _wifiMode = 'normal'; // 'normal' | 'package' (메인에서 URL로 전달)
+  var _toggles = { tv: false, router: false, wifi7d: false };
 
   // ── 유틸 ──
   function escapeHtml(s) {
@@ -84,8 +85,19 @@
   }
 
   // 옵션별 월 결합가 (InternetCalc 재사용)
+  // 와이파이 패키지 모드면 인터넷 옵션에만 가산 (calc.js와 동일 규칙). TV/셋탑/공유기엔 미적용.
   function priceOf(opt) {
-    return InternetCalc.bundleOf(opt);
+    var p = InternetCalc.bundleOf(opt);
+    if (
+      _wifiMode === 'package' &&
+      _opts.internets &&
+      _opts.internets.indexOf(opt) >= 0
+    ) {
+      p += Number(opt.wifiPackageAdd != null ? opt.wifiPackageAdd : 0);
+      if (_toggles.wifi7d)
+        p += Number(opt.wifi7dAdd != null ? opt.wifi7dAdd : 0);
+    }
+    return p;
   }
 
   // 현재 선택 → InternetCalc 입력 객체
@@ -97,6 +109,7 @@
       tv2: _selectedTv2,
       setTop2: _selectedSetTop2,
       router: _selectedRouter,
+      wifiMode: _wifiMode,
       toggles: _toggles,
       meta: _opts.meta,
     };
@@ -193,6 +206,15 @@
     _toggles.tv = !!_selectedTv;
     _toggles.router = !!_selectedRouter;
 
+    // 와이파이 패키지 모드/7D 복원 (메인 goDetail이 실어 보낸 값)
+    _wifiMode = params.get('wifimode') === 'package' ? 'package' : 'normal';
+    _toggles.wifi7d = params.get('wifi7d') === '1';
+    // 패키지 모드면 공유기 배타 (메인과 동일 규칙) — 복원 시에도 공유기 해제
+    if (_wifiMode === 'package') {
+      _toggles.router = false;
+      _selectedRouter = null;
+    }
+
     // 셋탑(TV 종속) 복원: URL settop 우선, 없으면 TV 있을 때 첫 셋탑 자동선택
     _selectedSetTop = InternetCalc.findOptionByName(
       _opts.setTops,
@@ -273,6 +295,13 @@
         (d.sub ? ' · ' + escapeHtml(d.sub) : '') +
         '</div>'
       : '';
+    // 와이파이 패키지 모드 표기 — 인터넷 카드에만 (상세엔 탭이 없어 모드 인지용)
+    var wifiNote =
+      c.kind === 'internet' && _wifiMode === 'package'
+        ? '<div class="id-item-desc">와이파이 패키지' +
+          (_toggles.wifi7d ? ' · 7D 광대역' : '') +
+          '</div>'
+        : '';
     var actions =
       '<button class="id-item-btn" data-action="change" data-kind="' +
       c.kind +
@@ -297,6 +326,7 @@
       escapeHtml(opt.name) +
       '</div>' +
       descHtml +
+      wifiNote +
       '<div class="id-item-price">월 ' +
       formatPrice(priceOf(opt)) +
       '원</div>' +
@@ -555,6 +585,7 @@
       '    <span class="idlg-title" id="idDlgTitle">선택</span>',
       '    <button class="idlg-close" id="idDlgClose" type="button" aria-label="닫기">✕</button>',
       '  </div>',
+      '  <div class="idlg-sub" id="idDlgSub" style="display:none;font-size:12px;color:#9ca3af;padding:0 0 10px;"></div>',
       '  <div class="idlg-grid" id="idDlgGrid"></div>',
       '</div>',
     ].join('');
@@ -597,6 +628,20 @@
     _dlgKind = kind;
     var options = optsFor(kind) || [];
     setText('idDlgTitle', labelOf(kind) + ' 선택');
+
+    // 인터넷 다이얼로그 + 와이파이 패키지 모드일 때만 가격 기준 안내 (카드 가격은 priceOf로 이미 모드 반영됨)
+    var subEl = document.getElementById('idDlgSub');
+    if (subEl) {
+      if (kind === 'internet' && _wifiMode === 'package') {
+        subEl.textContent =
+          '와이파이 패키지 적용 가격' +
+          (_toggles.wifi7d ? ' · 7D 광대역 포함' : '');
+        subEl.style.display = '';
+      } else {
+        subEl.textContent = '';
+        subEl.style.display = 'none';
+      }
+    }
 
     var grid = document.getElementById('idDlgGrid');
     if (!options.length) {
