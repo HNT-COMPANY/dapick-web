@@ -140,15 +140,6 @@
     <div class="product-view-brand" id="productViewBrand"></div>
   </div>
 
-  <!-- 페이지 히어로 -->
-  <div class="page-hero">
-    <div class="page-hero-inner">
-      <div class="page-hero-tag" id="productHeroTag">💧 정수기 렌탈</div>
-      <h1 id="productHeroTitle">초기비용 0원<br><em>브랜드별 최저가</em> 직접 비교</h1>
-      <p id="productHeroSub">약정·색상·관리주기 선택 후 월 렌탈료 바로 확인</p>
-    </div>
-  </div>
-
   <!-- 브랜드 탭 (상품뷰 내부) -->
   <nav class="brand-nav">
     <div class="brand-inner">
@@ -171,10 +162,16 @@
   <div class="section">
     <!-- 조각1: 리모컨 필터 2단 레이아웃 (UI만 — 동작은 조각2). 기존 .wrap 은 우측 컬럼으로 그대로 유지 -->
     <div class="water-layout">
-      <aside class="water-filter">
+      <!-- 모바일 전용 필터 토글 버튼 (데스크탑은 CSS로 숨김). 동작(.is-open 토글)은 다음 조각(JS). -->
+      <button type="button" class="wf-toggle" id="wfToggleBtn" aria-expanded="false" aria-controls="waterFilter">
+        <span class="wf-toggle-ico" aria-hidden="true">≡</span> 필터
+      </button>
+      <aside class="water-filter" id="waterFilter">
         <div class="wf-header">
           <span class="wf-title">필터</span>
           <button type="button" class="wf-reset" id="wfReset">초기화</button>
+          <!-- 모바일 드로어 닫기(X) — 데스크탑은 CSS로 숨김. 동작은 다음 조각(JS). -->
+          <button type="button" class="wf-close" id="wfCloseBtn" aria-label="필터 닫기">✕</button>
         </div>
 
         <!-- 1. 브랜드 (다중) -->
@@ -295,6 +292,8 @@
     </div>
     </div><!-- /.water-layout -->
   </div>
+  <!-- 모바일 필터 드로어 배경 오버레이 (데스크탑은 CSS로 숨김). 동작은 다음 조각(JS). -->
+  <div class="wf-overlay" id="wfOverlay"></div>
 </div>
 
 <!-- 다이얼로그 -->

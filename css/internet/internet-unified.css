@@ -128,6 +128,243 @@
 }
 
 /* ══════════════════════════════════════════════════════
+   하단바(리모컨) 모바일 압축 — 통합페이지 전용 (1단계, 상세요금 남김 확정본)
+   ★ @media 768px 안에서만. 데스크탑 하단바는 위 공유/기본 CSS 그대로.
+     마크업 변경 없이 CSS만으로 재배치.
+   목표 레이아웃(≤768px):
+     1줄: [현금 지원금  금액]                  (.ip-pb-giftbox, 양 칸 가로지름)
+     2줄: [월 요금 금액]   [상세요금][신청하기]  (.ip-pb-month | .ip-pb-actions)
+   숨김: 결합전요금/휴대폰결합/셋톱힌트(.ip-pb-prices 전체)
+   남김: 현금사은품(칸2 .ip-pb-giftbox) · 월요금 · 상세요금 · 신청하기
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  .ip-pricebar {
+    padding: 10px 16px;
+  }
+  /* 1fr(좌: 현금/월요금) + auto(우: 버튼묶음) 2열, 2줄 그리드 */
+  .ip-pricebar-inner {
+    grid-template-columns: 1fr auto;
+    gap: 8px 12px;
+    align-items: center;
+  }
+
+  /* 칸1 가격 상세 3줄 숨김(결합전요금/휴대폰결합/셋톱힌트) — 현금사은품은 칸2라 영향 없음 */
+  .ip-pb-prices {
+    display: none;
+  }
+
+  /* 칸2(.ip-pb-gift) 해체 → 자식(월요금/현금박스)을 바깥 그리드에 직접 배치 */
+  .ip-pb-gift {
+    display: contents;
+  }
+
+  /* 1줄: 현금 지원금 — 양 칸(1/-1) 가로지름, 컴팩트 */
+  .ip-pb-giftbox {
+    grid-column: 1 / -1;
+    grid-row: 1;
+    padding: 6px 12px;
+  }
+
+  /* 2줄 왼쪽: 월 요금 (버튼 폭에 눌려도 줄어들 수 있게 min-width:0 + 약정문구 줄바꿈 허용) */
+  .ip-pb-month {
+    grid-column: 1;
+    grid-row: 2;
+    min-width: 0;
+  }
+  .ip-pb-month-val small {
+    white-space: normal;
+  }
+
+  /* 2줄 오른쪽: 상세요금 + 신청하기 가로 (★상세요금 남김) */
+  .ip-pb-actions {
+    grid-column: 2;
+    grid-row: 2;
+    width: auto;
+    gap: 6px;
+  }
+  .ip-pb-actions .ip-pb-detail {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center; /* 버튼 텍스트 가운데(특히 ≤360서 flex:1로 넓어질 때) */
+    flex: 0 0 auto;
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+  .ip-pb-actions .ip-pb-apply {
+    flex: 0 0 auto;
+    width: auto;
+    min-width: 92px;
+    padding: 13px 16px;
+  }
+
+  /* 하단바가 낮아짐 → 본문 하단 여백 축소. 실측 바 높이 114px + 여유 → 130px */
+  .ip-builder {
+    padding-bottom: 130px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   초협폭(≤360: 갤럭시 360 / 폴드 외부 344) 하단바 줄 분리 — 통합페이지 전용
+   ★ max-width:360px 만. 375px(아이폰) 이상은 위 768블록 그대로(무회귀).
+   문제: 2줄째 [1fr 월요금][auto 버튼]에서 버튼이 고정폭이라 월요금이 ≤360서 126~140px로
+        짓눌려 약정문구가 빡빡. → 1열로 풀어 3줄 적층:
+        1줄 현금사은품 / 2줄 월요금(가운데) / 3줄 [상세요금][신청하기] 풀폭 분할.
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 360px) {
+  /* 그리드 1열 → 모든 자식 세로 적층 (giftbox의 grid-column:1/-1은 1열에서 col1 유지) */
+  .ip-pricebar-inner {
+    grid-template-columns: 1fr;
+  }
+  /* 2줄: 월요금 — 풀폭 단독. 정렬은 base(space-between: 라벨 좌 / 값 우) 그대로 둠. */
+  .ip-pb-month {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  /* 3줄: 버튼 2개 풀폭 균등 분할 (더 이상 월요금에 안 밀림) */
+  .ip-pb-actions {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+  }
+  .ip-pb-actions .ip-pb-detail,
+  .ip-pb-actions .ip-pb-apply {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+  /* 3줄로 늘어난 만큼 본문 하단 여백 보강(실측 바 160px + 여유). */
+  .ip-builder {
+    padding-bottom: 176px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   모바일 상품 영역 가운데정렬 — 통합페이지 전용 (2단계)
+   ★ @media 768px 안에서만. 데스크탑 무영향. common/product.css 미수정.
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 768px) {
+  /* (A) ★우측 치우침 버그 수정
+     product.css(전역)의 #ipWifiTabs/#ipInternetGrid{grid-column:2}가
+     모바일 1열 섹션에서 암묵적 2번째 열을 만들어 인터넷 카드가 우측 절반으로
+     밀리고 좁아짐(실측 x175~359, 폭184). → 모바일에선 1열로 복귀.
+     (ID 셀렉터 동일 특이성 + unified가 product보다 늦게 로드되어 오버라이드) */
+  #ipWifiTabs,
+  #ipInternetGrid {
+    grid-column: 1;
+  }
+
+  /* (B) 섹션 라벨 가운데 (카드 위 중앙) */
+  .ip-section-label {
+    text-align: center;
+  }
+
+  /* (C) 카드 내부 텍스트 가운데
+     - .ip-opt-grade/.ip-opt-tier는 블록 텍스트 → text-align로 가운데
+     - .ip-opt-headline/.ip-opt-price는 flex → justify-content로 가운데 */
+  .ip-opt-card {
+    text-align: center;
+  }
+  .ip-opt-headline,
+  .ip-opt-price {
+    justify-content: center;
+  }
+
+  /* (D) 부가옵션 토글 가운데 (기본 flex-start → center) */
+  .ip-toggles {
+    justify-content: center;
+  }
+  /* 약정 칩도 같은 줄 맥락 → 가운데 통일 */
+  .ip-chips {
+    justify-content: center;
+  }
+
+  /* (E) 와이파이 탭은 .ip-wifi-tabs{margin:0 auto;align-items:center}로 이미 중앙.
+     통신사 선택 바(.iu-carrier-bar repeat(3,1fr))는 풀폭 + 카드 내용 이미 center.
+     → 추가 정렬 불필요(회귀 방지 위해 미변경). */
+}
+
+/* ══════════════════════════════════════════════════════
+   하단바 태블릿 정렬 — 통합페이지 전용 (3단계, flex 양끝 배치)
+   ★ (min-width:769px) and (max-width:1024px) 구간만. 모바일(≤768)·데스크탑(>1024) 무영향.
+   문제: 그리드(1fr auto)+gift 세로가운데 → 가격묶음이 어중간하게 뜨고 버튼만 우측 몰림.
+   해결: .ip-pricebar-inner를 flex space-between으로 →
+        [월요금 + 현금사은품] (좌측 정렬)  ······  [상세요금][신청하기] (우측 고정)
+   ★카드/통신사바 미변경(하단바만). product 1024블록(.ip-pb-gift{grid-column:1/-1} 등)을
+     flex로 덮음 — display:flex면 grid-column은 무효. 충돌 셀렉터는 .ip-pricebar 프리픽스(0,2,0)로
+     파일 뒤쪽 항상적용 .ip-pb-gift{flex-direction:column}까지 순서 무관하게 이김.
+   ══════════════════════════════════════════════════════ */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ip-pricebar {
+    padding: 12px 24px;
+  }
+  /* 그리드 → flex 양끝: 좌(가격묶음) ↔ 우(버튼묶음), 가운데 빈 공간 */
+  .ip-pricebar .ip-pricebar-inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+
+  /* 가격 상세 3줄 숨김(결합전/휴대폰결합/셋톱힌트) — 현금사은품은 칸2라 영향 없음 */
+  .ip-pricebar .ip-pb-prices {
+    display: none;
+  }
+
+  /* 좌측 묶음: 월요금 + 현금박스 가로 나란히, 좌측 정렬 */
+  .ip-pricebar .ip-pb-gift {
+    flex: 0 1 auto;
+    flex-direction: row;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 12px;
+  }
+  .ip-pricebar .ip-pb-month {
+    flex: 0 0 auto;
+  }
+  .ip-pricebar .ip-pb-giftbox {
+    flex: 0 0 auto;
+    justify-content: center;
+    width: auto;               /* 축소 찌그러짐 방지 */
+    min-width: 200px;          /* 라벨(좌)+값(중앙) 안 겹치게 충분한 폭 */
+  }
+
+  /* 우측 묶음: 상세요금 + 신청하기, 우측 고정 */
+  .ip-pricebar .ip-pb-actions {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+  }
+  .ip-pricebar .ip-pb-detail,
+  .ip-pricebar .ip-pb-apply {
+    display: inline-flex;
+    width: auto;
+  }
+
+  /* 가로 1줄 → 본문 하단 여백. 실측 후 조정. */
+  .ip-builder {
+    padding-bottom: 110px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
+   카카오 플로팅 — 하단바 위로 (모바일 ≤768 + 태블릿 769~1024)
+   ★ 데스크탑(>1024)은 미변경. common.css의 .kakao-float를 unified(늦게 로드)에서 오버라이드.
+   바 높이: 모바일 114px · 태블릿 109px → bottom:130px면 둘 다 위로(여유 16~21px).
+   right는 common 값 유지(모바일 16px / 태블릿·기본 28px).
+   ══════════════════════════════════════════════════════ */
+@media (max-width: 1024px) {
+  .kakao-float {
+    bottom: 130px;
+  }
+}
+/* ≤360 줄분리로 하단바가 160px로 높아짐 → 카카오 더 위로 (위 130 오버라이드, 소스 더 뒤라 이김) */
+@media (max-width: 360px) {
+  .kakao-float {
+    bottom: 176px;
+  }
+}
+
+/* ══════════════════════════════════════════════════════
    디자인 정비 — 통합페이지 전용 오버라이드 (조각: unified 정비)
    ★ 출처는 전역(body)·공유(internet-product.css)지만, 이 파일은 통합페이지만
      로드 + head 마지막이라 여기서만 덮으면 레거시 6개 페이지는 무영향.

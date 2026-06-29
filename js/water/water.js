@@ -157,6 +157,17 @@ async function switchBrand(brand) {
   document
     .querySelectorAll('.brand-tab')
     .forEach((t) => t.classList.toggle('active', t.dataset.brand === brand));
+
+  // 상단 브랜드 헤더(로고+이름) 갱신 — 탭 클릭 경로엔 이게 빠져 이전 브랜드에 멈췄음.
+  // selectBrand(water-board.js 41–43행)와 동일 패턴 미러. BRAND_INFO는 같은 페이지 전역.
+  const info = typeof BRAND_INFO !== 'undefined' ? BRAND_INFO[brand] : null;
+  if (info) {
+    const pvb = document.getElementById('productViewBrand');
+    if (pvb)
+      pvb.innerHTML = `<img src="${info.logo}" alt="${info.name}" style="height:24px;object-fit:contain;">
+     <span class="product-view-brand-name">${info.name}</span>`;
+  }
+
   await renderBrand(brand);
 }
 
@@ -332,6 +343,11 @@ function renderEmpty(brand) {
     <div style="grid-column:1/-1;padding:60px 20px;text-align:center;color:var(--text-muted);font-size:13px;">
       ${name} 브랜드 상품이 등록되어 있지 않습니다.
     </div>`;
+
+  // 빈 브랜드로 전환해도 제목이 이전 브랜드에 멈추지 않게 갱신
+  // (renderBrand는 251행에서 갱신하지만 여기로 early-return 시 스킵됨)
+  const listTitleEl = document.getElementById('listTitle');
+  if (listTitleEl) listTitleEl.textContent = `${name} 전체 상품`;
 
   const bestSection = document.getElementById('bestSection');
   const bg = document.getElementById('bestGrid');
@@ -680,3 +696,44 @@ document.addEventListener('DOMContentLoaded', () => {
     DapickApplication.resumeIfPending();
   }
 });
+
+// ════════════════════════════════════════════════════
+// 모바일 필터 드로어 토글 (조각2-B)
+// 정수기 전용 id(#wfToggleBtn/#waterFilter/#wfOverlay/#wfCloseBtn) → 렌탈 무영향.
+// CSS(조각2-A)가 .is-open으로 슬라이드/오버레이 처리. JS는 클래스 토글만.
+// ════════════════════════════════════════════════════
+(function () {
+  const btn = document.getElementById('wfToggleBtn');
+  const panel = document.getElementById('waterFilter');
+  const overlay = document.getElementById('wfOverlay');
+  const closeBtn = document.getElementById('wfCloseBtn');
+  if (!btn || !panel || !overlay) return;
+
+  function openDrawer() {
+    panel.classList.add('is-open');
+    overlay.classList.add('is-open');
+    btn.classList.add('is-hidden'); // 좌측 손잡이 숨김(드로어와 겹침 방지)
+    btn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden'; // 배경 스크롤 잠금
+  }
+  function closeDrawer() {
+    panel.classList.remove('is-open');
+    overlay.classList.remove('is-open');
+    btn.classList.remove('is-hidden'); // 손잡이 복원
+    btn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = ''; // ★스크롤 복원 (안 하면 닫은 뒤 페이지 스크롤 막힘)
+  }
+
+  btn.addEventListener('click', openDrawer);
+  overlay.addEventListener('click', closeDrawer); // 바깥 어둠 클릭 → 닫기
+  if (closeBtn) closeBtn.addEventListener('click', closeDrawer); // ✕ → 닫기
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && panel.classList.contains('is-open')) closeDrawer();
+  });
+  // 리사이즈로 데스크탑(>1024) 되면 열림/스크롤잠금 잔존 방지 (드로어 CSS 경계와 일치)
+  window.addEventListener('resize', () => {
+    if (window.innerWidth > 1024 && panel.classList.contains('is-open')) {
+      closeDrawer();
+    }
+  });
+})();

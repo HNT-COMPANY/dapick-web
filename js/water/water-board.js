@@ -34,10 +34,8 @@ const BRAND_INFO = {
 function selectBrand(brand) {
   const info = BRAND_INFO[brand];
 
-  document.getElementById('productHeroTag').textContent = info.tag;
-  document.getElementById('productHeroTitle').innerHTML = info.title;
-  document.getElementById('productHeroSub').textContent = info.sub;
-
+  // hero(.page-hero)는 제거됨 — productHeroTag/Title/Sub set도 제거(요소 없어 null 에러 방지).
+  // productViewBrand(상단 브랜드 로고+이름)는 hero 아님 → 유지.
   document.getElementById('productViewBrand').innerHTML =
     `<img src="${info.logo}" alt="${info.name}" style="height:24px;object-fit:contain;">
      <span class="product-view-brand-name">${info.name}</span>`;
