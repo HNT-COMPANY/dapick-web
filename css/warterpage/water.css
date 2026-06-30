@@ -390,9 +390,13 @@
 
 .water-best-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 16px;
+  grid-template-columns: repeat(5, 1fr);   /* 5칸 균등, 항상 폭 꽉 채움 */
+  gap: 24px;
   margin-bottom: 48px;
+}
+.water-best-grid .water-card.is-best {
+  width: 100%;             /* 각 칸 꽉 채움 */
+  max-width: none;
 }
 .water-card {
   background: var(--white);
@@ -1062,6 +1066,48 @@
   transform: translateY(-3px);
 }
 
+/* ════════════════════════════════════════════════════
+   0단계 카드 디자인 — 코웨이 레이아웃(흰 배경 + 회색 카드 + 다픽 보라 텍스트)
+   ★★렌탈 격리 필수: rental.js도 .water-prod-card/.wpg-* 를 재사용함(공유 클래스)!
+   단 rental은 .water-layout 을 안 씀 → 모든 규칙을 #productView .water-layout 하위로
+   스코프해 정수기 전용으로 격리(렌탈 카드 무영향). CSS만, 데이터 0. */
+#productView .water-layout {
+  background: var(--white); /* 상품 영역 흰 배경 → 회색 카드가 도드라짐 */
+  border-radius: var(--radius);
+  padding-top: 20px;
+  padding-bottom: 24px;
+}
+#productView .water-layout .water-prod-card {
+  background: #f5f5f7; /* 코웨이톤 연회색 카드 바탕 */
+  border-color: transparent; /* 테두리 대신 회색 면으로 구분 */
+  box-shadow: 0 1px 5px rgba(108, 63, 197, 0.05);
+}
+#productView .water-layout .water-prod-card:hover {
+  background: #f0eef6; /* hover 시 살짝 보라끼 (테두리/리프트는 위 규칙 유지) */
+}
+#productView .water-layout .wpg-img {
+  background: var(--white); /* 제품 이미지는 흰 타일에 또렷하게 */
+}
+#productView .water-layout .wpg-name {
+  color: var(--purple); /* 상품명 = 다픽 보라 (가격 wpg-price는 기존부터 보라) */
+}
+
+/* 1단계-④ 제품 색상 칩 (동그라미). 정수기 전용 스코프 → 렌탈 무영향.
+   흰색 칩도 회색 카드 위에서 보이게 테두리 부여. 매핑 없는 색은 JS가 회색 폴백+title. */
+#productView .water-layout .wpg-colors {
+  display: flex;
+  gap: 5px;
+  margin-top: 2px;
+}
+#productView .water-layout .wpg-color-chip {
+  display: inline-block;
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.14);
+  flex-shrink: 0;
+}
+
 /* 이미지 영역 (정사각) */
 .wpg-img {
   position: relative;
@@ -1108,6 +1154,35 @@
   border-radius: 999px;
   z-index: 1;
 }
+
+/* 정수기능 뱃지 — 카드 우측 세로 정렬(냉수=파랑/온수=빨강/정수=회색/얼음=하늘).
+   pointer-events:none → 카드 클릭 이동 방해 안 함. 상단 BEST/NEW 뱃지와 안 겹치게 세로 중앙. */
+.w-func-badges {
+  position: absolute;
+  top: 50%;
+  right: 8px;
+  transform: translateY(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  z-index: 2;
+  align-items: flex-end;
+  pointer-events: none;
+}
+.w-func-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 999px;
+  line-height: 1.25;
+  color: #fff;
+  white-space: nowrap;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+.w-func-badge.is-cold { background: #3b82f6; }
+.w-func-badge.is-hot { background: #ef4444; }
+.w-func-badge.is-pure { background: #94a3b8; }
+.w-func-badge.is-ice { background: #38bdf8; }
 
 /* 본문 */
 .wpg-body {
@@ -1470,4 +1545,245 @@
   .wf-overlay.is-open {
     display: block;
   }
+}
+
+/* === BEST 카드 코웨이화 === */
+.water-card.is-best .water-card-img {
+  position: relative;
+  width: 100%;
+  height: auto;
+  aspect-ratio: 4 / 5;         /* 약간 덜 길게, 가로 여유 → 이미지 더 큼직 */
+  background: transparent;     /* 회색 제거 → 반쪽 배경은 카드가 담당 */
+  border-radius: 0;
+  margin-bottom: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: visible;           /* 제품이 회색 밖으로 삐져나오게 */
+}
+.water-card.is-best .water-card-img img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  padding: 8px;             /* 패딩 대폭 축소 → 이미지 크게 */
+}
+.water-card.is-best .w-func-badges {
+  top: auto;
+  bottom: 12px;
+  right: 12px;
+  transform: none;
+  gap: 4px;
+}
+.water-card.is-best .w-func-badge {
+  font-size: 11px;
+  padding: 4px 12px;
+  border-radius: 999px;
+  min-width: 46px;
+  text-align: center;
+  justify-content: center;
+}
+.wbest-rank {
+  position: absolute;
+  top: 10px; left: 12px;
+  font-size: 12px; font-weight: 700;
+  color: var(--text-muted);
+  line-height: 1.1;
+  z-index: 3;
+}
+.wbest-rank b { font-size: 20px; color: var(--text-main); }
+.wbest-name {
+  font-size: 16px; font-weight: 800;
+  color: var(--text-main);
+  text-align: center;
+  margin: 4px 0 6px;
+}
+.wbest-promo-tag {
+  text-align: center;
+  font-size: 12px; font-weight: 700;
+  color: var(--purple);
+  margin-bottom: 10px;
+}
+.wbest-prices { display: flex; flex-direction: column; gap: 6px; margin-bottom: 12px; }
+.wbest-price-line { display: flex; justify-content: space-between; align-items: baseline; }
+.wbest-price-label { font-size: 13px; color: var(--text-sub); }
+.wbest-price-val { font-size: 14px; font-weight: 700; color: var(--text-main); }
+.wbest-price-val.is-strike { color: var(--text-muted); text-decoration: line-through; font-weight: 500; }
+.wbest-price-val.is-accent { color: var(--purple); }
+.wbest-tip {
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-xs);
+  padding: 8px 10px;
+  text-align: center;
+}
+.wbest-tip-head { font-size: 12px; font-weight: 700; color: var(--purple); margin-bottom: 3px; }
+.wbest-tip-body { font-size: 12px; color: var(--text-sub); }
+
+/* === BEST 카드: 코웨이식 박스 해제 === */
+.water-best-grid .water-card.is-best {
+  background: transparent;     /* 흰 박스 제거 */
+  border: none;                /* 금색 테두리 제거 */
+  box-shadow: none;
+  padding: 0;                  /* 카드 패딩 제거 — 이미지칸이 회색을 책임짐 */
+}
+.water-best-grid .water-card.is-best:hover {
+  border: none;
+  box-shadow: none;
+  transform: none;             /* 박스 호버 들림 제거 (코웨이는 정적) */
+}
+
+/* === BEST 그리드 반응형 (flex 기준 — 기존 @media grid 정의를 이기도록 뒤에 배치) === */
+@media (max-width: 1024px) {
+  .water-best-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .water-best-grid { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 480px) {
+  .water-best-grid { grid-template-columns: 1fr; }
+}
+
+/* === BEST 풀폭 섹션 (필터 밖, 중앙정렬·거터는 layout과 동일) === */
+#productView .best-fullwidth {
+  max-width: var(--max-w);
+  margin: 0 auto;
+  padding: 0 40px;
+  margin-bottom: 40px;
+}
+@media (max-width: 1024px) {
+  #productView .best-fullwidth { padding: 0 20px; }
+}
+
+/* BEST 헤더 중앙정렬 */
+#productView .best-fullwidth .sec-head {
+  justify-content: center;
+  text-align: center;
+}
+#productView .best-fullwidth .sec-sub {
+  text-align: center;
+}
+
+/* BEST 카드 배경 보라톤 제거 (글자 보라는 유지) */
+#productView .best-fullwidth .water-card.is-best {
+  background: transparent;
+}
+#productView .best-fullwidth .water-card.is-best .water-card-img {
+  background: transparent;     /* 회색 제거 → 카드 배경(연보라/회색반쪽)이 비침 */
+}
+
+/* BEST 카드 상단 반쪽만 회색 (이미지칸 투명 → 카드가 반쪽 배경 담당) */
+#productView .best-fullwidth .water-card.is-best {
+  position: relative;
+  background: linear-gradient(
+    to bottom,
+    #f5f5f7 0%,
+    #f5f5f7 55%,      /* 상단 55%까지 회색 */
+    #ffffff 55%,      /* 그 아래 흰색 */
+    #ffffff 100%
+  );
+  border-radius: 12px 12px 0 0;
+  padding: 16px 12px 0;
+}
+
+/* BEST 1위 특별 차별화 */
+#productView .best-fullwidth .water-card.is-best.is-rank1 {
+  background: linear-gradient(
+    to bottom,
+    #efeafc 0%,        /* 연보라 (다픽 보라 계열) */
+    #efeafc 55%,
+    #ffffff 55%,
+    #ffffff 100%
+  );
+}
+.water-card.is-best.is-rank1 .wbest-rank,
+.water-card.is-best.is-rank1 .wbest-rank b {
+  color: var(--purple);     /* 1위 순위번호 보라 */
+}
+.water-card.is-best.is-rank1 .wbest-name {
+  color: var(--purple);     /* 1위 상품명 보라 */
+}
+
+/* 다픽 팁 박스 — 카드 하단 여백·정렬 보정 */
+#productView .best-fullwidth .wbest-tip {
+  margin: 10px 12px 16px;
+  border: 1px solid #ece9fb;
+  border-radius: 8px;
+  padding: 8px 10px;
+  text-align: center;
+}
+
+/* === 접수 다이얼로그: 약정/주기/타사보상 박스 (상세 .wd-box와 동일 톤, 양 페이지 공통) === */
+.w-dialog .wd-box-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.w-dialog .wd-box-group-auto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.w-dialog .wd-box-group-auto .wd-box { flex: 1 1 auto; min-width: 90px; }
+.w-dialog .wd-box {
+  padding: 12px 10px;
+  border: 1.5px solid #e5e3ee;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.w-dialog .wd-box:hover { border-color: var(--purple-soft); }
+.w-dialog .wd-box.active {
+  border-color: var(--purple);
+  color: var(--purple);
+  font-weight: 700;
+  background: #f7f6fe;
+}
+
+/* 가격박스: 라벨/금액 좌 + 렌탈 취소선 우 */
+.w-price-box { display: flex; justify-content: space-between; align-items: flex-end; }
+.w-price-right .wd-rental-orig { font-size: 13px; color: var(--text-muted); text-decoration: line-through; }
+
+/* 다이얼로그 상품명 아래 모델명 */
+.w-dialog-model { font-size: 13px; color: var(--text-muted); margin-top: 2px; }
+
+/* 다이얼로그 최대 지원금 — 풀폭 + 라벨 검정 / 금액 보라(supportHtml 인라인 유지) */
+.w-spec-grid .w-spec-support {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.w-spec-grid .w-spec-support .w-spec-label { margin-bottom: 0; font-size: 16px; font-weight: 700; color: var(--text-main); }
+.w-spec-grid .w-spec-support .w-spec-val-big { font-size: 22px; font-weight: 900; text-align: right; }
+.w-spec-grid .w-spec-support .w-spec-val-big span { font-size: inherit !important; font-weight: inherit !important; }
+
+/* 다이얼로그 옵션 라벨 — 보라 → 검정·굵게 */
+.w-dialog .w-option-label {
+  color: var(--text-main);
+  font-weight: 700;
+}
+
+/* 관리주기 상위 토글 (자가관리/방문관리) — 상세·모달 공통 */
+.wd-care-toggle {
+  display: flex;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.wd-care-btn {
+  flex: 1 1 auto;
+  padding: 8px 10px;
+  border: 1.5px solid #e5e3ee;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--text-sub);
+  cursor: pointer;
+}
+.wd-care-btn.active {
+  border-color: var(--purple);
+  color: var(--purple);
+  background: #f7f6fe;
 }

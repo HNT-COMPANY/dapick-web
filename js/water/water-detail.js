@@ -12,6 +12,8 @@
 let WD_PRODUCT = null; // 조회된 상품 (water.js groupByBrand 형태로 정규화)
 let WD_BRAND_KEY = null;
 let WD_COLOR = '';
+const WD_BACK_BRAND =
+  new URLSearchParams(location.search).get('brand') || ''; // 뒤로가기용 브랜드
 
 document.addEventListener('DOMContentLoaded', () => {
   const id = new URLSearchParams(location.search).get('id');
@@ -51,6 +53,7 @@ async function loadDetail(id) {
     WD_PRODUCT = {
       id: p.id,
       name: p.name,
+      modelName: p.modelName || p.model_name || '',
       desc: p.description || '',
       image: p.imageUrl || '',
       colors: Array.isArray(p.colors) && p.colors.length ? p.colors : ['기본'],
@@ -88,9 +91,12 @@ function renderDetail() {
     BRAND_META[WD_BRAND_KEY]) || { name: WD_BRAND_KEY, emoji: '💧' };
 
   // 헤더/이미지/이름/설명
-  document.getElementById('wdBrandTag').textContent =
-    `${meta.emoji} ${meta.name}`;
+  // (브랜드칩 제거 — 요소를 숨김)
+  const _bt = document.getElementById('wdBrandTag');
+  if (_bt) _bt.style.display = 'none';
   document.getElementById('wdName').textContent = p.name;
+  const _modelEl = document.getElementById('wdModel');
+  if (_modelEl) _modelEl.textContent = p.modelName || '';
   document.getElementById('wdDesc').textContent = p.desc || '';
   document.getElementById('wdBackText').textContent =
     `‹ ${meta.name} 상품 목록`;
@@ -98,22 +104,29 @@ function renderDetail() {
   const gal = document.getElementById('wdGallery');
   gal.innerHTML = p.image
     ? `<img src="${p.image}" alt="${p.name}">`
-    : `<span class="wd-emoji">${meta.emoji}</span>`;
+    : `<span class="wd-emoji"></span>`;
 
-  // 약정 드롭다운
+  // 약정 박스 버튼 (기존 드롭다운 → 박스 4개)
   const contractKeys = Object.keys(p.pricing);
-  const cSel = document.getElementById('wdContract');
-  cSel.innerHTML = contractKeys
+  const boxEl = document.getElementById('wdContractBox');
+  const defaultKey = contractKeys[contractKeys.length - 1]; // 기존과 동일: 마지막 키 기본
+  document.getElementById('wdContract').value = defaultKey;
+  boxEl.innerHTML = contractKeys
     .map(
-      (k, i) =>
-        `<option value="${k}" ${i === contractKeys.length - 1 ? 'selected' : ''}>${(typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[k]) || k}</option>`,
+      (k) =>
+        `<button type="button" class="wd-box ${k === defaultKey ? 'active' : ''}" data-key="${k}">${(typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[k]) || k}</button>`,
     )
     .join('');
-  cSel.onchange = () => {
-    fillCycle();
-    fillType();
-    calc();
-  };
+  boxEl.querySelectorAll('.wd-box').forEach((btn) => {
+    btn.onclick = () => {
+      boxEl.querySelectorAll('.wd-box').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('wdContract').value = btn.dataset.key;
+      fillCycle();
+      fillType();
+      calc();
+    };
+  });
 
   fillCycle();
   fillType();
@@ -122,36 +135,113 @@ function renderDetail() {
   renderDetailBody(); // 하단 상세는 한 번만 렌더 (calc 와 분리)
 }
 
-function fillCycle() {
+// 관리주기 라벨: '셀프형'은 그대로, 숫자형은 "방문관리" 붙임(중복 방지)
+function cycleLabel(c) {
+  if (!c) return '';
+  if (c.includes('셀프') || c === '셀프형') return '셀프형';
+  return c.includes('개월') ? `${c} 방문관리` : c;
+}
+
+// 관리주기 키를 자가관리/방문관리로 분류 ('개월' 포함=방문, 아니면 자가)
+function isVisitCycle(c) {
+  return typeof c === 'string' && c.includes('개월');
+}
+function groupCycles(cycleKeys) {
+  return {
+    self: cycleKeys.filter((c) => !isVisitCycle(c)), // 자가관리 (셀프형 등)
+    visit: cycleKeys.filter((c) => isVisitCycle(c)), // 방문관리 (N개월)
+  };
+}
+
+function fillCycle(preferMode) {
   const p = WD_PRODUCT;
   const contract = document.getElementById('wdContract').value;
-  const cycles = Object.keys(p.pricing[contract] || {});
-  const sel = document.getElementById('wdCycle');
-  sel.innerHTML = cycles
-    .map(
-      (c, i) =>
-        `<option value="${c}" ${i === 0 ? 'selected' : ''}>${c} 방문 관리</option>`,
-    )
-    .join('');
-  sel.onchange = () => {
+  const cycleKeys = Object.keys(p.pricing[contract] || {});
+  const groups = groupCycles(cycleKeys);
+
+  const modes = [];
+  if (groups.self.length) modes.push({ key: 'self', label: '자가관리' });
+  if (groups.visit.length) modes.push({ key: 'visit', label: '방문관리' });
+
+  const toggleEl = document.getElementById('wdCareToggle');
+  let mode =
+    preferMode && modes.some((m) => m.key === preferMode)
+      ? preferMode
+      : modes[0]
+        ? modes[0].key
+        : 'visit';
+  document.getElementById('wdCareMode').value = mode;
+
+  if (modes.length > 1) {
+    toggleEl.style.display = '';
+    toggleEl.innerHTML = modes
+      .map(
+        (m) =>
+          `<button type="button" class="wd-care-btn ${m.key === mode ? 'active' : ''}" data-mode="${m.key}">${m.label}</button>`,
+      )
+      .join('');
+    toggleEl.querySelectorAll('.wd-care-btn').forEach((btn) => {
+      btn.onclick = () => {
+        document.getElementById('wdCareMode').value = btn.dataset.mode;
+        renderCycleBoxes(groups[btn.dataset.mode]);
+        toggleEl
+          .querySelectorAll('.wd-care-btn')
+          .forEach((b) => b.classList.toggle('active', b === btn));
+      };
+    });
+  } else {
+    toggleEl.style.display = 'none';
+    toggleEl.innerHTML = '';
+  }
+
+  renderCycleBoxes(groups[mode] || []);
+
+  function renderCycleBoxes(keys) {
+    const boxEl = document.getElementById('wdCycleBox');
+    const defaultKey = keys[0];
+    document.getElementById('wdCycle').value = defaultKey || '';
+    boxEl.innerHTML = keys
+      .map(
+        (c) =>
+          `<button type="button" class="wd-box ${c === defaultKey ? 'active' : ''}" data-key="${c}">${cycleLabel(c)}</button>`,
+      )
+      .join('');
+    boxEl.querySelectorAll('.wd-box').forEach((btn) => {
+      btn.onclick = () => {
+        boxEl.querySelectorAll('.wd-box').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('wdCycle').value = btn.dataset.key;
+        fillType();
+        calc();
+      };
+    });
     fillType();
-    calc();
-  };
+    calc(); // 모드 전환 시에도 가격 갱신
+  }
 }
 
 function fillType() {
   const p = WD_PRODUCT;
   const contract = document.getElementById('wdContract').value;
   const cycle = document.getElementById('wdCycle').value;
-  const types = Object.keys((p.pricing[contract] || {})[cycle] || {});
-  const sel = document.getElementById('wdType');
-  sel.innerHTML = types
+  const typeKeys = Object.keys(p.pricing[contract]?.[cycle] || {});
+  const boxEl = document.getElementById('wdTypeBox');
+  const defaultKey = typeKeys[0];
+  document.getElementById('wdType').value = defaultKey;
+  boxEl.innerHTML = typeKeys
     .map(
-      (t, i) =>
-        `<option value="${t}" ${i === 0 ? 'selected' : ''}>${t === '타사보상' ? '타사보상 (현재 다른 회사 정수기 사용 중)' : t}</option>`,
+      (t) =>
+        `<button type="button" class="wd-box ${t === defaultKey ? 'active' : ''}" data-key="${t}">${t}</button>`,
     )
     .join('');
-  sel.onchange = () => calc();
+  boxEl.querySelectorAll('.wd-box').forEach((btn) => {
+    btn.onclick = () => {
+      boxEl.querySelectorAll('.wd-box').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('wdType').value = btn.dataset.key;
+      calc();
+    };
+  });
 }
 
 function renderColors() {
@@ -184,18 +274,22 @@ function calc() {
   const months =
     parseInt((contract.split('/')[1] || '').replace(/[^0-9]/g, '')) || 60;
   const monthly = d.monthly || 0;
+  const cardPrice = d.cardPrice || 0;
+  const mainPrice = cardPrice > 0 ? cardPrice : monthly; // 제휴카드 있으면 그게 메인
+  const showRental = cardPrice > 0 && monthly > 0; // 둘 다 있을 때만 렌탈 우측 표기
 
-  document.getElementById('wdPrice').innerHTML = monthly
-    ? `${monthly.toLocaleString()}<small>원/월</small>`
+  document.getElementById('wdPrice').innerHTML = mainPrice
+    ? `${mainPrice.toLocaleString()}<small>원/월</small>`
     : `<span style="font-size:16px;color:var(--text-muted);">상담 시 안내</span>`;
-  document.getElementById('wdTotal').innerHTML = monthly
-    ? `총 ${(monthly * months).toLocaleString()}원<br>(${months}개월)`
-    : '-';
+  // 우측: 제휴카드가 메인일 때만 기존 렌탈가(취소선) 표시. 총요금/개월은 제거.
+  document.getElementById('wdTotal').innerHTML = showRental
+    ? `<span class="wd-rental-orig">월 ${monthly.toLocaleString()}원</span>`
+    : '';
+
+  const lblEl = document.querySelector('.wd-pb-label');
+  if (lblEl) lblEl.textContent = cardPrice > 0 ? '제휴카드 월요금' : '월 렌탈료';
 
   document.getElementById('wdSpecType').textContent = type;
-  document.getElementById('wdSpecCard').innerHTML = d.cardDiscount
-    ? `<span style="color:#e8547a;">월 ${d.cardDiscount.toLocaleString()}원</span>`
-    : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
   document.getElementById('wdSpecSupport').innerHTML = d.maxSupport
     ? `<span style="color:var(--purple);">₩ ${d.maxSupport.toLocaleString()}</span>`
     : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
@@ -330,5 +424,6 @@ function wdKakao() {
 }
 
 function wdGoBack() {
-  location.href = 'water.html';
+  const back = WD_BACK_BRAND || WD_BRAND_KEY || '';
+  location.href = back ? `water.html?brand=${back}` : 'water.html';
 }

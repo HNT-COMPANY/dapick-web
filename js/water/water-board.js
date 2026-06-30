@@ -57,4 +57,29 @@ function goBoard() {
   document.getElementById('productView').style.display = 'none';
   document.getElementById('boardView').style.display = 'block';
   window.scrollTo({ top: 0, behavior: 'smooth' });
+
+  // URL을 brand 없는 상태로 되돌림 (브랜드선택창과 URL 일치)
+  if (location.search) {
+    history.pushState({}, '', 'water.html');
+  }
 }
+
+// ── 브라우저 ←/→ : URL 따라 화면 동기화 ──
+window.addEventListener('popstate', () => {
+  const bp = new URLSearchParams(location.search).get('brand');
+  if (bp && BRAND_INFO[bp]) {
+    selectBrand(bp); // selectBrand 내부 pushState는 URL 일치 시 if로 걸러짐 → 중복 누적 없음
+  } else {
+    document.getElementById('productView').style.display = 'none';
+    document.getElementById('boardView').style.display = 'block';
+  }
+});
+
+// ── 진입 시 ?brand=… 있으면 해당 브랜드 목록 자동 표시 (상세 뒤로가기 복원) ──
+// selectBrand → switchBrand → renderBrand 가 데이터 로드를 직접 처리하므로 즉시 호출 안전.
+document.addEventListener('DOMContentLoaded', () => {
+  const bp = new URLSearchParams(location.search).get('brand');
+  if (bp && BRAND_INFO[bp]) {
+    selectBrand(bp);
+  }
+});

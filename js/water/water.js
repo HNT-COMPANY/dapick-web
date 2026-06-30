@@ -9,7 +9,7 @@
 // ════════════════════════════════════════════════════
 
 // ── 공통 상수 ──
-const EMPTY = { monthly: 0, cardDiscount: 0, maxSupport: 0 };
+const EMPTY = { monthly: 0, maxSupport: 0 };
 
 const CONTRACT_LABELS = {
   '의무36/계약60': '36개월(의무) · 60개월(계약)',
@@ -88,6 +88,8 @@ function groupByBrand(list) {
       sortOrder: p.sortOrder ?? 999,
       averageRating: p.averageRating ?? 0,
       reviewCount: p.reviewCount ?? 0,
+      // 정수기능 뱃지용 — EnumDto {code,label} 또는 null (API: /api/water-products)
+      waterFunction: p.waterFunction || null,
     });
   });
 
@@ -96,6 +98,67 @@ function groupByBrand(list) {
   });
 
   return groups;
+}
+
+// ── 정수기능 뱃지 ──
+// waterFunction(EnumDto code, 단일 조합값)을 개별 기능 칩으로 펼침.
+// 정규 순서 = 냉/온/정/얼음 (백엔드 label "냉/온/정/얼음" 순서와 일치). 모든 조합은 정수(pure) 기본 포함.
+const WATER_FUNC_CHIPS = {
+  PURIFIED: ['pure'],
+  COLD: ['cold', 'pure'],
+  HOT: ['hot', 'pure'],
+  COLD_HOT: ['cold', 'hot', 'pure'],
+  COLD_HOT_ICE: ['cold', 'hot', 'pure', 'ice'],
+};
+const WATER_FUNC_META = {
+  cold: { label: '냉수', cls: 'is-cold' },
+  hot: { label: '온수', cls: 'is-hot' },
+  pure: { label: '정수', cls: 'is-pure' },
+  ice: { label: '얼음', cls: 'is-ice' },
+};
+function waterFuncBadgesHtml(wf) {
+  const keys = WATER_FUNC_CHIPS[wf && wf.code];
+  if (!keys || !keys.length) return '';
+  const chips = keys
+    .map((k) => `<span class="w-func-badge ${WATER_FUNC_META[k].cls}">${WATER_FUNC_META[k].label}</span>`)
+    .join('');
+  return `<div class="w-func-badges">${chips}</div>`;
+}
+
+// ── 제품 색상 칩 ──
+// 백엔드 colors = 색상명 문자열 배열(hex 없음) → 프론트 매핑으로 동그라미.
+// 키 = 실측 색상명(products/*.js): 화이트/그레이/블랙/베이지/실버 + 쿠쿠 아이스 시리즈.
+// 매핑 없는 색은 회색 폴백(#ccc) + title 툴팁으로 색상명 노출.
+const WATER_COLOR_HEX = {
+  화이트: '#ffffff',
+  그레이: '#b4b4ba',
+  블랙: '#2c2c30',
+  베이지: '#e7dcc6',
+  실버: '#c9cdd0',
+  '아이스 화이트': '#eef3f7',
+  '아이스 핑크': '#f4cfdb',
+  '아이스 블루': '#cee2ef',
+  '아이스 그레이': '#d3d9dd',
+  // 보너스(향후 등장 가능성 대비)
+  골드: '#e8c97a',
+  로즈골드: '#e6c3b3',
+  핑크: '#f5b8cb',
+  블루: '#7fb0e0',
+  네이비: '#33415c',
+  민트: '#bfe6d8',
+  그린: '#86c293',
+};
+function waterColorChipsHtml(colors) {
+  if (!Array.isArray(colors)) return '';
+  const real = colors.filter((c) => c && c !== '기본'); // placeholder('기본') 제외
+  if (!real.length) return '';
+  const dots = real
+    .map((c) => {
+      const hex = WATER_COLOR_HEX[c] || '#cccccc';
+      return `<span class="wpg-color-chip" style="background:${hex}" title="${c}"></span>`;
+    })
+    .join('');
+  return `<div class="wpg-colors">${dots}</div>`;
 }
 
 // ════════════════════════════════════════════════════
@@ -132,7 +195,11 @@ function getBestPriceInfo(pricing) {
     Object.values(cycles).forEach((types) => {
       Object.values(types).forEach((d) => {
         if (d.monthly > 0 && (!best || d.monthly < best.monthly)) {
-          best = { monthly: d.monthly, cardDiscount: d.cardDiscount || 0 };
+          best = {
+            monthly: d.monthly,
+            promo: d.promo || 0,
+            cardPrice: d.cardPrice || 0,
+          };
         }
       });
     });
@@ -154,6 +221,12 @@ let dialogColor = '';
 // ════════════════════════════════════════════════════
 async function switchBrand(brand) {
   currentBrand = brand;
+
+  // URL에 brand 반영 (탭 전환·카드 진입·복원 모든 경로 공통). 이미 ?brand=… 면 중복 push 방지.
+  if (location.search !== `?brand=${brand}`) {
+    history.pushState({ brand }, '', `water.html?brand=${brand}`);
+  }
+
   document
     .querySelectorAll('.brand-tab')
     .forEach((t) => t.classList.toggle('active', t.dataset.brand === brand));
@@ -217,39 +290,54 @@ async function renderBrand(brand) {
     }
 
     bestGridEl.innerHTML = best
-      .map((p) => {
-        const minPrice = getMinPrice(p.pricing);
-        const tierHtml = contractKeys
-          .map((key) => {
-            const val = getMinByContract(p.pricing, key);
-            const shortLabel = key.split('/')[0].replace('의무', '') + '개월';
-            return `
-        <div class="water-card-tier">
-          <div class="water-card-tier-label">${shortLabel}(의무)</div>
-          <div class="water-card-tier-val">${val ? val.toLocaleString() + '원~' : '-'}</div>
-        </div>`;
-          })
-          .join('');
+      .map((p, idx) => {
+        const info = getBestPriceInfo(p.pricing);
+        const monthly = info ? info.monthly : 0;
+        const promo = info ? info.promo : 0;
+        const cardPrice = info ? info.cardPrice : 0;
+        const hasPromo = promo > 0;
+        const hasCard = cardPrice > 0;
+        const strike = hasPromo || hasCard; // 더 싼 줄이 있으면 렌탈 취소선
+        const rank = String(idx + 1).padStart(2, '0');
+
+        const rentalHtml = monthly
+          ? `<div class="wbest-price-line">
+               <span class="wbest-price-label">렌탈</span>
+               <span class="wbest-price-val ${strike ? 'is-strike' : ''}">월 ${monthly.toLocaleString()}원~</span>
+             </div>`
+          : `<div class="wbest-price-line">
+               <span class="wbest-price-label">렌탈</span>
+               <span class="wbest-price-val">가격 문의</span>
+             </div>`;
+        const promoHtml = hasPromo
+          ? `<div class="wbest-price-line">
+               <span class="wbest-price-label">프로모션</span>
+               <span class="wbest-price-val is-accent">월 ${promo.toLocaleString()}원 ~</span>
+             </div>`
+          : '';
+        const cardHtml = hasCard
+          ? `<div class="wbest-price-line">
+               <span class="wbest-price-label">제휴카드</span>
+               <span class="wbest-price-val is-accent">월 ${cardPrice.toLocaleString()}원 ~</span>
+             </div>`
+          : '';
 
         return `
-    <div class="water-card is-best" onclick="location.href='water-detail.html?id=${p.id}'">
+    <div class="water-card is-best ${idx === 0 ? 'is-rank1' : ''}" onclick="location.href='water-detail.html?id=${p.id}&brand=${brand}'">
       <button class="water-card-heart ${favorites[p.id] ? 'active' : ''}" onclick="quickFav(event,'${p.id}','${brand}')">♥</button>
-      <div class="water-card-badges">
-        <span class="wbadge wbadge-best">BEST</span>
-        ${p.new ? '<span class="wbadge wbadge-new">NEW</span>' : ''}
-        <span class="wbadge wbadge-brand">${data.name}</span>
-      </div>
+      <div class="wbest-rank">BEST<br><b>${rank}</b></div>
       <div class="water-card-img">
+        ${waterFuncBadgesHtml(p.waterFunction)}
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<span>${data.emoji}</span>`}
       </div>
-      <div class="water-card-name">${p.name}</div>
-      ${ratingHtml(p.averageRating, p.reviewCount)}
-      <div class="water-card-price-row">
-        <span class="water-card-price">${minPrice ? '월 ' + minPrice.toLocaleString() + '원~' : '가격 문의'}</span>
-        <span class="water-card-price-unit">${minPrice ? '최저가' : ''}</span>
+      <div class="wbest-name">${p.name}</div>
+      ${hasPromo ? '<div class="wbest-promo-tag">[프로모션 진행중]</div>' : ''}
+      <div class="wbest-prices">
+        ${rentalHtml}
+        ${promoHtml}
+        ${cardHtml}
       </div>
-      <div class="water-card-tiers" style="grid-template-columns:repeat(4,1fr);">${tierHtml}</div>
-      <div class="water-card-desc">${p.desc}</div>
+      ${p.desc ? `<div class="wbest-tip"><div class="wbest-tip-head">다픽 팁</div><div class="wbest-tip-body">${p.desc}</div></div>` : ''}
     </div>`;
       })
       .join('');
@@ -265,28 +353,31 @@ async function renderBrand(brand) {
     .map((p) => {
       const info = getBestPriceInfo(p.pricing);
       const hasPrice = !!info;
-      const orig = hasPrice ? info.monthly : 0;
-      const discounted = hasPrice ? Math.max(orig - info.cardDiscount, 0) : 0;
-      const hasDiscount = hasPrice && info.cardDiscount > 0;
+      const monthly = hasPrice ? info.monthly : 0;
+      const cardPrice = hasPrice ? info.cardPrice : 0;
+      const mainPrice = cardPrice > 0 ? cardPrice : monthly;   // 제휴카드 있으면 그게 메인
+      const showOrig = cardPrice > 0 && monthly > 0;           // 제휴카드 메인일 때만 렌탈 취소선
 
-      const priceHtml = hasPrice
+      const priceHtml = mainPrice
         ? `
-        ${hasDiscount ? `<span class="wpg-orig">월 ${orig.toLocaleString()}원</span>` : ''}
+        ${showOrig ? `<span class="wpg-orig">월 ${monthly.toLocaleString()}원</span>` : ''}
         <div class="wpg-price-line">
-          ${hasDiscount ? '<span class="wpg-tag">카드할인</span>' : ''}
-          <span class="wpg-price">월 ${discounted.toLocaleString()}원~</span>
+          ${cardPrice > 0 ? '<span class="wpg-tag">제휴카드</span>' : ''}
+          <span class="wpg-price">월 ${mainPrice.toLocaleString()}원~</span>
         </div>`
         : `<div class="wpg-price-line"><span class="wpg-price wpg-ask">가격 문의</span></div>`;
 
       return `
-    <div class="water-prod-card" onclick="location.href='water-detail.html?id=${p.id}'">
+    <div class="water-prod-card" onclick="location.href='water-detail.html?id=${p.id}&brand=${brand}'">
       <div class="wpg-img">
         ${p.best ? '<span class="wpg-badge-best">인기</span>' : ''}
         ${p.new ? '<span class="wpg-badge-new">NEW</span>' : ''}
+        ${waterFuncBadgesHtml(p.waterFunction)}
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<span class="wpg-emoji">${data.emoji}</span>`}
       </div>
       <div class="wpg-body">
         <div class="wpg-name">${p.name}</div>
+        ${waterColorChipsHtml(p.colors)}
         ${ratingHtml(p.averageRating, p.reviewCount)}
         ${priceHtml}
       </div>
@@ -372,25 +463,39 @@ function openDialog(productId, brand) {
   const prev = favorites[p.id] || {};
   dialogColor = prev.color || p.colors[0];
 
-  document.getElementById('wDTag').textContent =
-    `${data.emoji} ${data.name}${p.new ? '  🆕 NEW' : ''}`;
+  const _tag = document.getElementById('wDTag');
+  if (_tag) _tag.style.display = 'none';
   document.getElementById('wDName').textContent = p.name;
+  const _m = document.getElementById('wDModel');
+  if (_m) _m.textContent = p.modelName || p.model_name || '';
+  console.log('[모델명 디버그]', {
+    modelName: p.modelName,
+    model_name: p.model_name,
+    wDModelEl: !!_m,
+    keys: Object.keys(p),
+  });
 
   const contractKeys = Object.keys(p.pricing);
   const defaultContract =
     prev.contract || contractKeys[contractKeys.length - 1];
-  const contractSel = document.getElementById('wDContract');
-  contractSel.innerHTML = contractKeys
+  const cBox = document.getElementById('wDContractBox');
+  document.getElementById('wDContract').value = defaultContract;
+  cBox.innerHTML = contractKeys
     .map(
       (key) =>
-        `<option value="${key}" ${key === defaultContract ? 'selected' : ''}>${CONTRACT_LABELS[key] || key}</option>`,
+        `<button type="button" class="wd-box ${key === defaultContract ? 'active' : ''}" data-key="${key}">${CONTRACT_LABELS[key] || key}</button>`,
     )
     .join('');
-  contractSel.onchange = () => {
-    updateCycleOptions(p, null);
-    updateTypeOptions(p, null);
-    calcPrice();
-  };
+  cBox.querySelectorAll('.wd-box').forEach((btn) => {
+    btn.onclick = () => {
+      cBox.querySelectorAll('.wd-box').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('wDContract').value = btn.dataset.key;
+      updateCycleOptions(p, null);
+      updateTypeOptions(p, null);
+      calcPrice();
+    };
+  });
 
   updateCycleOptions(p, prev.cycle);
   updateTypeOptions(p, prev.type);
@@ -406,36 +511,108 @@ function openDialog(productId, brand) {
   document.body.style.overflow = 'hidden';
 }
 
+// 관리주기 라벨: '셀프형'은 그대로, 숫자형은 "방문관리" 붙임(중복 방지)
+function cycleLabel(c) {
+  if (!c) return '';
+  if (c.includes('셀프') || c === '셀프형') return '셀프형';
+  return c.includes('개월') ? `${c} 방문관리` : c;
+}
+
+// 관리주기 키를 자가관리/방문관리로 분류 ('개월' 포함=방문, 아니면 자가)
+function isVisitCycle(c) {
+  return typeof c === 'string' && c.includes('개월');
+}
+function groupCycles(cycleKeys) {
+  return {
+    self: cycleKeys.filter((c) => !isVisitCycle(c)), // 자가관리 (셀프형 등)
+    visit: cycleKeys.filter((c) => isVisitCycle(c)), // 방문관리 (N개월)
+  };
+}
+
 function updateCycleOptions(p, prevCycle) {
   const contract = document.getElementById('wDContract').value;
-  const cycles = Object.keys(p.pricing[contract] || {});
-  const cycleSel = document.getElementById('wDCycle');
-  cycleSel.innerHTML = cycles
-    .map(
-      (c) =>
-        `<option value="${c}" ${c === (prevCycle || cycles[0]) ? 'selected' : ''}>${c} 방문 관리</option>`,
-    )
-    .join('');
-  cycleSel.onchange = () => {
+  const cycleKeys = Object.keys(p.pricing[contract] || {});
+  const groups = groupCycles(cycleKeys);
+
+  const modes = [];
+  if (groups.self.length) modes.push({ key: 'self', label: '자가관리' });
+  if (groups.visit.length) modes.push({ key: 'visit', label: '방문관리' });
+
+  let mode = modes[0] ? modes[0].key : 'visit';
+  if (prevCycle) mode = isVisitCycle(prevCycle) ? 'visit' : 'self';
+  if (!modes.some((m) => m.key === mode)) mode = modes[0] ? modes[0].key : 'visit';
+  document.getElementById('wDCareMode').value = mode;
+
+  const toggleEl = document.getElementById('wDCareToggle');
+  if (modes.length > 1) {
+    toggleEl.style.display = '';
+    toggleEl.innerHTML = modes
+      .map(
+        (m) =>
+          `<button type="button" class="wd-care-btn ${m.key === mode ? 'active' : ''}" data-mode="${m.key}">${m.label}</button>`,
+      )
+      .join('');
+    toggleEl.querySelectorAll('.wd-care-btn').forEach((btn) => {
+      btn.onclick = () => {
+        document.getElementById('wDCareMode').value = btn.dataset.mode;
+        renderModalCycleBoxes(groups[btn.dataset.mode], null);
+        toggleEl
+          .querySelectorAll('.wd-care-btn')
+          .forEach((b) => b.classList.toggle('active', b === btn));
+      };
+    });
+  } else {
+    toggleEl.style.display = 'none';
+    toggleEl.innerHTML = '';
+  }
+
+  renderModalCycleBoxes(groups[mode] || [], prevCycle);
+
+  function renderModalCycleBoxes(keys, prefer) {
+    const box = document.getElementById('wDCycleBox');
+    const def = prefer && keys.includes(prefer) ? prefer : keys[0];
+    document.getElementById('wDCycle').value = def || '';
+    box.innerHTML = keys
+      .map(
+        (c) =>
+          `<button type="button" class="wd-box ${c === def ? 'active' : ''}" data-key="${c}">${cycleLabel(c)}</button>`,
+      )
+      .join('');
+    box.querySelectorAll('.wd-box').forEach((btn) => {
+      btn.onclick = () => {
+        box.querySelectorAll('.wd-box').forEach((b) => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById('wDCycle').value = btn.dataset.key;
+        updateTypeOptions(p, null);
+        calcPrice();
+      };
+    });
     updateTypeOptions(p, null);
     calcPrice();
-  };
+  }
 }
 
 function updateTypeOptions(p, prevType) {
   const contract = document.getElementById('wDContract').value;
   const cycle = document.getElementById('wDCycle').value;
   const types = Object.keys((p.pricing[contract] || {})[cycle] || {});
-  const typeSel = document.getElementById('wDType');
-  typeSel.innerHTML = types
+  const box = document.getElementById('wDTypeBox');
+  const def = prevType || types[0];
+  document.getElementById('wDType').value = def;
+  box.innerHTML = types
     .map(
       (t) =>
-        `<option value="${t}" ${t === (prevType || types[0]) ? 'selected' : ''}>
-      ${t === '타사보상' ? '타사보상 (현재 다른 회사 정수기 사용 중)' : t}
-    </option>`,
+        `<button type="button" class="wd-box ${t === def ? 'active' : ''}" data-key="${t}">${t}</button>`,
     )
     .join('');
-  typeSel.onchange = () => calcPrice();
+  box.querySelectorAll('.wd-box').forEach((btn) => {
+    btn.onclick = () => {
+      box.querySelectorAll('.wd-box').forEach((b) => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.getElementById('wDType').value = btn.dataset.key;
+      calcPrice();
+    };
+  });
 }
 
 function renderColorChips(p) {
@@ -462,31 +639,32 @@ function calcPrice() {
   const d = dialogProd.pricing[contract]?.[cycle]?.[type];
   if (!d) return;
 
-  const contractMonths =
-    parseInt((contract.split('/')[1] || '').replace(/[^0-9]/g, '')) || 60;
-  const total = d.monthly * contractMonths;
   const contractLabel = CONTRACT_LABELS[contract] || contract;
 
-  document.getElementById('wDPrice').innerHTML = d.monthly
-    ? `${d.monthly.toLocaleString()}<span>원/월</span>`
+  const monthly = d.monthly || 0;
+  const cardPrice = d.cardPrice || 0;
+  const mainPrice = cardPrice > 0 ? cardPrice : monthly;
+  const showOrig = cardPrice > 0 && monthly > 0;
+
+  document.getElementById('wDPrice').innerHTML = mainPrice
+    ? `${mainPrice.toLocaleString()}<span>원/월</span>`
     : `<span style="font-size:15px;color:var(--text-muted);">상담 시 안내</span>`;
+  const lbl = document.getElementById('wDPriceLabel');
+  if (lbl) lbl.textContent = cardPrice > 0 ? '제휴카드 월요금' : '월 렌탈료';
+  const origEl = document.getElementById('wDRentalOrig');
+  if (origEl)
+    origEl.innerHTML = showOrig
+      ? `<span class="wd-rental-orig">월 ${monthly.toLocaleString()}원</span>`
+      : '';
 
-  document.getElementById('wDTotal').textContent = d.monthly
-    ? `총 ${total.toLocaleString()}원 (${contractMonths}개월)`
-    : '-';
-
-  const cardHtml = d.cardDiscount
-    ? `<span style="color:#e8547a;font-weight:700;">월 ${d.cardDiscount.toLocaleString()}원</span>`
-    : `<span style="color:var(--text-muted);font-size:12px;">상담 시 안내</span>`;
   const supportHtml = d.maxSupport
     ? `<span style="color:var(--purple);font-weight:700;">₩ ${d.maxSupport.toLocaleString()}</span>`
     : `<span style="color:var(--text-muted);font-size:12px;">상담 시 안내</span>`;
 
   document.getElementById('wDSpecs').innerHTML = `
-    <div class="w-spec-item"><div class="w-spec-label">약정 조건</div><div class="w-spec-val" style="font-size:12px;">${contractLabel}</div></div>
     <div class="w-spec-item"><div class="w-spec-label">가입 조건</div><div class="w-spec-val">${type}</div></div>
-    <div class="w-spec-item"><div class="w-spec-label">카드할인 시</div><div class="w-spec-val">${cardHtml}</div></div>
-    <div class="w-spec-item"><div class="w-spec-label">최대 지원금</div><div class="w-spec-val">${supportHtml}</div></div>`;
+    <div class="w-spec-item"><div class="w-spec-label">결제 안내</div><div class="w-spec-val" style="font-size:12px;">렌탈 약정 기준</div></div>
+    <div class="w-spec-item w-spec-support"><div class="w-spec-label">최대 지원금</div><div class="w-spec-val w-spec-val-big">${supportHtml}</div></div>`;
 
   document.getElementById('wDDesc').textContent = dialogProd.desc;
 }

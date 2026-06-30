@@ -5,6 +5,15 @@
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>다픽 정수기 상세 | 코웨이·SK매직·청호나이스·쿠쿠</title>
+  <!-- ── Favicon ── -->
+  <link rel="icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <link rel="shortcut icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <link rel="icon" sizes="192x192" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <link rel="icon" sizes="512x512" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <meta name="msapplication-TileImage" content="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <meta name="msapplication-TileColor" content="#000000" />
+  <meta name="theme-color" content="#000000" />
   <meta name="description" content="정수기 상세 정보 — 약정·관리주기·색상 선택 후 월 렌탈료 확인 및 상담 신청."/>
   <meta name="robots" content="index, follow"/>
 
@@ -50,6 +59,7 @@
     <div class="wd-panel">
       <span class="wd-brand-tag" id="wdBrandTag"></span>
       <div class="wd-name" id="wdName"></div>
+      <div class="wd-model" id="wdModel"></div>
       <div class="wd-desc" id="wdDesc"></div>
 
       <div class="wd-pricebox">
@@ -61,16 +71,21 @@
       </div>
 
       <div class="wd-opt">
-        <div class="wd-opt-label">📅 약정 기간</div>
-        <select class="wd-select" id="wdContract"></select>
+        <div class="wd-opt-label">약정 기간</div>
+        <div class="wd-box-group" id="wdContractBox"></div>
+        <input type="hidden" id="wdContract" />
       </div>
       <div class="wd-opt">
-        <div class="wd-opt-label">🔧 관리 주기</div>
-        <select class="wd-select" id="wdCycle"></select>
+        <div class="wd-opt-label">관리 주기</div>
+        <div class="wd-care-toggle" id="wdCareToggle"></div>
+        <div class="wd-box-group wd-box-group-auto" id="wdCycleBox"></div>
+        <input type="hidden" id="wdCycle" />
+        <input type="hidden" id="wdCareMode" />
       </div>
       <div class="wd-opt">
-        <div class="wd-opt-label">🏷️ 타사보상 여부</div>
-        <select class="wd-select" id="wdType"></select>
+        <div class="wd-opt-label">타사보상 여부</div>
+        <div class="wd-box-group" id="wdTypeBox"></div>
+        <input type="hidden" id="wdType" />
       </div>
       <div class="wd-opt">
         <div class="wd-opt-label">🎨 색상 선택</div>
@@ -79,9 +94,11 @@
 
       <div class="wd-specs">
         <div class="wd-spec"><div class="wd-spec-label">가입 조건</div><div class="wd-spec-val" id="wdSpecType">-</div></div>
-        <div class="wd-spec"><div class="wd-spec-label">카드할인 시</div><div class="wd-spec-val" id="wdSpecCard">-</div></div>
-        <div class="wd-spec"><div class="wd-spec-label">최대 지원금</div><div class="wd-spec-val" id="wdSpecSupport">-</div></div>
         <div class="wd-spec"><div class="wd-spec-label">결제 안내</div><div class="wd-spec-val" style="font-size:12px;">렌탈 약정 기준</div></div>
+        <div class="wd-spec wd-spec-full wd-spec-support">
+          <div class="wd-spec-label">최대 지원금</div>
+          <div class="wd-spec-val wd-spec-val-big" id="wdSpecSupport">-</div>
+        </div>
       </div>
 
       <div class="wd-actions">
@@ -113,6 +130,7 @@
         <div>
           <span id="wDTag" class="w-dialog-brand-tag"></span>
           <div id="wDName" class="w-dialog-name"></div>
+          <div id="wDModel" class="w-dialog-model"></div>
         </div>
         <button class="w-dialog-close" onclick="closeDialog()">✕</button>
       </div>
@@ -120,35 +138,37 @@
     <div class="w-dialog-body">
       <div class="w-price-box">
         <div class="w-price-left">
-          <div class="wpl-label">월 렌탈료</div>
+          <div class="wpl-label" id="wDPriceLabel">월 렌탈료</div>
           <div class="w-price-val" id="wDPrice">-<span>/월</span></div>
         </div>
-        <div class="w-price-right">
-          <div class="w-total-label">총 렌탈료</div>
-          <div class="w-total-val" id="wDTotal">-</div>
-        </div>
+        <div class="w-price-right" id="wDRentalOrig"></div>
       </div>
       <div class="w-option-group">
-        <div class="w-option-label">📅 약정 기간</div>
-        <select class="w-select" id="wDContract"></select>
+        <div class="w-option-label">약정 기간</div>
+        <div class="wd-box-group" id="wDContractBox"></div>
+        <input type="hidden" id="wDContract" />
       </div>
       <div class="w-option-group">
-        <div class="w-option-label">🔧 관리 주기</div>
-        <select class="w-select" id="wDCycle"></select>
+        <div class="w-option-label">관리 주기</div>
+        <div class="wd-care-toggle" id="wDCareToggle"></div>
+        <div class="wd-box-group wd-box-group-auto" id="wDCycleBox"></div>
+        <input type="hidden" id="wDCycle" />
+        <input type="hidden" id="wDCareMode" />
       </div>
       <div class="w-option-group">
-        <div class="w-option-label">🏷️ 타사보상 여부</div>
-        <select class="w-select" id="wDType"></select>
+        <div class="w-option-label">타사보상 여부</div>
+        <div class="wd-box-group" id="wDTypeBox"></div>
+        <input type="hidden" id="wDType" />
       </div>
       <div class="w-option-group">
-        <div class="w-option-label">🎨 색상 선택</div>
+        <div class="w-option-label">색상 선택</div>
         <div class="w-color-chips" id="wDColors"></div>
       </div>
       <div class="w-spec-grid" id="wDSpecs"></div>
       <div class="w-desc-box" id="wDDesc"></div>
       <div class="w-actions">
-        <button class="w-btn-kakao" style="background:#5b5bd6;color:#fff;" onclick="openWaterApply()">상담 신청하기 →</button>
-        <button class="w-btn-kakao" onclick="openKakaoWithProduct()">카카오로 상담하기 →</button>
+        <button class="w-btn-kakao" style="background:#5b5bd6;color:#fff;" onclick="openWaterApply()">상품 접수</button>
+        <button class="w-btn-kakao" onclick="openKakaoWithProduct()">카카오 상담</button>
         <button class="w-btn-heart" id="wDHeart" onclick="toggleFavInDialog()">🤍</button>
       </div>
     </div>

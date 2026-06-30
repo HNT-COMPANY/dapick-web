@@ -349,3 +349,87 @@
   background: #f7f6fe;
   border-color: var(--purple, #5b5bd6);
 }
+
+/* === STEP 1: 상세 배경 흰색 (전역 body는 그대로) === */
+#wdRoot.wd-wrap {
+  background: #ffffff;
+  border-radius: 16px;
+  padding: 24px;
+}
+#wdRoot .wd-pricebox { background: #f7f7fa; }   /* 보라 #f7f6fe → 중립 회색 */
+#wdRoot .wd-spec { background: #fafafa; }        /* #faf9fe → 중립 */
+
+/* === STEP 1: 약정 박스 버튼 (드롭다운 대체) === */
+.wd-box-group {
+  display: grid;
+  grid-template-columns: 1fr 1fr;   /* 2×2 박스 (4개) */
+  gap: 8px;
+}
+.wd-box {
+  padding: 12px 10px;
+  border: 1.5px solid #e5e3ee;
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  color: var(--text-sub);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.wd-box:hover { border-color: var(--purple-soft); }
+.wd-box.active {
+  border-color: var(--purple);
+  color: var(--purple);
+  font-weight: 700;
+  background: #f7f6fe;
+}
+
+/* === STEP 1: 우측 렌탈 취소선 (제휴카드 메인일 때) === */
+.wd-rental-orig { font-size: 13px; color: var(--text-muted); text-decoration: line-through; }
+.wd-total-sub { font-size: 12px; color: var(--text-muted); }
+
+/* === STEP 1: 가변 박스 그룹 (관리주기) + 타사보상 2칸 === */
+.wd-box-group-auto {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.wd-box-group-auto .wd-box { flex: 1 1 auto; min-width: 90px; }
+#wdTypeBox { grid-template-columns: 1fr 1fr; }
+
+/* === 상품명 아래 모델명 (회색 작은 글씨) === */
+.wd-model {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+  margin-bottom: 8px;
+}
+
+/* === 최대 지원금 풀폭 (스펙 grid 2칸 유지, full만 전체 폭) === */
+.wd-specs .wd-spec-full {
+  grid-column: 1 / -1;
+}
+
+/* === 최대 지원금 강조 (라벨 좌 / 금액 우, 크게) === */
+.wd-specs .wd-spec-support {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;   /* 라벨 좌 / 금액 우 */
+}
+.wd-specs .wd-spec-support .wd-spec-label {
+  margin-bottom: 0;
+  font-size: 16px;             /* 라벨 키움 */
+  font-weight: 700;
+  color: var(--text-main);     /* 검정 톤 */
+}
+.wd-specs .wd-spec-support .wd-spec-val-big {
+  font-size: 22px;
+  font-weight: 900;
+  color: var(--purple);        /* 보라 복구 */
+  text-align: right;
+}
+/* calc()가 wdSpecSupport에 넣는 inline span(₩ ...)의 자체 색/크기가 위를 덮지 않게 */
+.wd-specs .wd-spec-support .wd-spec-val-big span {
+  font-size: inherit !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+}

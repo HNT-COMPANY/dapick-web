@@ -160,6 +160,17 @@
 
   <!-- 상품 컨텐츠 -->
   <div class="section">
+    <!-- ★ BEST 섹션: 풀폭, 필터 밖 (상품 0개일 때 JS에서 숨김 처리) -->
+    <div id="bestSection" class="best-fullwidth">
+      <div class="sec-head">
+        <span class="sec-title" id="bestTitle">인기 상품</span>
+        <span class="sec-badge" id="bestBadge">BEST</span>
+      </div>
+      <p class="sec-sub" id="bestSub">클릭하면 약정·관리주기·타사보상 선택 가능</p>
+      <div class="brand-banner" id="brandBanner" style="display:none;"></div>
+      <div class="water-best-grid" id="bestGrid"></div>
+    </div>
+
     <!-- 조각1: 리모컨 필터 2단 레이아웃 (UI만 — 동작은 조각2). 기존 .wrap 은 우측 컬럼으로 그대로 유지 -->
     <div class="water-layout">
       <!-- 모바일 전용 필터 토글 버튼 (데스크탑은 CSS로 숨김). 동작(.is-open 토글)은 다음 조각(JS). -->
@@ -272,17 +283,6 @@
       </aside>
 
     <div class="wrap">
-      <!-- 베스트 섹션: 상품 0개일 때 JS에서 숨김 처리 -->
-      <div id="bestSection">
-        <div class="sec-head">
-          <span class="sec-title" id="bestTitle">인기 상품</span>
-          <span class="sec-badge" id="bestBadge">BEST</span>
-        </div>
-        <p class="sec-sub" id="bestSub">클릭하면 약정·관리주기·타사보상 선택 가능</p>
-        <div class="brand-banner" id="brandBanner" style="display:none;"></div>
-        <div class="water-best-grid" id="bestGrid"></div>
-      </div>
-
       <!-- 전체 상품 섹션 -->
       <div class="sec-head">
         <span class="sec-title" id="listTitle">전체 상품</span>
@@ -305,6 +305,7 @@
         <div>
           <span id="wDTag" class="w-dialog-brand-tag"></span>
           <div id="wDName" class="w-dialog-name"></div>
+          <div id="wDModel" class="w-dialog-model"></div>
         </div>
         <button class="w-dialog-close" onclick="closeDialog()">✕</button>
       </div>
@@ -314,36 +315,38 @@
       <!-- 가격 박스 -->
       <div class="w-price-box">
         <div class="w-price-left">
-          <div class="wpl-label">월 렌탈료</div>
+          <div class="wpl-label" id="wDPriceLabel">월 렌탈료</div>
           <div class="w-price-val" id="wDPrice">-<span>/월</span></div>
         </div>
-        <div class="w-price-right">
-          <div class="w-total-label">총 렌탈료</div>
-          <div class="w-total-val" id="wDTotal">-</div>
-        </div>
+        <div class="w-price-right" id="wDRentalOrig"></div>
       </div>
 
       <!-- 약정 기간 -->
       <div class="w-option-group">
-        <div class="w-option-label">📅 약정 기간</div>
-        <select class="w-select" id="wDContract"></select>
+        <div class="w-option-label">약정 기간</div>
+        <div class="wd-box-group" id="wDContractBox"></div>
+        <input type="hidden" id="wDContract" />
       </div>
 
       <!-- 관리 주기 -->
       <div class="w-option-group">
-        <div class="w-option-label">🔧 관리 주기</div>
-        <select class="w-select" id="wDCycle"></select>
+        <div class="w-option-label">관리 주기</div>
+        <div class="wd-care-toggle" id="wDCareToggle"></div>
+        <div class="wd-box-group wd-box-group-auto" id="wDCycleBox"></div>
+        <input type="hidden" id="wDCycle" />
+        <input type="hidden" id="wDCareMode" />
       </div>
 
       <!-- 타사보상 여부 -->
       <div class="w-option-group">
-        <div class="w-option-label">🏷️ 타사보상 여부</div>
-        <select class="w-select" id="wDType"></select>
+        <div class="w-option-label">타사보상 여부</div>
+        <div class="wd-box-group" id="wDTypeBox"></div>
+        <input type="hidden" id="wDType" />
       </div>
 
       <!-- 색상 선택 -->
       <div class="w-option-group">
-        <div class="w-option-label">🎨 색상 선택</div>
+        <div class="w-option-label">색상 선택</div>
         <div class="w-color-chips" id="wDColors"></div>
       </div>
 
@@ -355,8 +358,8 @@
 
       <!-- 액션 -->
       <div class="w-actions">
-         <button class="w-btn-kakao" style="background:#5b5bd6;color:#fff;" onclick="openWaterApply()">상담 신청하기 →</button>
-        <button class="w-btn-kakao" onclick="openKakaoWithProduct()">카카오로 상담하기 →</button>
+         <button class="w-btn-kakao" style="background:#5b5bd6;color:#fff;" onclick="openWaterApply()">상품 접수</button>
+        <button class="w-btn-kakao" onclick="openKakaoWithProduct()">카카오 상담</button>
         <button class="w-btn-heart" id="wDHeart" onclick="toggleFavInDialog()">🤍</button>
       </div>
     </div>
