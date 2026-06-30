@@ -90,6 +90,8 @@ function groupByBrand(list) {
       reviewCount: p.reviewCount ?? 0,
       // 정수기능 뱃지용 — EnumDto {code,label} 또는 null (API: /api/water-products)
       waterFunction: p.waterFunction || null,
+      modelName: p.modelName || '',
+      householdSize: p.householdSize || null,
     });
   });
 
@@ -377,6 +379,7 @@ async function renderBrand(brand) {
       </div>
       <div class="wpg-body">
         <div class="wpg-name">${p.name}</div>
+        ${p.modelName ? `<div class="wpg-model">${p.modelName}</div>` : ''}
         ${waterColorChipsHtml(p.colors)}
         ${ratingHtml(p.averageRating, p.reviewCount)}
         ${priceHtml}

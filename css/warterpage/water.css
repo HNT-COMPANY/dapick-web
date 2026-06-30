@@ -1199,6 +1199,12 @@
   color: var(--text-main);
   min-height: 2.8em; /* 2줄 높이 확보 — 카드 높이 균일 */
 }
+.wpg-model {
+  font-size: 12px;
+  color: var(--text-sub);
+  margin: 2px 0 6px;
+  font-weight: 500;
+}
 
 /* 가격 */
 .wpg-orig {
