@@ -20,7 +20,9 @@
 
 .iu-carrier-bar .i-provider-select-grid {
   display: grid;
-  grid-template-columns: repeat(6, 1fr);
+  /* 6열 고정 → auto-fit: 현재 3사는 한 줄을 꽉 채우고,
+     알뜰 3사 주석 해제 시 6장이 단일 행으로 자동 복귀 (min 150px, 1080px 바에 6×150=900 < 폭) */
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
   gap: 10px;
 }
 

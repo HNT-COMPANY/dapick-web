@@ -41,7 +41,7 @@ window.InternetProductBase = (function () {
     'LG U+': {
       name: 'LG U+',
       logo: 'assets/logos/LG.png',
-      color: '#E5007D',
+      color: '#E6007E',
       hero: '실속있는 가격 · 4K UHD 화질',
     },
     'LG HelloVision': {
@@ -719,6 +719,8 @@ window.InternetProductBase = (function () {
     const hint = document.getElementById('ipSettopHint');
     if (hint) {
       const bits = [];
+      if (calc.tvComboDiscount > 0)
+        bits.push(`TV 결합 할인 -${formatPrice(calc.tvComboDiscount)}원`);
       if (calc.bundleDiscount > 0)
         bits.push(`유무선 결합 -${formatPrice(calc.bundleDiscount)}원`);
       if (calc.cardDiscount > 0)

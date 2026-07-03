@@ -56,10 +56,12 @@ window.InternetCalc = (function () {
         cardDiscount: 0,
         gift: 0,
         bundleDiscount: 0,
+        tvComboDiscount: 0,
       };
 
     let base = normalOf(it);
     let combo = bundleOf(it);
+    let tvComboDiscount = 0; // TV 결합 할인 적용액 (표시용 반환)
     // 와이파이 패키지 모드 — 인터넷 단독 가산 (KT). 데이터 없으면(?? 0) 영향 없음 = 비KT 안전
     if (s.wifiMode === 'package') {
       const wifiPkgAdd = Number(it.wifiPackageAdd ?? 0); // 1G=0 가능
@@ -90,6 +92,10 @@ window.InternetCalc = (function () {
           combo += bundleOf(s.setTop2);
         }
       }
+      // TV 결합 할인 — TV 토글 ON일 때만 인터넷 티어별 결합가에서 차감.
+      // (옵션값 우선, 없으면 상품 discountMeta 폴백. 미입력 → ?? 0 → 기존 계산 불변)
+      tvComboDiscount = Number(it.tvComboDiscount ?? meta.tvComboDiscount ?? 0);
+      combo = Math.max(0, combo - tvComboDiscount);
     }
     if (toggles.router && s.router) {
       base += normalOf(s.router);
@@ -118,6 +124,7 @@ window.InternetCalc = (function () {
       cardDiscount: cardDiscount,
       gift: gift,
       bundleDiscount: bundleDiscount,
+      tvComboDiscount: tvComboDiscount, // TV 결합 할인 적용액 (힌트 표시용)
     };
   }
   //

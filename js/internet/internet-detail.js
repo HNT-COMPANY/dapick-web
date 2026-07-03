@@ -373,6 +373,8 @@
         calc.gift > 0 ? formatPrice(calc.gift) + '원' : '상담 시 안내';
 
     var bits = [];
+    if (calc.tvComboDiscount > 0)
+      bits.push('TV 결합 할인 -' + formatPrice(calc.tvComboDiscount) + '원');
     if (calc.bundleDiscount > 0)
       bits.push('유무선 결합 -' + formatPrice(calc.bundleDiscount) + '원');
     if (calc.cardDiscount > 0)

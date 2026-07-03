@@ -8,11 +8,12 @@ const GNB_CARRIERS = [
   // carrier: unified 페이지로 넘길 정확한 코드값(CARRIER_MAP 키, 공백·대소문자 원본)
   // page: 독립 HTML 경로(롤백/직접진입용 보존 — 현재 렌더에선 미사용)
   { label: 'SKT', carrier: 'SKT', page: 'internet-skt.html' },
-  { label: 'SK브로드밴드', carrier: 'SK broadband', page: 'internet-sk-broadband.html' },
+  // 알뜰 3사 비노출 (2026-07-03, 3사 통신사만 운영) — 재개 시 주석 해제
+  // { label: 'SK브로드밴드', carrier: 'SK broadband', page: 'internet-sk-broadband.html' },
   { label: 'KT', carrier: 'KT', page: 'internet-kt.html' },
-  { label: 'KT스카이라이프', carrier: 'KT Skylife', page: 'internet-kt-skylife.html' },
+  // { label: 'KT스카이라이프', carrier: 'KT Skylife', page: 'internet-kt-skylife.html' },
   { label: 'LG U+', carrier: 'LG U+', page: 'internet-lg.html' },
-  { label: 'LG헬로비전', carrier: 'LG HelloVision', page: 'internet-lg-hello.html' },
+  // { label: 'LG헬로비전', carrier: 'LG HelloVision', page: 'internet-lg-hello.html' },
 ];
 
 const GNB_CATS = [

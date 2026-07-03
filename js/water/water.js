@@ -92,6 +92,15 @@ function groupByBrand(list) {
       waterFunction: p.waterFunction || null,
       modelName: p.modelName || '',
       householdSize: p.householdSize || null,
+      // 목적태그 — 응답은 [{code,label}] (EnumDto List) → code 배열로 정규화 (필터 includes 매칭용)
+      purposeTags: Array.isArray(p.purposeTags) ? p.purposeTags.map((t) => t.code) : [],
+      // 사이드바 필터용 enum ({code,label} 그대로 — 필터 시 .code 비교)
+      installType: p.installType || null,
+      filterType: p.filterType || null,
+      extractType: p.extractType || null,
+      pipeMaterial: p.pipeMaterial || null,
+      // 월 렌탈료: 저장 priceRange(대부분 null) 대신 pricing 최저 월요금으로 구간 산출
+      priceBucket: computePriceBucket(p.pricing),
     });
   });
 
@@ -100,6 +109,20 @@ function groupByBrand(list) {
   });
 
   return groups;
+}
+
+// ── 월 렌탈료 구간 판정 — pricing 최저 월요금 → priceRange enum 코드 ──
+// 경계는 < 비교 (10000 정확히면 RANGE_10K = "1만원대"). getBestPriceInfo 재사용.
+function computePriceBucket(pricing) {
+  const info = getBestPriceInfo(pricing);
+  const m = info && info.monthly ? info.monthly : null;
+  if (m == null) return null;
+  if (m < 10000) return 'UNDER_10K';
+  if (m < 20000) return 'RANGE_10K';
+  if (m < 30000) return 'RANGE_20K';
+  if (m < 40000) return 'RANGE_30K';
+  if (m < 50000) return 'RANGE_40K';
+  return 'OVER_50K';
 }
 
 // ── 정수기능 뱃지 ──
@@ -192,6 +215,7 @@ function getMinByContract(pricing, contractKey) {
 
 // 최저가 옵션의 {monthly, cardDiscount} 반환 (카드 표시용)
 function getBestPriceInfo(pricing) {
+  if (!pricing || typeof pricing !== 'object') return null; // ★null/비객체 방어 (로드/렌더/모달 일괄 안전화)
   let best = null;
   Object.values(pricing).forEach((cycles) => {
     Object.values(cycles).forEach((types) => {
@@ -243,6 +267,7 @@ async function switchBrand(brand) {
      <span class="product-view-brand-name">${info.name}</span>`;
   }
 
+  clearFilterInputs(); // 브랜드 바뀌면 필터 입력만 초기화 (renderBrand는 아래서 — 중복 호출 방지)
   await renderBrand(brand);
 }
 
@@ -351,31 +376,40 @@ async function renderBrand(brand) {
   // ── 전체 상품 — 아정당식 카드 그리드 ──
   if (listTitleEl) listTitleEl.textContent = `${data.name} 전체 상품`;
 
+  // 카드 렌더는 renderProductCard로 추출 (통합 필터와 공유). 브랜드별 화면은 brand/emoji 주입해 동일 결과.
   listGridEl.innerHTML = data.products
-    .map((p) => {
-      const info = getBestPriceInfo(p.pricing);
-      const hasPrice = !!info;
-      const monthly = hasPrice ? info.monthly : 0;
-      const cardPrice = hasPrice ? info.cardPrice : 0;
-      const mainPrice = cardPrice > 0 ? cardPrice : monthly;   // 제휴카드 있으면 그게 메인
-      const showOrig = cardPrice > 0 && monthly > 0;           // 제휴카드 메인일 때만 렌탈 취소선
+    .map((p) => renderProductCard({ ...p, brand, emoji: data.emoji }))
+    .join('');
+}
 
-      const priceHtml = mainPrice
-        ? `
-        ${showOrig ? `<span class="wpg-orig">월 ${monthly.toLocaleString()}원</span>` : ''}
-        <div class="wpg-price-line">
-          ${cardPrice > 0 ? '<span class="wpg-tag">제휴카드</span>' : ''}
-          <span class="wpg-price">월 ${mainPrice.toLocaleString()}원~</span>
-        </div>`
-        : `<div class="wpg-price-line"><span class="wpg-price wpg-ask">가격 문의</span></div>`;
+// ── 카드 렌더 (renderBrand .map에서 추출 — 결과 동일). p에 brand/emoji 주입 필수.
+//    브랜드별: {...p, brand, emoji: data.emoji} / 평면 풀: getAllProductsFlat가 이미 주입.
+function renderProductCard(p) {
+  const brand = p.brand;
+  const emoji = p.emoji || '';
+  const info = getBestPriceInfo(p.pricing);
+  const hasPrice = !!info;
+  const monthly = hasPrice ? info.monthly : 0;
+  const cardPrice = hasPrice ? info.cardPrice : 0;
+  const mainPrice = cardPrice > 0 ? cardPrice : monthly; // 제휴카드 있으면 그게 메인
+  const showOrig = cardPrice > 0 && monthly > 0; // 제휴카드 메인일 때만 렌탈 취소선
 
-      return `
+  const priceHtml = mainPrice
+    ? `
+    ${showOrig ? `<span class="wpg-orig">월 ${monthly.toLocaleString()}원</span>` : ''}
+    <div class="wpg-price-line">
+      ${cardPrice > 0 ? '<span class="wpg-tag">제휴카드</span>' : ''}
+      <span class="wpg-price">월 ${mainPrice.toLocaleString()}원~</span>
+    </div>`
+    : `<div class="wpg-price-line"><span class="wpg-price wpg-ask">가격 문의</span></div>`;
+
+  return `
     <div class="water-prod-card" onclick="location.href='water-detail.html?id=${p.id}&brand=${brand}'">
       <div class="wpg-img">
         ${p.best ? '<span class="wpg-badge-best">인기</span>' : ''}
         ${p.new ? '<span class="wpg-badge-new">NEW</span>' : ''}
         ${waterFuncBadgesHtml(p.waterFunction)}
-        ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<span class="wpg-emoji">${data.emoji}</span>`}
+        ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<span class="wpg-emoji">${emoji}</span>`}
       </div>
       <div class="wpg-body">
         <div class="wpg-name">${p.name}</div>
@@ -385,8 +419,24 @@ async function renderBrand(brand) {
         ${priceHtml}
       </div>
     </div>`;
-    })
-    .join('');
+}
+
+// ── 전 브랜드 평면 풀 — 각 상품에 brand/emoji 주입 (통합 필터/카드 렌더가 소비) ──
+function getAllProductsFlat() {
+  return Object.entries(WATER_PRODUCTS).flatMap(([brand, g]) =>
+    g.products.map((p) => ({ ...p, brand, emoji: g.emoji })),
+  );
+}
+
+// ── 필터 결과 그리드 렌더 (평면 풀 상품은 brand/emoji 주입돼 있어 renderProductCard 그대로) ──
+function renderFilteredGrid(products) {
+  const listGridEl = document.getElementById('listGrid');
+  if (!listGridEl) return;
+  if (!products.length) {
+    listGridEl.innerHTML = '<div class="wpg-empty">조건에 맞는 상품이 없습니다.</div>';
+    return;
+  }
+  listGridEl.innerHTML = products.map((p) => renderProductCard(p)).join('');
 }
 
 // ── 브랜드 배너: assets/{brand}/{brand}-01.png 시도, 없으면 숨김 ──
@@ -862,11 +912,103 @@ window.addEventListener(
 );
 
 // ════════════════════════════════════════════════════
+// 사이드바 통합 필터 엔진 (#waterFilter 전 섹션) — 전 브랜드 평면풀 대상
+// 축간 AND, 축내 다중 OR. getAllProductsFlat/renderFilteredGrid(층1) 재사용.
+// ════════════════════════════════════════════════════
+function collectFilters() {
+  const c = {}; // { brand:[], waterFunction:[], householdSize:[], purposeTags:[], installType:[], filterType:[], extractType:[], pipeMaterial:[], priceRange:[], modelName:'', name:'' }
+  document
+    .querySelectorAll('#waterFilter input[type="checkbox"][data-filter]:checked')
+    .forEach((el) => {
+      const f = el.dataset.filter;
+      const v = el.dataset.value;
+      (c[f] = c[f] || []).push(v);
+    });
+  document
+    .querySelectorAll('#waterFilter input[type="text"][data-filter]')
+    .forEach((el) => {
+      if (el.value.trim()) c[el.dataset.filter] = el.value.trim();
+    });
+  return c;
+}
+
+function applyFilters() {
+  const c = collectFilters();
+  if (Object.keys(c).length === 0) {
+    renderBrand(currentBrand); // 아무 조건 없으면 현재 브랜드 화면 (listTitle도 원복)
+    return;
+  }
+
+  let list = getAllProductsFlat(); // 전 브랜드 평면풀 (층1)
+  // 축간 AND, 축내 OR
+  if (c.brand) list = list.filter((p) => c.brand.includes(p.brand));
+  if (c.waterFunction)
+    list = list.filter((p) => p.waterFunction && c.waterFunction.includes(p.waterFunction.code));
+  if (c.householdSize)
+    list = list.filter((p) => p.householdSize && c.householdSize.includes(p.householdSize.code));
+  if (c.purposeTags)
+    list = list.filter(
+      (p) => Array.isArray(p.purposeTags) && c.purposeTags.some((v) => p.purposeTags.includes(v)),
+    );
+  if (c.installType)
+    list = list.filter((p) => p.installType && c.installType.includes(p.installType.code));
+  if (c.filterType)
+    list = list.filter((p) => p.filterType && c.filterType.includes(p.filterType.code));
+  if (c.extractType)
+    list = list.filter((p) => p.extractType && c.extractType.includes(p.extractType.code));
+  if (c.pipeMaterial)
+    list = list.filter((p) => p.pipeMaterial && c.pipeMaterial.includes(p.pipeMaterial.code));
+  if (c.priceRange)
+    list = list.filter((p) => p.priceBucket && c.priceRange.includes(p.priceBucket));
+  if (c.modelName) list = list.filter((p) => (p.modelName || '').includes(c.modelName));
+  if (c.name) list = list.filter((p) => (p.name || '').includes(c.name));
+
+  renderFilteredGrid(list); // 층1
+  updateListTitle(`검색 결과 (${list.length})`);
+}
+
+function updateListTitle(text) {
+  const t = document.getElementById('listTitle');
+  if (t) t.textContent = text;
+}
+
+// 사이드바 입력 바인딩 + 초기화 버튼 (DOMContentLoaded에서 1회)
+function initWaterFilter() {
+  const panel = document.getElementById('waterFilter');
+  if (!panel) return;
+  panel.querySelectorAll('input[data-filter]').forEach((el) => {
+    const evt = el.type === 'text' ? 'input' : 'change';
+    el.addEventListener(evt, applyFilters);
+  });
+  const reset = document.getElementById('wfReset');
+  if (reset) reset.addEventListener('click', resetFilters);
+}
+
+// 초기화 버튼: 입력 비우고 브랜드 화면 복귀
+function resetFilters() {
+  clearFilterInputs();
+  renderBrand(currentBrand);
+}
+
+// 입력만 비움 (renderBrand 호출 X — switchBrand가 이미 renderBrand 부르므로 무한루프 방지)
+function clearFilterInputs() {
+  const panel = document.getElementById('waterFilter');
+  if (!panel) return;
+  panel
+    .querySelectorAll('input[type="checkbox"][data-filter]')
+    .forEach((el) => (el.checked = false));
+  panel
+    .querySelectorAll('input[type="text"][data-filter]')
+    .forEach((el) => (el.value = ''));
+}
+
+// ════════════════════════════════════════════════════
 // 초기 실행
 // ════════════════════════════════════════════════════
 loadWaterProducts().catch(() => {});
 
 document.addEventListener('DOMContentLoaded', () => {
+  initWaterFilter(); // 사이드바 필터 입력 바인딩 + 초기화 버튼
   if (typeof resumePendingKakaoConsult === 'function') {
     resumePendingKakaoConsult();
   }
