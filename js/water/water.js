@@ -99,8 +99,15 @@ function groupByBrand(list) {
       filterType: p.filterType || null,
       extractType: p.extractType || null,
       pipeMaterial: p.pipeMaterial || null,
+      // 살균방식(sanitizing) — 응답 [{code,label}] → code 배열(필터 includes 매칭용)
+      sanitizing: Array.isArray(p.sanitizing) ? p.sanitizing.map((t) => t.code) : [],
       // 월 렌탈료: 저장 priceRange(대부분 null) 대신 pricing 최저 월요금으로 구간 산출
       priceBucket: computePriceBucket(p.pricing),
+      // 배지/필터용 — 특가(special)·프로모션(promoType {code,label} or null)·슬림(slimType)·타사보상(tradeIn)
+      special: !!p.special,
+      promoType: p.promoType || null,
+      slimType: p.slimType || null,
+      tradeIn: !!p.tradeIn,
     });
   });
 
@@ -111,18 +118,17 @@ function groupByBrand(list) {
   return groups;
 }
 
-// ── 월 렌탈료 구간 판정 — pricing 최저 월요금 → priceRange enum 코드 ──
-// 경계는 < 비교 (10000 정확히면 RANGE_10K = "1만원대"). getBestPriceInfo 재사용.
+// ── 월 렌탈료 구간 판정 — pricing 최저 월요금 → priceRange enum 코드 (J1: 4구간) ──
+// 1만원 미만은 RANGE_10K로 흡수(백엔드 V20260704003 UNDER_10K→RANGE_10K 병합과 일치).
+// 4만원 이상은 OVER_40K(구 RANGE_40K/OVER_50K 병합). getBestPriceInfo 재사용.
 function computePriceBucket(pricing) {
   const info = getBestPriceInfo(pricing);
   const m = info && info.monthly ? info.monthly : null;
   if (m == null) return null;
-  if (m < 10000) return 'UNDER_10K';
   if (m < 20000) return 'RANGE_10K';
   if (m < 30000) return 'RANGE_20K';
   if (m < 40000) return 'RANGE_30K';
-  if (m < 50000) return 'RANGE_40K';
-  return 'OVER_50K';
+  return 'OVER_40K';
 }
 
 // ── 정수기능 뱃지 ──
@@ -133,6 +139,7 @@ const WATER_FUNC_CHIPS = {
   COLD: ['cold', 'pure'],
   HOT: ['hot', 'pure'],
   COLD_HOT: ['cold', 'hot', 'pure'],
+  COLD_ICE: ['cold', 'pure', 'ice'],
   COLD_HOT_ICE: ['cold', 'hot', 'pure', 'ice'],
 };
 const WATER_FUNC_META = {
@@ -148,6 +155,17 @@ function waterFuncBadgesHtml(wf) {
     .map((k) => `<span class="w-func-badge ${WATER_FUNC_META[k].cls}">${WATER_FUNC_META[k].label}</span>`)
     .join('');
   return `<div class="w-func-badges">${chips}</div>`;
+}
+
+// ── 카드 메타 배지 (표 ○ 세트 중 특가/프로모션/슬림/타사보상) ──
+// BEST·정수기능은 별도(코너 배지). 값 존재 시에만 노출. 라벨은 고정 enum 라벨(이스케이프 불요).
+function metaBadgesHtml(p) {
+  let h = '';
+  if (p.special) h += '<span class="wpg-badge wpg-badge-special">특가</span>';
+  if (p.promoType) h += `<span class="wpg-badge wpg-badge-promo">${p.promoType.label || '프로모션'}</span>`;
+  if (p.slimType) h += '<span class="wpg-badge wpg-badge-slim">초슬림</span>';
+  if (p.tradeIn) h += '<span class="wpg-badge wpg-badge-trade">타사보상</span>';
+  return h ? `<div class="wpg-meta-badges">${h}</div>` : '';
 }
 
 // ── 제품 색상 칩 ──
@@ -414,6 +432,7 @@ function renderProductCard(p) {
       <div class="wpg-body">
         <div class="wpg-name">${p.name}</div>
         ${p.modelName ? `<div class="wpg-model">${p.modelName}</div>` : ''}
+        ${metaBadgesHtml(p)}
         ${waterColorChipsHtml(p.colors)}
         ${ratingHtml(p.averageRating, p.reviewCount)}
         ${priceHtml}
@@ -960,6 +979,13 @@ function applyFilters() {
     list = list.filter((p) => p.pipeMaterial && c.pipeMaterial.includes(p.pipeMaterial.code));
   if (c.priceRange)
     list = list.filter((p) => p.priceBucket && c.priceRange.includes(p.priceBucket));
+  // 살균방식(sanitizing) — code 배열로 정규화. 선택값 중 하나라도 포함(OR).
+  if (c.sanitizing)
+    list = list.filter(
+      (p) => Array.isArray(p.sanitizing) && c.sanitizing.some((v) => p.sanitizing.includes(v)),
+    );
+  // 타사보상 — 단일 축. 체크 시 tradeIn=true 상품만.
+  if (c.tradeIn) list = list.filter((p) => p.tradeIn === true);
   if (c.modelName) list = list.filter((p) => (p.modelName || '').includes(c.modelName));
   if (c.name) list = list.filter((p) => (p.name || '').includes(c.name));
 

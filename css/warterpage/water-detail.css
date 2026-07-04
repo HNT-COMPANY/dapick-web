@@ -204,27 +204,224 @@
 .wd-detail-section {
   margin-top: 50px;
 }
+/* 박스형 세그먼트 탭 — 균등분할·셀 경계선·전체 테두리+radius (정수기 3탭 / 렌탈 2탭 공유) */
 .wd-detail-tabbar {
   display: flex;
-  border-bottom: 2px solid var(--border-card, #e8e6f3);
+  border: 1px solid var(--border-card, #e5e3f5);
+  border-radius: 12px;
+  overflow: hidden; /* 활성 셀 채움색이 모서리 radius 안에서 클립 */
   margin-bottom: 24px;
 }
 .wd-tab {
-  padding: 14px 24px;
-  font-size: 15px;
+  flex: 1 1 0; /* 탭 균등분할 */
+  text-align: center;
+  padding: 16px 12px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--text-muted, #8a8a99); /* 기본: 비활성(연한 색) */
-  border-bottom: 2px solid transparent; /* 기본: 밑줄 투명 */
-  margin-bottom: -2px;
+  color: var(--text-muted, #a09dbb); /* 기본: 비활성 */
+  background: #fff;
   cursor: pointer;
   transition:
-    color 0.15s,
-    border-color 0.15s;
+    background 0.15s,
+    color 0.15s;
+}
+.wd-tab + .wd-tab {
+  border-left: 1px solid var(--border-card, #e5e3f5); /* 셀 경계선 */
 }
 .wd-tab.active {
-  color: var(--purple, #5b5bd6); /* 활성: 진한 퍼플 */
-  border-bottom-color: var(--purple, #5b5bd6); /* 활성: 퍼플 밑줄 */
+  background: var(--purple, #6c3fc5); /* 활성: 채움 (그레이 원하면 이 값 1개 교체) */
+  color: #fff;
 }
+
+/* 제품사양 표 (좌열 라벨=연보라 셀/보라 글자, 우열 값, 행 구분선) */
+.wd-spec-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+.wd-spec-table th,
+.wd-spec-table td {
+  border: 1px solid var(--border-card, #e5e3f5);
+  padding: 12px 16px;
+  text-align: left;
+  vertical-align: top;
+}
+.wd-spec-table .wd-spec-th {
+  width: 128px;
+  background: var(--purple-pale, #f3eeff);
+  color: var(--purple, #6c3fc5);
+  font-weight: 700;
+  white-space: nowrap;
+}
+.wd-spec-table .wd-spec-td {
+  color: #444;
+}
+
+/* 제품사양 요약 — 6칸 그리드 박스 (연보라 bg, 3열×2행, 칸 사이 구분선) */
+.wd-spec-sum {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px; /* gap 이 구분선 색을 드러냄 (구분선 = 배경색) */
+  background: var(--border-card, #e5e3f5); /* 칸 사이 세로/가로 구분선 색 */
+  border: 1px solid var(--border-card, #e5e3f5); /* 박스 외곽 */
+  border-radius: 12px;
+  overflow: hidden;
+}
+.wd-spec-sum-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 18px 14px;
+  text-align: center;
+  background: #fff; /* 칸 배경 흰색 (구분감은 배경 대신 테두리로) */
+}
+.wd-spec-sum-label {
+  font-size: 13px;
+  color: #222; /* 라벨 검정 */
+  font-weight: 700;
+}
+.wd-spec-sum-val {
+  font-size: 16px;
+  color: var(--purple, #6c3fc5); /* 값 보라 강조 */
+  font-weight: 700;
+}
+/* 값 없음('-')은 회색 — 보라로 물들면 미입력이 강조돼 보이므로 제외 */
+.wd-spec-sum-val.is-empty {
+  color: #c0bccc;
+}
+
+/* 제품사양: 요약 → 상세 전환 버튼 (중앙 아웃라인, min 240px, hover 연보라) */
+.wd-spec-more-btn {
+  display: block;
+  margin: 16px auto 0;
+  min-width: 240px;
+  padding: 13px 24px;
+  background: #fff;
+  border: 1px solid var(--purple, #6c3fc5);
+  border-radius: 10px;
+  color: var(--purple, #6c3fc5);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.wd-spec-more-btn:hover {
+  background: var(--purple-pale, #f3eeff);
+}
+
+/* 제품사양 상세 뷰 — 2열 페어 그리드 + O/X (라벨셀 회백 bg) */
+.wd-spec2-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--purple, #6c3fc5);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 0;
+  margin-bottom: 12px;
+}
+.wd-spec2-block {
+  margin-bottom: 28px;
+}
+.wd-spec2-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #222;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
+  border-bottom: 2px solid var(--purple, #6c3fc5);
+}
+.wd-spec2-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-top: 1px solid var(--border-card, #e5e3f5);
+  border-left: 1px solid var(--border-card, #e5e3f5);
+}
+.wd-spec2-cell {
+  display: flex;
+  align-items: stretch;
+  border-right: 1px solid var(--border-card, #e5e3f5);
+  border-bottom: 1px solid var(--border-card, #e5e3f5);
+  font-size: 14px;
+}
+.wd-spec2-label {
+  flex: 0 0 160px; /* 넓어진 폭(960px)에서 40%는 과대 → 고정 160px */
+  background: #f5f4f8; /* 회백 톤 (다픽 연보라계 중립) */
+  color: #555;
+  font-weight: 700;
+  padding: 12px 14px;
+}
+.wd-spec2-val {
+  flex: 1;
+  padding: 12px 14px;
+  color: #333;
+  word-break: break-word;
+}
+.wd-spec2-ox {
+  flex: 1;
+  padding: 12px 14px;
+  font-weight: 800;
+  text-align: center;
+}
+.wd-spec2-ox.is-on {
+  color: var(--purple, #6c3fc5);
+}
+.wd-spec2-ox.is-off {
+  color: #ccc;
+}
+
+/* ── 전면 스펙 페이지 (view=spec) — 세로 단일 컬럼, 720px 중앙 ── */
+.wd-specpage {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 8px 16px 60px;
+}
+.wd-specpage-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: none;
+  border: none;
+  color: var(--purple, #6c3fc5);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 8px 0;
+  margin-bottom: 8px;
+}
+.wd-specpage-inner {
+  display: flex;
+  flex-direction: column;
+}
+.wd-specpage-hero {
+  text-align: center;
+  margin: 8px 0 16px;
+}
+.wd-specpage-img {
+  display: block;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  margin: 0 auto;
+  border-radius: 12px;
+}
+.wd-specpage-name {
+  text-align: center;
+  font-size: 20px;
+  font-weight: 800;
+  color: #1a1a1a;
+  margin-top: 4px;
+}
+.wd-specpage-model {
+  text-align: center;
+  font-size: 14px;
+  color: #888;
+  margin: 4px 0 20px;
+}
+
 /* 리뷰 패널: 탭 안에서는 상세 패널 폭에 맞춰 정합 (.dpr 자체 max-width 무력화) */
 #reviewSection .dpr {
   max-width: none;
@@ -254,6 +451,31 @@
   }
   .wd-wrap {
     padding: 20px 16px 60px;
+  }
+  /* 탭 3개 유지하되 축소 */
+  .wd-tab {
+    padding: 12px 8px;
+    font-size: 14px;
+  }
+  /* 스펙 표 축소 */
+  .wd-spec-table .wd-spec-th {
+    width: 96px;
+  }
+  .wd-spec-table th,
+  .wd-spec-table td {
+    padding: 10px 12px;
+  }
+  /* 상세 뷰 2열 페어 그리드 → 1열 스택 */
+  .wd-spec2-grid {
+    grid-template-columns: 1fr;
+  }
+  /* 전면 스펙 페이지 이미지 축소 (M3: 900px 이하 max 280px) */
+  .wd-specpage-img {
+    max-width: 280px;
+  }
+  /* 6칸 요약 박스 3열 → 2열 재배열 */
+  .wd-spec-sum {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

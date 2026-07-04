@@ -1206,6 +1206,26 @@
   font-weight: 500;
 }
 
+/* 카드 메타 배지 — 특가/프로모션/슬림/타사보상 (본문 인라인 칩, 코너배지와 분리) */
+.wpg-meta-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin: 0 0 2px;
+}
+.wpg-badge {
+  font-size: 10px;
+  font-weight: 700;
+  padding: 2px 8px;
+  border-radius: 999px;
+  line-height: 1.35;
+  white-space: nowrap;
+}
+.wpg-badge-special { background: #fee2e2; color: #b91c1c; }
+.wpg-badge-promo { background: #ede9fe; color: #6d28d9; }
+.wpg-badge-slim { background: #e0f2fe; color: #0369a1; }
+.wpg-badge-trade { background: #fef3c7; color: #92400e; }
+
 /* 가격 */
 .wpg-orig {
   font-size: 12px;

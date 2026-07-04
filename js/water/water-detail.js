@@ -23,6 +23,13 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   loadDetail(id);
 
+  // 후기 모듈 초기화 (id = 상품 UUID = WD_PRODUCT.id). 신규 API 호출은 reviews.js 내부.
+  if (typeof initReviews === 'function') initReviews(id);
+  // 상세/제품사양/리뷰 탭 전환 (data-tab ↔ 패널 id 맵 기반 범용 토글, N탭 대응)
+  initDetailTabs();
+  // 스펙 상세 뷰 뒤로/앞으로 대응 (1회 등록)
+  window.addEventListener('popstate', onSpecPopState);
+
   // 로그인 후 복귀 시 신청 모달 이어서
   if (
     typeof DapickApplication !== 'undefined' &&
@@ -31,6 +38,136 @@ document.addEventListener('DOMContentLoaded', () => {
     DapickApplication.resumeIfPending();
   }
 });
+
+// 탭 전환 — 패널은 미리 렌더, 보이기/숨기기만. data-tab 값 → 패널 element id 맵.
+const DETAIL_PANELS = {
+  detail: 'wdDetailBody',
+  spec: 'wdSpecBody',
+  review: 'reviewSection',
+};
+function setActiveDetailTab(key) {
+  const tabbar = document.querySelector('.wd-detail-tabbar');
+  if (!tabbar) return;
+  tabbar
+    .querySelectorAll('.wd-tab')
+    .forEach((t) => t.classList.toggle('active', t.getAttribute('data-tab') === key));
+  Object.keys(DETAIL_PANELS).forEach((k) => {
+    const el = document.getElementById(DETAIL_PANELS[k]);
+    if (el) el.style.display = k === key ? '' : 'none';
+  });
+}
+function initDetailTabs() {
+  const tabbar = document.querySelector('.wd-detail-tabbar');
+  if (!tabbar) return;
+  tabbar.addEventListener('click', (e) => {
+    const tab = e.target.closest('.wd-tab');
+    if (!tab) return;
+    const key = tab.getAttribute('data-tab');
+    setActiveDetailTab(key);
+    // R1-5: 제품사양 외 탭으로 전환 시 view=spec 상태면 URL 정리 + 패널을 요약으로 리셋
+    if (key !== 'spec' && hasSpecView()) {
+      const url = new URL(location.href);
+      url.searchParams.delete('view');
+      history.replaceState({}, '', url);
+      renderSpecBody();
+    }
+  });
+}
+
+// ── 스펙 상세 뷰 URL 라우팅 (history API) ──
+function hasSpecView() {
+  return new URLSearchParams(location.search).get('view') === 'spec';
+}
+// "스펙 전체보기" — pushState(&view=spec) 후 상세 뷰 진입
+function openSpecDetail() {
+  const url = new URL(location.href);
+  url.searchParams.set('view', 'spec');
+  history.pushState({ view: 'spec' }, '', url);
+  enterSpecView();
+}
+// 초기 로드: view=spec URL(새로고침·공유 링크) → 요약 베이스 엔트리 확보 후 스펙 탭+상세 뷰 직진입
+function initSpecRouting() {
+  if (!hasSpecView()) return;
+  const summaryUrl = new URL(location.href);
+  summaryUrl.searchParams.delete('view');
+  history.replaceState({}, '', summaryUrl); // 요약 엔트리 (← 요약으로 back 가능하게)
+  setActiveDetailTab('spec');
+  openSpecDetail(); // pushState(view=spec) + enterSpecView (전면 스펙 페이지)
+}
+// 뒤로/앞으로: view 파라미터 유무로 상세/요약 분기
+function onSpecPopState() {
+  if (!WD_PRODUCT) return; // 로드 전 방어
+  if (hasSpecView()) {
+    enterSpecView();
+  } else {
+    exitSpecView();
+  }
+}
+
+// ── 전면 스펙 페이지 (view=spec 시 상세 화면을 통째로 가리고 #wdSpecPage 표시) ──
+// 숨김 대상 = #wdRoot 최상위 블록(래퍼 단위): 뒤로가기 버튼 / 상단 옵션영역 / 탭+상세 섹션.
+const SPEC_HIDDEN_BLOCKS = ['.wd-back', '.wd-top', '.wd-detail-section'];
+
+function setSpecBaseVisible(show) {
+  const root = document.getElementById('wdRoot');
+  if (!root) return;
+  SPEC_HIDDEN_BLOCKS.forEach((sel) => {
+    const el = root.querySelector(sel);
+    if (el) el.style.display = show ? '' : 'none';
+  });
+}
+
+// #wdSpecPage 1회 생성 (HTML 수정 최소화 — JS로 .wd-wrap 안에 주입).
+function ensureSpecPage() {
+  if (document.getElementById('wdSpecPage')) return;
+  const root = document.getElementById('wdRoot');
+  if (!root) return;
+  const page = document.createElement('div');
+  page.id = 'wdSpecPage';
+  page.className = 'wd-specpage';
+  page.style.display = 'none';
+  root.appendChild(page);
+}
+
+function enterSpecView() {
+  if (!WD_PRODUCT) return;
+  ensureSpecPage();
+  setSpecBaseVisible(false); // 기존 상세 블록 숨김
+  const page = document.getElementById('wdSpecPage');
+  if (page) page.style.display = '';
+  renderSpecPage();
+  window.scrollTo(0, 0);
+}
+
+function exitSpecView() {
+  const page = document.getElementById('wdSpecPage');
+  if (page) page.style.display = 'none';
+  setSpecBaseVisible(true); // 상세 블록 복원 (가격바·탭 정상)
+  setActiveDetailTab('spec'); // 복귀 시 '제품사양' 탭 활성 유지
+  renderSpecBody(); // 요약 패널 원복
+}
+
+// 전면 스펙 페이지 렌더 — 세로 단일 컬럼: 돌아가기 / 이미지 / 상품명·모델명 / 스펙 섹션들.
+function renderSpecPage() {
+  const page = document.getElementById('wdSpecPage');
+  if (!page) return;
+  const p = WD_PRODUCT;
+
+  let html =
+    '<button type="button" class="wd-specpage-back" onclick="backToSpecSummary()">← 상품으로 돌아가기</button>';
+  html += '<div class="wd-specpage-inner">';
+  if (p.image) {
+    html += `<div class="wd-specpage-hero"><img class="wd-specpage-img" src="${p.image}" alt="${escapeHtml(p.name || '')}"></div>`;
+  }
+  html += `<div class="wd-specpage-name">${escapeHtml(p.name || '')}</div>`;
+  if (p.modelName) {
+    html += `<div class="wd-specpage-model">${escapeHtml(p.modelName)}</div>`;
+  }
+  // 기존 섹션 렌더 함수 재사용 (마크업 재발명 금지) — 표는 기존 .wd-spec2-* 그대로.
+  html += `<div class="wd-spec2">${specSectionsInnerHtml(p)}</div>`;
+  html += '</div>';
+  page.innerHTML = html;
+}
 
 function showStatus(msg) {
   const el = document.getElementById('wdRoot');
@@ -61,6 +198,28 @@ async function loadDetail(id) {
       detailImages: Array.isArray(p.detailImages) ? p.detailImages : [],
       best: !!p.best,
       new: !!p.new,
+      // ── 제품사양 탭용 스펙 승계 (표는 값 있는 행만 노출) ──
+      // enum 필드는 {code,label} 그대로 / 다중선택은 [{code,label}] 배열 / 나머지는 원시값
+      extractType: p.extractType || null,
+      waterFunction: p.waterFunction || null,
+      installType: p.installType || null,
+      filterType: p.filterType || null,
+      sanitizing: Array.isArray(p.sanitizing) ? p.sanitizing : [],
+      pipeMaterial: p.pipeMaterial || null,
+      slimType: p.slimType || null,
+      householdSize: p.householdSize || null,
+      features: Array.isArray(p.features) ? p.features : [], // O/X 유도용
+      width: p.width || '',
+      depth: p.depth || '', // 2단계: 제품 크기 W×D×H
+      height: p.height || '',
+      weight: p.weight || '',
+      power: p.power || '',
+      energyGrade: p.energyGrade != null ? p.energyGrade : null,
+      filterCount: p.filterCount != null ? p.filterCount : null,
+      careInterval: p.careInterval || '',
+      controlFeatures: p.controlFeatures || '',
+      extraFeatures: p.extraFeatures || '',
+      specSections: Array.isArray(p.specSections) ? p.specSections : [], // 2단계: 추가 스펙 섹션
     };
 
     // water.js 전역 WATER_PRODUCTS 에 주입 → openDialog(id, brand) 가 찾을 수 있게
@@ -79,6 +238,7 @@ async function loadDetail(id) {
 
     WD_COLOR = WD_PRODUCT.colors[0];
     renderDetail();
+    initSpecRouting(); // view=spec 직진입/새로고침 대응 (renderDetail 후 = 패널 렌더 완료 시점)
   } catch (e) {
     console.error('[water-detail] 로드 실패:', e);
     showStatus('상품 정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.');
@@ -133,6 +293,7 @@ function renderDetail() {
   renderColors();
   calc();
   renderDetailBody(); // 하단 상세는 한 번만 렌더 (calc 와 분리)
+  renderSpecBody(); // 제품사양 탭도 한 번만 렌더
 }
 
 // 관리주기 라벨: '셀프형'은 그대로, 숫자형은 "방문관리" 붙임(중복 방지)
@@ -293,6 +454,204 @@ function calc() {
   document.getElementById('wdSpecSupport').innerHTML = d.maxSupport
     ? `<span style="color:var(--purple);">₩ ${d.maxSupport.toLocaleString()}</span>`
     : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
+}
+
+// ── 제품사양 표 ──────────────────────────────────────────────
+// enum {code,label} → label / 다중선택 [{label}] → ' · ' join / 원시값은 그대로.
+// get(p)가 '' 반환하면 그 행은 표에서 스킵(값 있는 행만 노출 → 표 길이 자동 가변).
+function specEnumLabel(e) {
+  return e && e.label ? e.label : '';
+}
+function specEnumList(arr) {
+  return Array.isArray(arr)
+    ? arr.map((x) => x && x.label).filter(Boolean).join(' · ')
+    : '';
+}
+function specSizeText(p) {
+  // 제품 크기 W × D × H (있는 값만 조합).
+  const parts = [];
+  if (p.width) parts.push(`W ${p.width}`);
+  if (p.depth) parts.push(`D ${p.depth}`);
+  if (p.height) parts.push(`H ${p.height}`);
+  return parts.join(' × ');
+}
+
+// 단위 부착 — 이중부착 방지: 값에 이미 문자(단위)가 있으면 그대로, 순수 숫자면 단위 붙임.
+// 어드민 신규저장은 숫자만("180")이라 mm/kg/W 부착. 레거시 "180mm"류는 이미 단위 포함 → 그대로.
+function withUnit(v, unit) {
+  const s = String(v == null ? '' : v).trim();
+  if (s === '') return '';
+  return /[a-zA-Z가-힣]/.test(s) ? s : s + unit;
+}
+
+// '스펙' 섹션 전용 2열 그리드 — 셀 배열({label,value} 또는 {empty:true})을 그대로 렌더.
+// 빈 셀은 라벨 없는 백지 셀(그리드 stretch로 행 높이 매칭)로 좌/우 정렬을 유지한다.
+function specColumnGrid(cells) {
+  if (!cells.some((c) => !c.empty)) return '';
+  return (
+    '<div class="wd-spec2-grid">' +
+    cells
+      .map((c) =>
+        c.empty
+          ? '<div class="wd-spec2-cell"></div>'
+          : `<div class="wd-spec2-cell"><span class="wd-spec2-label">${escapeHtml(c.label)}</span><span class="wd-spec2-val">${escapeHtml(c.value)}</span></div>`,
+      )
+      .join('') +
+    '</div>'
+  );
+}
+
+// 표 행 순서 = 레퍼런스 미러
+const SPEC_ROWS = [
+  { label: '정수 방식', get: (p) => specEnumLabel(p.extractType) },
+  { label: '출수 기능', get: (p) => specEnumLabel(p.waterFunction) },
+  { label: '설치 형태', get: (p) => specEnumLabel(p.installType) },
+  { label: '필터 방식', get: (p) => specEnumLabel(p.filterType) },
+  { label: '살균 방식', get: (p) => specEnumList(p.sanitizing) },
+  { label: '직수관 재질', get: (p) => specEnumLabel(p.pipeMaterial) },
+  { label: '제품 크기', get: (p) => specSizeText(p) },
+  { label: '제품 무게', get: (p) => p.weight || '' },
+  { label: '소비 전력', get: (p) => p.power || '' },
+  { label: '에너지 등급', get: (p) => (p.energyGrade != null ? `${p.energyGrade}등급` : '') },
+  { label: '필터 개수', get: (p) => (p.filterCount != null ? `${p.filterCount}개` : '') },
+  { label: '필터 교체', get: (p) => p.careInterval || '' },
+  { label: '조작 기능', get: (p) => p.controlFeatures || '' },
+  { label: '부가 기능', get: (p) => p.extraFeatures || '' },
+];
+
+// 제품사양 탭: 값 있는 행만 표로 (renderDetailBody 미러: 누적→빈 가드→innerHTML)
+function renderSpecBody() {
+  const body = document.getElementById('wdSpecBody');
+  if (!body) return;
+  const p = WD_PRODUCT;
+
+  // 6칸 요약 박스 — 표 순: 정수타입/정수기능/제품유형/필터방식/살균방식/에너지효율 (3열 행우선).
+  // 살균방식 = sanitizing(어드민 살균방식 드롭다운 저장필드), 정수타입 = extractType. 값 없으면 '-'.
+  const cells = [
+    { label: '정수타입', value: specEnumLabel(p.extractType) },
+    { label: '정수기능', value: specEnumLabel(p.waterFunction) },
+    { label: '제품유형', value: specEnumLabel(p.installType) },
+    { label: '필터방식', value: specEnumLabel(p.filterType) },
+    { label: '살균방식', value: specEnumList(p.sanitizing) },
+    { label: '에너지효율', value: p.energyGrade != null ? `${p.energyGrade}등급` : '' },
+  ];
+  const cellsHtml = cells
+    .map((c) => {
+      const v = String(c.value || '').trim() || '-';
+      // 값 없음('-')이면 is-empty(회색) — 실값만 보라 강조. CSS 로는 텍스트('-') 판별 불가라 클래스로 훅.
+      const valCls = v === '-' ? 'wd-spec-sum-val is-empty' : 'wd-spec-sum-val';
+      return `<div class="wd-spec-sum-cell"><span class="wd-spec-sum-label">${escapeHtml(c.label)}</span><span class="${valCls}">${escapeHtml(v)}</span></div>`;
+    })
+    .join('');
+
+  body.innerHTML =
+    `<div class="wd-spec-sum">${cellsHtml}</div>` +
+    '<button type="button" class="wd-spec-more-btn" onclick="openSpecDetail()">스펙 전체보기 &gt;</button>';
+}
+
+// 최저 월 렌탈료 텍스트 — water.js getMinPrice 재사용(새 계산식 없음). 없으면 ''.
+function specMinRentalText(p) {
+  if (typeof getMinPrice !== 'function' || !p.pricing) return '';
+  const min = getMinPrice(p.pricing);
+  return min > 0 ? `월 ${min.toLocaleString()}원` : '';
+}
+
+// ── 제품사양 상세 뷰 (요약 ⇄ 상세 innerHTML 교체, 탭/URL 불변) ──
+// 구성(이미지1): 기본정보 / 상품색상 / 스펙(단위부착) / 필터옵션 → + specSections 최하단. O/X표 제거됨.
+function specPushPair(arr, label, value) {
+  const v = String(value == null ? '' : value).trim();
+  if (v !== '') arr.push({ label: label, value: v });
+}
+function specSection2(title, innerHtml) {
+  if (!innerHtml) return '';
+  return `<div class="wd-spec2-block"><h3 class="wd-spec2-title">${escapeHtml(title)}</h3>${innerHtml}</div>`;
+}
+function specPairsGrid(pairs) {
+  if (!pairs.length) return '';
+  return (
+    '<div class="wd-spec2-grid">' +
+    pairs
+      .map(
+        (pr) =>
+          `<div class="wd-spec2-cell"><span class="wd-spec2-label">${escapeHtml(pr.label)}</span><span class="wd-spec2-val">${escapeHtml(pr.value)}</span></div>`,
+      )
+      .join('') +
+    '</div>'
+  );
+}
+// 스펙 섹션 innerHTML 조립 (기본정보/상품색상/스펙/필터옵션/specSections) — 전면 스펙 페이지 공용 순수 함수.
+// .wd-spec2 래퍼·백버튼은 호출부(renderSpecPage)가 담당. 섹션 마크업은 기존 함수 재사용.
+function specSectionsInnerHtml(p) {
+  const sections = Array.isArray(p.specSections) ? p.specSections : [];
+  let html = '';
+
+  // 1. 기본정보 — 상품명/모델명 + specSections title="기본사양" 행 이어붙임
+  const basic = [];
+  specPushPair(basic, '상품명', p.name);
+  specPushPair(basic, '모델명', p.modelName);
+  sections
+    .filter((s) => (s.title || '').trim() === '기본사양')
+    .forEach((s) =>
+      (s.rows || []).forEach((r) => specPushPair(basic, r.label, r.value)),
+    );
+  html += specSection2('기본정보', specPairsGrid(basic));
+
+  // 2. 상품색상
+  const colorPairs = [];
+  specPushPair(colorPairs, '색상', (p.colors || []).filter((c) => c && c !== '기본').join(', '));
+  html += specSection2('상품색상', specPairsGrid(colorPairs));
+
+  // 3. 스펙 — 좌열 W/D/H/소비전력, 우열 무게/에너지효율 (단위부착 mm/kg/W, 이중부착 방지).
+  //    ★이 섹션 전용 조립: specPushPair 스킵(밀림) 대신 열 단위로 present 값만 모아 zip →
+  //    한 열이 짧으면 그 행의 반대 칸을 빈 셀로 채워 좌/우 정렬 유지 (다른 섹션 스킵 규칙 불변).
+  const specLeft = [
+    { label: '가로(W)', value: withUnit(p.width, 'mm') },
+    { label: '세로(깊이)(D)', value: withUnit(p.depth, 'mm') },
+    { label: '높이(H)', value: withUnit(p.height, 'mm') },
+    { label: '소비전력', value: withUnit(p.power, 'W') },
+  ].filter((it) => it.value !== '');
+  const specRight = [
+    { label: '제품 무게', value: withUnit(p.weight, 'kg') },
+    { label: '에너지효율', value: p.energyGrade != null ? `${p.energyGrade}등급` : '' },
+  ].filter((it) => it.value !== '');
+  const specCells = [];
+  const specRows = Math.max(specLeft.length, specRight.length);
+  for (let i = 0; i < specRows; i++) {
+    specCells.push(specLeft[i] || { empty: true });
+    specCells.push(specRight[i] || { empty: true });
+  }
+  html += specSection2('스펙', specColumnGrid(specCells));
+
+  // 4. 필터옵션 — 표 순: 정수기능/제품유형/필터방식/살균방식/정수타입/가격대
+  const filt = [];
+  specPushPair(filt, '정수기능', specEnumLabel(p.waterFunction));
+  specPushPair(filt, '제품유형', specEnumLabel(p.installType));
+  specPushPair(filt, '필터방식', specEnumLabel(p.filterType));
+  specPushPair(filt, '살균방식', specEnumList(p.sanitizing));
+  specPushPair(filt, '정수타입', specEnumLabel(p.extractType));
+  specPushPair(filt, '가격대', specEnumLabel(p.priceRange));
+  html += specSection2('필터옵션', specPairsGrid(filt));
+
+  // 5. 추가 스펙 섹션(기본사양 제외) — 최하단 유지
+  const rest = sections
+    .filter((s) => (s.title || '').trim() !== '기본사양')
+    .map((s) => ({ title: (s.title || '').trim() || '기타', rows: (s.rows || []).slice() }));
+  rest.forEach((s) => {
+    const pairs = [];
+    s.rows.forEach((r) => specPushPair(pairs, r.label, r.value));
+    html += specSection2(s.title, specPairsGrid(pairs));
+  });
+
+  return html;
+}
+
+// R1-2: 뒤로가기로 통일 (pushState 중복 방지). popstate 가 renderSpecBody + URL 정리 담당.
+function backToSpecSummary() {
+  history.back();
+}
+function scrollSpecTop() {
+  const bar = document.querySelector('.wd-detail-tabbar');
+  if (bar) bar.scrollIntoView({ behavior: 'smooth', block: 'start' });
 }
 
 // 하단 상세: 상세이미지 세로 나열(쿠팡식) + 텍스트 설명 + 펼쳐보기 토글

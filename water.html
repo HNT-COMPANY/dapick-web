@@ -215,6 +215,7 @@
             <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD"><span>냉/정</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="HOT"><span>온/정</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD_HOT"><span>냉/온/정</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD_ICE"><span>냉/정/얼음</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD_HOT_ICE"><span>냉/온/정/얼음</span></label>
           </div>
         </div>
@@ -247,12 +248,10 @@
         <div class="wf-section">
           <div class="wf-section-label">월 렌탈료</div>
           <div class="wf-options">
-            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="UNDER_10K"><span>1만원 미만</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_10K"><span>1만원대</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_20K"><span>2만원대</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_30K"><span>3만원대</span></label>
-            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_40K"><span>4만원대</span></label>
-            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="OVER_50K"><span>5만원 이상</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="OVER_40K"><span>4만원 이상</span></label>
           </div>
         </div>
 
@@ -261,7 +260,7 @@
           <div class="wf-section-label">설치 형태</div>
           <div class="wf-options">
             <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="DESK"><span>데스크형</span></label>
-            <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="BUILT_IN"><span>빌트인</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="BUILT_IN"><span>빌트인형</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="STAND"><span>스탠드형</span></label>
           </div>
         </div>
@@ -294,15 +293,27 @@
           </div>
         </div>
 
-        <!-- 10~12. 비활성 슬롯 (데이터 없음 — data 속성 없이 회색/준비중) -->
+        <!-- 10. 살균 방식 (다중) — sanitizing 기준. 저장은 단일값이나 필터는 OR 다중 대응 -->
+        <div class="wf-section">
+          <div class="wf-section-label">살균 방식</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="UV"><span>UV살균</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="HIGH_TEMP"><span>고온살균</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="ELECTROLYTIC"><span>전해수살균</span></label>
+          </div>
+        </div>
+
+        <!-- 11. 타사보상 (단일 축) -->
+        <div class="wf-section">
+          <div class="wf-section-label">타사보상</div>
+          <div class="wf-options">
+            <label class="wf-opt"><input type="checkbox" data-filter="tradeIn" data-value="true"><span>타사보상 가능</span></label>
+          </div>
+        </div>
+
+        <!-- 12. 비활성 슬롯 (데이터 없음 — data 속성 없이 회색/준비중) -->
         <div class="wf-section wf-disabled">
           <div class="wf-section-label">관리 주기<span class="wf-badge-soon">준비중</span></div>
-        </div>
-        <div class="wf-section wf-disabled">
-          <div class="wf-section-label">위생 기능<span class="wf-badge-soon">준비중</span></div>
-        </div>
-        <div class="wf-section wf-disabled">
-          <div class="wf-section-label">기능<span class="wf-badge-soon">준비중</span></div>
         </div>
       </aside>
 

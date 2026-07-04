@@ -128,6 +128,11 @@
               ? '후기 ' + count.toLocaleString() + '개'
               : '아직 등록된 후기가 없어요';
         }
+        // 정수기 상세: 리뷰 탭 라벨 카운트 (id=reviewTabCount 있을 때만 — 렌탈 HTML엔 없어 무영향)
+        var tabCountEl = document.getElementById('reviewTabCount');
+        if (tabCountEl) {
+          tabCountEl.textContent = count > 0 ? ' (' + count.toLocaleString() + ')' : '';
+        }
       })
       .catch(function (e) {
         console.warn('[reviews] stats 로드 실패:', e && e.message);
