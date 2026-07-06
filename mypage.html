@@ -118,38 +118,34 @@
 
   <!-- ── 컨텐츠 영역 ───────────────────────────────── -->
   <section class="mp-content">
-    <!-- 인사말 카드 (다픽 보라+골드 그라디언트) -->
-    <div class="mp-greeting">
-      <div class="mp-greeting__main">
-        <h1 class="mp-greeting__title">
-          <span id="greeting-nick">다픽 회원</span>님 안녕하세요 <span class="wave"></span>
-        </h1>
-        <p class="mp-greeting__email" id="greeting-email">-</p>
-      </div>
-      <div class="mp-greeting__badge">
-      </div>
-    </div>
-
-    <!-- 빠른 메뉴 그리드 (4개) -->
+    <!-- 빠른 메뉴 (4개 세로 스택) -->
     <div class="mp-quick">
       <button class="mp-quick__item" data-tab="applications">
-        <div class="mp-quick__icon mp-quick__icon--purple">📋</div>
-        <span class="mp-quick__label">신청 내역</span>
+        <span class="mp-quick__left">
+          <span class="mp-quick__icon mp-quick__icon--purple">📋</span>
+          <span class="mp-quick__label">신청 내역</span>
+        </span>
         <strong class="mp-quick__count" id="quick-app-count">0</strong>
       </button>
       <button class="mp-quick__item" data-tab="favorites">
-        <div class="mp-quick__icon mp-quick__icon--gold">⭐</div>
-        <span class="mp-quick__label">즐겨찾기</span>
+        <span class="mp-quick__left">
+          <span class="mp-quick__icon mp-quick__icon--gold">⭐</span>
+          <span class="mp-quick__label">즐겨찾기</span>
+        </span>
         <small class="mp-quick__soon">준비중</small>
       </button>
       <button class="mp-quick__item" data-tab="compare">
-        <div class="mp-quick__icon mp-quick__icon--blue">⚖️</div>
-        <span class="mp-quick__label">비교함</span>
+        <span class="mp-quick__left">
+          <span class="mp-quick__icon mp-quick__icon--blue">⚖️</span>
+          <span class="mp-quick__label">비교함</span>
+        </span>
         <small class="mp-quick__soon">준비중</small>
       </button>
       <button class="mp-quick__item" data-tab="notice">
-        <div class="mp-quick__icon mp-quick__icon--red">🔔</div>
-        <span class="mp-quick__label">알림</span>
+        <span class="mp-quick__left">
+          <span class="mp-quick__icon mp-quick__icon--red">🔔</span>
+          <span class="mp-quick__label">알림</span>
+        </span>
         <small class="mp-quick__soon">준비중</small>
       </button>
     </div>

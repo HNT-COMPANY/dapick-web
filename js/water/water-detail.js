@@ -296,10 +296,10 @@ function renderDetail() {
   renderSpecBody(); // 제품사양 탭도 한 번만 렌더
 }
 
-// 관리주기 라벨: '셀프형'은 그대로, 숫자형은 "방문관리" 붙임(중복 방지)
+// 관리주기 라벨: '셀프형'(저장키)은 화면에 '자가관리'로 표시, 숫자형은 "방문관리" 붙임(중복 방지)
 function cycleLabel(c) {
   if (!c) return '';
-  if (c.includes('셀프') || c === '셀프형') return '셀프형';
+  if (c.includes('셀프') || c === '셀프형') return '자가관리';
   return c.includes('개월') ? `${c} 방문관리` : c;
 }
 

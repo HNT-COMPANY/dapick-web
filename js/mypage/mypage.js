@@ -83,8 +83,7 @@ function renderProfile(p) {
 
   document.getElementById('sidebar-nick').textContent = nick;
   document.getElementById('sidebar-email').textContent = email;
-  document.getElementById('greeting-nick').textContent = nick;
-  document.getElementById('greeting-email').textContent = email;
+  // 환영 배너(.mp-greeting) 제거로 greeting-nick/email 바인딩 삭제 (사이드바·프로필 표시는 유지)
   document.getElementById('profile-email').textContent = email;
   document.getElementById('profile-nickname').textContent = nick;
   document.getElementById('profile-realname').textContent = p.realName || '-';
