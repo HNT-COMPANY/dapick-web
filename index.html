@@ -161,7 +161,6 @@
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <link rel="stylesheet" href="css/hero.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
-  <link rel="stylesheet" href="css/kakao-banner.css"/>
 
   <!-- Structured Data (JSON-LD)는 위 head 인라인이 정본 (JS 주입 제거) -->
 </head>
@@ -199,19 +198,6 @@
   </div> 
 </div> 
 
-<!-- 카카오 배너 -->
-<section class="kakao-banner">
-  <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-banner__link" aria-label="다픽 카카오톡 플러스친구 추가">
-    <img
-      src="assets/kakaobanner/kakaobanner-01.png"
-      alt="다픽 카카오톡 플러스친구 추가"
-      class="kakao-banner__image"
-      width="1920"
-      height="500"
-      loading="lazy"
-    />
-  </a>
-</section>
 
 <!-- 브랜드 로고 띠 (히어로 아래 독립 섹션) 
 <section class="brand-marquee" aria-label="다픽 제휴 브랜드">
@@ -515,6 +501,11 @@
 
 <!-- 카카오 플로팅 -->
 <div class="kakao-float" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
+  <!-- 카카오 플러스친구 추가 (배너에서 이전 — 링크 유지, 이미지 자리 src 삽입 예정) -->
+  <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-plus" aria-label="카카오 플러스친구 추가" onclick="event.stopPropagation()">
+    <img src="/assets/kakaoplus/kakaoplus.png" alt="카카오 플러스친구 추가" class="kakao-plus__img">
+  </a>
+  <span class="kakao-label">카카오 플러스</span>
   <button class="kakao-btn" title="카카오톡 상담">
     <svg viewBox="0 0 48 48" fill="none"><path d="M24 6C13.507 6 5 13.134 5 21.9c0 5.466 3.187 10.271 8.013 13.18L11.1 42l8.52-4.44C20.99 37.84 22.48 38 24 38c10.493 0 19-7.134 19-15.9S34.493 6 24 6z" fill="#3A1D1D"/></svg>
   </button>

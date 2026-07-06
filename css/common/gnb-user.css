@@ -294,3 +294,69 @@
   align-items: center;
   gap: 8px;
 }
+
+/* ════════════════════════════════════════════════════════
+   알림 벨 (준비중) + 트리거 사람 아이콘
+   ════════════════════════════════════════════════════════ */
+.gnb-bell {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  background: #fff;
+  border: 1.5px solid #ececec;
+  border-radius: 999px;
+  color: #1a1a1a;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.gnb-bell:hover {
+  border-color: #b8a6f0;
+  color: #5b3fbe;
+}
+.gnb-bell:active {
+  transform: translateY(1px);
+}
+
+/* 우상단 빨간 뱃지 (숫자 표시용 자리 — 현재 기능 미완이라 기본 숨김) */
+.gnb-bell-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+  box-shadow: 0 0 0 2px #fff;
+}
+.gnb-bell-badge[hidden] {
+  display: none;
+}
+
+/* 닉네임 버튼 좌측 사람 아이콘 (텍스트 블랙과 동일 색) */
+.gnb-user-btn-ico {
+  display: inline-flex;
+  align-items: center;
+  color: #1a1a1a;
+}
+.gnb-user-btn:hover .gnb-user-btn-ico,
+.gnb-user.is-open .gnb-user-btn-ico {
+  color: #5b3fbe;
+}
+
+@media (max-width: 768px) {
+  .gnb-bell {
+    width: 36px;
+    height: 36px;
+  }
+}

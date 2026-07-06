@@ -117,9 +117,16 @@
 
     // 우상단 버튼 라벨: "마이페이지" (드롭다운 토글)
     gnbRight.innerHTML =
+      // \uC54C\uB9BC \uBCA8 (\uC900\uBE44\uC911 \u2014 \uBC43\uC9C0 \uC790\uB9AC\uB9CC \uD655\uBCF4, \uD074\uB9AD \uC2DC \uC548\uB0B4)
+      '<button class="gnb-bell" type="button" aria-label="\uC54C\uB9BC" data-count="0">' +
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' +
+      '<span class="gnb-bell-badge" hidden></span>' +
+      '</button>' +
       '<div class="gnb-user" id="gnbUserDrop">' +
+      // \uD2B8\uB9AC\uAC70: \uC0AC\uB78C \uC544\uC774\uCF58 + \uB2C9\uB124\uC784 + \u25BE
       '<button class="gnb-user-btn" type="button">' +
-      '<span class="gnb-user-name">\uB9C8\uC774\uD398\uC774\uC9C0</span>' +
+      '<span class="gnb-user-btn-ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="18" height="18"><circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 4-6 8-6s8 2 8 6"/></svg></span>' +
+      '<span class="gnb-user-name">' + cleanName + '\uB2D8</span>' +
       '<span class="gnb-user-arrow">\u25BE</span>' +
       '</button>' +
       '<div class="gnb-user-panel">' +
@@ -165,6 +172,15 @@
 
     var btn = gnbRight.querySelector('.gnb-user-btn');
     if (btn) btn.addEventListener('click', toggleDrop);
+
+    // 알림 벨 — 기능 미완이므로 클릭 시 준비중 안내 (마이페이지 '준비중' 톤과 일관)
+    var bell = gnbRight.querySelector('.gnb-bell');
+    if (bell) {
+      bell.addEventListener('click', function (e) {
+        e.stopPropagation();
+        alert('알림 기능은 준비 중입니다.');
+      });
+    }
 
     gnbRight.querySelectorAll('.gnb-user-link').forEach(function (linkBtn) {
       linkBtn.addEventListener('click', function (e) {
