@@ -1089,7 +1089,7 @@
   background: var(--white); /* 제품 이미지는 흰 타일에 또렷하게 */
 }
 #productView .water-layout .wpg-name {
-  color: var(--purple); /* 상품명 = 다픽 보라 (가격 wpg-price는 기존부터 보라) */
+  color: var(--text-main); /* 상품명 = 잉크색(#18172b). 정수기 전용 스코프(#productView .water-layout) → 렌탈(.wpg-name 기본색 동일) 불변 */
 }
 
 /* 1단계-④ 제품 색상 칩 (동그라미). 정수기 전용 스코프 → 렌탈 무영향.

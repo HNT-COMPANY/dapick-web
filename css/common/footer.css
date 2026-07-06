@@ -158,6 +158,28 @@
   transform: translateY(-2px);
 }
 
+/* ── 온라인 사전 승낙서 마크 (SNS 하단, 가운데 정렬) ── */
+.footer-precon {
+  display: flex;
+  justify-content: center;
+  align-self: center; /* .footer-side 컬럼 정렬(flex-end/flex-start)과 무관하게 가운데 유지 */
+  margin-top: 20px; /* 마크 확대(48→60px)에 따른 SNS 영역과의 간격 보정 */
+}
+.footer-precon-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px; /* 모바일 터치 최소 규격 */
+}
+.footer-precon-img {
+  height: 100px; /* 사전 승낙서 마크 단독 확대 (로고와 별개) */
+  width: auto;
+  display: block;
+}
+.footer-precon-img[src=""] {
+  display: none; /* 이미지 미입력 상태에서 깨진 아이콘 방지 */
+}
+
 .footer-badges {
   display: flex;
   gap: 10px;
@@ -258,6 +280,9 @@
   .footer-logo__img {
     height: 32px;
   }
+  .footer-precon-img {
+    height: 68px; /* 모바일 단독 축소 (레이아웃 안전 범위) */
+  }
 }
 
 @media (max-width: 480px) {
@@ -277,5 +302,8 @@
   }
   .footer-logo__img {
     height: 28px;
+  }
+  .footer-precon-img {
+    height: 56px; /* 소형 화면 단독 축소 (레이아웃 안전 범위) */
   }
 }

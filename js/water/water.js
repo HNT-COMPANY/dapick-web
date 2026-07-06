@@ -120,10 +120,11 @@ function groupByBrand(list) {
 
 // ── 월 렌탈료 구간 판정 — pricing 최저 월요금 → priceRange enum 코드 (J1: 4구간) ──
 // 1만원 미만은 RANGE_10K로 흡수(백엔드 V20260704003 UNDER_10K→RANGE_10K 병합과 일치).
-// 4만원 이상은 OVER_40K(구 RANGE_40K/OVER_50K 병합). getBestPriceInfo 재사용.
+// 4만원 이상은 OVER_40K(구 RANGE_40K/OVER_50K 병합).
+// ★가격대 필터는 '월 렌탈료' 기준이어야 하므로 getMinPrice(순수 최저 monthly)로 산출.
+//   (getBestPriceInfo는 표시용으로 제휴카드가 포함된 '실지불 최저가'를 고르게 바뀌어 버킷과 분리.)
 function computePriceBucket(pricing) {
-  const info = getBestPriceInfo(pricing);
-  const m = info && info.monthly ? info.monthly : null;
+  const m = getMinPrice(pricing) || null; // 최저 monthly (없으면 0→null)
   if (m == null) return null;
   if (m < 20000) return 'RANGE_10K';
   if (m < 30000) return 'RANGE_20K';
@@ -208,6 +209,7 @@ function waterColorChipsHtml(colors) {
 // 헬퍼 함수
 // ════════════════════════════════════════════════════
 function getMinPrice(pricing) {
+  if (!pricing || typeof pricing !== 'object') return null; // ★getBestPriceInfo 가드 미러 — null/비객체는 결측(null). Object.values 전 차단.
   let min = Infinity;
   Object.values(pricing).forEach((cycles) => {
     Object.values(cycles).forEach((types) => {
@@ -231,19 +233,23 @@ function getMinByContract(pricing, contractKey) {
   return min === Infinity ? null : min;
 }
 
-// 최저가 옵션의 {monthly, cardDiscount} 반환 (카드 표시용)
+// 표시용 최저가 옵션의 {monthly, promo, cardPrice} 반환.
+// ★최저가 후보에 제휴카드 포함: 옵션별 실지불가 eff = (cardPrice>0 ? cardPrice : monthly) 가 최소인 옵션 선택.
+//   → 카드 할인가가 최저-월렌탈료가 아닌 다른 약정 티어에 있어도 대표가로 노출됨(목록/BEST 공용).
+//   카드 0/미입력 안전: 어드민 toNum('')=0 이라 저장상 0=미입력 → cardPrice>0 만 카드 적용(0은 미적용).
 function getBestPriceInfo(pricing) {
   if (!pricing || typeof pricing !== 'object') return null; // ★null/비객체 방어 (로드/렌더/모달 일괄 안전화)
   let best = null;
+  let bestEff = Infinity;
   Object.values(pricing).forEach((cycles) => {
     Object.values(cycles).forEach((types) => {
       Object.values(types).forEach((d) => {
-        if (d.monthly > 0 && (!best || d.monthly < best.monthly)) {
-          best = {
-            monthly: d.monthly,
-            promo: d.promo || 0,
-            cardPrice: d.cardPrice || 0,
-          };
+        if (!(d.monthly > 0)) return;
+        const card = d.cardPrice || 0;
+        const eff = card > 0 ? card : d.monthly; // 카드 있으면 실지불가, 없으면 월렌탈료
+        if (eff < bestEff) {
+          bestEff = eff;
+          best = { monthly: d.monthly, promo: d.promo || 0, cardPrice: card };
         }
       });
     });
