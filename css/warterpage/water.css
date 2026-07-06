@@ -1289,6 +1289,92 @@
   border-radius: 16px; /* 배너 자체가 단독이라 직접 radius OK */
 }
 
+/* ── 상단 배너 캐러셀 (water-banner.js 주입) ── */
+.w-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 16px;
+}
+.w-carousel__track {
+  display: flex;
+  transition: transform 0.4s ease;
+  will-change: transform;
+}
+.w-carousel__slide {
+  flex: 0 0 100%;
+  min-width: 100%;
+}
+.w-carousel__slide img {
+  display: block;
+  width: 100%;
+  height: auto;
+  border-radius: 0; /* 모서리 클립은 .w-carousel 가 담당 → 슬라이드 이음새 깔끔 */
+}
+.w-carousel__arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(0, 0, 0, 0.35);
+  color: #fff;
+  font-size: 24px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+  transition: background 0.15s;
+}
+.w-carousel__arrow:hover {
+  background: rgba(0, 0, 0, 0.55);
+}
+.w-carousel__arrow--prev {
+  left: 12px;
+}
+.w-carousel__arrow--next {
+  right: 12px;
+}
+.w-carousel__dots {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 12px;
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  z-index: 2;
+}
+.w-carousel__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.55);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.w-carousel__dot.active {
+  width: 22px;
+  background: #fff;
+}
+/* 모바일: 화살표 숨김(스와이프 사용) */
+@media (hover: none), (max-width: 768px) {
+  .w-carousel__arrow {
+    display: none;
+  }
+}
+@media (max-width: 480px) {
+  .w-carousel {
+    border-radius: 12px;
+  }
+}
+
 /* 브랜드 배너 (bestSection 안, 베스트 카드 위) */
 .brand-banner {
   margin: 0 0 24px;

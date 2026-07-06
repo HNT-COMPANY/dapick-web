@@ -65,7 +65,13 @@
 ══════════════════════════════════════ -->
 <div id="boardView">
   <div class="water-main-banner">
-    <img src="assets/water/water-01.png" alt="다픽 정수기" />
+    <!-- 배너 캐러셀 — 슬라이드는 water-banner.js 가 banner 배열로 주입 -->
+    <div class="w-carousel" id="wCarousel">
+      <div class="w-carousel__track" id="wTrack"></div>
+      <button class="w-carousel__arrow w-carousel__arrow--prev" id="wPrev" type="button" aria-label="이전 배너">‹</button>
+      <button class="w-carousel__arrow w-carousel__arrow--next" id="wNext" type="button" aria-label="다음 배너">›</button>
+      <div class="w-carousel__dots" id="wDots"></div>
+    </div>
   </div>
 
   <div class="board-section">
@@ -478,6 +484,7 @@
 
 <script src="js/water/water.js"></script>
 <script src="js/water/water-board.js"></script>
+<script src="js/water/water-banner.js"></script>
 
 </body>
 </html>
