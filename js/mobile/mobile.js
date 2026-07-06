@@ -497,18 +497,6 @@ function goPage(page) {
 }
 
 // ════════════════════════════════════════════════════
-// 6. scroll-top 버튼 토글
-// ════════════════════════════════════════════════════
-window.addEventListener(
-  'scroll',
-  () => {
-    const btn = document.getElementById('scroll-top');
-    if (btn) btn.classList.toggle('show', window.scrollY > 300);
-  },
-  { passive: true },
-);
-
-// ════════════════════════════════════════════════════
 // 7. 초기 렌더 — 첫 탭 자동 active + STORES 동적 렌더 + 페이드업 초기화
 // ════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {

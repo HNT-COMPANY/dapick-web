@@ -82,7 +82,6 @@ window.InternetProductBase = (function () {
   let _selectedRouter = null;
   let _wifiMode = 'normal'; // 'normal' | 'package' (KT 와이파이 패키지)
   let _toggles = { tv: false, router: false, tv2: false, wifi7d: false };
-  let _scrollBound = false; // 통합 페이지 carrier 전환 시 scroll 리스너 중복 등록 방지
   let _initSeq = 0; // init 세대 토큰 — carrier 전환 시 stale 콜백 폐기용
   let _builderSkeleton = null; // 최초 pristine .ip-builder 골격 (showError 파괴 후 복원용)
 
@@ -144,18 +143,6 @@ window.InternetProductBase = (function () {
     _provider = config.provider; // 전역 유지(applyConsult 등 콜백 외부 참조용)
     const provider = config.provider; // 이번 init 콜백이 볼 carrier (지역 캡처)
     const mySeq = ++_initSeq; // 이번 init의 세대 번호
-
-    if (!_scrollBound) {
-      _scrollBound = true;
-      window.addEventListener(
-        'scroll',
-        () => {
-          const btn = document.getElementById('scroll-top');
-          if (btn) btn.classList.toggle('show', window.scrollY > 300);
-        },
-        { passive: true },
-      );
-    }
 
     const ready = (cb) => {
       if (document.readyState === 'loading')

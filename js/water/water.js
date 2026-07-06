@@ -927,14 +927,6 @@ function openKakao() {
   window.open('https://pf.kakao.com/_exaRjX/chat', '_blank');
 }
 
-window.addEventListener(
-  'scroll',
-  () => {
-    const btn = document.getElementById('scroll-top');
-    if (btn) btn.classList.toggle('show', window.scrollY > 300);
-  },
-  { passive: true },
-);
 
 // ════════════════════════════════════════════════════
 // 사이드바 통합 필터 엔진 (#waterFilter 전 섹션) — 전 브랜드 평면풀 대상

@@ -18,16 +18,6 @@ function goPage(page) {
   window.location.href = map[page] || 'index.html';
 }
 
-// ── scroll-top 토글 ────────────────────────────────
-window.addEventListener(
-  'scroll',
-  () => {
-    const btn = document.getElementById('scroll-top');
-    if (btn) btn.classList.toggle('show', window.scrollY > 300);
-  },
-  { passive: true },
-);
-
 // ── 인터넷 혜택 배너 캐러셀 (자동/hover정지/화살표/점) ──
 (function () {
   var track = document.getElementById('iTrack');

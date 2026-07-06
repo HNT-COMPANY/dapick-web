@@ -237,19 +237,3 @@ function createToastContainer() {
   document.body.appendChild(el);
   return el;
 }
-
-// ── 스크롤 탑 버튼 표시 ──
-function initScrollTop() {
-  window.addEventListener('scroll', () => {
-    const btn = document.getElementById('scroll-top');
-    if (!btn) return;
-    window.scrollY > 400
-      ? btn.classList.add('show')
-      : btn.classList.remove('show');
-  });
-}
-
-// ── 공통 초기화 ──
-document.addEventListener('DOMContentLoaded', () => {
-  initScrollTop();
-});
