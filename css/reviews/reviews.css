@@ -1,0 +1,236 @@
+/* ════════════════════════════════════════════════════
+   reviews.css — 실제 후기 통합 탭 (조각2-③)
+   ════════════════════════════════════════════════════ */
+.rv-wrap {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 32px 20px 80px;
+}
+
+/* 헤더: 제목 + 글쓰기 */
+.rv-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.rv-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1c1b22;
+  margin: 0;
+}
+.rv-write-btn {
+  min-height: 44px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 10px;
+  background: #6c3fc5;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: inherit;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+.rv-write-btn:hover {
+  opacity: 0.9;
+}
+
+/* 카테고리 탭 (가로 pill 버튼) */
+.rv-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding-bottom: 18px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid #ececf1;
+}
+.rv-tab {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #e0dced;
+  border-radius: 999px;
+  background: #fff;
+  color: #555;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.rv-tab:hover {
+  border-color: #6c3fc5;
+  color: #6c3fc5;
+}
+.rv-tab.is-active {
+  background: #6c3fc5;
+  border-color: #6c3fc5;
+  color: #fff;
+}
+
+/* 목록 */
+.rv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.rv-empty {
+  padding: 48px 0;
+  text-align: center;
+  color: #9a9aa5;
+  font-size: 14px;
+}
+
+/* 리뷰 카드 */
+.rv-card {
+  display: flex;
+  gap: 14px;
+  padding: 18px;
+  border: 1px solid #ececf1;
+  border-radius: 14px;
+  background: #fff;
+}
+.rv-card__thumb {
+  flex-shrink: 0;
+  width: 84px;
+  height: 84px;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #f4f2fa;
+}
+.rv-card__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.rv-card__body {
+  min-width: 0;
+  flex: 1;
+}
+.rv-card__stars {
+  font-size: 15px;
+  letter-spacing: 2px;
+  color: #ffb400;
+  line-height: 1;
+}
+.rv-card__stars-off {
+  color: #dcd7e8;
+}
+.rv-card__content {
+  margin: 8px 0 10px;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #333;
+  /* 길면 3줄까지 후 말줄임 */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  word-break: break-word;
+}
+.rv-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #8a8a96;
+}
+.rv-card__product {
+  font-weight: 700;
+  color: #4a4a55;
+}
+.rv-card__date {
+  margin-left: auto;
+}
+
+/* 더보기 */
+.rv-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 20px;
+}
+.rv-more-btn {
+  min-height: 44px;
+  padding: 0 28px;
+  border: 1px solid #1c1b22;
+  border-radius: 0;
+  background: transparent;
+  color: #1c1b22;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.rv-more-btn:hover {
+  background: #f2f2f5;
+}
+
+/* 안내/확인 모달 */
+.rv-modal[hidden] {
+  display: none;
+}
+.rv-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.rv-modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+}
+.rv-modal__content {
+  position: relative;
+  z-index: 1;
+  width: calc(100% - 40px);
+  max-width: 360px;
+  background: #fff;
+  border-radius: 14px;
+  padding: 24px 20px 18px;
+}
+.rv-modal__msg {
+  margin: 0 0 18px;
+  font-size: 15px;
+  line-height: 1.6;
+  color: #1c1b22;
+  white-space: pre-line;
+  text-align: center;
+}
+.rv-modal__actions {
+  display: flex;
+  gap: 10px;
+}
+.rv-btn {
+  flex: 1;
+  min-height: 44px;
+  border-radius: 10px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+}
+.rv-btn--ghost {
+  background: #fff;
+  border: 1px solid #e0dced;
+  color: #555;
+}
+.rv-btn--primary {
+  background: #6c3fc5;
+  border: 1px solid #6c3fc5;
+  color: #fff;
+}
+
+@media (max-width: 640px) {
+  .rv-card__thumb {
+    width: 64px;
+    height: 64px;
+  }
+}
