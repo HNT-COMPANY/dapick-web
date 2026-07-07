@@ -292,6 +292,30 @@
   </div>
 </div>
 
+<!-- 리뷰 작성 모달 (조각2-②) -->
+<div class="modal" id="modal-review" hidden>
+  <div class="modal__backdrop" data-close-review></div>
+  <div class="modal__content">
+    <h3 class="modal__title">리뷰 작성</h3>
+    <p class="review-modal__product" id="review-product">-</p>
+    <div class="review-stars" id="review-stars" role="radiogroup" aria-label="별점 선택">
+      <button type="button" class="review-star" data-val="1" aria-label="1점">★</button>
+      <button type="button" class="review-star" data-val="2" aria-label="2점">★</button>
+      <button type="button" class="review-star" data-val="3" aria-label="3점">★</button>
+      <button type="button" class="review-star" data-val="4" aria-label="4점">★</button>
+      <button type="button" class="review-star" data-val="5" aria-label="5점">★</button>
+    </div>
+    <textarea id="review-content" class="modal__input review-modal__textarea" maxlength="1000"
+      placeholder="상품/상담은 어떠셨나요? 솔직한 후기를 남겨주세요. (선택)"></textarea>
+    <div class="review-modal__counter"><span id="review-count">0</span> / 1000</div>
+    <p class="modal__hint" id="review-hint"></p>
+    <div class="modal__actions">
+      <button class="btn btn--ghost" type="button" data-close-review id="btn-cancel-review">취소</button>
+      <button class="btn btn--primary" type="button" id="btn-submit-review">등록</button>
+    </div>
+  </div>
+</div>
+
 <!-- ════════════════════════════════════════════════════
      공통 푸터 (전 페이지 동일)
      ════════════════════════════════════════════════════ -->

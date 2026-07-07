@@ -15,8 +15,10 @@
   setupNicknameModal();
   setupLogout();
   setupDetailModal();
+  setupReviewModal();
 
   await loadProfile();
+  await loadReviewEligibility(); // 신청 렌더 전에 eligible 집합 확보
   await loadApplications();
 })();
 
@@ -97,6 +99,29 @@ function renderProfile(p) {
 // ── 신청 내역 ────────────────────────────────────────
 let allApps = [];
 
+// 리뷰 작성 가능 상담(완료+미작성) 집합 — eligible API 결과. 실패 시 리뷰 UI 미표시.
+let eligibleSet = new Set();
+let eligibleLoaded = false;
+let reviewRating = 0;
+let reviewTargetId = null;
+
+async function loadReviewEligibility() {
+  try {
+    const data = await api.get('/api/reviews/eligible');
+    if (data == null) {
+      // 401 갱신 실패(로그인 이동 중) 또는 빈 응답 → 리뷰 UI 미표시(오표기 방지)
+      eligibleLoaded = false;
+      return;
+    }
+    const list = Array.isArray(data) ? data : data.content || [];
+    eligibleSet = new Set(list.map((e) => e.consultationId));
+    eligibleLoaded = true;
+  } catch (err) {
+    console.error('[mypage] review eligible load failed:', err);
+    eligibleLoaded = false; // 실패 시 버튼/완료표기 모두 숨김 (오표기 방지)
+  }
+}
+
 async function loadApplications() {
   try {
     const data = await api.get('/api/consultations/my');
@@ -159,7 +184,17 @@ function renderApps(filter) {
           </div>`
           : '';
 
+      // 리뷰 행: 완료(DONE) + eligible 이면 [리뷰 쓰기], 완료지만 미포함이면 작성완료, 그 외 없음.
+      // (eligible 로드 실패 시 오표기 방지 위해 전부 숨김)
+      const reviewRowHtml =
+        eligibleLoaded && app.status === 'DONE'
+          ? eligibleSet.has(app.id)
+            ? `<div class="app-review-row"><button type="button" class="app-review-btn" data-review-id="${escapeHtml(app.id)}">⭐ 리뷰 쓰기</button></div>`
+            : `<div class="app-review-row"><span class="app-review-done">✓ 리뷰 작성 완료</span></div>`
+          : '';
+
       return `
+    <div class="app-card-wrap">
     <button type="button" class="app-card app-card--btn" data-app-id="${escapeHtml(app.id)}">
       <div class="app-card__main">
         <p class="app-card__no">${escapeHtml(app.consultationNumber || '-')}</p>
@@ -172,6 +207,8 @@ function renderApps(filter) {
         <span class="app-card__chevron">›</span>
       </div>
     </button>
+    ${reviewRowHtml}
+    </div>
   `;
     })
     .join('');
@@ -183,6 +220,122 @@ function renderApps(filter) {
       if (app) openDetailModal(app);
     });
   });
+
+  // 리뷰 쓰기 버튼 (카드 버튼과 별개 요소 — 이벤트 버블링 없음)
+  list.querySelectorAll('[data-review-id]').forEach((btn) => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const app = allApps.find((a) => a.id === btn.dataset.reviewId);
+      if (app) openReviewModal(app);
+    });
+  });
+}
+
+// 현재 활성 필터 (리뷰 등록 후 재렌더용)
+function currentAppsFilter() {
+  const active = document.querySelector('.apps-filter__btn.is-active');
+  return active ? active.dataset.filter : 'all';
+}
+
+// ── 리뷰 작성 모달 (조각2-②) ─────────────────────────
+function setupReviewModal() {
+  const modal = document.getElementById('modal-review');
+  if (!modal) return;
+
+  modal.querySelectorAll('[data-close-review]').forEach((el) => {
+    el.addEventListener('click', () => {
+      modal.hidden = true;
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') modal.hidden = true;
+  });
+
+  // 별점 클릭 선택
+  modal.querySelectorAll('.review-star').forEach((star) => {
+    star.addEventListener('click', () => {
+      reviewRating = parseInt(star.dataset.val, 10);
+      paintReviewStars(reviewRating);
+    });
+  });
+
+  // 실시간 글자수 카운터
+  const ta = document.getElementById('review-content');
+  const counter = document.getElementById('review-count');
+  if (ta && counter) {
+    ta.addEventListener('input', () => {
+      counter.textContent = ta.value.length;
+    });
+  }
+
+  document
+    .getElementById('btn-submit-review')
+    .addEventListener('click', submitReview);
+}
+
+function paintReviewStars(n) {
+  document.querySelectorAll('#review-stars .review-star').forEach((star) => {
+    star.classList.toggle('is-on', parseInt(star.dataset.val, 10) <= n);
+  });
+}
+
+function openReviewModal(app) {
+  reviewTargetId = app.id; // 상담 id (= consultationId). category/productId는 서버가 파생.
+  reviewRating = 0;
+  paintReviewStars(0);
+  const ta = document.getElementById('review-content');
+  if (ta) ta.value = '';
+  document.getElementById('review-count').textContent = '0';
+  document.getElementById('review-hint').textContent = '';
+  document.getElementById('review-product').textContent =
+    app.productName || getCategoryLabel(app.categoryType) || '상담';
+  document.getElementById('modal-review').hidden = false;
+}
+
+async function submitReview() {
+  if (!reviewTargetId) return;
+  const hint = document.getElementById('review-hint');
+
+  if (reviewRating < 1 || reviewRating > 5) {
+    hint.textContent = '별점을 선택해주세요.';
+    return;
+  }
+  const content = document.getElementById('review-content').value.trim();
+
+  const btn = document.getElementById('btn-submit-review');
+  btn.disabled = true;
+  try {
+    // consultationId만 전송 — category/productId는 서버가 상담에서 파생(위변조 방지)
+    const res = await api.post('/api/reviews', {
+      consultationId: reviewTargetId,
+      rating: reviewRating,
+      content: content || null,
+    });
+    if (res === null) return; // 401 갱신 실패 → 이미 로그인 이동
+
+    // 성공: eligible 에서 제거 → 해당 카드 "리뷰 작성 완료"로 갱신
+    eligibleSet.delete(reviewTargetId);
+    document.getElementById('modal-review').hidden = true;
+    showToast('리뷰가 등록되었습니다.');
+    renderApps(currentAppsFilter());
+  } catch (e) {
+    if (e.status === 401) {
+      showToast('로그인이 필요합니다. 다시 로그인해 주세요.');
+      return;
+    }
+    // 중복(이미 작성 — DB UNIQUE 백스톱): 카드도 완료로 정정 후 닫기
+    if (/이미|ALREADY/i.test(e.message || '')) {
+      eligibleSet.delete(reviewTargetId);
+      document.getElementById('modal-review').hidden = true;
+      showToast(e.message);
+      renderApps(currentAppsFilter());
+      return;
+    }
+    // 미완료/타인 상담 등 도메인 예외 메시지 노출
+    hint.textContent = e.message || '리뷰 등록에 실패했습니다.';
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 function getStatusLabel(status) {
