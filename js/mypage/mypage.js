@@ -170,7 +170,7 @@ function renderApps(filter) {
 
   list.innerHTML = filtered
     .map((app) => {
-      const priceLine =
+      const priceHtml =
         app.monthlyPrice != null && Number(app.monthlyPrice) > 0
           ? `<span class="app-card__price">월 ${Number(app.monthlyPrice).toLocaleString('ko-KR')}원</span>`
           : '';
@@ -184,32 +184,41 @@ function renderApps(filter) {
           </div>`
           : '';
 
-      // 리뷰 버튼은 목록에서 제거 → 상세 모달 전용(getReviewState는 모달이 계속 사용).
+      // 3열 그리드: 좌(상태+번호) / 중(제목, 2줄 말줄임) / 우(요금·날짜·카테고리).
+      // 카드 div는 클릭 대상 아님 — data-app-id는 하단 [자세히 보기] 버튼에만.
+      // 리뷰 버튼은 목록에 없음(상세 모달 전용 유지).
       return `
-    <button type="button" class="app-card app-card--btn" data-app-id="${escapeHtml(app.id)}">
-      <div class="app-card__main">
-        <p class="app-card__no">${escapeHtml(app.consultationNumber || '-')}</p>
-        <h4 class="app-card__title">${escapeHtml(app.productName || getCategoryLabel(app.categoryType) || '상담 신청')}</h4>
-        <p class="app-card__meta">${formatDate(app.createdAt)} · ${escapeHtml(getCategoryLabel(app.categoryType))}${priceLine ? ' · ' : ''}${priceLine}</p>
-        ${rejectBox}
+    <div class="app-card">
+      <div class="app-card__grid">
+        <div class="app-card__col-left">
+          <span class="app-card__status ${getStatusClass(app.status)}">${getStatusLabel(app.status)}</span>
+          <span class="app-card__no">${escapeHtml(app.consultationNumber || '-')}</span>
+        </div>
+        <div class="app-card__col-center">
+          <h4 class="app-card__title">${escapeHtml(app.productName || getCategoryLabel(app.categoryType) || '상담 신청')}</h4>
+        </div>
+        <div class="app-card__col-right">
+          ${priceHtml}
+          <span class="app-card__date">${formatDate(app.createdAt)}</span>
+          <span class="app-card__cat">${escapeHtml(getCategoryLabel(app.categoryType))}</span>
+        </div>
       </div>
-      <div class="app-card__right">
-        <span class="app-card__status ${getStatusClass(app.status)}">${getStatusLabel(app.status)}</span>
-        <span class="app-card__more">자세히 보기 ›</span>
+      ${rejectBox}
+      <div class="app-card__foot">
+        <button type="button" class="app-card__detail-btn" data-app-id="${escapeHtml(app.id)}">자세히 보기</button>
       </div>
-    </button>
+    </div>
   `;
     })
     .join('');
 
-  // 카드 클릭 → 자세히 보기
-  list.querySelectorAll('[data-app-id]').forEach((card) => {
-    card.addEventListener('click', () => {
-      const app = allApps.find((a) => a.id === card.dataset.appId);
+  // [자세히 보기] 버튼 클릭만 상세 모달 오픈 (카드 다른 영역 클릭은 무반응)
+  list.querySelectorAll('.app-card__detail-btn').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const app = allApps.find((a) => a.id === btn.dataset.appId);
       if (app) openDetailModal(app);
     });
   });
-
 }
 
 // 현재 활성 필터 (리뷰 등록 후 재렌더용)
