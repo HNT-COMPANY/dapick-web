@@ -697,6 +697,7 @@ body {
 }
 .app-card__no {
   font-size: 12px;
+  font-weight: 700;
   color: var(--text-main);
   margin: 0 0 4px;
   font-family: monospace;
@@ -753,6 +754,7 @@ body {
 }
 .app-card__col-center {
   min-width: 0; /* 그리드 셀에서 말줄임 성립 조건 */
+  text-align: center; /* 상품명 가운데 정렬 (2줄 말줄임 유지) */
 }
 .app-card__col-right {
   display: flex;
@@ -775,7 +777,7 @@ body {
   border-top: 1px solid var(--border);
   padding-top: 12px;
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
 }
 .app-card__detail-btn {
   min-height: 44px;
