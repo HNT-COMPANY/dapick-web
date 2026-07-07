@@ -184,17 +184,8 @@ function renderApps(filter) {
           </div>`
           : '';
 
-      // 리뷰 행: 목록·상세 모달 공유 판정(getReviewState) 사용 — DRY
-      const rState = getReviewState(app);
-      const reviewRowHtml =
-        rState === 'write'
-          ? `<div class="app-review-row"><button type="button" class="app-review-btn" data-review-id="${escapeHtml(app.id)}">⭐ 리뷰 쓰기</button></div>`
-          : rState === 'done'
-            ? `<div class="app-review-row"><span class="app-review-done">✓ 리뷰 작성 완료</span></div>`
-            : '';
-
+      // 리뷰 버튼은 목록에서 제거 → 상세 모달 전용(getReviewState는 모달이 계속 사용).
       return `
-    <div class="app-card-wrap">
     <button type="button" class="app-card app-card--btn" data-app-id="${escapeHtml(app.id)}">
       <div class="app-card__main">
         <p class="app-card__no">${escapeHtml(app.consultationNumber || '-')}</p>
@@ -204,11 +195,9 @@ function renderApps(filter) {
       </div>
       <div class="app-card__right">
         <span class="app-card__status ${getStatusClass(app.status)}">${getStatusLabel(app.status)}</span>
-        <span class="app-card__chevron">›</span>
+        <span class="app-card__more">자세히 보기 ›</span>
       </div>
     </button>
-    ${reviewRowHtml}
-    </div>
   `;
     })
     .join('');
@@ -221,14 +210,6 @@ function renderApps(filter) {
     });
   });
 
-  // 리뷰 쓰기 버튼 (카드 버튼과 별개 요소 — 이벤트 버블링 없음)
-  list.querySelectorAll('[data-review-id]').forEach((btn) => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const app = allApps.find((a) => a.id === btn.dataset.reviewId);
-      if (app) openReviewModal(app);
-    });
-  });
 }
 
 // 현재 활성 필터 (리뷰 등록 후 재렌더용)
