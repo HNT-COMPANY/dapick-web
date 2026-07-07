@@ -794,28 +794,11 @@ body {
   background: #f2f2f5;
 }
 
-/* 거절 박스 (카드 내부) */
-.app-card__reject {
-  margin-top: 12px;
-  padding: 10px 12px;
-  background: #fff3cd;
-  border-radius: 8px;
-  border-left: 3px solid #dc3545;
-  font-size: 13px;
-}
-.app-card__reject-title {
-  color: #856404;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-.app-card__reject-body {
-  color: #5a4a08;
-  line-height: 1.5;
-}
-.app-card__reject-date {
-  color: #999;
-  font-size: 11px;
-  margin-top: 6px;
+/* 취소 카드 하단: [상담 취소 사유 보기][자세히 보기] 가운데 정렬 */
+.app-card__foot--center {
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 /* 상태 배지 */
@@ -839,8 +822,8 @@ body {
   color: #1a9b54;
 }
 .app-status--cancelled {
-  background: #f1f1f4;
-  color: #8a8a96;
+  background: #fdecea;
+  color: #c62828;
 }
 
 /* ── 자세히 보기 모달 ── */
@@ -891,28 +874,7 @@ body {
   text-align: right;
   word-break: break-word;
 }
-.detail-reject {
-  margin-top: 12px;
-  padding: 12px 14px;
-  background: #fff3cd;
-  border-radius: 8px;
-  border-left: 3px solid #dc3545;
-  font-size: 13px;
-}
-.detail-reject__title {
-  color: #856404;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-.detail-reject__body {
-  color: #5a4a08;
-  line-height: 1.5;
-}
-.detail-reject__date {
-  color: #999;
-  font-size: 11px;
-  margin-top: 6px;
-}
+/* 취소 사유는 이제 일반 detail-row 텍스트로 표시 (별도 박스/보더 없음) */
 
 /* ── 리뷰 쓰기 (신청 카드 하단, 조각2-②) ── */
 /* 카드(.app-card)는 무변경. 래퍼로 카드+리뷰행을 세로 스택만 함. */

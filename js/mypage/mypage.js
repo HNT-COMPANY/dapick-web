@@ -174,15 +174,16 @@ function renderApps(filter) {
         app.monthlyPrice != null && Number(app.monthlyPrice) > 0
           ? `<span class="app-card__price">월 ${Number(app.monthlyPrice).toLocaleString('ko-KR')}원</span>`
           : '';
-      const rejectBox =
-        app.status === 'CANCELLED' && app.rejectReason
-          ? `
-          <div class="app-card__reject">
-            <div class="app-card__reject-title">⚠ 상담 거절</div>
-            <div class="app-card__reject-body">${escapeHtml(app.rejectReason)}</div>
-            ${app.cancelledAt ? `<div class="app-card__reject-date">${formatDate(app.cancelledAt)} 처리</div>` : ''}
-          </div>`
-          : '';
+      // 취소 상태만 [상담 취소 사유 보기]+[자세히 보기] 가운데. 그 외는 [자세히 보기]만.
+      const footHtml =
+        app.status === 'CANCELLED'
+          ? `<div class="app-card__foot app-card__foot--center">
+        <button type="button" class="app-card__detail-btn" data-reason-id="${escapeHtml(app.id)}">상담 취소 사유 보기</button>
+        <button type="button" class="app-card__detail-btn" data-app-id="${escapeHtml(app.id)}">자세히 보기</button>
+      </div>`
+          : `<div class="app-card__foot">
+        <button type="button" class="app-card__detail-btn" data-app-id="${escapeHtml(app.id)}">자세히 보기</button>
+      </div>`;
 
       // 3열 그리드: 좌(상태+번호) / 중(제목, 2줄 말줄임) / 우(요금·날짜·카테고리).
       // 카드 div는 클릭 대상 아님 — data-app-id는 하단 [자세히 보기] 버튼에만.
@@ -203,20 +204,25 @@ function renderApps(filter) {
           <span class="app-card__cat">${escapeHtml(getCategoryLabel(app.categoryType))}</span>
         </div>
       </div>
-      ${rejectBox}
-      <div class="app-card__foot">
-        <button type="button" class="app-card__detail-btn" data-app-id="${escapeHtml(app.id)}">자세히 보기</button>
-      </div>
+      ${footHtml}
     </div>
   `;
     })
     .join('');
 
-  // [자세히 보기] 버튼 클릭만 상세 모달 오픈 (카드 다른 영역 클릭은 무반응)
-  list.querySelectorAll('.app-card__detail-btn').forEach((btn) => {
+  // [자세히 보기](data-app-id)만 상세 모달 (카드 다른 영역·사유 버튼은 무반응)
+  list.querySelectorAll('[data-app-id]').forEach((btn) => {
     btn.addEventListener('click', () => {
       const app = allApps.find((a) => a.id === btn.dataset.appId);
       if (app) openDetailModal(app);
+    });
+  });
+
+  // [상담 취소 사유 보기](data-reason-id) → 토스트로 사유/날짜/담당자
+  list.querySelectorAll('[data-reason-id]').forEach((btn) => {
+    btn.addEventListener('click', () => {
+      const app = allApps.find((a) => a.id === btn.dataset.reasonId);
+      if (app) showToast(cancelReasonText(app));
     });
   });
 }
@@ -225,6 +231,14 @@ function renderApps(filter) {
 function currentAppsFilter() {
   const active = document.querySelector('.apps-filter__btn.is-active');
   return active ? active.dataset.filter : 'all';
+}
+
+// 취소 사유 토스트 텍스트 (사유/날짜/담당자 — 없으면 '-'). 줄바꿈은 토스트 pre-line 로 표시.
+function cancelReasonText(app) {
+  const reason = (app.rejectReason && app.rejectReason.trim()) || '-';
+  const date = app.cancelledAt ? formatDate(app.cancelledAt) : '-';
+  const manager = (app.cancelledBy && app.cancelledBy.name) || '-';
+  return `취소 사유 : ${reason}\n날짜 : ${date}\n담당자 : ${manager}`;
 }
 
 // 리뷰 상태 판정 — 목록 카드와 상세 모달이 공유(DRY). 'write' | 'done' | 'none'
@@ -449,15 +463,11 @@ function openDetailModal(app) {
     );
   }
 
-  // 거절 사유
-  if (app.status === 'CANCELLED' && app.rejectReason) {
-    rows.push(
-      `<div class="detail-reject">
-        <div class="detail-reject__title">⚠ 상담 거절 사유</div>
-        <div class="detail-reject__body">${escapeHtml(app.rejectReason)}</div>
-        ${app.cancelledAt ? `<div class="detail-reject__date">${formatDate(app.cancelledAt)} 처리</div>` : ''}
-      </div>`,
-    );
+  // 취소 사유 — 배경 박스 없이 일반 텍스트 행(사유/처리 날짜/담당자)
+  if (app.status === 'CANCELLED') {
+    rows.push(detailRow('취소 사유', app.rejectReason || '-'));
+    rows.push(detailRow('처리 날짜', app.cancelledAt ? formatDate(app.cancelledAt) : '-'));
+    rows.push(detailRow('담당자', (app.cancelledBy && app.cancelledBy.name) || '-'));
   }
 
   document.getElementById('detail-title').textContent =
@@ -662,7 +672,7 @@ function showToast(msg) {
   const t = document.createElement('div');
   t.textContent = msg;
   t.style.cssText =
-    'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111018;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;box-shadow:0 8px 20px rgba(0,0,0,0.2);';
+    'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111018;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;line-height:1.6;white-space:pre-line;text-align:left;z-index:9999;box-shadow:0 8px 20px rgba(0,0,0,0.2);';
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2400);
 }
