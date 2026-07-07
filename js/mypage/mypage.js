@@ -184,14 +184,14 @@ function renderApps(filter) {
           </div>`
           : '';
 
-      // 리뷰 행: 완료(DONE) + eligible 이면 [리뷰 쓰기], 완료지만 미포함이면 작성완료, 그 외 없음.
-      // (eligible 로드 실패 시 오표기 방지 위해 전부 숨김)
+      // 리뷰 행: 목록·상세 모달 공유 판정(getReviewState) 사용 — DRY
+      const rState = getReviewState(app);
       const reviewRowHtml =
-        eligibleLoaded && app.status === 'DONE'
-          ? eligibleSet.has(app.id)
-            ? `<div class="app-review-row"><button type="button" class="app-review-btn" data-review-id="${escapeHtml(app.id)}">⭐ 리뷰 쓰기</button></div>`
-            : `<div class="app-review-row"><span class="app-review-done">✓ 리뷰 작성 완료</span></div>`
-          : '';
+        rState === 'write'
+          ? `<div class="app-review-row"><button type="button" class="app-review-btn" data-review-id="${escapeHtml(app.id)}">⭐ 리뷰 쓰기</button></div>`
+          : rState === 'done'
+            ? `<div class="app-review-row"><span class="app-review-done">✓ 리뷰 작성 완료</span></div>`
+            : '';
 
       return `
     <div class="app-card-wrap">
@@ -235,6 +235,13 @@ function renderApps(filter) {
 function currentAppsFilter() {
   const active = document.querySelector('.apps-filter__btn.is-active');
   return active ? active.dataset.filter : 'all';
+}
+
+// 리뷰 상태 판정 — 목록 카드와 상세 모달이 공유(DRY). 'write' | 'done' | 'none'
+// eligible 로드 실패 시 'none'(오표기 방지). 판정 소스는 eligibleSet 단일.
+function getReviewState(app) {
+  if (!eligibleLoaded || !app || app.status !== 'DONE') return 'none';
+  return eligibleSet.has(app.id) ? 'write' : 'done';
 }
 
 // ── 리뷰 작성 모달 (조각2-②) ─────────────────────────
@@ -477,7 +484,30 @@ function openDetailModal(app) {
     loadConsentStatus(app.id, app.consultationNumber);
   }
 
+  // 리뷰 UI (목록과 동일 판정 공유) — 상세 모달 하단, 확인 버튼 옆
+  renderDetailReview(app);
+
   modal.hidden = false;
+}
+
+// 상세 모달 리뷰 슬롯 렌더 — 목록과 같은 getReviewState 사용(일관성)
+function renderDetailReview(app) {
+  const slot = document.getElementById('detail-review-slot');
+  if (!slot) return;
+  const st = getReviewState(app);
+  if (st === 'write') {
+    slot.innerHTML =
+      '<button type="button" class="app-review-btn" id="detail-review-btn">⭐ 리뷰 쓰기</button>';
+    slot.querySelector('#detail-review-btn').addEventListener('click', () => {
+      // 상세 닫고 작성 모달 오픈 — 스택/스테일 방지, 제출 후 목록·모달 모두 eligibleSet에서 재파생
+      document.getElementById('modal-detail').hidden = true;
+      openReviewModal(app);
+    });
+  } else if (st === 'done') {
+    slot.innerHTML = '<span class="app-review-done">✓ 리뷰 작성 완료</span>';
+  } else {
+    slot.innerHTML = '';
+  }
 }
 
 // 모달 진입 시 동의서 상태 조회 → 다운로드 버튼 노출 결정 (JWT 자동: api 래퍼)
