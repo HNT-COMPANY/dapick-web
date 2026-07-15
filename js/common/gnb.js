@@ -36,7 +36,7 @@ function buildGnbHtml() {
       const subLinks = c.dropdown
         .map(
           (s) =>
-            `<a class="cat-sub-item" href="internet-unified.html?carrier=${encodeURIComponent(s.carrier)}">${s.label}</a>`
+            `<a class="cat-sub-item" href="/internet-unified?carrier=${encodeURIComponent(s.carrier)}">${s.label}</a>`
         )
         .join('');
       return `
@@ -51,17 +51,17 @@ function buildGnbHtml() {
   // ↓ internet-unified.html 원본 gnb-top 그대로 (로고 경로/클래스, gnb-right onclick 포함)
   return `
     <div class="gnb-top">
-      <a href="index.html" class="logo-wrap">
+      <a href="/" class="logo-wrap">
         <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
       </a>
       <nav class="gnb-extras">
-        <a href="support.html">고객센터</a>
+        <a href="/support">고객센터</a>
         <a href="events.html" class="has-new">이벤트</a>
-        <a href="reviews.html">후기</a>
+        <a href="/reviews">후기</a>
         <a href="faq.html">자주묻는질문</a>
       </nav>
       <div class="gnb-right">
-        <button class="btn-login" onclick="window.location.href='login.html'">로그인/회원가입</button>
+        <button class="btn-login" onclick="window.location.href='/login'">로그인/회원가입</button>
       </div>
     </div>
     <div class="cat-bar">

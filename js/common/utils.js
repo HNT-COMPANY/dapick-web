@@ -3,12 +3,12 @@
 // ── 페이지 이동 ──
 function goPage(cat) {
   const pages = {
-    internet: 'internet.html',
-    mobile: 'mobile.html',
-    card: 'card.html',
-    water: 'water.html',
-    rental: 'rental.html',
-    main: 'index.html',
+    internet: '/internet',
+    mobile: '/mobile',
+    card: '/card',
+    water: '/water',
+    rental: '/rental',
+    main: '/',
   };
   const target = pages[cat];
   if (target) {
@@ -105,7 +105,7 @@ function openKakaoConsult(info = null) {
 
     showToast('상담을 위해 로그인이 필요합니다.', 'info');
     setTimeout(() => {
-      window.location.href = 'login.html';
+      window.location.href = '/login';
     }, 1000);
     return;
   }
