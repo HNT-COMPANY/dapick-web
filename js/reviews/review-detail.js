@@ -111,9 +111,6 @@
       '<div class="rd-body">' +
       bodyHtml +
       '</div>' +
-      '<a class="rd-cta" href="' +
-      ctaHref +
-      '">최대 지원금 받고 나도 신청하기 →</a>' +
       '<a class="rd-list" href="/reviews">목록으로</a>';
 
     document.getElementById('rdArticle').hidden = false;

@@ -52,7 +52,7 @@ function buildGnbHtml() {
   return `
     <div class="gnb-top">
       <a href="/" class="logo-wrap">
-        <img src="assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
+        <img src="/assets/logos/dapick.png" alt="다픽 아이콘" class="logo-wrap__img" />
       </a>
       <nav class="gnb-extras">
         <a href="/support">고객센터</a>
