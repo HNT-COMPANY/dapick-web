@@ -40,7 +40,10 @@
   // ── 모듈 상태 ─────────────────────────────────────────────────
   var state = {
     productId: null,
+    consultationId: null, // 이 상품의 완료 상담 id (consultation 경로 작성용)
     myRating: 0, // 입력 UI에서 선택한 별점 (1~5)
+    imageUrls: [], // 업로드 완료된 이미지 URL (최대 5)
+    uploading: false, // 이미지 업로드 진행 중
     submitting: false,
     submitted: false, // 이번 세션에서 작성 완료(또는 이미 작성) → 폼 잠금
   };
@@ -71,7 +74,10 @@
     }
 
     state.productId = productId;
+    state.consultationId = null;
     state.myRating = 0;
+    state.imageUrls = [];
+    state.uploading = false;
     state.submitting = false;
     state.submitted = false;
 
@@ -205,7 +211,34 @@
       return;
     }
 
-    // [2] 로그인 → 폼 노출 (자격 없음/중복은 제출 시 서버 응답으로 분기)
+    // [2] 로그인 → 이 상품의 완료 상담(consultationId) 확인 후 폼/안내 분기
+    //     (consultation 경로 통일: 상세에서 써도 통합 후기에 category 와 함께 저장됨)
+    wrap.innerHTML =
+      '<div class="dpr-login-gate"><span>작성 자격 확인 중...</span></div>';
+    api
+      .get('/api/reviews/eligible')
+      .then(function (list) {
+        var arr = Array.isArray(list) ? list : [];
+        var match = arr.filter(function (c) {
+          return c && c.productId === state.productId;
+        });
+        if (!match.length) {
+          wrap.innerHTML =
+            '<div class="dpr-login-gate"><span>이 상품의 상담 완료 후 후기를 작성할 수 있어요.</span></div>';
+          return;
+        }
+        // 최신 미작성 상담 사용 (eligible 은 최신순). 상담이 남아있으면 다회 작성 가능.
+        state.consultationId = match[0].consultationId;
+        renderWriteForm(wrap);
+      })
+      .catch(function () {
+        wrap.innerHTML =
+          '<div class="dpr-login-gate"><span>작성 자격을 확인하지 못했습니다. 잠시 후 다시 시도해주세요.</span></div>';
+      });
+  }
+
+  // ── 작성 폼 렌더 (별점 + 내용 + 이미지 최대 5매) ─────────────
+  function renderWriteForm(wrap) {
     wrap.innerHTML =
       '<div class="dpr-form" id="dprForm">' +
       '  <div class="dpr-form-label">별점</div>' +
@@ -214,6 +247,14 @@
       '  </div>' +
       '  <textarea class="dpr-textarea" id="dprContent" rows="3" maxlength="1000" ' +
       'placeholder="상품에 대한 솔직한 후기를 남겨주세요. (선택)"></textarea>' +
+      '  <div class="dpr-form-label">사진 (최대 5장, 선택)</div>' +
+      '  <div class="dpr-uploads" id="dprUploads"></div>' +
+      '  <div class="dpr-upload-row">' +
+      '    <label class="dpr-upload-btn" id="dprUploadLabel">사진 추가' +
+      '      <input type="file" id="dprFileInput" accept="image/*" multiple hidden>' +
+      '    </label>' +
+      '    <span class="dpr-upload-count" id="dprUploadCount">0 / 5</span>' +
+      '  </div>' +
       '  <button type="button" class="dpr-btn dpr-btn--primary" id="dprSubmit">후기 등록</button>' +
       '</div>';
 
@@ -235,8 +276,121 @@
       });
     }
 
+    // 이미지 업로드 바인딩
+    var fileInput = wrap.querySelector('#dprFileInput');
+    if (fileInput) fileInput.addEventListener('change', onFilesSelected);
+
     var submitBtn = wrap.querySelector('#dprSubmit');
     if (submitBtn) submitBtn.addEventListener('click', submitReview);
+
+    renderUploads();
+  }
+
+  // ── 이미지 선택 → 업로드 (최대 5매) ───────────────────────────
+  function onFilesSelected(e) {
+    var files = Array.prototype.slice.call(e.target.files || []);
+    e.target.value = ''; // 같은 파일 재선택 허용
+    if (!files.length) return;
+
+    var remaining = 5 - state.imageUrls.length;
+    if (remaining <= 0) {
+      toast('이미지는 최대 5장까지 첨부할 수 있어요.', 'error');
+      return;
+    }
+    var toUpload = files.slice(0, remaining);
+    if (files.length > remaining) {
+      toast('이미지는 최대 5장까지 첨부할 수 있어요.', 'info');
+    }
+
+    state.uploading = true;
+    updateUploadUi();
+
+    var jobs = toUpload.map(function (f) {
+      return uploadImage(f)
+        .then(function (data) {
+          if (data && data.url) state.imageUrls.push(data.url);
+        })
+        .catch(function (err) {
+          toast((err && err.message) || '이미지 업로드 실패', 'error');
+        });
+    });
+
+    Promise.all(jobs).then(function () {
+      state.uploading = false;
+      renderUploads();
+      updateUploadUi();
+    });
+  }
+
+  // 이미지 업로드 (multipart) — api.js 는 JSON 전용이라 fetch 직접 사용.
+  function uploadImage(file) {
+    var fd = new FormData();
+    fd.append('file', file);
+    var token = localStorage.getItem('dapick_token');
+    return fetch(BASE_URL + '/api/reviews/images', {
+      method: 'POST',
+      headers: token ? { Authorization: 'Bearer ' + token } : {},
+      body: fd,
+    }).then(function (res) {
+      return res.text().then(function (text) {
+        var data = null;
+        if (text) {
+          try {
+            data = JSON.parse(text);
+          } catch (e2) {
+            /* 비-JSON 무시 */
+          }
+        }
+        if (!res.ok) {
+          throw new Error(
+            (data && data.message) || '업로드 실패 (' + res.status + ')',
+          );
+        }
+        return (data && (data.data != null ? data.data : data)) || {};
+      });
+    });
+  }
+
+  // ── 업로드 썸네일 목록 렌더 ───────────────────────────────────
+  function renderUploads() {
+    var box = document.getElementById('dprUploads');
+    if (!box) return;
+    box.innerHTML = state.imageUrls
+      .map(function (url, i) {
+        return (
+          '<div class="dpr-thumb">' +
+          '<img src="' +
+          escapeHtml(url) +
+          '" alt="">' +
+          '<button type="button" class="dpr-thumb-del" data-idx="' +
+          i +
+          '" aria-label="삭제">×</button>' +
+          '</div>'
+        );
+      })
+      .join('');
+    box.querySelectorAll('.dpr-thumb-del').forEach(function (b) {
+      b.addEventListener('click', function () {
+        var idx = parseInt(b.getAttribute('data-idx'), 10);
+        state.imageUrls.splice(idx, 1);
+        renderUploads();
+      });
+    });
+    updateUploadUi();
+  }
+
+  function updateUploadUi() {
+    var cnt = document.getElementById('dprUploadCount');
+    if (cnt) {
+      cnt.textContent =
+        state.imageUrls.length + ' / 5' + (state.uploading ? ' (업로드 중...)' : '');
+    }
+    var label = document.getElementById('dprUploadLabel');
+    if (label) {
+      var disabled = state.imageUrls.length >= 5 || state.uploading;
+      label.style.opacity = disabled ? '.5' : '1';
+      label.style.pointerEvents = disabled ? 'none' : 'auto';
+    }
   }
 
   // ── 비로그인 → 로그인 페이지 (복귀 경로 저장) ─────────────────
@@ -251,13 +405,21 @@
     }
     toast('로그인 후 후기를 작성할 수 있어요.', 'info');
     setTimeout(function () {
-      window.location.href = 'login.html';
+      window.location.href = '/login';
     }, 800);
   }
 
   // ── 제출 ──────────────────────────────────────────────────────
   function submitReview() {
     if (state.submitting || state.submitted) return;
+    if (state.uploading) {
+      toast('이미지 업로드가 끝난 뒤 등록해주세요.', 'info');
+      return;
+    }
+    if (!state.consultationId) {
+      toast('작성 자격 정보를 확인하지 못했습니다.', 'error');
+      return;
+    }
 
     var rating = clampRating(state.myRating);
     if (!rating) {
@@ -270,15 +432,19 @@
     state.submitting = true;
     setSubmitLoading(true);
 
+    // consultation 경로 통일 — 상세에서 작성해도 category 와 함께 통합 후기에 저장됨
     api
-      .post('/api/products/' + state.productId + '/reviews', {
+      .post('/api/reviews', {
+        consultationId: state.consultationId,
         rating: rating,
         content: content || null,
+        imageUrls: state.imageUrls.length ? state.imageUrls.slice() : null,
       })
       .then(function (res) {
         // api.post가 401 갱신 실패 시 null 반환(이미 로그인 페이지로 이동됨)
         if (res === null) return;
         state.submitted = true;
+        state.imageUrls = [];
         lockFormAsPending();
         toast(
           '후기가 등록되었습니다. 승인 후 목록에 노출됩니다. 감사합니다! 🎉',
@@ -465,7 +631,19 @@
       '.dpr-btn--primary:disabled{opacity:.6;cursor:default;}' +
       '.dpr-btn--ghost{background:#fff;color:#6C3FC5;border:1px solid #6C3FC5;}' +
       '.dpr-pending{padding:16px 18px;background:#eafaf0;border:1px solid #c8ebd5;' +
-      'border-radius:12px;font-size:14px;color:#1f8a4c;}';
+      'border-radius:12px;font-size:14px;color:#1f8a4c;}' +
+      // 이미지 업로드
+      '.dpr-uploads{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}' +
+      '.dpr-thumb{position:relative;width:64px;height:64px;border-radius:8px;' +
+      'overflow:hidden;border:1px solid #e0dced;}' +
+      '.dpr-thumb img{width:100%;height:100%;object-fit:cover;display:block;}' +
+      '.dpr-thumb-del{position:absolute;top:2px;right:2px;width:18px;height:18px;' +
+      'line-height:16px;text-align:center;border:none;border-radius:50%;' +
+      'background:rgba(0,0,0,.55);color:#fff;font-size:13px;cursor:pointer;padding:0;}' +
+      '.dpr-upload-row{display:flex;align-items:center;gap:10px;margin-bottom:12px;}' +
+      '.dpr-upload-btn{display:inline-block;padding:8px 14px;border:1px dashed #b7a9e0;' +
+      'border-radius:10px;color:#6C3FC5;font-size:13px;font-weight:600;cursor:pointer;background:#fff;}' +
+      '.dpr-upload-count{font-size:12px;color:#8a8a99;}';
 
     var styleEl = document.createElement('style');
     styleEl.id = 'dpr-styles';

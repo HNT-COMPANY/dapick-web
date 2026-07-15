@@ -17,11 +17,13 @@ let rvCurrentCat = RV_CATEGORIES[0].cat;
 let rvPage = 0;
 let rvLoading = false;
 let rvModalConfirm = null;
+const rvById = {}; // id → 리뷰 원본 (상세 모달용)
 
 document.addEventListener('DOMContentLoaded', () => {
   rvRenderTabs();
   rvBindWrite();
   rvBindModal();
+  rvSetupDetail(); // 상세 모달 + 카드 클릭 위임
   rvSelectCat(rvCurrentCat);
 });
 
@@ -68,6 +70,9 @@ async function rvLoadReviews(reset) {
       rvRenderMore(false);
       return;
     }
+    items.forEach((it) => {
+      if (it && it.id != null) rvById[it.id] = it;
+    });
     list.insertAdjacentHTML('beforeend', items.map(rvCardHtml).join(''));
     rvRenderMore(rvPage + 1 < totalPages);
   } catch (e) {
@@ -90,17 +95,26 @@ function rvCardHtml(r) {
     '<span class="rv-card__stars-off">' +
     '★'.repeat(5 - rating) +
     '</span></span>';
-  const thumb =
-    r && r.imageUrl
-      ? `<div class="rv-card__thumb"><img src="${rvEscape(r.imageUrl)}" alt="" loading="lazy"></div>`
-      : '';
+  const imgs =
+    r && Array.isArray(r.imageUrls) && r.imageUrls.length
+      ? r.imageUrls
+      : r && r.imageUrl
+        ? [r.imageUrl]
+        : [];
+  const thumb = imgs.length
+    ? `<div class="rv-card__thumb"><img src="${rvEscape(imgs[0])}" alt="" loading="lazy">${
+        imgs.length > 1
+          ? `<span class="rv-card__imgcount">+${imgs.length - 1}</span>`
+          : ''
+      }</div>`
+    : '';
   const content =
     r && r.content
       ? `<p class="rv-card__content">${rvEscape(r.content)}</p>`
       : '';
 
   return `
-    <article class="rv-card">
+    <article class="rv-card" data-id="${r && r.id != null ? r.id : ''}" role="button" tabindex="0">
       ${thumb}
       <div class="rv-card__body">
         ${stars}
@@ -209,4 +223,166 @@ function rvEscape(s) {
         "'": '&#39;',
       })[c],
   );
+}
+
+// ════════════════════════════════════════════════════
+// 상세 모달 — 카드 클릭 시 전체 글 + 이미지 전부 (아정당식)
+// (조회수/좋아요/댓글/태그는 백엔드 데이터 없어 이번 범위 제외)
+// ════════════════════════════════════════════════════
+function rvSetupDetail() {
+  injectRvDetailStyles();
+
+  const modal = document.createElement('div');
+  modal.className = 'rvd-modal';
+  modal.id = 'rvDetailModal';
+  modal.hidden = true;
+  modal.innerHTML =
+    '<div class="rvd-backdrop" data-rvd-close></div>' +
+    '<div class="rvd-panel" role="dialog" aria-modal="true">' +
+    '  <button type="button" class="rvd-close" data-rvd-close aria-label="닫기">×</button>' +
+    '  <div class="rvd-body" id="rvDetailBody"></div>' +
+    '</div>';
+  document.body.appendChild(modal);
+
+  modal.querySelectorAll('[data-rvd-close]').forEach((el) => {
+    el.addEventListener('click', rvCloseDetail);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') rvCloseDetail();
+  });
+
+  // 카드 클릭 위임 (목록은 동적 렌더라 위임 사용)
+  const listEl = document.getElementById('rvList');
+  if (listEl) {
+    listEl.addEventListener('click', (e) => {
+      const card = e.target.closest('.rv-card');
+      if (card && card.dataset.id) rvOpenDetail(card.dataset.id);
+    });
+    listEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        const card = e.target.closest('.rv-card');
+        if (card && card.dataset.id) {
+          e.preventDefault();
+          rvOpenDetail(card.dataset.id);
+        }
+      }
+    });
+  }
+}
+
+function rvOpenDetail(id) {
+  const r = rvById[id];
+  if (!r) return;
+  const body = document.getElementById('rvDetailBody');
+  if (body) body.innerHTML = rvDetailHtml(r);
+  const modal = document.getElementById('rvDetailModal');
+  if (modal) {
+    modal.hidden = false;
+    modal.scrollTop = 0;
+  }
+  document.body.style.overflow = 'hidden';
+}
+
+function rvCloseDetail() {
+  const modal = document.getElementById('rvDetailModal');
+  if (modal) modal.hidden = true;
+  document.body.style.overflow = '';
+}
+
+function rvCatLabel(cat) {
+  const found = RV_CATEGORIES.find((c) => c.cat === cat);
+  return found ? found.label : cat || '후기';
+}
+
+function rvCtaHref(cat) {
+  if (cat === 'WATER') return '/water';
+  if (cat === 'RENTAL') return '/rental';
+  return '/internet';
+}
+
+function rvDetailHtml(r) {
+  const rating = rvClampRating(r && r.rating);
+  const stars =
+    '<span class="rvd-stars">' +
+    '★'.repeat(rating) +
+    '<span class="rvd-stars-off">' +
+    '★'.repeat(5 - rating) +
+    '</span></span>';
+  const imgs =
+    r && Array.isArray(r.imageUrls) && r.imageUrls.length
+      ? r.imageUrls
+      : r && r.imageUrl
+        ? [r.imageUrl]
+        : [];
+  const gallery = imgs.length
+    ? '<div class="rvd-gallery">' +
+      imgs
+        .map(
+          (u) =>
+            '<img class="rvd-img" src="' +
+            rvEscape(u) +
+            '" alt="" loading="lazy">',
+        )
+        .join('') +
+      '</div>'
+    : '';
+  const content = r && r.content ? rvEscape(r.content) : '';
+
+  return (
+    '<div class="rvd-crumb">후기 › ' +
+    rvEscape(rvCatLabel(r && r.category)) +
+    '</div>' +
+    '<div class="rvd-head">' +
+    stars +
+    '<span class="rvd-date">' +
+    rvDate(r && r.createdAt) +
+    '</span></div>' +
+    '<div class="rvd-author">' +
+    rvEscape((r && r.authorName) || '익명') +
+    ' · ' +
+    rvEscape((r && r.productName) || '-') +
+    '</div>' +
+    (content ? '<p class="rvd-content">' + content + '</p>' : '') +
+    gallery +
+    '<a class="rvd-cta" href="' +
+    rvCtaHref(r && r.category) +
+    '">최대 지원금 받고 나도 신청하기 →</a>' +
+    '<button type="button" class="rvd-list-btn" data-rvd-close>목록으로</button>'
+  );
+}
+
+function injectRvDetailStyles() {
+  if (document.getElementById('rvd-styles')) return;
+  const css =
+    '.rvd-modal[hidden]{display:none;}' +
+    '.rvd-modal{position:fixed;inset:0;z-index:1000;display:flex;align-items:flex-start;' +
+    'justify-content:center;padding:24px 12px;overflow-y:auto;}' +
+    '.rvd-backdrop{position:fixed;inset:0;background:rgba(20,16,40,.55);}' +
+    '.rvd-panel{position:relative;z-index:1;width:100%;max-width:900px;background:#fff;' +
+    "border-radius:16px;padding:32px 32px 28px;box-shadow:0 20px 60px rgba(0,0,0,.25);font-family:'Noto Sans KR',sans-serif;}" +
+    '.rvd-close{position:absolute;top:14px;right:16px;width:32px;height:32px;border:none;' +
+    'background:#f2f0f8;border-radius:50%;font-size:20px;line-height:1;color:#6b6b7b;cursor:pointer;}' +
+    '.rvd-crumb{font-size:13px;color:#8a8a99;margin-bottom:12px;}' +
+    '.rvd-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}' +
+    '.rvd-stars{font-size:18px;letter-spacing:2px;color:#ffb400;}' +
+    '.rvd-stars-off{color:#dcd7e8;}' +
+    '.rvd-date{font-size:13px;color:#aaa;}' +
+    '.rvd-author{font-size:13px;font-weight:600;color:#5b3fbe;margin-bottom:16px;}' +
+    '.rvd-content{font-size:15px;line-height:1.75;color:#2a2a35;white-space:pre-wrap;' +
+    'word-break:break-word;margin:0 0 18px;}' +
+    '.rvd-gallery{display:flex;flex-direction:column;align-items:center;gap:12px;margin-bottom:20px;}' +
+    '.rvd-img{max-width:100%;max-height:70vh;border-radius:12px;display:block;margin:0 auto;object-fit:contain;}' +
+    '.rvd-cta{display:block;text-align:center;background:#5b3fbe;color:#fff;text-decoration:none;' +
+    'font-weight:700;font-size:15px;padding:14px;border-radius:12px;margin-bottom:10px;}' +
+    '.rvd-list-btn{display:block;width:100%;background:#fff;border:1px solid #d7d2e6;' +
+    'border-radius:12px;padding:12px;font-size:14px;font-weight:600;color:#555;cursor:pointer;}' +
+    // 카드: 클릭 커서 + 다중 이미지 배지
+    '.rv-card{cursor:pointer;}' +
+    '.rv-card__thumb{position:relative;}' +
+    '.rv-card__imgcount{position:absolute;bottom:4px;right:4px;background:rgba(0,0,0,.6);' +
+    'color:#fff;font-size:11px;font-weight:600;padding:2px 6px;border-radius:10px;}';
+  const style = document.createElement('style');
+  style.id = 'rvd-styles';
+  style.textContent = css;
+  document.head.appendChild(style);
 }
