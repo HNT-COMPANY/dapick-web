@@ -61,6 +61,24 @@
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://dapick.co.kr/internet-sk-broadband</loc>
+    <lastmod>2026-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://dapick.co.kr/internet-kt-skylife</loc>
+    <lastmod>2026-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://dapick.co.kr/internet-lg-hello</loc>
+    <lastmod>2026-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://dapick.co.kr/internet-unified</loc>
     <lastmod>2026-06-30</lastmod>
     <changefreq>weekly</changefreq>
@@ -111,12 +129,12 @@
     <priority>0.7</priority>
   </url>
 
-  <!-- 고객센터 -->
+  <!-- 실사용 후기 -->
   <url>
-    <loc>https://dapick.co.kr/support</loc>
-    <lastmod>2026-06-30</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.5</priority>
+    <loc>https://dapick.co.kr/reviews</loc>
+    <lastmod>2026-07-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
   </url>
 
   <!-- 정책 페이지 -->
