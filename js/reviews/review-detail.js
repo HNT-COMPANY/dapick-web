@@ -78,7 +78,16 @@
     setAttr('link[rel="canonical"]', 'href', location.origin + location.pathname);
   }
 
+  // 아이콘 (흑백 SVG)
+  const RD_ICON_LIKE =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>';
+  const RD_ICON_VIEW =
+    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+
+  let rdReview = null;
+
   function render(review) {
+    rdReview = review;
     const cat = CAT_LABEL[review.category] || '후기';
     const bodyHtml =
       Array.isArray(review.contentBlocks) && review.contentBlocks.length
@@ -86,7 +95,13 @@
           deltaToHtml(review.contentBlocks) +
           '</div></div>'
         : '<p class="rd-content">' + esc(review.content || '') + '</p>';
-    const ctaHref = CTA_HREF[review.category] || '/internet';
+
+    const tags = Array.isArray(review.hashtags) ? review.hashtags : [];
+    const tagsHtml = tags.length
+      ? '<div class="rd-tags">' +
+        tags.map((t) => '<span class="rd-tag">#' + esc(t) + '</span>').join('') +
+        '</div>'
+      : '';
 
     document.getElementById('rdArticle').innerHTML =
       '<div class="rd-crumb"><a href="/reviews">후기</a> › ' +
@@ -108,20 +123,249 @@
       '<div class="rd-ratingrow">' +
       starsHtml(review.rating) +
       '</div>' +
+      tagsHtml +
       '<div class="rd-body">' +
       bodyHtml +
       '</div>' +
-      '<a class="rd-list" href="/reviews">목록으로</a>';
+      '<div class="rd-stats">' +
+      '<button type="button" class="rd-like" id="rdLikeBtn" aria-label="좋아요">' +
+      RD_ICON_LIKE +
+      '<span id="rdLikeCount">' +
+      ((review.likeCount) || 0) +
+      '</span></button>' +
+      '<span class="rd-view">' +
+      RD_ICON_VIEW +
+      '<span id="rdViewCount">' +
+      ((review.viewCount) || 0) +
+      '</span></span>' +
+      '</div>' +
+      '<a class="rd-list" href="/reviews">목록으로</a>' +
+      '<section class="rd-comments" id="rdComments"></section>' +
+      '<section class="rd-recent" id="rdRecent"></section>';
 
     document.getElementById('rdArticle').hidden = false;
     const load = document.getElementById('rdLoading');
     if (load) load.remove();
     setMeta(review);
+
+    bindLike(review.id);
+    incrementView(review.id);
+    loadComments(review.id);
+    loadRecent(review.id);
+  }
+
+  // ── 조회수 +1 (세션당 후기별 1회) ──────────────────────
+  function incrementView(id) {
+    try {
+      const key = 'rd_viewed_' + id;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+    } catch (e) {
+      /* sessionStorage 불가 시 그냥 1회 시도 */
+    }
+    api
+      .post('/api/reviews/' + id + '/view', {})
+      .then((r) => {
+        if (r && r.viewCount != null) {
+          const el = document.getElementById('rdViewCount');
+          if (el) el.textContent = r.viewCount;
+        }
+      })
+      .catch(() => {});
+  }
+
+  // ── 좋아요 (식별 없음, localStorage 로 중복 클릭만 방지) ──
+  function bindLike(id) {
+    const btn = document.getElementById('rdLikeBtn');
+    if (!btn) return;
+    const key = 'rd_liked_' + id;
+    let liked = false;
+    try {
+      liked = !!localStorage.getItem(key);
+    } catch (e) {}
+    if (liked) btn.classList.add('on');
+    btn.addEventListener('click', () => {
+      if (btn.classList.contains('on')) return; // 이미 누름
+      btn.classList.add('on');
+      try {
+        localStorage.setItem(key, '1');
+      } catch (e) {}
+      api
+        .post('/api/reviews/' + id + '/like', {})
+        .then((r) => {
+          if (r && r.likeCount != null) {
+            const el = document.getElementById('rdLikeCount');
+            if (el) el.textContent = r.likeCount;
+          }
+        })
+        .catch(() => {
+          btn.classList.remove('on');
+          try {
+            localStorage.removeItem(key);
+          } catch (e) {}
+        });
+    });
   }
 
   function renderError(msg) {
     const load = document.getElementById('rdLoading');
     if (load) load.textContent = msg || '후기를 불러오지 못했습니다.';
+  }
+
+  // ── 로그인 여부 (auth.js isLoggedIn 있으면 사용) ──────────
+  function rdLoggedIn() {
+    return typeof isLoggedIn === 'function'
+      ? isLoggedIn()
+      : !!localStorage.getItem('dapick_token');
+  }
+
+  // ════════════════════════════════════════════════════
+  // 댓글 (로그인 후 작성 — 별명 + 내용)
+  // ════════════════════════════════════════════════════
+  function loadComments(id) {
+    api
+      .get('/api/reviews/' + id + '/comments')
+      .then((list) => renderComments(id, Array.isArray(list) ? list : []))
+      .catch(() => renderComments(id, []));
+  }
+
+  function commentItemHtml(c) {
+    return (
+      '<div class="rd-cmt">' +
+      '<div class="rd-cmt-head">' +
+      '<span class="rd-cmt-author">' +
+      esc(c.authorName || '익명') +
+      '</span>' +
+      '<span class="rd-cmt-date">' +
+      fmtDateTime(c.createdAt) +
+      '</span></div>' +
+      '<p class="rd-cmt-body">' +
+      esc(c.content || '') +
+      '</p></div>'
+    );
+  }
+
+  function renderComments(id, list) {
+    const wrap = document.getElementById('rdComments');
+    if (!wrap) return;
+    const listHtml = list.length
+      ? list.map(commentItemHtml).join('')
+      : '<p class="rd-cmt-empty">첫 댓글을 남겨보세요.</p>';
+
+    const formHtml = rdLoggedIn()
+      ? '<div class="rd-cmt-form">' +
+        '<textarea class="rd-cmt-input" id="rdCmtInput" maxlength="1000" placeholder="따뜻한 댓글을 남겨주세요."></textarea>' +
+        '<button type="button" class="rd-cmt-submit" id="rdCmtSubmit">등록</button>' +
+        '</div>'
+      : '<div class="rd-cmt-login">댓글은 로그인 후 작성할 수 있습니다. ' +
+        '<a href="/login">로그인하기</a></div>';
+
+    wrap.innerHTML =
+      '<h2 class="rd-sec-title">댓글 <span class="rd-sec-count">' +
+      list.length +
+      '</span></h2>' +
+      '<div class="rd-cmt-list">' +
+      listHtml +
+      '</div>' +
+      formHtml;
+
+    const submit = document.getElementById('rdCmtSubmit');
+    if (submit) {
+      submit.addEventListener('click', () => postComment(id));
+    }
+  }
+
+  function postComment(id) {
+    const input = document.getElementById('rdCmtInput');
+    if (!input) return;
+    const content = input.value.trim();
+    if (!content) {
+      alert('댓글 내용을 입력해주세요.');
+      return;
+    }
+    const btn = document.getElementById('rdCmtSubmit');
+    if (btn) {
+      btn.disabled = true;
+      btn.textContent = '등록 중...';
+    }
+    api
+      .post('/api/reviews/' + id + '/comments', { content: content })
+      .then((r) => {
+        if (r === null) return; // 미로그인(401) → api 가 null 반환/리다이렉트
+        loadComments(id); // 재조회로 목록 + 카운트 갱신
+      })
+      .catch((e) => {
+        alert((e && e.message) || '댓글 등록에 실패했습니다.');
+      })
+      .finally(() => {
+        if (btn) {
+          btn.disabled = false;
+          btn.textContent = '등록';
+        }
+      });
+  }
+
+  // ════════════════════════════════════════════════════
+  // 비슷한 후기 — 관련도 없이 "최근 올라온 순" (현재 글 제외)
+  // ════════════════════════════════════════════════════
+  function slugify(title) {
+    if (!title) return 'review';
+    const s = String(title)
+      .trim()
+      .replace(/[^\p{L}\p{N}]+/gu, '-')
+      .replace(/^-+|-+$/g, '')
+      .slice(0, 80);
+    return s || 'review';
+  }
+
+  function recentUrl(r) {
+    const host = location.hostname;
+    const isLocal =
+      host === 'localhost' ||
+      host === '127.0.0.1' ||
+      host.startsWith('192.168.') ||
+      host.endsWith('.local');
+    if (isLocal) return '/review-detail.html?id=' + r.id;
+    return '/reviews/' + slugify(r.title) + '-' + r.id;
+  }
+
+  function recentItemHtml(r) {
+    const thumb =
+      Array.isArray(r.imageUrls) && r.imageUrls.length
+        ? r.imageUrls[0]
+        : r.imageUrl || '/assets/logos/dapicklogo.png';
+    const isLogo = !(Array.isArray(r.imageUrls) && r.imageUrls.length) && !r.imageUrl;
+    return (
+      '<a class="rd-rc" href="' +
+      recentUrl(r) +
+      '">' +
+      '<span class="rd-rc-thumb' +
+      (isLogo ? ' rd-rc-thumb--logo' : '') +
+      '"><img src="' +
+      esc(thumb) +
+      '" alt="" loading="lazy"></span>' +
+      '<span class="rd-rc-title">' +
+      esc(r.title || '후기') +
+      '</span></a>'
+    );
+  }
+
+  function loadRecent(excludeId) {
+    api
+      .get('/api/reviews?page=0&size=7')
+      .then((data) => {
+        const items = ((data && data.content) || []).filter(
+          (r) => r && !r.hidden && String(r.id) !== String(excludeId),
+        );
+        const wrap = document.getElementById('rdRecent');
+        if (!wrap || !items.length) return;
+        wrap.innerHTML =
+          '<h2 class="rd-sec-title">다른 후기</h2>' +
+          '<div class="rd-rc-list">' +
+          items.slice(0, 6).map(recentItemHtml).join('') +
+          '</div>';
+      })
+      .catch(() => {});
   }
 
   function injectStyles() {
@@ -145,7 +389,45 @@
       '.rd-cta{display:block;text-align:center;background:#5b3fbe;color:#fff;text-decoration:none;' +
       'font-weight:700;font-size:16px;padding:15px;border-radius:12px;margin-bottom:10px;}' +
       '.rd-list{display:block;text-align:center;background:#fff;border:1px solid #d7d2e6;' +
-      'border-radius:12px;padding:13px;font-size:14px;font-weight:600;color:#555;text-decoration:none;}';
+      'border-radius:12px;padding:13px;font-size:14px;font-weight:600;color:#555;text-decoration:none;}' +
+      // 해시태그
+      '.rd-tags{display:flex;flex-wrap:wrap;gap:6px;margin:-6px 0 18px;}' +
+      '.rd-tag{font-size:13px;color:#5b3fbe;background:#f1edfb;border-radius:6px;padding:3px 10px;font-weight:600;}' +
+      // 좋아요/조회수
+      '.rd-stats{display:flex;align-items:center;gap:16px;margin:0 0 20px;}' +
+      '.rd-like{display:inline-flex;align-items:center;gap:6px;border:1px solid #e0dced;background:#fff;' +
+      'color:#8a8a99;border-radius:999px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit;}' +
+      '.rd-like.on{background:#f1edfb;border-color:#5b3fbe;color:#5b3fbe;}' +
+      '.rd-view{display:inline-flex;align-items:center;gap:6px;color:#a0a0ad;font-size:13px;}' +
+      // 섹션 제목
+      '.rd-sec-title{font-size:17px;font-weight:800;color:#1e1b2e;margin:28px 0 14px;padding-top:24px;border-top:1px solid #eee;}' +
+      '.rd-sec-count{color:#5b3fbe;}' +
+      // 댓글
+      '.rd-cmt-list{display:flex;flex-direction:column;gap:14px;margin-bottom:18px;}' +
+      '.rd-cmt{background:#faf9fe;border:1px solid #efecf8;border-radius:12px;padding:12px 14px;}' +
+      '.rd-cmt-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;}' +
+      '.rd-cmt-author{font-weight:700;font-size:13px;color:#5b3fbe;}' +
+      '.rd-cmt-date{font-size:12px;color:#a8a8b5;margin-left:auto;}' +
+      '.rd-cmt-body{font-size:14px;line-height:1.6;color:#33333f;white-space:pre-wrap;word-break:break-word;margin:0;}' +
+      '.rd-cmt-empty{font-size:14px;color:#9a9aa5;padding:8px 0 16px;}' +
+      '.rd-cmt-form{display:flex;gap:8px;align-items:flex-start;}' +
+      '.rd-cmt-input{flex:1;box-sizing:border-box;border:1px solid #e0dced;border-radius:10px;' +
+      'padding:10px 12px;font-size:14px;font-family:inherit;min-height:44px;resize:vertical;}' +
+      '.rd-cmt-submit{border:none;background:#5b3fbe;color:#fff;border-radius:10px;padding:0 18px;' +
+      'height:44px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;flex:none;}' +
+      '.rd-cmt-submit:disabled{opacity:.6;cursor:default;}' +
+      '.rd-cmt-login{font-size:14px;color:#8a8a99;background:#faf9fe;border:1px solid #efecf8;' +
+      'border-radius:10px;padding:14px;text-align:center;}' +
+      '.rd-cmt-login a{color:#5b3fbe;font-weight:700;text-decoration:none;}' +
+      // 비슷한 후기
+      '.rd-rc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}' +
+      '.rd-rc{text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px;}' +
+      '.rd-rc-thumb{display:block;width:100%;aspect-ratio:1/1;border-radius:12px;overflow:hidden;background:#f3f0fa;}' +
+      '.rd-rc-thumb img{width:100%;height:100%;object-fit:cover;display:block;}' +
+      '.rd-rc-thumb--logo{display:flex;align-items:center;justify-content:center;background:#f5f3fb;}' +
+      '.rd-rc-thumb--logo img{width:60%;height:60%;object-fit:contain;}' +
+      '.rd-rc-title{font-size:14px;font-weight:600;color:#2a2a35;line-height:1.4;' +
+      'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}';
     const style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);

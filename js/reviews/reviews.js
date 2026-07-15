@@ -13,19 +13,62 @@ const RV_CATEGORIES = [
 ];
 const RV_PAGE_SIZE = 10;
 
+// 이미지 미첨부 시 카드 썸네일 기본값 (다픽 로고)
+const RV_LOGO = '/assets/logos/dapicklogo.png';
+
+// 해시태그 화이트리스트(고정 5종, '#'은 표시할 때 부착) — 백엔드 화이트리스트와 일치.
+const RV_HASHTAGS = ['다픽', '만족', '박리다매', '친절한요금', '친절한상담'];
+
+// 인터넷TV 하위탭(통신사) — carrier 값은 InternetTvProduct.carrier 와 정확히 일치해야 함(gnb.js 동일).
+const RV_CARRIER_SUBTABS = [
+  { label: '전체', carrier: null },
+  { label: 'SKT', carrier: 'SKT' },
+  { label: 'KT', carrier: 'KT' },
+  { label: 'LG U+', carrier: 'LG U+' },
+];
+
 let rvCurrentCat = RV_CATEGORIES[0].cat;
+let rvCurrentCarrier = null; // 인터넷 하위탭 선택 통신사
+let rvCurrentSubCat = null; // 정수기/렌탈 하위탭 선택 자식 카테고리 id
 let rvPage = 0;
 let rvLoading = false;
 let rvModalConfirm = null;
 const rvById = {}; // id → 리뷰 원본 (상세 모달용)
 
-document.addEventListener('DOMContentLoaded', () => {
+// 카테고리 type → 카테고리 객체(children 포함). /api/categories 1회 조회 캐시.
+// 정수기/렌탈의 "브랜드"(코웨이 등)는 brands 테이블이 아니라 자식 카테고리이므로 children 을 하위탭으로 쓴다.
+let rvCatByType = null;
+
+document.addEventListener('DOMContentLoaded', async () => {
   rvRenderTabs();
   rvBindWrite();
   rvBindModal();
   rvSetupDetail(); // 상세 모달 + 카드 클릭 위임
+  await rvLoadCategories(); // 하위탭(자식 카테고리) 프리페치(실패해도 전체탭은 동작)
   rvSelectCat(rvCurrentCat);
 });
+
+// 카테고리 목록 1회 로드 → type → 카테고리 객체(children 포함) 맵
+async function rvLoadCategories() {
+  if (rvCatByType) return rvCatByType;
+  rvCatByType = {};
+  try {
+    const cats = await api.get('/api/categories');
+    (Array.isArray(cats) ? cats : []).forEach((c) => {
+      if (c && c.type) rvCatByType[c.type] = c;
+    });
+  } catch (e) {
+    /* 실패 시 하위탭만 비고 전체 목록은 정상 */
+  }
+  return rvCatByType;
+}
+
+// 특정 카테고리(정수기/렌탈)의 자식 카테고리 목록 (활성만, sortOrder 순 — 서버가 정렬해 내려줌)
+function rvSubCategories(cat) {
+  const c = rvCatByType && rvCatByType[cat];
+  const children = (c && Array.isArray(c.children)) ? c.children : [];
+  return children.filter((ch) => ch && ch.id && ch.isActive !== false);
+}
 
 // ── 카테고리 탭 (가로 버튼) ───────────────────────────
 function rvRenderTabs() {
@@ -41,10 +84,64 @@ function rvRenderTabs() {
 
 function rvSelectCat(cat) {
   rvCurrentCat = cat;
+  rvCurrentCarrier = null;
+  rvCurrentSubCat = null;
   rvPage = 0;
   document.querySelectorAll('#rvTabs .rv-tab').forEach((b) => {
     b.classList.toggle('is-active', b.dataset.cat === cat);
   });
+  rvRenderSubtabs(cat);
+  rvLoadReviews(true);
+}
+
+// ── 카테고리 하위탭 (통신사/자식 카테고리) ───────────────────────
+// 인터넷TV → 전체/SKT/KT/LG U+ (carrier). 정수기/렌탈 → 전체 + 자식 카테고리(코웨이 등).
+function rvRenderSubtabs(cat) {
+  const el = document.getElementById('rvSubtabs');
+  if (!el) return;
+
+  if (cat === 'INTERNET_TV') {
+    el.innerHTML = RV_CARRIER_SUBTABS.map(
+      (s, i) =>
+        `<button type="button" class="rv-subtab${i === 0 ? ' is-active' : ''}" data-kind="carrier" data-val="${
+          s.carrier == null ? '' : rvEscape(s.carrier)
+        }">${rvEscape(s.label)}</button>`,
+    ).join('');
+  } else {
+    // 정수기/렌탈: 전체 + 자식 카테고리(있을 때만). 렌탈은 자식 추가되면 자동 노출.
+    const subs = rvSubCategories(cat);
+    el.innerHTML =
+      '<button type="button" class="rv-subtab is-active" data-kind="subcat" data-val="">전체</button>' +
+      subs
+        .map(
+          (s) =>
+            `<button type="button" class="rv-subtab" data-kind="subcat" data-val="${rvEscape(
+              s.id,
+            )}">${rvEscape(s.name)}</button>`,
+        )
+        .join('');
+  }
+
+  el.querySelectorAll('.rv-subtab').forEach((btn) => {
+    btn.addEventListener('click', () => rvSelectSubtab(btn));
+  });
+}
+
+function rvSelectSubtab(btn) {
+  const el = document.getElementById('rvSubtabs');
+  if (el) {
+    el.querySelectorAll('.rv-subtab').forEach((b) => b.classList.remove('is-active'));
+  }
+  btn.classList.add('is-active');
+  const val = btn.dataset.val || null;
+  if (btn.dataset.kind === 'carrier') {
+    rvCurrentCarrier = val;
+    rvCurrentSubCat = null;
+  } else {
+    rvCurrentSubCat = val;
+    rvCurrentCarrier = null;
+  }
+  rvPage = 0;
   rvLoadReviews(true);
 }
 
@@ -57,9 +154,7 @@ async function rvLoadReviews(reset) {
   if (reset) list.innerHTML = '<div class="rv-empty">불러오는 중...</div>';
 
   try {
-    const data = await api.get(
-      `/api/reviews?category=${encodeURIComponent(rvCurrentCat)}&page=${rvPage}&size=${RV_PAGE_SIZE}`,
-    );
+    const data = await api.get(rvBuildQuery());
     const items = (data && data.content) || [];
     const totalPages = (data && data.totalPages) || 0;
 
@@ -84,6 +179,18 @@ async function rvLoadReviews(reset) {
   } finally {
     rvLoading = false;
   }
+}
+
+// 목록 조회 쿼리 조립 — 하위탭 우선순위: carrier(인터넷) > subCategoryId(정수기/렌탈 자식) > category(전체)
+function rvBuildQuery() {
+  const base = `page=${rvPage}&size=${RV_PAGE_SIZE}`;
+  if (rvCurrentCarrier) {
+    return `/api/reviews?carrier=${encodeURIComponent(rvCurrentCarrier)}&${base}`;
+  }
+  if (rvCurrentSubCat) {
+    return `/api/reviews?subCategoryId=${encodeURIComponent(rvCurrentSubCat)}&${base}`;
+  }
+  return `/api/reviews?category=${encodeURIComponent(rvCurrentCat)}&${base}`;
 }
 
 // 흑백 자물쇠 (컬러 이모지 X — SVG monochrome)
@@ -116,13 +223,14 @@ function rvCardHtml(r) {
       : r && r.imageUrl
         ? [r.imageUrl]
         : [];
+  // 이미지 없으면 다픽 로고를 자동 부착(--logo: contain 렌더). 있으면 첫 장 + 다중 배지.
   const thumb = imgs.length
     ? `<div class="rv-card__thumb"><img src="${rvEscape(imgs[0])}" alt="" loading="lazy">${
         imgs.length > 1
           ? `<span class="rv-card__imgcount">+${imgs.length - 1}</span>`
           : ''
       }</div>`
-    : '';
+    : `<div class="rv-card__thumb rv-card__thumb--logo"><img src="${RV_LOGO}" alt="다픽" loading="lazy"></div>`;
   const titleHtml =
     r && r.title ? `<p class="rv-card__title">${rvEscape(r.title)}</p>` : '';
   const content =
@@ -137,13 +245,55 @@ function rvCardHtml(r) {
         ${stars}
         ${titleHtml}
         ${content}
+        ${rvHashtagsHtml(r)}
         <div class="rv-card__meta">
           <span class="rv-card__product">${rvEscape((r && r.productName) || '-')}</span>
           <span class="rv-card__author">${rvEscape((r && r.authorName) || '익명')}</span>
           <span class="rv-card__date">${rvDate(r && r.createdAt)}</span>
         </div>
+        ${rvCountersHtml(r)}
       </div>
     </article>`;
+}
+
+// 해시태그 뱃지 ('#' 부착) — 없으면 빈 문자열
+function rvHashtagsHtml(r) {
+  const tags = r && Array.isArray(r.hashtags) ? r.hashtags : [];
+  if (!tags.length) return '';
+  return (
+    '<div class="rv-card__tags">' +
+    tags
+      .map((t) => '<span class="rv-tag">#' + rvEscape(t) + '</span>')
+      .join('') +
+    '</div>'
+  );
+}
+
+// 카운터(조회수/좋아요/댓글) 아이콘 행 — 흑백 SVG
+const RV_ICON_VIEW =
+  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7z"/><circle cx="12" cy="12" r="3"/></svg>';
+const RV_ICON_LIKE =
+  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3zM7 22H4a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h3"/></svg>';
+const RV_ICON_COMMENT =
+  '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>';
+
+function rvCountersHtml(r) {
+  const view = (r && r.viewCount) || 0;
+  const like = (r && r.likeCount) || 0;
+  const comment = (r && r.commentCount) || 0;
+  return (
+    '<div class="rv-card__counters">' +
+    '<span class="rv-counter">' + RV_ICON_VIEW + rvNum(view) + '</span>' +
+    '<span class="rv-counter">' + RV_ICON_LIKE + rvNum(like) + '</span>' +
+    '<span class="rv-counter">' + RV_ICON_COMMENT + rvNum(comment) + '</span>' +
+    '</div>'
+  );
+}
+
+// 카운트 표시 (1000+ → 1.2k)
+function rvNum(n) {
+  n = Number(n) || 0;
+  return n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
 }
 
 // ── 더보기 버튼 ───────────────────────────────────────
@@ -446,7 +596,22 @@ function injectRvDetailStyles() {
     // 상세: Quill Delta 렌더 콘텐츠
     '.rvd-blockbody .ql-snow{border:none;}' +
     '.rvd-blockbody .ql-editor{padding:0;font-size:15px;line-height:1.75;color:#2a2a35;}' +
-    '.rvd-blockbody .ql-editor img{max-width:100%;height:auto;border-radius:10px;display:block;margin:12px auto;}';
+    '.rvd-blockbody .ql-editor img{max-width:100%;height:auto;border-radius:10px;display:block;margin:12px auto;}' +
+    // 카테고리 하위탭(통신사/브랜드)
+    '.rv-subtabs{display:flex;flex-wrap:wrap;gap:8px;margin:-4px 0 18px;}' +
+    '.rv-subtab{border:1px solid #e0dced;background:#fff;color:#555;border-radius:999px;' +
+    'padding:6px 14px;font-size:13px;cursor:pointer;font-family:inherit;line-height:1.2;}' +
+    '.rv-subtab.is-active{background:#5b3fbe;border-color:#5b3fbe;color:#fff;font-weight:700;}' +
+    // 이미지 없는 카드: 로고 썸네일(contain)
+    '.rv-card__thumb--logo{display:flex;align-items:center;justify-content:center;background:#f5f3fb;}' +
+    '.rv-card__thumb--logo img{width:62%;height:62%;object-fit:contain;}' +
+    // 해시태그 뱃지
+    '.rv-card__tags{display:flex;flex-wrap:wrap;gap:6px;margin:6px 0 2px;}' +
+    '.rv-tag{font-size:12px;color:#5b3fbe;background:#f1edfb;border-radius:6px;padding:2px 8px;font-weight:600;}' +
+    // 카운터(조회수/좋아요/댓글)
+    '.rv-card__counters{display:flex;gap:14px;margin-top:8px;color:#9a9aa5;font-size:12px;}' +
+    '.rv-counter{display:inline-flex;align-items:center;gap:4px;}' +
+    '.rv-counter svg{color:#b0aac2;}';
   const style = document.createElement('style');
   style.id = 'rvd-styles';
   style.textContent = css;
@@ -460,6 +625,7 @@ const rvEd = {
   consultationId: null,
   rating: 0,
   blocks: [], // [{type:'text',text}|{type:'image',url}]
+  hashtags: [], // 선택된 해시태그 라벨('#' 제외)
   uploading: false,
   submitting: false,
 };
@@ -483,6 +649,8 @@ function rvEnsureEditor() {
     '    <input class="rve-input" id="rveTitle" maxlength="200" placeholder="제목을 입력하세요">' +
     '    <label class="rve-label">별점</label>' +
     '    <div class="rve-stars" id="rveStars"></div>' +
+    '    <label class="rve-label">해시태그 <span class="rve-optional">(선택)</span></label>' +
+    '    <div class="rve-tags" id="rveTags"></div>' +
     '    <label class="rve-label">내용</label>' +
     '    <div class="rve-quill" id="rveEditor"></div>' +
     '  </div>' +
@@ -589,6 +757,7 @@ function rvOpenEditor() {
       }
       rvEd.consultationId = arr[0].consultationId;
       rvEd.rating = 0;
+      rvEd.hashtags = [];
       rvEd.submitting = false;
 
       document.getElementById('rveConsult').innerHTML = arr
@@ -603,6 +772,7 @@ function rvOpenEditor() {
         .join('');
       document.getElementById('rveTitle').value = '';
       rvRenderStars();
+      rvRenderHashtags();
       rvInitQuill();
       if (rvQuill) rvQuill.setText(''); // 본문 초기화
       document.getElementById('rvEditorModal').hidden = false;
@@ -639,6 +809,31 @@ function rvRenderStars() {
     b.addEventListener('click', () => {
       rvEd.rating = parseInt(b.dataset.v, 10);
       rvRenderStars();
+    });
+  });
+}
+
+// 해시태그 선택 칩(고정 5종) — 토글. 선택은 rvEd.hashtags 에 라벨 저장.
+function rvRenderHashtags() {
+  const el = document.getElementById('rveTags');
+  if (!el) return;
+  el.innerHTML = RV_HASHTAGS.map(
+    (t) =>
+      '<button type="button" class="rve-tag' +
+      (rvEd.hashtags.indexOf(t) >= 0 ? ' on' : '') +
+      '" data-t="' +
+      rvEscape(t) +
+      '">#' +
+      rvEscape(t) +
+      '</button>',
+  ).join('');
+  el.querySelectorAll('.rve-tag').forEach((b) => {
+    b.addEventListener('click', () => {
+      const t = b.dataset.t;
+      const i = rvEd.hashtags.indexOf(t);
+      if (i >= 0) rvEd.hashtags.splice(i, 1);
+      else rvEd.hashtags.push(t);
+      rvRenderHashtags();
     });
   });
 }
@@ -708,6 +903,7 @@ function rvEdSubmit() {
       title: title,
       rating: rvEd.rating,
       contentBlocks: ops, // Quill Delta ops → 백엔드가 이미지/텍스트 파생 저장
+      hashtags: rvEd.hashtags, // 화이트리스트는 백엔드가 재검증
     })
     .then((res) => {
       if (res === null) return;
@@ -746,6 +942,11 @@ function injectRvEditorStyles() {
     '.rve-stars{display:flex;gap:2px;}' +
     '.rve-star{background:none;border:none;font-size:26px;line-height:1;color:#dcd7e8;cursor:pointer;padding:0 2px;}' +
     '.rve-star.on{color:#ffb400;}' +
+    '.rve-optional{color:#b3b0c2;font-weight:400;font-size:12px;}' +
+    '.rve-tags{display:flex;flex-wrap:wrap;gap:8px;}' +
+    '.rve-tag{border:1px solid #e0dced;background:#fff;color:#6b6b7b;border-radius:999px;' +
+    'padding:6px 12px;font-size:13px;cursor:pointer;font-family:inherit;}' +
+    '.rve-tag.on{background:#f1edfb;border-color:#5b3fbe;color:#5b3fbe;font-weight:700;}' +
     '.rve-blocks{display:flex;flex-direction:column;gap:10px;}' +
     '.rve-blk{position:relative;border:1px solid #ece8f6;border-radius:10px;padding:10px 10px 10px 44px;background:#faf9fe;}' +
     '.rve-blk-ctrl{position:absolute;left:6px;top:8px;display:flex;flex-direction:column;gap:2px;}' +
