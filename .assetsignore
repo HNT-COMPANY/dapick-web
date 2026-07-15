@@ -1,8 +1,0 @@
-# 정적 자산으로 서빙하지 않을 파일 (Worker 소스·설정·개발 파일)
-worker.js
-wrangler.jsonc
-.assetsignore
-.git
-.gitignore
-.dev.vars
-node_modules

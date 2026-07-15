@@ -1,8 +1,10 @@
 // ════════════════════════════════════════════════════
-// dapick-web Worker — 후기 상세 제목 URL 라우팅 + OG/메타 서버 주입(SSR-lite)
-// /reviews/{제목슬러그}-{id}  →  review-detail.html 에 후기별 title/description/og:* 주입 후 서빙
+// _worker.js — Cloudflare Pages 고급 모드 Worker
+// 후기 상세 제목 URL 라우팅 + OG/메타 서버 주입(SSR-lite)
+// /reviews/{제목슬러그}-{id}  →  review-detail 페이지에 후기별 title/description/og:* 주입 후 서빙
 //   (카톡·페북 등 JS 미실행 봇도 후기별 미리보기가 보이도록)
-// 그 외 모든 요청은 정적 자산으로 위임(clean URL/.html 리다이렉트 등 기존 동작 유지).
+// 그 외 모든 요청은 정적 자산으로 위임(clean URL/.html 처리 등 기존 동작 유지).
+// ※ Pages 고급 모드: 이 파일(_worker.js)이 있으면 모든 요청을 처리. env.ASSETS 자동 제공.
 // ════════════════════════════════════════════════════
 
 const API_BASE = 'https://api.dapick.co.kr';

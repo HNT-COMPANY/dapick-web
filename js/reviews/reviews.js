@@ -255,6 +255,14 @@ function rvSlug(title) {
 }
 function rvReviewUrl(id) {
   const r = rvById[id];
+  const host = window.location.hostname;
+  const isLocal =
+    host === 'localhost' ||
+    host === '127.0.0.1' ||
+    host.startsWith('192.168.') ||
+    host.endsWith('.local');
+  // 로컬(Worker 없음)은 직접 페이지, 프로덕션은 제목 URL(Worker 라우팅 + OG)
+  if (isLocal) return '/review-detail.html?id=' + id;
   return '/reviews/' + rvSlug(r && r.title) + '-' + id;
 }
 
