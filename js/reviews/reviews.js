@@ -243,6 +243,21 @@ function rvEscape(s) {
 // 상세 모달 — 카드 클릭 시 전체 글 + 이미지 전부 (아정당식)
 // (조회수/좋아요/댓글/태그는 백엔드 데이터 없어 이번 범위 제외)
 // ════════════════════════════════════════════════════
+// 후기 상세 URL (제목 슬러그 + id) — 예: /reviews/다픽-후기-42 (Worker 가 라우팅+OG 주입)
+function rvSlug(title) {
+  if (!title) return 'review';
+  const s = String(title)
+    .trim()
+    .replace(/[^\p{L}\p{N}]+/gu, '-')
+    .replace(/^-+|-+$/g, '')
+    .slice(0, 80);
+  return s || 'review';
+}
+function rvReviewUrl(id) {
+  const r = rvById[id];
+  return '/reviews/' + rvSlug(r && r.title) + '-' + id;
+}
+
 function rvSetupDetail() {
   injectRvDetailStyles();
 
@@ -270,14 +285,14 @@ function rvSetupDetail() {
   if (listEl) {
     listEl.addEventListener('click', (e) => {
       const card = e.target.closest('.rv-card');
-      if (card && card.dataset.id) rvOpenDetail(card.dataset.id);
+      if (card && card.dataset.id) window.location.href = rvReviewUrl(card.dataset.id);
     });
     listEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
         const card = e.target.closest('.rv-card');
         if (card && card.dataset.id) {
           e.preventDefault();
-          rvOpenDetail(card.dataset.id);
+          window.location.href = rvReviewUrl(card.dataset.id);
         }
       }
     });
@@ -344,16 +359,11 @@ function rvDetailHtml(r) {
   const blocks = r && Array.isArray(r.contentBlocks) ? r.contentBlocks : [];
   let bodyHtml;
   if (blocks.length) {
-    // 블록형: 텍스트/이미지 순서대로
-    bodyHtml = blocks
-      .map((b) => {
-        if (b && b.type === 'image' && b.url)
-          return '<img class="rvd-img" src="' + rvEscape(b.url) + '" alt="" loading="lazy">';
-        if (b && b.type === 'text' && b.text)
-          return '<p class="rvd-content">' + rvEscape(b.text) + '</p>';
-        return '';
-      })
-      .join('');
+    // Quill Delta → 읽기전용 Quill 로 안전 렌더(서식·이미지 순서 보존)
+    bodyHtml =
+      '<div class="ql-snow"><div class="ql-editor rvd-ql">' +
+      rvDeltaToHtml(blocks) +
+      '</div></div>';
   } else {
     // 구 데이터: 평문 + 이미지 갤러리
     const content = r && r.content ? rvEscape(r.content) : '';
@@ -424,7 +434,11 @@ function injectRvDetailStyles() {
     '.rv-card--hidden{cursor:default;}' +
     '.rv-card__lockrow{display:flex;align-items:center;gap:8px;padding:22px 20px;' +
     'color:#9a9aa5;font-size:14px;}' +
-    '.rv-lock{color:#9a9aa5;flex:none;}';
+    '.rv-lock{color:#9a9aa5;flex:none;}' +
+    // 상세: Quill Delta 렌더 콘텐츠
+    '.rvd-blockbody .ql-snow{border:none;}' +
+    '.rvd-blockbody .ql-editor{padding:0;font-size:15px;line-height:1.75;color:#2a2a35;}' +
+    '.rvd-blockbody .ql-editor img{max-width:100%;height:auto;border-radius:10px;display:block;margin:12px auto;}';
   const style = document.createElement('style');
   style.id = 'rvd-styles';
   style.textContent = css;
@@ -461,14 +475,8 @@ function rvEnsureEditor() {
     '    <input class="rve-input" id="rveTitle" maxlength="200" placeholder="제목을 입력하세요">' +
     '    <label class="rve-label">별점</label>' +
     '    <div class="rve-stars" id="rveStars"></div>' +
-    '    <label class="rve-label">내용 (텍스트·사진을 추가하고 순서를 바꿀 수 있어요)</label>' +
-    '    <div class="rve-blocks" id="rveBlocks"></div>' +
-    '    <div class="rve-addbar">' +
-    '      <button type="button" class="rve-addbtn" id="rveAddText">＋ 텍스트</button>' +
-    '      <label class="rve-addbtn" id="rveAddImgLabel">＋ 사진' +
-    '        <input type="file" id="rveFile" accept="image/*" multiple hidden></label>' +
-    '      <span class="rve-imgcount" id="rveImgCount">사진 0 / 5</span>' +
-    '    </div>' +
+    '    <label class="rve-label">내용</label>' +
+    '    <div class="rve-quill" id="rveEditor"></div>' +
     '  </div>' +
     '  <div class="rve-footer">' +
     '    <button type="button" class="rve-btn rve-btn--ghost" data-rve-close>취소</button>' +
@@ -480,15 +488,82 @@ function rvEnsureEditor() {
   modal.querySelectorAll('[data-rve-close]').forEach((el) => {
     el.addEventListener('click', rvCloseEditor);
   });
-  document.getElementById('rveAddText').addEventListener('click', () => {
-    rvEd.blocks.push({ type: 'text', text: '' });
-    rvRenderBlocks();
-  });
-  document.getElementById('rveFile').addEventListener('change', rvEdFiles);
   document.getElementById('rveConsult').addEventListener('change', (e) => {
     rvEd.consultationId = e.target.value || null;
   });
   document.getElementById('rveSubmit').addEventListener('click', rvEdSubmit);
+}
+
+// Quill 인스턴스 (에디터/상세 렌더 공용 아님 — 에디터 전용)
+let rvQuill = null;
+
+// Quill 초기화 (모달 최초 오픈 시 1회). 티스토리식 툴바 + 이미지 업로드 핸들러 + placeholder.
+function rvInitQuill() {
+  if (rvQuill || typeof Quill === 'undefined') return;
+  rvQuill = new Quill('#rveEditor', {
+    theme: 'snow',
+    placeholder:
+      '욕설, 비방, 허위사실, 개인정보가 포함된 후기는 관리자에 의해 숨김 처리될 수 있습니다. 서로를 배려하는 후기를 작성해 주세요.',
+    modules: {
+      toolbar: {
+        container: [
+          [{ header: [1, 2, 3, false] }],
+          ['bold', 'italic', 'underline', 'strike'],
+          [{ color: [] }],
+          [{ align: [] }],
+          ['blockquote'],
+          [{ list: 'ordered' }, { list: 'bullet' }],
+          ['link', 'image'],
+          ['clean'],
+        ],
+        handlers: { image: rvQuillImageHandler },
+      },
+    },
+  });
+}
+
+// 본문 이미지 수 (Delta 의 image embed 개수)
+function rvCountQuillImages() {
+  if (!rvQuill) return 0;
+  const ops = (rvQuill.getContents() && rvQuill.getContents().ops) || [];
+  return ops.filter(
+    (o) => o.insert && typeof o.insert === 'object' && o.insert.image,
+  ).length;
+}
+
+// Quill 이미지 버튼 → 파일 선택 → /api/reviews/images 업로드 → 커서 위치 삽입 (최대 5장)
+function rvQuillImageHandler() {
+  if (rvCountQuillImages() >= 5) {
+    alert('사진은 최대 5장까지 첨부할 수 있어요.');
+    return;
+  }
+  const input = document.createElement('input');
+  input.type = 'file';
+  input.accept = 'image/*';
+  input.onchange = () => {
+    const file = input.files && input.files[0];
+    if (!file) return;
+    rvUploadImage(file)
+      .then((d) => {
+        if (d && d.url && rvQuill) {
+          const range = rvQuill.getSelection(true);
+          const idx = range ? range.index : rvQuill.getLength();
+          rvQuill.insertEmbed(idx, 'image', d.url, 'user');
+          rvQuill.setSelection(idx + 1, 0, 'user');
+        }
+      })
+      .catch((err) => alert((err && err.message) || '이미지 업로드 실패'));
+  };
+  input.click();
+}
+
+// Delta(ops) → 읽기전용 Quill 로 안전 렌더한 HTML (상세용)
+function rvDeltaToHtml(ops) {
+  if (typeof Quill === 'undefined' || !Array.isArray(ops)) return '';
+  const tmp = document.createElement('div');
+  const q = new Quill(tmp, { modules: { toolbar: false }, readOnly: true });
+  q.setContents({ ops: ops });
+  return q.root.innerHTML;
 }
 
 function rvOpenEditor() {
@@ -506,8 +581,6 @@ function rvOpenEditor() {
       }
       rvEd.consultationId = arr[0].consultationId;
       rvEd.rating = 0;
-      rvEd.blocks = [{ type: 'text', text: '' }];
-      rvEd.uploading = false;
       rvEd.submitting = false;
 
       document.getElementById('rveConsult').innerHTML = arr
@@ -522,7 +595,8 @@ function rvOpenEditor() {
         .join('');
       document.getElementById('rveTitle').value = '';
       rvRenderStars();
-      rvRenderBlocks();
+      rvInitQuill();
+      if (rvQuill) rvQuill.setText(''); // 본문 초기화
       document.getElementById('rvEditorModal').hidden = false;
       document.body.style.overflow = 'hidden';
     })
@@ -561,97 +635,6 @@ function rvRenderStars() {
   });
 }
 
-function rvImgCount() {
-  return rvEd.blocks.filter((b) => b.type === 'image').length;
-}
-
-function rvRenderBlocks() {
-  const el = document.getElementById('rveBlocks');
-  if (!el) return;
-  el.innerHTML = rvEd.blocks
-    .map((b, i) => {
-      const ctrls =
-        '<div class="rve-blk-ctrl">' +
-        '<button type="button" data-act="up" data-i="' + i + '" title="위로">▲</button>' +
-        '<button type="button" data-act="down" data-i="' + i + '" title="아래로">▼</button>' +
-        '<button type="button" data-act="del" data-i="' + i + '" title="삭제">✕</button>' +
-        '</div>';
-      const inner =
-        b.type === 'image'
-          ? '<img class="rve-blk-img" src="' + rvEscape(b.url) + '" alt="">'
-          : '<textarea class="rve-blk-text" data-i="' +
-            i +
-            '" rows="3" placeholder="내용을 입력하세요">' +
-            rvEscape(b.text || '') +
-            '</textarea>';
-      return '<div class="rve-blk">' + ctrls + inner + '</div>';
-    })
-    .join('');
-
-  el.querySelectorAll('textarea.rve-blk-text').forEach((t) => {
-    t.addEventListener('input', () => {
-      const i = parseInt(t.dataset.i, 10);
-      if (rvEd.blocks[i]) rvEd.blocks[i].text = t.value;
-    });
-  });
-  el.querySelectorAll('.rve-blk-ctrl button').forEach((btn) => {
-    btn.addEventListener('click', () => {
-      const i = parseInt(btn.dataset.i, 10);
-      const act = btn.dataset.act;
-      if (act === 'del') {
-        rvEd.blocks.splice(i, 1);
-      } else if (act === 'up' && i > 0) {
-        const tmp = rvEd.blocks[i - 1];
-        rvEd.blocks[i - 1] = rvEd.blocks[i];
-        rvEd.blocks[i] = tmp;
-      } else if (act === 'down' && i < rvEd.blocks.length - 1) {
-        const tmp = rvEd.blocks[i + 1];
-        rvEd.blocks[i + 1] = rvEd.blocks[i];
-        rvEd.blocks[i] = tmp;
-      }
-      rvRenderBlocks();
-    });
-  });
-
-  const cnt = document.getElementById('rveImgCount');
-  if (cnt) {
-    cnt.textContent =
-      '사진 ' + rvImgCount() + ' / 5' + (rvEd.uploading ? ' (업로드 중...)' : '');
-  }
-  const lbl = document.getElementById('rveAddImgLabel');
-  if (lbl) {
-    const dis = rvImgCount() >= 5 || rvEd.uploading;
-    lbl.style.opacity = dis ? '.5' : '1';
-    lbl.style.pointerEvents = dis ? 'none' : 'auto';
-  }
-}
-
-function rvEdFiles(e) {
-  const files = Array.prototype.slice.call(e.target.files || []);
-  e.target.value = '';
-  if (!files.length) return;
-  const remaining = 5 - rvImgCount();
-  if (remaining <= 0) {
-    alert('사진은 최대 5장까지 첨부할 수 있어요.');
-    return;
-  }
-  const toUp = files.slice(0, remaining);
-  rvEd.uploading = true;
-  rvRenderBlocks();
-  Promise.all(
-    toUp.map((f) =>
-      rvUploadImage(f)
-        .then((d) => {
-          if (d && d.url) rvEd.blocks.push({ type: 'image', url: d.url });
-        })
-        .catch((err) => alert((err && err.message) || '이미지 업로드 실패')),
-    ),
-  ).then(() => {
-    rvEd.uploading = false;
-    rvRenderBlocks();
-  });
-}
-
 function rvUploadImage(file) {
   const fd = new FormData();
   fd.append('file', file);
@@ -682,10 +665,6 @@ function rvUploadImage(file) {
 
 function rvEdSubmit() {
   if (rvEd.submitting) return;
-  if (rvEd.uploading) {
-    alert('이미지 업로드가 끝난 뒤 등록해주세요.');
-    return;
-  }
   if (!rvEd.consultationId) {
     alert('후기를 작성할 상담을 선택해주세요.');
     return;
@@ -699,13 +678,14 @@ function rvEdSubmit() {
     alert('제목을 입력해주세요.');
     return;
   }
-  const blocks = rvEd.blocks
-    .map((b) =>
-      b.type === 'text'
-        ? { type: 'text', text: (b.text || '').trim() }
-        : { type: 'image', url: b.url },
-    )
-    .filter((b) => (b.type === 'text' ? b.text : b.url));
+
+  const delta = rvQuill ? rvQuill.getContents() : null;
+  const ops = (delta && delta.ops) || [];
+  const plain = rvQuill ? rvQuill.getText().trim() : '';
+  if (!plain && rvCountQuillImages() === 0) {
+    alert('내용을 입력해주세요.');
+    return;
+  }
 
   rvEd.submitting = true;
   const btn = document.getElementById('rveSubmit');
@@ -719,15 +699,12 @@ function rvEdSubmit() {
       consultationId: rvEd.consultationId,
       title: title,
       rating: rvEd.rating,
-      contentBlocks: blocks,
+      contentBlocks: ops, // Quill Delta ops → 백엔드가 이미지/텍스트 파생 저장
     })
     .then((res) => {
       if (res === null) return;
       rvCloseEditor();
-      rvOpenModal(
-        '후기가 등록되었습니다. 승인 후 목록에 노출됩니다. 감사합니다!',
-        null,
-      );
+      rvOpenModal('후기가 등록되었습니다. 감사합니다!', null);
       rvSelectCat(rvCurrentCat);
     })
     .catch((e) => {
@@ -777,7 +754,14 @@ function injectRvEditorStyles() {
     '.rve-btn{flex:1;border:none;border-radius:10px;padding:12px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}' +
     '.rve-btn--ghost{background:#f2f0f8;color:#555;}' +
     '.rve-btn--primary{background:#5b3fbe;color:#fff;}' +
-    '.rve-btn--primary:disabled{opacity:.6;cursor:default;}';
+    '.rve-btn--primary:disabled{opacity:.6;cursor:default;}' +
+    // Quill 에디터
+    '.rve-quill .ql-toolbar{border-radius:10px 10px 0 0;border-color:#e0dced;}' +
+    '.rve-quill .ql-container{border-radius:0 0 10px 10px;border-color:#e0dced;' +
+    'min-height:220px;font-size:15px;font-family:inherit;}' +
+    '.rve-quill .ql-editor{min-height:220px;line-height:1.7;}' +
+    '.rve-quill .ql-editor.ql-blank::before{color:#b3b0c2;font-style:normal;font-size:13px;}' +
+    '.rve-quill .ql-editor img{max-width:100%;height:auto;border-radius:8px;}';
   const style = document.createElement('style');
   style.id = 'rve-styles';
   style.textContent = css;
