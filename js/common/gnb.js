@@ -49,6 +49,11 @@ function buildGnbHtml() {
   }).join('');
 
   // ↓ internet-unified.html 원본 gnb-top 그대로 (로고 경로/클래스, gnb-right onclick 포함)
+  // 모바일 햄버거 메뉴용 카테고리 링크(카테고리 바가 좁을 때 대체 진입)
+  const mobileCatLinks = GNB_CATS.map(
+    (c) => `<a class="gnb-mobile-link" href="javascript:void(0)" onclick="goPage('${c.cat}')">${c.label}</a>`
+  ).join('');
+
   return `
     <div class="gnb-top">
       <a href="/" class="logo-wrap">
@@ -63,9 +68,25 @@ function buildGnbHtml() {
       <div class="gnb-right">
         <button class="btn-login" onclick="window.location.href='/login'">로그인/회원가입</button>
       </div>
+      <button class="gnb-burger" type="button" aria-label="메뉴" aria-expanded="false" onclick="toggleGnbMobileMenu(this)">
+        <span></span><span></span><span></span>
+      </button>
     </div>
     <div class="cat-bar">
       <div class="cat-inner">${catItems}</div>
+    </div>
+    <div class="gnb-mobile" id="gnbMobile" hidden>
+      <div class="gnb-mobile-sec">
+        <div class="gnb-mobile-label">카테고리</div>
+        ${mobileCatLinks}
+      </div>
+      <div class="gnb-mobile-sec">
+        <div class="gnb-mobile-label">메뉴</div>
+        <a class="gnb-mobile-link" href="/support">고객센터</a>
+        <a class="gnb-mobile-link" href="events.html">이벤트</a>
+        <a class="gnb-mobile-link" href="/reviews">후기</a>
+        <a class="gnb-mobile-link" href="faq.html">자주묻는질문</a>
+      </div>
     </div>`;
 }
 
@@ -106,6 +127,16 @@ function setupGnbDropdownToggle() {
       .querySelectorAll('.cat-item.has-dropdown.is-open')
       .forEach((i) => i.classList.remove('is-open'));
   });
+}
+
+// 모바일 햄버거 메뉴 토글 (≤768px 에서 노출)
+function toggleGnbMobileMenu(btn) {
+  const menu = document.getElementById('gnbMobile');
+  if (!menu) return;
+  const willOpen = menu.hasAttribute('hidden');
+  if (willOpen) menu.removeAttribute('hidden');
+  else menu.setAttribute('hidden', '');
+  if (btn) btn.setAttribute('aria-expanded', String(willOpen));
 }
 
 // 헤더 주입 실행 (gnb-user.js보다 먼저)

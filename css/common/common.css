@@ -975,3 +975,73 @@ body {
     font-size: 13px;
   }
 }
+
+
+/* ════════════════════════════════════
+   모바일 GNB — 햄버거 메뉴 (후기/카테고리 진입 복구)
+   ════════════════════════════════════ */
+.gnb-burger {
+  display: none;
+  flex-direction: column;
+  justify-content: center;
+  gap: 5px;
+  width: 42px;
+  height: 42px;
+  padding: 0;
+  margin-left: 10px;
+  background: #fff;
+  border: 1.5px solid var(--border-card);
+  border-radius: 8px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+.gnb-burger span {
+  display: block;
+  width: 20px;
+  height: 2px;
+  margin: 0 auto;
+  background: var(--text-main);
+  border-radius: 2px;
+}
+.gnb-mobile {
+  display: none;
+  border-top: 1px solid var(--border);
+  background: #fff;
+  padding: 6px 20px 16px;
+}
+.gnb-mobile-sec {
+  padding: 8px 0;
+  border-bottom: 1px solid var(--border);
+}
+.gnb-mobile-sec:last-child {
+  border-bottom: none;
+}
+.gnb-mobile-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #9a9aa5;
+  padding: 4px 4px 6px;
+}
+.gnb-mobile-link {
+  display: block;
+  padding: 12px 6px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  text-decoration: none;
+  border-radius: 8px;
+}
+.gnb-mobile-link:hover,
+.gnb-mobile-link:active {
+  color: var(--purple);
+  background: var(--purple-pale);
+}
+
+@media (max-width: 768px) {
+  .gnb-burger {
+    display: flex;
+  }
+  .gnb-mobile:not([hidden]) {
+    display: block;
+  }
+}

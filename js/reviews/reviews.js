@@ -12,7 +12,7 @@ const RV_CATEGORIES = [
   { cat: 'RENTAL', label: '렌탈' },
   { cat: 'INTERNET_TV', label: '인터넷TV' },
 ];
-const RV_PAGE_SIZE = 10;
+const RV_PAGE_SIZE = 24; // 3열 × 8줄
 
 // 이미지 미첨부 시 카드 썸네일 기본값 (다픽 로고)
 const RV_LOGO = '/assets/logos/dapicklogo.png';
@@ -264,20 +264,20 @@ async function rvLoadReviews(reset) {
     if (reset && items.length === 0) {
       list.innerHTML =
         '<div class="rv-empty">아직 등록된 후기가 없습니다.</div>';
-      rvRenderMore(false);
+      rvRenderPagination(0);
       return;
     }
     items.forEach((it) => {
       if (it && it.id != null) rvById[it.id] = it;
     });
     list.insertAdjacentHTML('beforeend', items.map(rvCardHtml).join(''));
-    rvRenderMore(rvPage + 1 < totalPages);
+    rvRenderPagination(totalPages);
   } catch (e) {
     if (reset) {
       list.innerHTML =
         '<div class="rv-empty">후기를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</div>';
     }
-    rvRenderMore(false);
+    rvRenderPagination(0);
   } finally {
     rvLoading = false;
   }
@@ -401,18 +401,55 @@ function rvNum(n) {
   return n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
 }
 
-// ── 더보기 버튼 ───────────────────────────────────────
-function rvRenderMore(show) {
+// ── 페이지네이션 ───────────────────────────────────────
+function rvRenderPagination(totalPages) {
   const el = document.getElementById('rvMore');
-  if (!show) {
+  if (!el) return;
+  const total = Number(totalPages) || 0;
+  if (total <= 0) {
     el.innerHTML = '';
     return;
   }
-  el.innerHTML =
-    '<button type="button" class="rv-more-btn" id="rvMoreBtn">더보기</button>';
-  document.getElementById('rvMoreBtn').addEventListener('click', () => {
-    rvPage += 1;
-    rvLoadReviews(false);
+  const cur = rvPage + 1; // 1-based 표시
+  const WINDOW = 10;
+  const start = Math.floor((cur - 1) / WINDOW) * WINDOW + 1;
+  const end = Math.min(start + WINDOW - 1, total);
+  let html = '<nav class="rv-pg" aria-label="페이지">';
+  if (start > 1) {
+    html +=
+      '<button type="button" class="rv-pg-btn rv-pg-nav" data-page="' +
+      (start - 2) + '" aria-label="이전">\u2039</button>';
+  }
+  for (let p = start; p <= end; p++) {
+    html +=
+      '<button type="button" class="rv-pg-btn' +
+      (p === cur ? ' is-active' : '') +
+      '" data-page="' + (p - 1) + '">' + p + '</button>';
+  }
+  if (cur < total) {
+    html +=
+      '<button type="button" class="rv-pg-btn rv-pg-nav" data-page="' +
+      cur + '" aria-label="다음">\u203a</button>';
+    html +=
+      '<button type="button" class="rv-pg-btn rv-pg-nav" data-page="' +
+      (total - 1) + '" aria-label="마지막">\u00bb</button>';
+  }
+  html += '</nav>';
+  el.innerHTML = html;
+  el.querySelectorAll('.rv-pg-btn').forEach((b) => {
+    b.addEventListener('click', () => {
+      const p = Number(b.dataset.page);
+      if (isNaN(p) || p === rvPage) return;
+      rvPage = p;
+      rvLoadReviews(true);
+      const listEl = document.querySelector('.rv-list');
+      if (listEl) {
+        window.scrollTo({
+          top: listEl.getBoundingClientRect().top + window.scrollY - 90,
+          behavior: 'smooth',
+        });
+      }
+    });
   });
 }
 

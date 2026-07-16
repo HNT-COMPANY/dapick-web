@@ -2,7 +2,7 @@
    reviews.css — 실제 후기 통합 탭 (조각2-③)
    ════════════════════════════════════════════════════ */
 .rv-wrap {
-  max-width: 900px;
+  max-width: 1200px;
   margin: 0 auto;
   padding: 32px 20px 80px;
 }
@@ -73,9 +73,18 @@
 /* 목록 */
 .rv-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
+  grid-template-columns: 1fr;
   gap: 14px;
-  align-items: start;
+}
+@media (min-width: 700px) {
+  .rv-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (min-width: 1040px) {
+  .rv-list {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
 }
 .rv-empty {
   grid-column: 1 / -1;
@@ -122,25 +131,11 @@
   gap: 14px;
   width: max-content;
 }
-/* 캐러셀 안의 카드는 고정 너비 + 연보라 강조 */
+/* 캐러셀 카드: 흰 배경 + 연보라 테두리만 (텍스트는 기본 후기와 동일) */
 .rv-top-track .rv-card {
   flex: 0 0 460px;
   width: 460px;
-  background: #8268d6; /* 연보라 톤 */
-  box-shadow: 0 6px 18px rgba(108, 63, 197, 0.28);
-}
-/* 연보라 배경 → 텍스트 흰색 계열 */
-.rv-top-track .rv-card__content,
-.rv-top-track .rv-card__title,
-.rv-top-track .rv-card__product {
-  color: #fff;
-}
-.rv-top-track .rv-card__author,
-.rv-top-track .rv-card__meta {
-  color: rgba(255, 255, 255, 0.85);
-}
-.rv-top-track .rv-card__thumb {
-  background: rgba(255, 255, 255, 0.18);
+  border: 2px solid #c3b0ee;
 }
 .rv-top-arrow {
   position: absolute;
@@ -186,6 +181,7 @@
   border-radius: 14px;
   background: #fff;
   box-shadow: 0 2px 14px rgba(0, 0, 0, 0.07);
+  min-height: 200px;
 }
 .rv-card__thumb {
   flex-shrink: 0;
@@ -204,6 +200,8 @@
 .rv-card__body {
   min-width: 0;
   flex: 1;
+  display: flex;
+  flex-direction: column;
 }
 .rv-card__stars {
   font-size: 15px;
@@ -214,8 +212,17 @@
 .rv-card__stars-off {
   color: #dcd7e8;
 }
+.rv-card__title {
+  margin: 8px 0 4px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #1c1b22;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 .rv-card__content {
-  margin: 8px 0 10px;
+  margin: 6px 0 10px;
   font-size: 14px;
   line-height: 1.6;
   color: #333;
@@ -226,6 +233,20 @@
   overflow: hidden;
   word-break: break-word;
 }
+/* 해시태그: 한 줄 가로 정렬 — 각 태그 온전(세로 접힘 방지), 넘치면 가로 스크롤 */
+.rv-card__tags {
+  flex-wrap: nowrap !important;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+.rv-card__tags::-webkit-scrollbar {
+  display: none;
+}
+.rv-tag {
+  flex: 0 0 auto;
+  white-space: nowrap;
+}
 .rv-card__meta {
   display: flex;
   flex-wrap: wrap;
@@ -233,6 +254,7 @@
   gap: 8px;
   font-size: 12px;
   color: #8a8a96;
+  margin-top: auto;
 }
 .rv-card__product {
   font-weight: 700;
@@ -324,8 +346,59 @@
 }
 
 @media (max-width: 640px) {
+  .rv-wrap {
+    padding: 20px 16px 60px;
+  }
+  .rv-head {
+    margin-bottom: 16px;
+  }
+  .rv-title {
+    font-size: 20px;
+  }
+  .rv-top-title {
+    font-size: 20px;
+  }
+  .rv-card {
+    padding: 14px;
+  }
   .rv-card__thumb {
     width: 64px;
     height: 64px;
   }
+}
+
+/* ── 페이지네이션 (하단 숫자 이동, 현재 페이지 박스) ── */
+.rv-pg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  margin-top: 16px;
+  flex-wrap: wrap;
+}
+.rv-pg-btn {
+  min-width: 34px;
+  height: 34px;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  background: none;
+  color: #6b6b7b;
+  font-size: 14px;
+  font-weight: 500;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.rv-pg-btn:hover {
+  color: #6c3fc5;
+  background: #f5f2fd;
+}
+.rv-pg-btn.is-active {
+  border-color: #1c1b22;
+  color: #1c1b22;
+  font-weight: 700;
+}
+.rv-pg-nav {
+  color: #9a9aa5;
 }

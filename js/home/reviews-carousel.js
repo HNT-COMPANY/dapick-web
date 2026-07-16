@@ -54,7 +54,7 @@
     const html = base.map(cardHtml).join('');
     track.innerHTML = html + html; // 2배 복제 → -50% 이동으로 매끄러운 루프
     // 천천히 흐르도록: 카드 수에 비례한 시간(느리게)
-    const dur = Math.max(24, base.length * 4);
+    const dur = Math.max(48, base.length * 8); // 속도 절반(느리게)
     track.style.animationDuration = dur + 's';
   }
 
