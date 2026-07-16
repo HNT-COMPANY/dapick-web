@@ -68,6 +68,17 @@ function buildGnbHtml() {
       <div class="gnb-right">
         <button class="btn-login" onclick="window.location.href='/login'">로그인/회원가입</button>
       </div>
+      <div class="gnb-more">
+        <button class="gnb-more-btn" type="button" aria-label="바로가기 더보기" aria-expanded="false" onclick="toggleGnbMore(this)">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="gnb-more-card" id="gnbMoreCard" hidden>
+          <a href="/support">고객센터</a>
+          <a href="events.html" class="has-new">이벤트</a>
+          <a href="/reviews">후기</a>
+          <a href="faq.html">자주묻는질문</a>
+        </div>
+      </div>
       <button class="gnb-burger" type="button" aria-label="메뉴" aria-expanded="false" onclick="toggleGnbMobileMenu(this)">
         <span></span><span></span><span></span>
       </button>
@@ -139,10 +150,29 @@ function toggleGnbMobileMenu(btn) {
   if (btn) btn.setAttribute('aria-expanded', String(willOpen));
 }
 
+// 모바일 더보기(⋯): 유틸 링크(고객센터·이벤트·후기·자주묻는질문) 카드 토글
+function toggleGnbMore(btn) {
+  const card = document.getElementById('gnbMoreCard');
+  if (!card) return;
+  const willOpen = card.hasAttribute('hidden');
+  if (willOpen) card.removeAttribute('hidden');
+  else card.setAttribute('hidden', '');
+  if (btn) btn.setAttribute('aria-expanded', String(willOpen));
+}
+
 // 헤더 주입 실행 (gnb-user.js보다 먼저)
 (function injectGnb() {
   const nav = document.querySelector('nav.gnb');
   if (!nav) return; // login/signup 등 nav.gnb 없으면 스킵
   nav.innerHTML = buildGnbHtml();
   setupGnbDropdownToggle();
+  document.addEventListener('click', (e) => {
+    const more = document.querySelector('.gnb-more');
+    const card = document.getElementById('gnbMoreCard');
+    if (card && !card.hasAttribute('hidden') && more && !more.contains(e.target)) {
+      card.setAttribute('hidden', '');
+      const b = more.querySelector('.gnb-more-btn');
+      if (b) b.setAttribute('aria-expanded', 'false');
+    }
+  });
 })();
