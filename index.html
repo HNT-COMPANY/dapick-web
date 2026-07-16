@@ -337,15 +337,21 @@
   </div>
 </div>
 
-<!-- 실제 후기 -->
-<div class="section">
+<!-- 실제 후기 (자동 캐러셀 — 5초마다 우측으로 한 칸) -->
+<div class="section hrev-section">
   <div class="wrap">
-    <div class="sec-head sec-head--tight">
-      <span class="sec-title">실제 후기</span>
-      <a class="sec-more" href="#">더보기 ›</a>
+    <div class="hrev-head">
+      <h2 class="hrev-title">먼저 써본 분들의 후기</h2>
+      <p class="hrev-sub">다픽을 먼저 이용해보신 분들의 생생한 후기입니다.</p>
     </div>
-    <div class="review-grid">
-      <div class="review-empty" style="grid-column:1 / -1;text-align:center;padding:36px 0;color:var(--text-muted);font-size:14px;">아직 등록된 후기가 없습니다.</div>
+    <!-- 우→좌 연속 흐름(마퀴). 좌우 버튼 없음. -->
+    <div class="hrev-carousel" id="hrevCarousel">
+      <div class="hrev-viewport">
+        <div class="hrev-track" id="hrevTrack"></div>
+      </div>
+    </div>
+    <div class="hrev-more">
+      <a class="hrev-more-btn" href="/reviews">후기 더보기</a>
     </div>
   </div>
 </div>
@@ -498,6 +504,7 @@
 <script src="js/common/application.js"></script>
 <script src="js/internet/internet-calc.js"></script>
 <script src="js/internet/best-grid.js"></script>
+<script src="js/home/reviews-carousel.js"></script>
 
 </body>
 </html>

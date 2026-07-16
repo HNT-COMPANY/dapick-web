@@ -51,7 +51,7 @@
   min-height: 44px;
   padding: 0 18px;
   border: 1px solid #e0dced;
-  border-radius: 999px;
+  border-radius: 6px; /* 직사각형 */
   background: #fff;
   color: #555;
   font-size: 14px;
@@ -72,15 +72,109 @@
 
 /* 목록 */
 .rv-list {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(400px, 1fr));
   gap: 14px;
+  align-items: start;
 }
 .rv-empty {
+  grid-column: 1 / -1;
   padding: 48px 0;
   text-align: center;
   color: #9a9aa5;
   font-size: 14px;
+}
+
+/* 최고 후기는? (좋아요 있는 후기만 — 가로 드래그 캐러셀) */
+.rv-top {
+  margin-bottom: 26px;
+}
+.rv-top[hidden] {
+  display: none;
+}
+.rv-top-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1c1b22;
+  margin: 0 0 14px;
+}
+.rv-top-carousel {
+  position: relative;
+}
+.rv-top-viewport {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  scroll-behavior: smooth;
+  cursor: grab;
+  user-select: none;
+  -webkit-overflow-scrolling: touch;
+}
+.rv-top-viewport::-webkit-scrollbar {
+  display: none;
+}
+.rv-top-viewport.is-drag {
+  cursor: grabbing;
+  scroll-behavior: auto;
+}
+.rv-top-track {
+  display: flex;
+  gap: 14px;
+  width: max-content;
+}
+/* 캐러셀 안의 카드는 고정 너비 + 연보라 강조 */
+.rv-top-track .rv-card {
+  flex: 0 0 460px;
+  width: 460px;
+  background: #8268d6; /* 연보라 톤 */
+  box-shadow: 0 6px 18px rgba(108, 63, 197, 0.28);
+}
+/* 연보라 배경 → 텍스트 흰색 계열 */
+.rv-top-track .rv-card__content,
+.rv-top-track .rv-card__title,
+.rv-top-track .rv-card__product {
+  color: #fff;
+}
+.rv-top-track .rv-card__author,
+.rv-top-track .rv-card__meta {
+  color: rgba(255, 255, 255, 0.85);
+}
+.rv-top-track .rv-card__thumb {
+  background: rgba(255, 255, 255, 0.18);
+}
+.rv-top-arrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid #e5e2ef;
+  background: #fff;
+  color: #6c3fc5;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+}
+.rv-top-arrow[hidden] {
+  display: none;
+}
+.rv-top-prev {
+  left: -8px;
+}
+.rv-top-next {
+  right: -8px;
+}
+@media (max-width: 640px) {
+  .rv-top-track .rv-card {
+    flex-basis: 280px;
+    width: 280px;
+  }
 }
 
 /* 리뷰 카드 */
@@ -88,9 +182,10 @@
   display: flex;
   gap: 14px;
   padding: 18px;
-  border: 1px solid #ececf1;
+  border: none; /* 테두리 제거 */
   border-radius: 14px;
   background: #fff;
+  box-shadow: 0 2px 14px rgba(0, 0, 0, 0.07);
 }
 .rv-card__thumb {
   flex-shrink: 0;

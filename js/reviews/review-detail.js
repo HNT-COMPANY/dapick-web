@@ -89,12 +89,27 @@
   function render(review) {
     rdReview = review;
     const cat = CAT_LABEL[review.category] || '후기';
-    const bodyHtml =
-      Array.isArray(review.contentBlocks) && review.contentBlocks.length
-        ? '<div class="ql-snow"><div class="ql-editor rd-ql">' +
-          deltaToHtml(review.contentBlocks) +
-          '</div></div>'
-        : '<p class="rd-content">' + esc(review.content || '') + '</p>';
+    let bodyHtml;
+    if (Array.isArray(review.contentBlocks) && review.contentBlocks.length) {
+      // Quill Delta 본문(실사용자 작성)
+      bodyHtml =
+        '<div class="ql-snow"><div class="ql-editor rd-ql">' +
+        deltaToHtml(review.contentBlocks) +
+        '</div></div>';
+    } else {
+      // 평문 본문(+ 이미지 갤러리) — 관리자 더미/구 데이터
+      const imgs = Array.isArray(review.imageUrls) ? review.imageUrls : [];
+      const gallery = imgs.length
+        ? '<div class="rd-gallery">' +
+          imgs
+            .map((u) => '<img class="rd-gimg" src="' + esc(u) + '" alt="" loading="lazy">')
+            .join('') +
+          '</div>'
+        : '';
+      bodyHtml =
+        (review.content ? '<p class="rd-content">' + esc(review.content) + '</p>' : '') +
+        gallery;
+    }
 
     const tags = Array.isArray(review.hashtags) ? review.hashtags : [];
     const tagsHtml = tags.length
@@ -185,6 +200,10 @@
     } catch (e) {}
     if (liked) btn.classList.add('on');
     btn.addEventListener('click', () => {
+      if (!rdLoggedIn()) {
+        rdLoginPrompt(); // 좋아요 회원제 — 비로그인은 로그인 안내
+        return;
+      }
       if (btn.classList.contains('on')) return; // 이미 누름
       btn.classList.add('on');
       try {
@@ -219,6 +238,34 @@
       : !!localStorage.getItem('dapick_token');
   }
 
+  // 로그인 안내 박스 (좋아요 회원제) — 로그인 하시겠습니까? [취소] [이동하기]
+  function rdLoginPrompt() {
+    let m = document.getElementById('rdLoginModal');
+    if (!m) {
+      m = document.createElement('div');
+      m.id = 'rdLoginModal';
+      m.className = 'rd-lmodal';
+      m.innerHTML =
+        '<div class="rd-lmodal-back"></div>' +
+        '<div class="rd-lmodal-box">' +
+        '<p class="rd-lmodal-msg">로그인이 필요합니다.<br>로그인 하시겠습니까?</p>' +
+        '<div class="rd-lmodal-btns">' +
+        '<button type="button" class="rd-lmodal-cancel">취소</button>' +
+        '<button type="button" class="rd-lmodal-go">이동하기</button>' +
+        '</div></div>';
+      document.body.appendChild(m);
+      const close = () => {
+        m.style.display = 'none';
+      };
+      m.querySelector('.rd-lmodal-back').addEventListener('click', close);
+      m.querySelector('.rd-lmodal-cancel').addEventListener('click', close);
+      m.querySelector('.rd-lmodal-go').addEventListener('click', () => {
+        window.location.href = '/login';
+      });
+    }
+    m.style.display = 'flex';
+  }
+
   // ════════════════════════════════════════════════════
   // 댓글 (로그인 후 작성 — 별명 + 내용)
   // ════════════════════════════════════════════════════
@@ -238,7 +285,11 @@
       '</span>' +
       '<span class="rd-cmt-date">' +
       fmtDateTime(c.createdAt) +
-      '</span></div>' +
+      '</span>' +
+      (c.mine
+        ? '<button type="button" class="rd-cmt-del" data-id="' + c.id + '">삭제</button>'
+        : '') +
+      '</div>' +
       '<p class="rd-cmt-body">' +
       esc(c.content || '') +
       '</p></div>'
@@ -273,6 +324,22 @@
     if (submit) {
       submit.addEventListener('click', () => postComment(id));
     }
+    // 본인 댓글 삭제 버튼 바인딩
+    wrap.querySelectorAll('.rd-cmt-del').forEach((btn) => {
+      btn.addEventListener('click', () => deleteComment(id, btn.dataset.id));
+    });
+  }
+
+  function deleteComment(reviewId, commentId) {
+    if (!commentId) return;
+    if (!confirm('댓글을 삭제할까요?')) return;
+    api
+      .delete('/api/reviews/comments/' + commentId)
+      .then((r) => {
+        if (r === null) return; // 미로그인/권한없음 등
+        loadComments(reviewId); // 재조회로 목록·카운트 갱신
+      })
+      .catch((e) => alert((e && e.message) || '댓글 삭제에 실패했습니다.'));
   }
 
   function postComment(id) {
@@ -383,6 +450,8 @@
       '.rd-stars-off{color:#dcd7e8;}' +
       '.rd-body{border-top:1px solid #eee;padding-top:22px;margin-bottom:28px;font-size:16px;line-height:1.8;}' +
       '.rd-content{white-space:pre-wrap;word-break:break-word;}' +
+      '.rd-gallery{display:flex;flex-direction:column;gap:12px;margin-top:14px;}' +
+      '.rd-gimg{max-width:100%;border-radius:12px;display:block;margin:0 auto;}' +
       '.rd-body .ql-snow{border:none;}' +
       '.rd-body .ql-editor{padding:0;font-size:16px;line-height:1.8;color:#2a2a35;}' +
       '.rd-body .ql-editor img{max-width:100%;height:auto;border-radius:12px;display:block;margin:14px auto;}' +
@@ -408,6 +477,9 @@
       '.rd-cmt-head{display:flex;align-items:center;gap:8px;margin-bottom:5px;}' +
       '.rd-cmt-author{font-weight:700;font-size:13px;color:#5b3fbe;}' +
       '.rd-cmt-date{font-size:12px;color:#a8a8b5;margin-left:auto;}' +
+      '.rd-cmt-del{border:none;background:none;color:#b0aac2;font-size:12px;cursor:pointer;' +
+      'padding:0 0 0 8px;font-family:inherit;text-decoration:underline;}' +
+      '.rd-cmt-del:hover{color:#e4595b;}' +
       '.rd-cmt-body{font-size:14px;line-height:1.6;color:#33333f;white-space:pre-wrap;word-break:break-word;margin:0;}' +
       '.rd-cmt-empty{font-size:14px;color:#9a9aa5;padding:8px 0 16px;}' +
       '.rd-cmt-form{display:flex;gap:8px;align-items:flex-start;}' +
@@ -419,6 +491,16 @@
       '.rd-cmt-login{font-size:14px;color:#8a8a99;background:#faf9fe;border:1px solid #efecf8;' +
       'border-radius:10px;padding:14px;text-align:center;}' +
       '.rd-cmt-login a{color:#5b3fbe;font-weight:700;text-decoration:none;}' +
+      // 로그인 안내 박스(좋아요 회원제)
+      '.rd-lmodal{display:none;position:fixed;inset:0;z-index:2000;align-items:center;justify-content:center;}' +
+      '.rd-lmodal-back{position:absolute;inset:0;background:rgba(20,16,40,.5);}' +
+      '.rd-lmodal-box{position:relative;z-index:1;width:calc(100% - 48px);max-width:320px;' +
+      'background:#fff;border-radius:14px;padding:26px 22px 18px;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.25);}' +
+      '.rd-lmodal-msg{font-size:15px;line-height:1.6;color:#1e1b2e;margin:0 0 20px;font-weight:600;}' +
+      '.rd-lmodal-btns{display:flex;gap:10px;}' +
+      '.rd-lmodal-cancel,.rd-lmodal-go{flex:1;height:44px;border-radius:10px;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;border:none;}' +
+      '.rd-lmodal-cancel{background:#f2f0f8;color:#555;}' +
+      '.rd-lmodal-go{background:#5b3fbe;color:#fff;}' +
       // 비슷한 후기
       '.rd-rc-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px;}' +
       '.rd-rc{text-decoration:none;color:inherit;display:flex;flex-direction:column;gap:8px;}' +
@@ -427,7 +509,20 @@
       '.rd-rc-thumb--logo{display:flex;align-items:center;justify-content:center;background:#f5f3fb;}' +
       '.rd-rc-thumb--logo img{width:60%;height:60%;object-fit:contain;}' +
       '.rd-rc-title{font-size:14px;font-weight:600;color:#2a2a35;line-height:1.4;' +
-      'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}';
+      'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}' +
+      // 반응형 (모바일/태블릿)
+      '@media (max-width:768px){' +
+      '.rd-wrap{margin:16px auto 48px;padding:0 14px;}' +
+      '.rd-title{font-size:21px;}' +
+      '.rd-body{font-size:15px;padding-top:18px;}' +
+      '.rd-rc-list{grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px;}' +
+      '.rd-cmt-input{font-size:16px;}' + // iOS 확대 방지(16px)
+      '}' +
+      '@media (max-width:400px){' +
+      '.rd-title{font-size:19px;}' +
+      '.rd-rc-list{grid-template-columns:1fr 1fr;}' +
+      '.rd-cmt-submit{padding:0 12px;}' +
+      '}';
     const style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);

@@ -7,6 +7,7 @@
 
 // 카테고리 상수 — 확장 대비 1곳 관리 (하드코딩 최소화)
 const RV_CATEGORIES = [
+  { cat: 'ALL', label: '전체' },
   { cat: 'WATER', label: '정수기' },
   { cat: 'RENTAL', label: '렌탈' },
   { cat: 'INTERNET_TV', label: '인터넷TV' },
@@ -46,7 +47,103 @@ document.addEventListener('DOMContentLoaded', async () => {
   rvSetupDetail(); // 상세 모달 + 카드 클릭 위임
   await rvLoadCategories(); // 하위탭(자식 카테고리) 프리페치(실패해도 전체탭은 동작)
   rvSelectCat(rvCurrentCat);
+  rvLoadTop(); // 최고 후기(좋아요순) 상단 노출
 });
+
+// ── 최고 후기는? (좋아요 있는 후기만, 가로 드래그 캐러셀 — 목록에도 그대로 남음) ──
+async function rvLoadTop() {
+  const wrap = document.getElementById('rvTop');
+  const list = document.getElementById('rvTopList');
+  if (!wrap || !list) return;
+  try {
+    const data = await api.get('/api/reviews?page=0&size=20&sort=likeCount,desc');
+    // 좋아요 1개 이상만 (좋아요 기준 — 전부 올릴 필요 없음)
+    const items = ((data && data.content) || []).filter(
+      (r) => r && !r.hidden && (Number(r.likeCount) || 0) > 0,
+    );
+    if (!items.length) {
+      wrap.hidden = true;
+      return;
+    }
+    items.forEach((it) => {
+      if (it && it.id != null) rvById[it.id] = it;
+    });
+    list.innerHTML = items.map(rvCardHtml).join('');
+    wrap.hidden = false;
+    rvSetupTopControls();
+  } catch (e) {
+    wrap.hidden = true;
+  }
+}
+
+// 가로 캐러셀 컨트롤: 마우스 드래그 + 터치(네이티브) + 이전/다음 버튼 + 화살표 표시 갱신
+function rvSetupTopControls() {
+  const vp = document.getElementById('rvTopViewport');
+  if (!vp) return;
+  const prev = document.querySelector('.rv-top-prev');
+  const next = document.querySelector('.rv-top-next');
+
+  const stepPx = () => {
+    const card = vp.querySelector('.rv-card');
+    return (card ? card.getBoundingClientRect().width : 320) + 14;
+  };
+  const updateArrows = () => {
+    const max = vp.scrollWidth - vp.clientWidth - 2;
+    const overflow = max > 2;
+    if (prev) prev.hidden = !overflow || vp.scrollLeft <= 2;
+    if (next) next.hidden = !overflow || vp.scrollLeft >= max;
+  };
+
+  if (!vp.dataset.bound) {
+    vp.dataset.bound = '1';
+    if (next)
+      next.addEventListener('click', () =>
+        vp.scrollBy({ left: stepPx() * 1.5, behavior: 'smooth' }),
+      );
+    if (prev)
+      prev.addEventListener('click', () =>
+        vp.scrollBy({ left: -stepPx() * 1.5, behavior: 'smooth' }),
+      );
+
+    // 마우스 드래그 스크롤 (터치는 overflow-x 로 네이티브 동작)
+    let down = false,
+      startX = 0,
+      startScroll = 0,
+      moved = false;
+    vp.addEventListener('mousedown', (e) => {
+      down = true;
+      moved = false;
+      startX = e.pageX;
+      startScroll = vp.scrollLeft;
+      vp.classList.add('is-drag');
+    });
+    window.addEventListener('mousemove', (e) => {
+      if (!down) return;
+      const dx = e.pageX - startX;
+      if (Math.abs(dx) > 4) moved = true;
+      vp.scrollLeft = startScroll - dx;
+    });
+    window.addEventListener('mouseup', () => {
+      down = false;
+      vp.classList.remove('is-drag');
+    });
+
+    // 카드 클릭 → 상세 (드래그면 이동 취소)
+    vp.addEventListener('click', (e) => {
+      if (moved) {
+        e.preventDefault();
+        e.stopPropagation();
+        return;
+      }
+      const card = e.target.closest('.rv-card');
+      if (card && card.dataset.id) window.location.href = rvReviewUrl(card.dataset.id);
+    });
+
+    vp.addEventListener('scroll', updateArrows);
+    window.addEventListener('resize', updateArrows);
+  }
+  setTimeout(updateArrows, 60);
+}
 
 // 카테고리 목록 1회 로드 → type → 카테고리 객체(children 포함) 맵
 async function rvLoadCategories() {
@@ -99,6 +196,11 @@ function rvSelectCat(cat) {
 function rvRenderSubtabs(cat) {
   const el = document.getElementById('rvSubtabs');
   if (!el) return;
+
+  if (cat === 'ALL') {
+    el.innerHTML = ''; // 전체는 하위탭 없음
+    return;
+  }
 
   if (cat === 'INTERNET_TV') {
     el.innerHTML = RV_CARRIER_SUBTABS.map(
@@ -190,7 +292,10 @@ function rvBuildQuery() {
   if (rvCurrentSubCat) {
     return `/api/reviews?subCategoryId=${encodeURIComponent(rvCurrentSubCat)}&${base}`;
   }
-  return `/api/reviews?category=${encodeURIComponent(rvCurrentCat)}&${base}`;
+  if (rvCurrentCat && rvCurrentCat !== 'ALL') {
+    return `/api/reviews?category=${encodeURIComponent(rvCurrentCat)}&${base}`;
+  }
+  return `/api/reviews?${base}`; // 전체 (카테고리 필터 없음)
 }
 
 // 흑백 자물쇠 (컬러 이모지 X — SVG monochrome)
