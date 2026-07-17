@@ -1,13 +1,13 @@
 // ════════════════════════════════════════════════════
 // apply-ticker.js — 실시간 신청 현황 (아래→위 흐름)
-// 회원 접수: [날짜][시간][별명(마스킹)][전화]  ·  간편 접수: [날짜][시간][이름(마스킹)][전화]
-// 지금은 관리자 더미. 추후 GET /api/applications/live 로 교체 예정.
+// GET /api/live-applications (관리자 CRUD 값). 비어있거나 실패하면 더미 폴백.
+// 회원: [날짜][시간][별명][전화] · 간편: [날짜][시간][이름][전화]
 // ════════════════════════════════════════════════════
 (function () {
   'use strict';
 
-  // [날짜, 시간, 구분(회원|간편), 이름/별명(마스킹), 전화(마스킹)]
-  const APPLYS = [
+  // 폴백(운영 데이터 없을 때만). [날짜, 시간, 구분, 이름/별명(마스킹), 전화(마스킹)]
+  const FALLBACK = [
     ['07/16','15:41','간편','장*혁','010-****-**68'],
     ['07/16','15:33','회원','행***루','010-****-**12'],
     ['07/16','15:20','간편','김*수','010-****-**45'],
@@ -45,15 +45,28 @@
     );
   }
 
-  function init(){
+  function render(rows){
     const track = document.getElementById('applyTrack');
-    if (!track) return;
-    const html = APPLYS.map(rowHtml).join('');
+    if (!track || !rows.length) return;
+    const html = rows.map(rowHtml).join('');
     track.innerHTML = html + html; // 2배 복제 → 무한 루프
-    const dur = Math.max(20, APPLYS.length * 0.95);
+    const dur = Math.max(20, rows.length * 1.11); // 지급내역과 행당 속도 동일
     track.style.animationDuration = dur + 's';
   }
 
+  async function load(){
+    let rows = null;
+    try {
+      if (typeof api !== 'undefined' && api.get) {
+        const data = await api.get('/api/live-applications');
+        const list = Array.isArray(data) ? data : (data && data.content) || [];
+        if (list.length) rows = list.map((m) => [m.date, m.time, m.typeLabel, m.name, m.phone]);
+      }
+    } catch (e) { /* 실패 시 폴백 */ }
+    render(rows && rows.length ? rows : FALLBACK);
+  }
+
+  function init(){ if (document.getElementById('applyTrack')) load(); }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();
