@@ -342,7 +342,6 @@
   from { transform: translate3d(0, 0, 0); }
   to   { transform: translate3d(0, -50%, 0); }
 }
-.card-flow:hover .card-flow__col { animation-play-state: paused; }
 
 /* 세로(포트레이트) 카드 타일 — 여백은 margin-bottom 으로 균일(마지막 포함) */
 .card-flow__tile {

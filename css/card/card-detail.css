@@ -1,0 +1,183 @@
+/* ════════════════════════════════════════════════════
+   card-detail.css — 카드사 상세(추천 카드) 페이지
+   레이아웃: 히어로 + 카드 그리드(가로 4 · 세로 쌓기) + 이미지1 스타일 카드
+   ════════════════════════════════════════════════════ */
+
+.cd-hero {
+  background: linear-gradient(180deg, #faf9ff 0%, #ffffff 100%);
+  border-bottom: 1px solid #f0eefb;
+  padding: 44px 20px 40px;
+  text-align: center;
+}
+.cd-hero__brand {
+  display: inline-block;
+  font-size: 13px;
+  font-weight: 800;
+  color: #6c3fc5;
+  background: #f3eeff;
+  border-radius: 999px;
+  padding: 6px 14px;
+  margin-bottom: 14px;
+}
+.cd-hero__title {
+  font-size: 30px;
+  font-weight: 900;
+  color: #18172b;
+  letter-spacing: -0.6px;
+  margin: 0 0 10px;
+}
+.cd-hero__sub {
+  font-size: 15px;
+  color: #6b6880;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.cd-wrap {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 40px 20px 72px;
+}
+.cd-secline {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 22px;
+}
+.cd-secline h2 { font-size: 20px; font-weight: 800; color: #18172b; margin: 0; }
+.cd-secline span { font-size: 13px; color: #9a97ad; }
+
+/* 가로 4개 · 세로 쌓기 */
+.cd-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 22px;
+}
+
+/* 카드 아이템 (이미지1 레이아웃) */
+.cd-card {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid #eceaf5;
+  border-radius: 18px;
+  overflow: hidden;
+  transition: transform 0.18s ease, box-shadow 0.18s ease, border-color 0.18s ease;
+}
+.cd-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 16px 38px rgba(24, 23, 43, 0.12);
+  border-color: #d9cdf5;
+}
+
+/* 카드 비주얼 (실제 카드 이미지 없으면 그라데이션 목업) */
+.cd-card__visual {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  padding: 16px 18px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: #fff;
+}
+.cd-card__visual img {
+  position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover;
+}
+.cd-card__chip {
+  width: 34px; height: 26px; border-radius: 6px;
+  background: linear-gradient(135deg, #f4d67a, #d8ad3f);
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.35);
+}
+.cd-card__vbrand { font-size: 12px; font-weight: 700; opacity: 0.9; letter-spacing: 0.5px; }
+.cd-card__vname { font-size: 17px; font-weight: 800; letter-spacing: -0.2px; }
+.cd-card__vrow { display: flex; align-items: flex-end; justify-content: space-between; }
+
+.cd-card__body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  padding: 16px 16px 18px;
+}
+.cd-card__title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #18172b;
+  line-height: 1.35;
+  margin: 0 0 8px;
+}
+.cd-card__amount {
+  font-size: 13px;
+  color: #6b6880;
+  margin-bottom: 12px;
+}
+.cd-card__amount b { color: #e0453a; font-size: 17px; font-weight: 900; }
+
+.cd-card__benefits {
+  list-style: none;
+  margin: 0 0 12px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cd-card__benefits li {
+  position: relative;
+  padding-left: 15px;
+  font-size: 12.5px;
+  color: #4a4a58;
+  line-height: 1.45;
+}
+.cd-card__benefits li::before {
+  content: '';
+  position: absolute; left: 0; top: 7px;
+  width: 5px; height: 5px; border-radius: 50%;
+  background: #8b5cf6;
+}
+.cd-card__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 10px;
+  margin-bottom: 14px;
+}
+.cd-card__meta span {
+  font-size: 11px;
+  color: #6b6880;
+  background: #f4f3fa;
+  border-radius: 6px;
+  padding: 4px 8px;
+}
+.cd-card__cta {
+  margin-top: auto;
+  display: block;
+  text-align: center;
+  padding: 12px;
+  border-radius: 11px;
+  background: linear-gradient(135deg, #6c3fc5, #8b5cf6);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 800;
+  text-decoration: none;
+  transition: transform 0.12s ease;
+}
+.cd-card__cta:hover { transform: translateY(-1px); }
+
+.cd-notice {
+  margin-top: 30px;
+  font-size: 12px;
+  color: #9a97ad;
+  line-height: 1.6;
+  text-align: center;
+}
+
+@media (max-width: 1024px) {
+  .cd-grid { grid-template-columns: repeat(3, 1fr); gap: 18px; }
+}
+@media (max-width: 768px) {
+  .cd-hero { padding: 34px 16px 30px; }
+  .cd-hero__title { font-size: 24px; }
+  .cd-grid { grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .cd-wrap { padding: 28px 14px 56px; }
+}
+@media (max-width: 420px) {
+  .cd-grid { grid-template-columns: 1fr; }
+}
