@@ -62,6 +62,7 @@
 }
 .payout-labels span:nth-child(2) { text-align: right; }
 .payout-labels span:nth-child(3) { text-align: center; }
+.payout-labels span:nth-child(4) { text-align: right; }
 
 .payout-viewport {
   position: relative;
@@ -138,6 +139,7 @@
 }
 .apply-labels span:nth-child(3) { text-align: center; }
 .apply-labels span:nth-child(4) { text-align: center; }
+.apply-labels span:nth-child(5) { text-align: right; }
 
 .apply-row {
   display: grid;

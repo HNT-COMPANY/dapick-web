@@ -2,16 +2,16 @@
 // simple-apply.js — 간편 신청 (비회원) 버튼 + 모달
 // 렌탈 / 정수기 / 인터넷TV 페이지에 로드. 카테고리는 경로로 자동 판별.
 // 폼: 이름 / 전화번호(2차 확인) / 내용 + 카테고리별 안내 문구.
-// ※ 백엔드 연동 전 — 현재는 접수 확인 메시지까지. (TODO: POST /api/simple-applications)
+// 백엔드: POST /api/simple-applications { category, name, phone, content } → 실시간 신청현황 자동 노출 + 관리자 알림.
 // ════════════════════════════════════════════════════
 (function () {
   'use strict';
 
   var path = (location.pathname || '').toLowerCase();
   var CAT;
-  if (path.indexOf('rental') >= 0) CAT = { key: 'RENTAL', label: '렌탈' };
-  else if (path.indexOf('water') >= 0) CAT = { key: 'WATER', label: '정수기' };
-  else if (path.indexOf('internet') >= 0) CAT = { key: 'INTERNET_TV', label: '인터넷' };
+  if (path.indexOf('rental') >= 0) CAT = { key: 'RENTAL', api: 'rental', label: '렌탈' };
+  else if (path.indexOf('water') >= 0) CAT = { key: 'WATER', api: 'water', label: '정수기' };
+  else if (path.indexOf('internet') >= 0) CAT = { key: 'INTERNET_TV', api: 'internet', label: '인터넷' };
   else return; // 대상 페이지 아님
 
   var PH = '원하는 상품명이 있거나 간단한 글로 ' + CAT.label + ' 문의 혹은 지원금 문의로 간편하게 접수하세요';
@@ -105,9 +105,33 @@
     form.style.display='none'; foot.style.display='none'; confirm.classList.add('on');
   });
   document.getElementById('saNo').addEventListener('click', resetToForm);
+  var submitting = false;
   document.getElementById('saYes').addEventListener('click', function(){
-    // TODO: 백엔드 연동 — POST /api/simple-applications { category, name, phone, memo }
-    confirm.classList.remove('on'); done.classList.add('on');
+    if (submitting) return;
+    var yesBtn = document.getElementById('saYes');
+    var payload = {
+      category: CAT.api,
+      name: (nameEl.value || '').trim(),
+      phone: fmtPhone(onlyDigits(phoneEl.value)),
+      content: (memoEl.value || '').trim()
+    };
+    if (typeof api === 'undefined' || !api.post) {
+      // api 미로드 시에도 UX 유지 (접수 확인만)
+      confirm.classList.remove('on'); done.classList.add('on');
+      return;
+    }
+    submitting = true;
+    yesBtn.textContent = '접수 중...';
+    api.post('/api/simple-applications', payload, { skipAuthRefresh: true })
+      .then(function(){
+        confirm.classList.remove('on'); done.classList.add('on');
+      })
+      .catch(function(err){
+        alertLite((err && err.message) || '접수에 실패했습니다. 잠시 후 다시 시도해주세요.');
+      })
+      .finally(function(){
+        submitting = false; yesBtn.textContent = '네, 맞아요';
+      });
   });
 
   function alertLite(msg){
