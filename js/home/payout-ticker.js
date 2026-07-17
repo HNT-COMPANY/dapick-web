@@ -69,7 +69,7 @@
     // 2배 복제 → -50% 이동으로 끊김 없는 무한 루프
     track.innerHTML = html + html;
     // 행 수에 비례한 느린 속도 (한 행당 약 0.9초)
-    const dur = Math.max(20, PAYOUTS.length * 0.9);
+    const dur = Math.max(20, PAYOUTS.length * 1.11); // 신청현황과 행당 속도 동일(20/18≈1.11s/행)
     track.style.animationDuration = dur + 's';
   }
 

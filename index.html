@@ -338,19 +338,37 @@
   </div>
 </div>
 
-<!-- 실시간 지원금 지급 내역 (베스트 요금제 아래 별도 섹션) -->
+<!-- 실시간 신청 현황 + 지원금 지급 내역 (50:50) -->
 <div class="section">
   <div class="wrap">
-    <div class="payout-panel">
-      <div class="payout-head">
-        <span class="payout-title">실시간 지원금 지급 내역</span>
-        <span class="payout-live">LIVE</span>
+    <div class="ticker-row">
+      <div class="apply-col">
+        <div class="payout-panel">
+          <div class="payout-head">
+            <span class="payout-title">실시간 신청 현황</span>
+            <span class="payout-live">LIVE</span>
+          </div>
+          <div class="apply-labels">
+            <span>날짜</span><span>시간</span><span>구분</span><span>이름</span><span>연락처</span>
+          </div>
+          <div class="payout-viewport">
+            <div class="payout-track" id="applyTrack"></div>
+          </div>
+        </div>
       </div>
-      <div class="payout-labels">
-        <span>날짜</span><span>금액</span><span>이름</span><span>연락처</span>
-      </div>
-      <div class="payout-viewport">
-        <div class="payout-track" id="payoutTrack"></div>
+      <div class="payout-col">
+        <div class="payout-panel">
+          <div class="payout-head">
+            <span class="payout-title">실시간 지원금 지급 내역</span>
+            <span class="payout-live">LIVE</span>
+          </div>
+          <div class="payout-labels">
+            <span>날짜</span><span>금액</span><span>이름</span><span>연락처</span>
+          </div>
+          <div class="payout-viewport">
+            <div class="payout-track" id="payoutTrack"></div>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -524,6 +542,7 @@
 <script src="js/internet/internet-calc.js"></script>
 <script src="js/internet/best-grid.js"></script>
 <script src="js/home/payout-ticker.js"></script>
+<script src="js/home/apply-ticker.js"></script>
 <script src="js/home/reviews-carousel.js"></script>
 
 </body>

@@ -115,3 +115,55 @@
   .payout-track { animation: none; }
   .payout-live::before { animation: none; }
 }
+
+/* ══ 실시간 신청 현황 + 지급 내역 50:50 나란히 + 신청현황 컬럼 ══ */
+.ticker-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  align-items: start;
+}
+.ticker-row > div { min-width: 0; }
+.ticker-row .payout-panel { max-width: none; margin: 0; }
+
+.apply-labels {
+  display: grid;
+  grid-template-columns: 52px 46px 46px 1fr 132px;
+  gap: 8px;
+  padding: 9px 20px;
+  background: #f6f3fe;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--text-muted, #a09dbb);
+}
+.apply-labels span:nth-child(3) { text-align: center; }
+.apply-labels span:nth-child(4) { text-align: center; }
+
+.apply-row {
+  display: grid;
+  grid-template-columns: 52px 46px 46px 1fr 132px;
+  gap: 8px;
+  align-items: center;
+  padding: 12px 20px;
+  border-bottom: 1px solid #f2effb;
+  font-size: 14px;
+  white-space: nowrap;
+}
+.apply-c-date { color: var(--text-muted, #a09dbb); font-size: 12px; font-variant-numeric: tabular-nums; }
+.apply-c-time { color: var(--text-sub, #6b6880); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 600; }
+.apply-c-gubun { text-align: center; }
+.apply-tag { font-size: 10.5px; font-weight: 800; padding: 3px 8px; border-radius: 999px; }
+.apply-tag--mem { background: var(--purple-pale, #f3eeff); color: var(--purple, #6c3fc5); }
+.apply-tag--easy { background: #e9f7ee; color: #2e9e52; }
+.apply-c-name { text-align: center; color: var(--text-main, #18172b); font-weight: 700; }
+.apply-c-phone { text-align: right; color: var(--text-sub, #6b6880); font-variant-numeric: tabular-nums; font-size: 13px; }
+
+@media (max-width: 768px) {
+  .ticker-row { grid-template-columns: 1fr; gap: 16px; }
+  .apply-labels, .apply-row { grid-template-columns: 46px 42px 42px 1fr 116px; gap: 6px; padding-left: 14px; padding-right: 14px; }
+  .apply-row { font-size: 13px; }
+}
+@media (max-width: 380px) {
+  .apply-labels, .apply-row { grid-template-columns: 40px 38px 40px 1fr 100px; gap: 5px; font-size: 12px; }
+  .apply-tag { padding: 2px 6px; font-size: 10px; }
+}
