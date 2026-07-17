@@ -298,3 +298,152 @@
     font-size: 12px;
   }
 }
+
+/* ════════════════════════════════════════════════════
+   CARD FLOW — 세로 카드가 끊김 없이 천천히 떠오르는 히어로 (이미지2 컨셉)
+   ════════════════════════════════════════════════════ */
+.card-flow {
+  position: relative;
+  overflow: hidden;
+  min-height: 640px;
+  background: radial-gradient(130% 100% at 50% 0%, #1b2247 0%, #0e1226 58%, #090c18 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  isolation: isolate;
+  perspective: 1600px;
+}
+
+/* 3D로 뒤로 기운 타일 벽 (이미지2의 대각 원근) */
+.card-flow__bg {
+  position: absolute;
+  inset: -26% -16%;
+  z-index: 0;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 26px;
+  transform: rotateX(9deg) rotateZ(-10deg) scale(1.32);
+  transform-origin: 50% 42%;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 20%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 20%, #000 82%, transparent 100%);
+}
+.card-flow__col {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  animation-name: cardFlowUp;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+  will-change: transform;
+}
+/* 정확히 한 세트 높이(타일높이+아래여백)만큼 이동 → 이음새 없이 무한 반복 */
+@keyframes cardFlowUp {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(0, -50%, 0); }
+}
+.card-flow:hover .card-flow__col { animation-play-state: paused; }
+
+/* 세로(포트레이트) 카드 타일 — 여백은 margin-bottom 으로 균일(마지막 포함) */
+.card-flow__tile {
+  width: 200px;
+  height: 286px;
+  flex: 0 0 auto;
+  margin-bottom: 26px;
+  border-radius: 20px;
+  background: #ffffff;
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  position: relative;
+}
+.card-flow__tile img {
+  max-width: 78%;
+  max-height: 132px;
+  object-fit: contain;
+}
+.card-flow__label {
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  font-weight: 800;
+  letter-spacing: -0.4px;
+}
+
+/* 가독성용 오버레이 */
+.card-flow__overlay {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    radial-gradient(64% 56% at 50% 50%, rgba(9, 12, 24, 0.82) 0%, rgba(9, 12, 24, 0.5) 46%, rgba(9, 12, 24, 0.12) 100%),
+    linear-gradient(180deg, rgba(9, 12, 24, 0.55) 0%, rgba(9, 12, 24, 0.18) 32%, rgba(9, 12, 24, 0.18) 68%, rgba(9, 12, 24, 0.62) 100%);
+}
+
+/* 중앙 콘텐츠 */
+.card-flow__content {
+  position: relative;
+  z-index: 2;
+  text-align: center;
+  color: #fff;
+  padding: 40px 24px;
+  max-width: 960px;
+}
+.card-flow__badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 16px;
+  background: rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(6px);
+  font-size: 26px;
+  margin-bottom: 18px;
+}
+.card-flow__title {
+  font-size: 42px;
+  font-weight: 900;
+  line-height: 1.24;
+  letter-spacing: -0.6px;
+  margin: 0 0 14px;
+  white-space: nowrap;
+  text-shadow: 0 4px 26px rgba(0, 0, 0, 0.5);
+}
+.card-flow__sub {
+  font-size: 16px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.85);
+  margin: 0;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.5);
+}
+.card-flow__cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 15px 30px;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #6c3fc5, #8b5cf6);
+  color: #fff;
+  font-size: 16px;
+  font-weight: 800;
+  text-decoration: none;
+  box-shadow: 0 10px 28px rgba(108, 63, 197, 0.5);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.card-flow__cta:hover { transform: translateY(-2px); box-shadow: 0 14px 34px rgba(108, 63, 197, 0.6); }
+
+@media (max-width: 768px) {
+  .card-flow { min-height: 520px; }
+  .card-flow__title { font-size: 26px; white-space: normal; }
+  .card-flow__sub { font-size: 14px; }
+  .card-flow__bg { gap: 18px; transform: rotateX(8deg) rotateZ(-10deg) scale(1.28); }
+  .card-flow__tile { width: 150px; height: 214px; margin-bottom: 18px; border-radius: 16px; }
+  .card-flow__tile img { max-height: 96px; }
+  .card-flow__col:nth-child(n + 5) { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .card-flow__col { animation: none; }
+}

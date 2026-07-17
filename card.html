@@ -70,23 +70,21 @@
 <nav class="gnb"></nav>
 
 <!-- ════════════════════════════════════════════════════
-     CARD HERO
+     CARD FLOW (카드사 로고가 천천히 떠오르는 히어로)
      ════════════════════════════════════════════════════ -->
-<section class="card-hero">
-  <div class="card-hero__inner">
-    <h1 class="card-hero__title">
-      <em>다픽</em> 제휴 카드
-    </h1>
-    <p class="card-hero__sub">
-      원하시는 카드사를 선택하시면<br class="mo-only">해당 카드사의 추천 카드를 확인하실 수 있습니다.
-    </p>
+<section class="card-flow" id="cardFlow">
+  <div class="card-flow__bg" id="cardFlowBg" aria-hidden="true"></div>
+  <div class="card-flow__overlay"></div>
+  <div class="card-flow__content">
+    <h2 class="card-flow__title">카드, 혜택부터 비교하고 신청하세요</h2>
+    <p class="card-flow__sub">주요 카드사 제휴 혜택을 다픽에서 한눈에.<br class="mo-only">원하는 카드사를 골라 추천 카드를 확인하세요.</p>
   </div>
 </section>
 
 <!-- ════════════════════════════════════════════════════
      PARTNER SECTION (7개 카드사)
      ════════════════════════════════════════════════════ -->
-<section class="partner-section">
+<section class="partner-section" id="partner">
   <div class="wrap">
     <div class="partner-head">
       <h2 class="partner-title">함께하는 카드사</h2>
@@ -261,5 +259,6 @@
 <script src="js/common/gnb.js"></script>
 <script src="js/common/gnb-user.js"></script>
 
+<script src="js/card/card-flow.js"></script>
 </body>
 </html>
