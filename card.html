@@ -84,6 +84,16 @@
 <!-- ════════════════════════════════════════════════════
      PARTNER SECTION (7개 카드사)
      ════════════════════════════════════════════════════ -->
+<section class="cardlist-section" id="featuredSection" style="display:none;">
+  <div class="wrap">
+    <div class="partner-head">
+      <h2 class="partner-title">다픽 추천 카드</h2>
+      <p class="partner-desc">다픽이 엄선한 추천 카드입니다.</p>
+    </div>
+    <div class="cl-list" id="featuredList"></div>
+  </div>
+</section>
+
 <section class="partner-section" id="partner">
   <div class="wrap">
     <div class="partner-head">
@@ -91,48 +101,25 @@
       <p class="partner-desc">다픽은 여러 카드사와 함께합니다.</p>
     </div>
 
-    <div class="card-grid">
-      <a href="card-hyundai.html" class="card-item" data-brand="hyundai">
-        <span class="card-item__brand">현대카드</span>
-        <span class="card-item__sub">Hyundai Card</span>
-      </a>
-
-      <a href="card-shinhan.html" class="card-item" data-brand="shinhan">
-        <span class="card-item__brand">신한카드</span>
-        <span class="card-item__sub">Shinhan Card</span>
-      </a>
-
-      <a href="card-samsung.html" class="card-item" data-brand="samsung">
-        <span class="card-item__brand">삼성카드</span>
-        <span class="card-item__sub">Samsung Card</span>
-      </a>
-
-      <a href="card-kb.html" class="card-item" data-brand="kb">
-        <span class="card-item__brand">국민카드</span>
-        <span class="card-item__sub">KB Kookmin Card</span>
-      </a>
-
-      <a href="card-lotte.html" class="card-item" data-brand="lotte">
-        <span class="card-item__brand">롯데카드</span>
-        <span class="card-item__sub">Lotte Card</span>
-      </a>
-
-      <a href="card-woori.html" class="card-item" data-brand="woori">
-        <span class="card-item__brand">우리카드</span>
-        <span class="card-item__sub">Woori Card</span>
-        </a>
-
-
-      <a href="card-hana.html" class="card-item" data-brand="hana">
-        <span class="card-item__brand">하나카드</span>
-        <span class="card-item__sub">Hana Card</span>
-      </a>
+    <div class="card-grid" id="cardPartners" aria-busy="true">
+      <div class="cardco-loading">카드사를 불러오는 중…</div>
     </div>
 <!--
     <div class="partner-notice">
       <strong>안내</strong> · 각 카드사 클릭 시 해당 카드사의 추천 상품 페이지로 이동합니다.
       카드 발급은 다픽 상담을 통해 가장 높은 혜택의 조건으로 진행됩니다.
     </div> -->
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     추천 카드 (개별 카드 — API)
+     ════════════════════════════════════════════════════ -->
+<section class="cardlist-section" id="cardListSection">
+  <div class="wrap">
+    <div class="cl-list" id="cardList">
+      <div class="cl-loading">위에서 카드사를 선택하면 카드가 표시됩니다.</div>
+    </div>
   </div>
 </section>
 
@@ -251,6 +238,7 @@
 <!-- ════════════════════════════════════════════════════
      공통 JS (전 페이지 동일)
      ════════════════════════════════════════════════════ -->
+<script src="https://unpkg.com/lucide@latest"></script>
 <script src="js/common/config.js"></script>
 <script src="js/common/api.js"></script>
 <script src="js/common/auth.js"></script>
@@ -260,5 +248,8 @@
 <script src="js/common/gnb-user.js"></script>
 
 <script src="js/card/card-flow.js"></script>
+<script src="js/card/card-partners.js"></script>
+<script src="js/card/card-list.js"></script>
+<script src="js/card/card-featured.js"></script>
 </body>
 </html>
