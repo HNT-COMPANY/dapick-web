@@ -41,6 +41,9 @@ const rvById = {}; // id → 리뷰 원본 (상세 모달용)
 let rvCatByType = null;
 
 document.addEventListener('DOMContentLoaded', async () => {
+  // 딥링크: ?category=INTERNET_TV 등으로 초기 탭 선택 (internet-unified '더보기' 연동)
+  var _rvUrlCat = new URLSearchParams(location.search).get('category');
+  if (_rvUrlCat && RV_CATEGORIES.some((c) => c.cat === _rvUrlCat)) rvCurrentCat = _rvUrlCat;
   rvRenderTabs();
   rvBindWrite();
   rvBindModal();
