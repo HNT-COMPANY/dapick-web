@@ -216,6 +216,9 @@ window.InternetProductBase = (function () {
         bindEvents();
         updatePricebar();
 
+        // 상세정보(리치 본문) 렌더 — 상품 로드 후 1회. 빈값/미저장이면 내부에서 박스 숨김.
+        if (window.ItvDetailContent) ItvDetailContent.render(_product);
+
         if (
           typeof DapickApplication !== 'undefined' &&
           DapickApplication.resumeIfPending
