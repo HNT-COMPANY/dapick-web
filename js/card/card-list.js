@@ -50,9 +50,34 @@
     );
   }
 
+  // '{카드사} 카드 전체' 섹션 헤더 (이미지 3 스타일) — 카드 목록 위에 표시
+  function ensureTitleEl() {
+    let t = document.getElementById('cardListTitle');
+    if (!t) {
+      t = document.createElement('h2');
+      t.id = 'cardListTitle';
+      t.className = 'cl-secttitle';
+      t.style.display = 'none';
+      box.parentNode.insertBefore(t, box);
+    }
+    return t;
+  }
+  function setTitle(name, count) {
+    const t = ensureTitleEl();
+    const base = String(name || '').replace(/\s*카드\s*$/, '') || name || '';
+    t.innerHTML = '<b>' + esc(base) + '</b> 카드 전체' +
+      (count != null ? '<span>' + count + '개</span>' : '');
+    t.style.display = 'flex';
+  }
+
   function injectStyles() {
     const css =
       '.cardlist-section{padding:20px 0 60px;}' +
+      // '현대 카드 전체' 섹션 헤더 (이미지 3 스타일)
+      '.cl-secttitle{max-width:820px;margin:6px auto 0;padding:0 4px 14px;font-size:22px;font-weight:900;' +
+      'color:#18172b;letter-spacing:-.4px;border-bottom:2px solid #ececf2;display:flex;align-items:baseline;gap:8px;}' +
+      '.cl-secttitle b{color:#5b3fbe;font-weight:900;}' +
+      '.cl-secttitle span{font-size:14px;font-weight:700;color:#9a9aa5;}' +
       '.cl-list{display:flex;flex-direction:column;gap:16px;max-width:820px;margin:20px auto 0;}' +
       '.cl-loading{padding:40px 0;text-align:center;color:#9a9aa5;}' +
       ".cl-card{display:flex;align-items:center;gap:22px;background:#fff;border:1px solid #eee;border-radius:18px;padding:22px;text-decoration:none;color:inherit;box-shadow:0 2px 14px rgba(24,23,43,.05);transition:box-shadow .15s,transform .15s;flex-wrap:wrap;}" +
@@ -82,14 +107,19 @@
   window.cardListShow = async function (cat) {
     if (!box || !cat) return;
     curCatName = cat.name || '';
+    setTitle(curCatName, null);
     box.setAttribute('aria-busy', 'true');
     box.innerHTML = '<div class="cl-loading">불러오는 중…</div>';
+    // 선택한 섹션으로 부드럽게 스크롤
+    try { box.scrollIntoView({ behavior: 'smooth', block: 'start' }); } catch (_) {}
     try {
       const list = await api.get('/api/card-categories/' + encodeURIComponent(cat.slug) + '/cards', { skipAuthRefresh: true });
       const cards = Array.isArray(list) ? list : (list && list.content) || [];
       if (!cards.length) {
+        setTitle(curCatName, 0);
         box.innerHTML = '<div class="cl-loading">' + esc(curCatName) + '에 등록된 카드가 없습니다.</div>';
       } else {
+        setTitle(curCatName, cards.length);
         box.innerHTML = cards.map(cardRow).join('');
         if (window.lucide && lucide.createIcons) lucide.createIcons();
       }

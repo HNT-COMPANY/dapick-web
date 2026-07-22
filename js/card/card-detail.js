@@ -15,6 +15,11 @@
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
+  // 아코디언 본문 경량 서식: **굵게** + 줄바꿈. 관리자(card-detail-edit.js)와 동일 로직 유지 필수.
+  function baccRichBody(s) {
+    return esc(s).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
+  }
+
   function parseId() {
     const q = new URLSearchParams(location.search).get('id');
     if (q && /^\d+$/.test(q)) return q;
@@ -83,16 +88,30 @@
         node.setAttribute('data-title', title);
         node.setAttribute('data-items', JSON.stringify(items));
         node.classList.add('bacc');
+        const tableHtml = (tbl) => {
+          if (!tbl || !Array.isArray(tbl.cells) || !tbl.cells.length) return '';
+          let h = '<table class="bacc-table">';
+          tbl.cells.forEach((row, ri) => {
+            h += '<tr>';
+            (row || []).forEach((cell) => {
+              const tag = (tbl.header && ri === 0) ? 'th' : 'td';
+              h += '<' + tag + '>' + be(cell || '').replace(/\n/g, '<br>') + '</' + tag + '>';
+            });
+            h += '</tr>';
+          });
+          return h + '</table>';
+        };
         let html = title ? '<div class="bacc-title">' + be(title) + '</div>' : '';
         html += '<div class="bacc-list">';
         items.forEach((it) => {
+          const bodyInner = (it.body ? baccRichBody(it.body) : '') + tableHtml(it.table);
           html += '<div class="bacc-row">' +
             '<div class="bacc-head">' +
             '<span class="bacc-rtitle">' + be(it.title || '') + '</span>' +
             '<span class="bacc-rsub">' + be(it.subtitle || '') + '</span>' +
             '<span class="bacc-chev" aria-hidden="true">⌄</span>' +
             '</div>' +
-            (it.body ? '<div class="bacc-body">' + be(it.body).replace(/\n/g, '<br>') + '</div>' : '') +
+            (bodyInner ? '<div class="bacc-body">' + bodyInner + '</div>' : '') +
             '</div>';
         });
         html += '</div>';
@@ -293,10 +312,13 @@
       '.ccd-detail .bacc-row.open .bacc-chev{transform:rotate(180deg);}' +
       '.ccd-detail .bacc-body{display:none;padding:16px 22px 18px;color:#3a3a48;font-size:14px;line-height:1.7;border-top:1px solid #f2f2f5;}' +
       '.ccd-detail .bacc-row.open .bacc-body{display:block;}' +
+      '.ccd-detail .bacc-table{border-collapse:collapse;width:100%;margin:10px 0 2px;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;}' +
+      '.ccd-detail .bacc-table th,.ccd-detail .bacc-table td{border:1px solid #e5e7eb;padding:10px 14px;font-size:13.5px;text-align:left;color:#374151;line-height:1.5;}' +
+      '.ccd-detail .bacc-table th{background:#f8f9fb;font-weight:700;color:#111827;}' +
       '.ccd-detail .ql-ctable-wrap{margin:16px 0;overflow-x:auto;}' +
-      '.ccd-detail .ql-ctable{border-collapse:collapse;width:100%;}' +
-      '.ccd-detail .ql-ctable th,.ccd-detail .ql-ctable td{border:1px solid #dcdce3;padding:9px 12px;font-size:14px;text-align:left;}' +
-      '.ccd-detail .ql-ctable th{background:#f4f6fb;font-weight:800;}' +
+      '.ccd-detail .ql-ctable{border-collapse:collapse;width:100%;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;}' +
+      '.ccd-detail .ql-ctable th,.ccd-detail .ql-ctable td{border:1px solid #e5e7eb;padding:11px 14px;font-size:14px;text-align:left;color:#374151;line-height:1.5;}' +
+      '.ccd-detail .ql-ctable th{background:#f8f9fb;font-weight:700;color:#111827;}' +
       '.ccd-list{display:block;text-align:center;background:#fff;border:1px solid #d7d2e6;border-radius:12px;padding:13px;font-size:14px;font-weight:600;color:#555;text-decoration:none;margin-top:28px;}' +
       '@media(max-width:768px){.ccd-hero{padding:20px;gap:18px;}.ccd-title{font-size:22px;}.ccd-img{width:100%;height:170px;}.ccd-cta{font-size:16px;}}';
     const style = document.createElement('style');

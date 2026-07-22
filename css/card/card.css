@@ -446,3 +446,54 @@
 @media (prefers-reduced-motion: reduce) {
   .card-flow__col { animation: none; }
 }
+
+/* ═════════════════════════════════════
+   CARDCO — 함께하는 카드사 (API 연동 타일)
+═════════════════════════════════════ */
+.cardco {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 12px;
+  min-height: 150px;
+  padding: 22px 16px 18px;
+  background: #ffffff;
+  border: 1.5px solid #ececec;
+  border-radius: 14px;
+  text-decoration: none;
+  cursor: pointer;
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.cardco:hover {
+  border-color: #7c3aed;
+  transform: translateY(-3px);
+  box-shadow: 0 10px 24px rgba(124, 58, 237, 0.14);
+}
+.cardco--nolink { cursor: default; }
+.cardco--nolink:hover { border-color: #ececec; transform: none; box-shadow: none; }
+.cardco__logo {
+  width: 56px; height: 56px;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+.cardco__logo img { max-width: 100%; max-height: 100%; object-fit: contain; }
+.cardco__ph {
+  width: 56px; height: 56px; border-radius: 50%;
+  background: #f3f0fb; color: #7c3aed;
+  font-weight: 800; font-size: 15px;
+  display: flex; align-items: center; justify-content: center;
+}
+.cardco__name {
+  font-size: 15px; font-weight: 800; color: #1a1a1a;
+  text-align: center; letter-spacing: -0.3px; line-height: 1.35;
+}
+.cardco__go {
+  margin-top: auto;
+  font-size: 12px; font-weight: 700; color: #666;
+  background: #f4f4f6; border-radius: 999px; padding: 6px 16px;
+  transition: all 0.22s ease;
+}
+.cardco:not(.cardco--nolink):hover .cardco__go { background: #7c3aed; color: #fff; }
+.cardco-loading { grid-column: 1 / -1; text-align: center; color: #aaa; font-size: 14px; padding: 30px 0; }
