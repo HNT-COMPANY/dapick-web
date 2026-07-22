@@ -6,16 +6,16 @@
 
   <!-- 아래 title/description/og:* 는 Cloudflare Worker 가 후기별로 주입(SSR-lite).
        Worker 미경유(로컬 ?id=)나 데이터 없음 시 기본값 유지 + 클라 JS 가 보정. -->
-  <title>다픽 후기</title>
-  <meta name="description" content="다픽 실사용 후기 — 상담 완료 고객의 솔직한 후기를 확인하세요." />
+  <title>다픽 이벤트</title>
+  <meta name="description" content="다픽 카드 상세 — 카드 혜택과 발급 정보를 확인하세요." />
   <link rel="canonical" href="https://dapick.co.kr/reviews" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
 
   <!-- Open Graph (Worker 주입 대상) -->
   <meta property="og:type" content="article" />
   <meta property="og:site_name" content="다픽" />
-  <meta property="og:title" content="다픽 후기" />
-  <meta property="og:description" content="다픽 실사용 후기 — 상담 완료 고객의 솔직한 후기." />
+  <meta property="og:title" content="다픽 카드" />
+  <meta property="og:description" content="다픽 카드 상세 — 카드 혜택과 발급 정보." />
   <meta property="og:image" content="https://dapick.co.kr/assets/logos/dapick.png" />
   <meta property="og:url" content="https://dapick.co.kr/reviews" />
   <meta name="twitter:card" content="summary_large_image" />
@@ -38,15 +38,18 @@
   <!-- Quill (Delta 읽기전용 렌더용) -->
   <link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+  <!-- Lucide (혜택 아이콘) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
 </head>
 <body>
 
 <!-- 공통 NAV (gnb.js 주입) -->
 <nav class="gnb"></nav>
 
-<main class="rd-wrap" id="rdWrap">
-  <div class="rd-loading" id="rdLoading">불러오는 중...</div>
-  <article class="rd-article" id="rdArticle" hidden></article>
+<main class="cel-wrap">
+  <div class="cel-head">이벤트</div>
+  <div class="cel-sub">다픽의 진행 중인 이벤트를 확인하세요.</div>
+  <div class="cel-list" id="evList"><div class="cel-loading">불러오는 중...</div></div>
 </main>
 
 <!-- 공통 푸터 -->
@@ -132,6 +135,6 @@
 <script src="/js/common/utils.js"></script>
 <script src="/js/common/gnb.js"></script>
 <script src="/js/common/gnb-user.js"></script>
-<script src="/js/reviews/review-detail.js"></script>
+<script src="/js/event/event-list.js"></script>
 </body>
 </html>
