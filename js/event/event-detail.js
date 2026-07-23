@@ -7,6 +7,8 @@
 (function () {
   'use strict';
 
+  var _ev = null; // 현재 이벤트(버튼 config 접근용)
+
   function esc(s) {
     if (s == null) return '';
     return String(s).replace(/[&<>"']/g, (c) =>
@@ -242,6 +244,7 @@
         (period ? '<div class="cev-period">이벤트 기간 &nbsp; ' + esc(period) + '</div>' : '') +
       '</div>' +
       img +
+      '<div id="evEntryBox" class="evx-box"></div>' +
       '<div class="ccd-detail">' + bodyHtml + '</div>' +
       '<div class="cev-nav">' + navRow('다음 글', e.nextId, e.nextTitle) + navRow('이전 글', e.prevId, e.prevTitle) + '</div>' +
       '<a class="ccd-list" href="events.html">목록으로</a>';
@@ -313,7 +316,23 @@
       '.ccd-detail .ql-ctable th,.ccd-detail .ql-ctable td{border:1px solid #e5e7eb;padding:11px 14px;font-size:14px;text-align:left;color:#374151;line-height:1.5;}' +
       '.ccd-detail .ql-ctable th{background:#f8f9fb;font-weight:700;color:#111827;}' +
       '.ccd-list{display:block;text-align:center;background:#fff;border:1px solid #d7d2e6;border-radius:12px;padding:13px;font-size:14px;font-weight:600;color:#555;text-decoration:none;margin-top:28px;}' +
-      '@media(max-width:768px){.ccd-hero{padding:20px;gap:18px;}.ccd-title{font-size:22px;}.ccd-img{width:100%;height:170px;}.ccd-cta{font-size:16px;}}';
+      '@media(max-width:768px){.ccd-hero{padding:20px;gap:18px;}.ccd-title{font-size:22px;}.ccd-img{width:100%;height:170px;}.ccd-cta{font-size:16px;}}' +
+      '.evx-box{margin:20px 0;}' +
+      '.evx-inner{padding:22px 20px;display:flex;align-items:center;justify-content:center;}' +
+      '.evx-count{font-size:15px;color:#4b3a86;}' +
+      '.evx-count b{color:#5b3fbe;font-size:17px;}' +
+      '.evx-btn{background:#5b3fbe;color:#fff;border:none;border-radius:12px;padding:13px 28px;font-size:16px;font-weight:800;cursor:pointer;font-family:inherit;}' +
+      '.evx-btn:hover{background:#4b32a8;}' +
+      '.evx-btn.done{background:#e6f6ec;color:#1a7f4b;cursor:default;}' +
+      '.evx-btn.closed{background:#f1f2f5;color:#8a8fa3;cursor:default;}' +
+      '.evx-ov{position:fixed;inset:0;z-index:3000;background:rgba(20,18,35,.5);display:flex;align-items:center;justify-content:center;padding:20px;}' +
+      '.evx-modal{background:#fff;border-radius:16px;max-width:400px;width:100%;padding:24px;box-shadow:0 12px 40px rgba(0,0,0,.25);}' +
+      '.evx-mtitle{font-size:18px;font-weight:800;color:#18172b;margin:0 0 12px;}' +
+      '.evx-mtext{font-size:14px;color:#5a5a68;line-height:1.7;margin:0 0 18px;}' +
+      '.evx-agree{display:flex;align-items:center;gap:8px;font-size:14px;color:#3a3a48;margin-bottom:18px;cursor:pointer;}' +
+      '.evx-mfoot{display:flex;gap:10px;}' +
+      '.evx-mbtn{flex:1;border-radius:10px;padding:12px;font-size:15px;font-weight:700;cursor:pointer;font-family:inherit;border:1px solid #d7d2e6;background:#fff;color:#555;}' +
+      '.evx-mbtn.pri{background:#5b3fbe;color:#fff;border:none;}';
     const style = document.createElement('style');
     style.textContent = css;
     document.head.appendChild(style);
@@ -334,8 +353,128 @@
     api.get('/api/events/' + id)
       .then((e) => {
         if (!e) { renderError('이벤트를 찾을 수 없습니다.'); return; }
+        _ev = e;
         render(e);
+        loadEntryStatus(id);
       })
       .catch(() => renderError('이벤트를 불러오지 못했습니다.'));
   });
+
+  // ── 이벤트 응모 (응모형 이벤트) ──
+  function loadEntryStatus(id) {
+    api.get('/api/events/' + id + '/entry/status').then(function (st) {
+      renderEntryBox(id, st);
+    }).catch(function () {});
+  }
+
+  var EVX_BTN_DEFAULTS = { label: '응모하기', bg: '#5b3fbe', color: '#ffffff', radius: 12, size: 'md', align: 'center', placement: 'top', action: 'modal', url: '', track: 'event_apply' };
+
+  function evBtnCfg() {
+    if (_ev && _ev.entryButtonConfig) {
+      try { return Object.assign({}, EVX_BTN_DEFAULTS, JSON.parse(_ev.entryButtonConfig)); } catch (e) {}
+    }
+    return EVX_BTN_DEFAULTS;
+  }
+
+  function evBtnStyle(cfg) {
+    var pad = { sm: '10px 22px', md: '14px 30px', lg: '18px 40px' }[cfg.size] || '14px 30px';
+    var fs = { sm: '14px', md: '16px', lg: '19px' }[cfg.size] || '16px';
+    var rad = (cfg.radius >= 999) ? '999px' : (cfg.radius + 'px');
+    return 'background:' + cfg.bg + ';color:' + cfg.color + ';border:none;border-radius:' + rad +
+      ';padding:' + pad + ';font-size:' + fs + ';font-weight:800;cursor:pointer;font-family:inherit;';
+  }
+
+  // 배치(top/bottom): top=이미지 아래(기본), bottom=본문 아래.
+  function evPlaceBox(box, placement) {
+    var article = document.getElementById('cdArticle');
+    if (!article) return;
+    var detail = article.querySelector('.ccd-detail');
+    if (placement === 'bottom' && detail && detail.nextSibling !== box) {
+      detail.parentNode.insertBefore(box, detail.nextSibling);
+    }
+  }
+
+  function renderEntryBox(id, st) {
+    var box = document.getElementById('evEntryBox');
+    if (!box) return;
+    if (!st || !st.entryEnabled) { box.innerHTML = ''; return; }
+    var cfg = evBtnCfg();
+    var track = esc(cfg.track || 'event_apply');
+    var label = esc(cfg.label || '응모하기');
+    var style = evBtnStyle(cfg);
+    var btn;
+    if (cfg.action === 'url') {
+      var href = cfg.url ? esc(cfg.url) : '#';
+      btn = '<a class="evx-btn" style="' + style + 'text-decoration:none;display:inline-block;" data-track="' + track +
+        '" href="' + href + '" target="_blank" rel="noopener">' + label + '</a>';
+    } else if (st.entered) {
+      btn = '<button class="evx-btn done" disabled>응모 완료</button>';
+    } else if (st.closed) {
+      btn = '<button class="evx-btn closed" disabled>모집 마감</button>';
+    } else {
+      btn = '<button class="evx-btn" style="' + style + '" data-track="' + track +
+        '" onclick="evOpenApply(\'' + id + '\')">' + label + '</button>';
+    }
+    var jc = cfg.align === 'left' ? 'flex-start' : cfg.align === 'right' ? 'flex-end' : 'center';
+    box.innerHTML = '<div class="evx-inner" style="justify-content:' + jc + ';">' + btn + '</div>';
+    evPlaceBox(box, cfg.placement);
+  }
+
+  function closeEvxModal() {
+    var m = document.getElementById('evxOv');
+    if (m && m.parentNode) m.parentNode.removeChild(m);
+  }
+
+  window.evOpenApply = function (id) {
+    if (typeof isLoggedIn === 'function' && !isLoggedIn()) { openGate(); return; }
+    openApplyModal(id);
+  };
+
+  function openGate() {
+    var ov = document.createElement('div');
+    ov.className = 'evx-ov'; ov.id = 'evxOv';
+    ov.innerHTML = '<div class="evx-modal">' +
+      '<p class="evx-mtitle">로그인이 필요합니다</p>' +
+      '<p class="evx-mtext">이 이벤트는 회원만 응모할 수 있어요.<br>로그인 후 응모해주세요.</p>' +
+      '<div class="evx-mfoot"><button class="evx-mbtn" data-x>닫기</button>' +
+      '<button class="evx-mbtn pri" data-go>로그인 하기</button></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) {
+      if (e.target === ov || e.target.hasAttribute('data-x')) closeEvxModal();
+      else if (e.target.hasAttribute('data-go')) location.href = '/login';
+    });
+  }
+
+  function openApplyModal(id) {
+    var ov = document.createElement('div');
+    ov.className = 'evx-ov'; ov.id = 'evxOv';
+    ov.innerHTML = '<div class="evx-modal">' +
+      '<p class="evx-mtitle">이벤트 응모</p>' +
+      '<p class="evx-mtext">아래 동의 후 응모가 완료됩니다.</p>' +
+      '<label class="evx-agree"><input type="checkbox" id="evxAgree" /> <span>전체 동의 (개인정보 수집·이용 및 이벤트 참여)</span></label>' +
+      '<div class="evx-mfoot"><button class="evx-mbtn" data-x>취소</button>' +
+      '<button class="evx-mbtn pri" data-submit data-track="event_apply_submit">응모하기</button></div></div>';
+    document.body.appendChild(ov);
+    ov.addEventListener('click', function (e) {
+      if (e.target === ov || e.target.hasAttribute('data-x')) { closeEvxModal(); return; }
+      if (e.target.hasAttribute('data-submit')) {
+        var ag = document.getElementById('evxAgree');
+        if (!ag || !ag.checked) { alert('전체 동의에 체크해주세요.'); return; }
+        submitEntry(id, e.target);
+      }
+    });
+  }
+
+  function submitEntry(id, btn) {
+    if (btn) { btn.disabled = true; btn.textContent = '응모 중...'; }
+    api.post('/api/events/' + id + '/entry', { agreed: true }).then(function () {
+      closeEvxModal();
+      alert('응모가 완료되었습니다!');
+      loadEntryStatus(id);
+    }).catch(function (err) {
+      if (btn) { btn.disabled = false; btn.textContent = '응모하기'; }
+      alert((err && err.message) || '응모에 실패했습니다.');
+    });
+  }
+
 })();
