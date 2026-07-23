@@ -3,6 +3,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-P28QTWQD');</script>
+<!-- End Google Tag Manager -->
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>다픽 정수기 상세 | 코웨이·SK매직·청호나이스·쿠쿠</title>
   <!-- ── Favicon ── -->
@@ -36,6 +40,10 @@
   <link rel="stylesheet" href="css/icon.css"/>
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P28QTWQD" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
 
 <!-- 공지바 -->
 <div class="notice-bar" onclick="goPage('internet')">
@@ -103,7 +111,7 @@
 
       <div class="wd-actions">
         <button class="wd-btn-apply" onclick="wdApply()">신청하기</button>
-        <button class="sapply-inline" type="button" onclick="openSimpleApply()"><span class="sapply-tip">3초만에 간편신청하기</span>간편 신청</button>
+        <button class="sapply-inline" data-track="simple_apply_open" type="button" onclick="openSimpleApply()"><span class="sapply-tip">3초만에 간편신청하기</span>간편 신청</button>
         <button class="wd-btn-kakao" onclick="wdKakao()">카카오 상담</button>
       </div>
     </div>
@@ -180,7 +188,7 @@
 </div>
 
 <!-- 카카오 플로팅 -->
-<div class="kakao-float" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
+<div class="kakao-float" data-track="kakao_consult" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
   <!-- 카카오 플러스친구 추가 (배너에서 이전 — 링크 유지, 이미지 자리 src 삽입 예정) -->
   <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-plus" aria-label="카카오 플러스친구 추가" onclick="event.stopPropagation()">
     <img src="/assets/kakaoplus/kakaoplus.png" alt="카카오 플러스친구 추가" class="kakao-plus__img">
@@ -264,5 +272,6 @@
 <script src="js/common/simple-apply.js"></script>
 <script src="js/common/reviews.js"></script>
 
+<script src="/js/common/track.js"></script>
 </body>
 </html>

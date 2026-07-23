@@ -60,7 +60,7 @@
 
     var n = list.length;
     var slides = list.map(function (p) {
-      return '<a class="dpop-slide" href="' + esc(target(p)) + '"><img src="' + esc(p.imageUrl) + '" alt="' + esc(p.title || '') + '" /></a>';
+      return '<a class="dpop-slide" data-track="popup_click" href="' + esc(target(p)) + '"><img src="' + esc(p.imageUrl) + '" alt="' + esc(p.title || '') + '" /></a>';
     }).join('');
     var arrows = n > 1
       ? '<button type="button" class="dpop-arrow prev" data-act="prev" aria-label="이전">‹</button>' +

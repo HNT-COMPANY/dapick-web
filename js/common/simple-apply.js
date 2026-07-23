@@ -90,8 +90,8 @@
     +         '<label class="sa-agree"><input type="checkbox" id="saMarketing"/><span>[선택] 마케팅 정보 수신에 동의합니다.</span></label>'
     +       '</div>'
     +     '</div>'
-    +     '<div class="sapply-foot" id="sapplyFoot"><button class="sapply-btn" id="saClose" type="button">닫기</button><button class="sapply-btn pri" id="saNext" type="button">접수하기</button></div>'
-    +     '<div class="sapply-confirm" id="sapplyConfirm"><p>입력하신 번호는</p><div class="ph" id="saPhoneEcho"></div><p class="q">정말 맞나요?</p><div class="sapply-foot" style="padding-left:0;padding-right:0;padding-bottom:0;"><button class="sapply-btn" id="saNo" type="button">아니요</button><button class="sapply-btn pri" id="saYes" type="button">네, 맞아요</button></div></div>'
+    +     '<div class="sapply-foot" id="sapplyFoot"><button class="sapply-btn" id="saClose" type="button">닫기</button><button class="sapply-btn pri" id="saNext" type="button" data-track="simple_apply_next">접수하기</button></div>'
+    +     '<div class="sapply-confirm" id="sapplyConfirm"><p>입력하신 번호는</p><div class="ph" id="saPhoneEcho"></div><p class="q">정말 맞나요?</p><div class="sapply-foot" style="padding-left:0;padding-right:0;padding-bottom:0;"><button class="sapply-btn" id="saNo" type="button">아니요</button><button class="sapply-btn pri" id="saYes" type="button" data-track="simple_apply_submit">네, 맞아요</button></div></div>'
     +     '<div class="sapply-done" id="sapplyDone"><div class="ic">✅</div><b>접수되었습니다</b><p>상담사가 입력하신 번호로 곧 연락드립니다.</p></div>'
     +   '</div>'
     + '</div>';

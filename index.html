@@ -3,6 +3,10 @@
 <html lang="ko">
 <head>
   <meta charset="UTF-8"/>
+<!-- Google Tag Manager -->
+<script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src='https://www.googletagmanager.com/gtm.js?id='+i+dl;f.parentNode.insertBefore(j,f);})(window,document,'script','dataLayer','GTM-P28QTWQD');</script>
+<!-- End Google Tag Manager -->
+
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="naver-site-verification" content="915416fea52343dca0655e46b44dcf0c0f35c044" />
   <meta name="google-site-verification" content="GCx_easXjW15Mj5PVaXMva8tTKI5YC-oHCmeO06h6pA" />
@@ -167,6 +171,10 @@
   <!-- Structured Data (JSON-LD)는 위 head 인라인이 정본 (JS 주입 제거) -->
 </head>
 <body>
+<!-- Google Tag Manager (noscript) -->
+<noscript><iframe src="https://www.googletagmanager.com/ns.html?id=GTM-P28QTWQD" height="0" width="0" style="display:none;visibility:hidden"></iframe></noscript>
+<!-- End Google Tag Manager (noscript) -->
+
 <!-- 공지 -->
 <div class="notice-bar" onclick="goPage('internet')">
   🎁 가만히 두면 <em>152만원 손해!</em> 지금 바로 지원금 확인하세요
@@ -186,8 +194,8 @@
       </h1>
       <p class="hero-sub">인터넷·TV · 가전렌탈 · 휴대폰 · 카드<br>모든 생활 지원금을 한눈에 비교</p>
       <div class="hero-cta">
-        <button class="btn-cta-main" onclick="goPage('internet')">인터넷 지원금 확인</button>
-        <button class="btn-cta-sub"  onclick="goPage('mobile')">휴대폰 가격 비교하기</button>
+        <button class="btn-cta-main" data-track="home_cta_internet" onclick="goPage('internet')">인터넷 지원금 확인</button>
+        <button class="btn-cta-sub" data-track="home_cta_mobile" onclick="goPage('mobile')">휴대폰 가격 비교하기</button>
       </div>
     </div>
 
@@ -521,7 +529,7 @@
 </footer>
 
 <!-- 카카오 플로팅 -->
-<div class="kakao-float" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
+<div class="kakao-float" data-track="kakao_consult" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
   <!-- 카카오 플러스친구 추가 (배너에서 이전 — 링크 유지, 이미지 자리 src 삽입 예정) -->
   <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-plus" aria-label="카카오 플러스친구 추가" onclick="event.stopPropagation()">
     <img src="/assets/kakaoplus/kakaoplus.png" alt="카카오 플러스친구 추가" class="kakao-plus__img">
@@ -546,5 +554,6 @@
 <script src="js/home/reviews-carousel.js"></script>
 <script src="js/common/popup.js"></script>
 
+<script src="/js/common/track.js"></script>
 </body>
 </html>
