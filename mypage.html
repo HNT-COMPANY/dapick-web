@@ -86,6 +86,11 @@
         <span class="mp-menu__icon">📋</span>
         <span class="mp-menu__label">신청 내역</span>
       </button>
+      <button class="mp-menu__item" data-tab="notifications">
+        <span class="mp-menu__icon">🔔</span>
+        <span class="mp-menu__label">알림</span>
+        <span id="mp-noti-badge" style="display:none;margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e5484d;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;"></span>
+      </button>
       <button class="mp-menu__item" data-tab="favorites">
         <span class="mp-menu__icon">⭐</span>
         <span class="mp-menu__label">즐겨찾기</span>
@@ -147,12 +152,12 @@
         </span>
         <small class="mp-quick__soon">준비중</small>
       </button>
-      <button class="mp-quick__item" data-tab="notice">
+      <button class="mp-quick__item" data-tab="notifications">
         <span class="mp-quick__left">
           <span class="mp-quick__icon mp-quick__icon--red">🔔</span>
           <span class="mp-quick__label">알림</span>
         </span>
-        <small class="mp-quick__soon">준비중</small>
+        <strong class="mp-quick__count" id="quick-noti-count">0</strong>
       </button>
     </div>
 
@@ -234,6 +239,15 @@
         <div class="apps-list" id="apps-list">
           <!-- JS로 렌더링 -->
         </div>
+      </div>
+
+      <!-- 알림 -->
+      <div class="mp-tab" id="tab-notifications" hidden>
+        <div class="mp-tab__head">
+          <h2 class="mp-tab__title">알림</h2>
+          <button class="mp-noti-readall" id="mp-noti-readall" type="button">모두 읽음</button>
+        </div>
+        <div class="mp-noti-list" id="mp-noti-list"></div>
       </div>
 
       <!-- 준비중 탭들 (즐겨찾기/비교함/공지사항/FAQ) -->
@@ -449,5 +463,18 @@
 <script src="js/mypage/mypage.js"></script>
 
 <script src="/js/common/track.js"></script>
+<style>
+  .mp-noti-list { display:flex; flex-direction:column; }
+  .mp-noti-empty { padding:40px 16px; text-align:center; color:#a7a5b8; font-size:14px; }
+  .mp-noti-row { display:block; width:100%; text-align:left; background:#fff; border:1px solid #eee; border-radius:12px; padding:14px 16px; margin-bottom:10px; cursor:pointer; transition:background .12s, box-shadow .12s; }
+  .mp-noti-row:hover { background:#faf9ff; box-shadow:0 2px 10px rgba(24,23,43,.06); }
+  .mp-noti-row.is-unread { background:#f5f1ff; border-color:#e5dcff; }
+  .mp-noti-rtitle { display:flex; align-items:center; gap:7px; font-size:15px; font-weight:700; color:#221f38; margin-bottom:5px; }
+  .mp-noti-rdot { width:7px; height:7px; border-radius:50%; background:#5b3fbe; flex-shrink:0; }
+  .mp-noti-rbody { font-size:13.5px; color:#5a5a68; line-height:1.6; white-space:pre-line; }
+  .mp-noti-rtime { font-size:11.5px; color:#b0aec2; margin-top:7px; }
+  .mp-noti-readall { background:none; border:1px solid #d7d2e6; border-radius:8px; padding:6px 12px; color:#5b3fbe; font-size:12.5px; font-weight:700; cursor:pointer; font-family:inherit; }
+  .mp-noti-readall:hover { background:#f3efff; }
+</style>
 </body>
 </html>

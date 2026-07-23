@@ -16,10 +16,12 @@
   setupLogout();
   setupDetailModal();
   setupReviewModal();
+  setupNotifications();
 
   await loadProfile();
   await loadReviewEligibility(); // 신청 렌더 전에 eligible 집합 확보
   await loadApplications();
+  loadNotiCount();
 })();
 
 // ── 탭 전환 ─────────────────────────────────────────
@@ -46,6 +48,7 @@ function switchTab(tabName) {
     target.classList.add('is-active');
     target.hidden = false;
   }
+  if (tabName === 'notifications') loadNotifications();
   if (window.innerWidth < 768) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -675,4 +678,109 @@ function showToast(msg) {
     'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#111018;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;line-height:1.6;white-space:pre-line;text-align:left;z-index:9999;box-shadow:0 8px 20px rgba(0,0,0,0.2);';
   document.body.appendChild(t);
   setTimeout(() => t.remove(), 2400);
+}
+
+
+// ══════════════════════════════════════════════════════
+// 알림 탭 (인앱 알림) — GET /api/notifications, PATCH /read, /read-all
+// ══════════════════════════════════════════════════════
+function mpEsc(v) {
+  if (v == null) return '';
+  return String(v).replace(/[&<>"']/g, function (c) {
+    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+  });
+}
+
+function mpNotiTime(raw) {
+  if (!raw) return '';
+  var m = String(raw).replace('T', ' ').match(/^(\d{4})-(\d{2})-(\d{2})[ ](\d{2}):(\d{2})/);
+  return m ? (m[2] + '.' + m[3] + ' ' + m[4] + ':' + m[5]) : '';
+}
+
+// 링크 정규화 — 미존재 경로 404 방지. 안전한 곳만 이동.
+function resolveMpNotiLink(raw) {
+  if (!raw) return null;
+  var t = String(raw).trim();
+  if (!t) return null;
+  if (/^https?:\/\//i.test(t)) return t;
+  if (t.charAt(0) !== '/') t = '/' + t;
+  if (/^\/mypage(\/|$|\?|#)/i.test(t)) return '/mypage.html';
+  if (/^\/consent(\/|$|\?|#)/i.test(t)) return t;
+  if (/\.html(\?|#|$)/i.test(t)) return t;
+  if (t === '/') return t;
+  return null;
+}
+
+function setupNotifications() {
+  var readall = document.getElementById('mp-noti-readall');
+  if (readall) readall.addEventListener('click', markAllMpNoti);
+  var list = document.getElementById('mp-noti-list');
+  if (list) {
+    list.addEventListener('click', function (e) {
+      var row = e.target.closest && e.target.closest('.mp-noti-row');
+      if (row) onMpNotiClick(row);
+    });
+  }
+}
+
+function loadNotiCount() {
+  if (typeof api === 'undefined' || !api.get) return;
+  api.get('/api/notifications/unread-count').then(function (d) {
+    updateNotiBadges((d && d.count) || 0);
+  }).catch(function () {});
+}
+
+function updateNotiBadges(count) {
+  var badge = document.getElementById('mp-noti-badge');
+  if (badge) {
+    if (count > 0) { badge.textContent = count > 99 ? '99+' : String(count); badge.style.display = ''; }
+    else { badge.textContent = ''; badge.style.display = 'none'; }
+  }
+  var quick = document.getElementById('quick-noti-count');
+  if (quick) quick.textContent = count > 99 ? '99+' : String(count);
+}
+
+function loadNotifications() {
+  var list = document.getElementById('mp-noti-list');
+  if (!list || typeof api === 'undefined' || !api.get) return;
+  list.innerHTML = '<div class="mp-noti-empty">불러오는 중…</div>';
+  api.get('/api/notifications').then(function (rows) {
+    var arr = Array.isArray(rows) ? rows : [];
+    if (!arr.length) { list.innerHTML = '<div class="mp-noti-empty">새 알림이 없습니다.</div>'; return; }
+    list.innerHTML = arr.map(function (n) {
+      return '<div class="mp-noti-row' + (n.read ? '' : ' is-unread') + '" data-id="' + mpEsc(n.id) +
+        '" data-link="' + mpEsc(n.linkUrl || '') + '">' +
+        '<div class="mp-noti-rtitle">' + (n.read ? '' : '<span class="mp-noti-rdot"></span>') + mpEsc(n.title || '알림') + '</div>' +
+        '<div class="mp-noti-rbody">' + mpEsc(n.content || '') + '</div>' +
+        '<div class="mp-noti-rtime">' + mpEsc(mpNotiTime(n.createdAt)) + '</div>' +
+      '</div>';
+    }).join('');
+  }).catch(function () {
+    list.innerHTML = '<div class="mp-noti-empty">알림을 불러오지 못했습니다.</div>';
+  });
+}
+
+function onMpNotiClick(row) {
+  var id = row.getAttribute('data-id');
+  var dest = resolveMpNotiLink(row.getAttribute('data-link'));
+  var go = function () { if (dest) window.location.href = dest; };
+  if (row.classList.contains('is-unread') && id && typeof api !== 'undefined' && api.patch) {
+    api.patch('/api/notifications/' + id + '/read', {}).then(function () {
+      row.classList.remove('is-unread');
+      var dot = row.querySelector('.mp-noti-rdot');
+      if (dot) dot.remove();
+      loadNotiCount();
+      go();
+    }).catch(go);
+  } else {
+    go();
+  }
+}
+
+function markAllMpNoti() {
+  if (typeof api === 'undefined' || !api.patch) return;
+  api.patch('/api/notifications/read-all', {}).then(function () {
+    loadNotifications();
+    loadNotiCount();
+  }).catch(function () {});
 }

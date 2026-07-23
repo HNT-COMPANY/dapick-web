@@ -71,6 +71,8 @@
       if (drop && drop.classList.contains('is-open')) {
         drop.classList.remove('is-open');
       }
+      var np = document.getElementById('gnbNotiPanel');
+      if (np && np.classList.contains('is-open')) np.classList.remove('is-open');
     });
   }
 
@@ -79,6 +81,8 @@
       if (e.key === 'Escape') {
         var drop = document.getElementById('gnbUserDrop');
         if (drop) drop.classList.remove('is-open');
+        var np = document.getElementById('gnbNotiPanel');
+        if (np) np.classList.remove('is-open');
       }
     });
   }
@@ -122,6 +126,11 @@
       '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" width="20" height="20"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg>' +
       '<span class="gnb-bell-badge" hidden></span>' +
       '</button>' +
+      '<div class="gnb-noti-panel" id="gnbNotiPanel">' +
+      '<div class="gnb-noti-head"><span class="gnb-noti-title">알림</span>' +
+      '<button class="gnb-noti-readall" type="button">모두 읽음</button></div>' +
+      '<div class="gnb-noti-list" id="gnbNotiList"></div>' +
+      '</div>' +
       '<div class="gnb-user" id="gnbUserDrop">' +
       // \uD2B8\uB9AC\uAC70: \uC0AC\uB78C \uC544\uC774\uCF58 + \uB2C9\uB124\uC784 + \u25BE
       '<button class="gnb-user-btn" type="button">' +
@@ -173,13 +182,25 @@
     var btn = gnbRight.querySelector('.gnb-user-btn');
     if (btn) btn.addEventListener('click', toggleDrop);
 
-    // 알림 벨 — 기능 미완이므로 클릭 시 준비중 안내 (마이페이지 '준비중' 톤과 일관)
+    // 알림 벨 — 클릭 시 알림 드롭다운 토글 + 목록 로드
+    injectNotiStyles();
     var bell = gnbRight.querySelector('.gnb-bell');
-    if (bell) {
+    var notiPanel = document.getElementById('gnbNotiPanel');
+    if (bell && notiPanel) {
       bell.addEventListener('click', function (e) {
         e.stopPropagation();
-        alert('알림 기능은 준비 중입니다.');
+        var opening = !notiPanel.classList.contains('is-open');
+        notiPanel.classList.toggle('is-open');
+        if (opening) loadNotiList();
       });
+      notiPanel.addEventListener('click', function (e) {
+        e.stopPropagation();
+        var readall = e.target.closest && e.target.closest('.gnb-noti-readall');
+        if (readall) { markAllNoti(); return; }
+        var item = e.target.closest && e.target.closest('.gnb-noti-item');
+        if (item) onNotiItemClick(item);
+      });
+      loadUnreadCount();
     }
 
     gnbRight.querySelectorAll('.gnb-user-link').forEach(function (linkBtn) {
@@ -198,6 +219,120 @@
         handleLogout();
       });
     }
+  }
+
+  // ── 인앱 알림 (GNB 벨 드롭다운) ──────────────────────────
+  function notiApiReady() { return typeof api !== 'undefined' && api && api.get; }
+
+  function setBellBadge(count) {
+    var bell = document.querySelector('.gnb-bell');
+    var badge = document.querySelector('.gnb-bell-badge');
+    if (!bell || !badge) return;
+    bell.setAttribute('data-count', String(count));
+    if (count > 0) { badge.textContent = count > 99 ? '99+' : String(count); badge.hidden = false; }
+    else { badge.textContent = ''; badge.hidden = true; }
+  }
+
+  function loadUnreadCount() {
+    if (!notiApiReady()) return;
+    api.get('/api/notifications/unread-count').then(function (d) {
+      setBellBadge((d && d.count) || 0);
+    }).catch(function () {});
+  }
+
+  function fmtNotiTime(raw) {
+    if (!raw) return '';
+    var m = String(raw).replace('T', ' ').match(/^(\d{4})-(\d{2})-(\d{2})[ ](\d{2}):(\d{2})/);
+    return m ? (m[2] + '.' + m[3] + ' ' + m[4] + ':' + m[5]) : '';
+  }
+
+  function loadNotiList() {
+    var list = document.getElementById('gnbNotiList');
+    if (!list || !notiApiReady()) return;
+    list.innerHTML = '<div class="gnb-noti-empty">불러오는 중…</div>';
+    api.get('/api/notifications').then(function (rows) {
+      var arr = Array.isArray(rows) ? rows : [];
+      if (!arr.length) { list.innerHTML = '<div class="gnb-noti-empty">새 알림이 없습니다.</div>'; return; }
+      list.innerHTML = arr.slice(0, 30).map(function (n) {
+        return '<div class="gnb-noti-item' + (n.read ? '' : ' is-unread') + '" data-id="' + escapeHtml(n.id) +
+          '" data-link="' + escapeHtml(n.linkUrl || '') + '">' +
+          '<div class="gnb-noti-item-title">' + (n.read ? '' : '<span class="gnb-noti-dot"></span>') + escapeHtml(n.title || '알림') + '</div>' +
+          '<div class="gnb-noti-item-body">' + escapeHtml(n.content || '') + '</div>' +
+          '<div class="gnb-noti-item-time">' + escapeHtml(fmtNotiTime(n.createdAt)) + '</div>' +
+          '</div>';
+      }).join('');
+    }).catch(function () {
+      list.innerHTML = '<div class="gnb-noti-empty">알림을 불러오지 못했습니다.</div>';
+    });
+  }
+
+  // 알림 링크 정규화 — 예쁜 경로/미존재 경로로 인한 404 방지. 안전한 곳만 이동.
+  function resolveNotiLink(raw) {
+    if (!raw) return null;
+    var s = String(raw).trim();
+    if (!s) return null;
+    if (/^https?:\/\//i.test(s)) return s;                    // 절대 URL
+    if (s.charAt(0) !== '/') s = '/' + s;
+    if (/^\/mypage(\/|$|\?|#)/i.test(s)) return '/mypage.html'; // 마이페이지 계열 → 실제 페이지
+    if (/^\/consent(\/|$|\?|#)/i.test(s)) return s;            // 동의서 서명(Pages 서빙)
+    if (/\.html(\?|#|$)/i.test(s)) return s;                   // 실제 정적 파일
+    if (s === '/') return s;                                    // 홈
+    return null;                                                // 알 수 없는 경로 → 이동 안 함(404 방지)
+  }
+
+  function onNotiItemClick(item) {
+    var id = item.getAttribute('data-id');
+    var link = item.getAttribute('data-link');
+    var dest = resolveNotiLink(link);
+    var go = function () { if (dest) window.location.href = dest; };
+    if (item.classList.contains('is-unread') && notiApiReady() && id) {
+      api.patch('/api/notifications/' + id + '/read', {}).then(function () {
+        item.classList.remove('is-unread');
+        var dot = item.querySelector('.gnb-noti-dot');
+        if (dot) dot.remove();
+        loadUnreadCount();
+        go();
+      }).catch(go);
+    } else { go(); }
+  }
+
+  function markAllNoti() {
+    if (!notiApiReady()) return;
+    api.patch('/api/notifications/read-all', {}).then(function () {
+      loadUnreadCount();
+      loadNotiList();
+    }).catch(function () {});
+  }
+
+  var _notiStyled = false;
+  function injectNotiStyles() {
+    if (_notiStyled) return;
+    _notiStyled = true;
+    var css =
+      '.gnb-right{position:relative;}' +
+      '.gnb-bell{position:relative;}' +
+      '.gnb-bell-badge{position:absolute;top:0;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#e5484d;color:#fff;font-size:10px;font-weight:800;line-height:16px;text-align:center;box-sizing:border-box;}' +
+      '.gnb-noti-panel{position:absolute;top:calc(100% + 12px);right:0;width:340px;max-height:460px;overflow-y:auto;background:#fff;border:1px solid #eceaf2;border-radius:14px;box-shadow:0 14px 44px rgba(20,18,35,.18);z-index:3000;display:none;font-family:"Noto Sans KR",sans-serif;}' +
+      '.gnb-noti-panel.is-open{display:block;}' +
+      '.gnb-noti-head{display:flex;align-items:center;justify-content:space-between;padding:14px 16px;border-bottom:1px solid #f1f0f6;position:sticky;top:0;background:#fff;border-radius:14px 14px 0 0;}' +
+      '.gnb-noti-title{font-size:15px;font-weight:800;color:#18172b;}' +
+      '.gnb-noti-readall{background:none;border:none;color:#5b3fbe;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;}' +
+      '.gnb-noti-readall:hover{text-decoration:underline;}' +
+      '.gnb-noti-list{padding:2px 0;}' +
+      '.gnb-noti-empty{padding:34px 16px;text-align:center;color:#a7a5b8;font-size:13.5px;}' +
+      '.gnb-noti-item{padding:12px 16px;border-bottom:1px solid #f6f5fa;cursor:pointer;transition:background .12s;}' +
+      '.gnb-noti-item:last-child{border-bottom:none;}' +
+      '.gnb-noti-item:hover{background:#faf9ff;}' +
+      '.gnb-noti-item.is-unread{background:#f5f1ff;}' +
+      '.gnb-noti-item.is-unread:hover{background:#efe9ff;}' +
+      '.gnb-noti-item-title{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:#221f38;margin-bottom:3px;}' +
+      '.gnb-noti-dot{width:7px;height:7px;border-radius:50%;background:#5b3fbe;flex-shrink:0;}' +
+      '.gnb-noti-item-body{font-size:12.5px;color:#6a6880;line-height:1.5;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}' +
+      '.gnb-noti-item-time{font-size:11px;color:#b0aec2;}' +
+      '@media(max-width:520px){.gnb-noti-panel{width:min(340px,calc(100vw - 24px));}}';
+    var st = document.createElement('style');
+    st.textContent = css;
+    document.head.appendChild(st);
   }
 
   function init() {
