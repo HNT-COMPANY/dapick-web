@@ -53,6 +53,7 @@ function switchTab(tabName) {
   }
   if (tabName === 'notifications') loadNotifications();
   if (tabName === 'recent') loadRecentViews();
+  if (tabName === 'favorites') loadFavorites();
   if (window.innerWidth < 768) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -812,6 +813,29 @@ function mpRecentUrl(r) {
   if (r.categoryType === 'WATER') return 'water-detail.html?id=' + r.productId;
   if (r.categoryType === 'RENTAL') return 'rental-detail.html?id=' + r.productId;
   return null; // 인터넷 등은 현재 단일 상세 링크 없음
+}
+function loadFavorites() {
+  mpInjectRecentStyles();
+  var list = document.getElementById('mp-fav-list');
+  if (!list || typeof api === 'undefined' || !api.get) return;
+  list.innerHTML = '<div class="mp-recent-empty">불러오는 중…</div>';
+  api.get('/api/favorites/my').then(function (rows) {
+    var arr = Array.isArray(rows) ? rows : [];
+    if (!arr.length) { list.innerHTML = '<div class="mp-recent-empty">즐겨찾기한 상품이 없습니다.</div>'; return; }
+    list.innerHTML = arr.map(function (r) {
+      var url = mpRecentUrl(r);
+      var fee = (r.monthlyFee != null && r.monthlyFee !== '') ? ('월 ' + Number(r.monthlyFee).toLocaleString() + '원') : '';
+      var meta = [getCategoryLabel(r.categoryType), fee].filter(Boolean).join(' · ');
+      var img = r.imageUrl
+        ? '<img class="mp-recent-thumb" src="' + mpEsc(r.imageUrl) + '" alt="" />'
+        : '<div class="mp-recent-thumb mp-recent-thumb--empty">이미지<br>없음</div>';
+      var info = '<div class="mp-recent-info"><div class="mp-recent-name">' + mpEsc(r.productName || '상품') + '</div>' +
+        '<div class="mp-recent-meta">' + mpEsc(meta) + '</div></div>';
+      var time = '<div class="mp-recent-time">' + mpEsc(mpNotiTime(r.createdAt)) + '</div>';
+      if (url) return '<a class="mp-recent-row" href="' + mpEsc(url) + '">' + img + info + time + '</a>';
+      return '<div class="mp-recent-row is-nolink">' + img + info + time + '</div>';
+    }).join('');
+  }).catch(function () { list.innerHTML = '<div class="mp-recent-empty">불러오지 못했습니다.</div>'; });
 }
 function loadRecentViews() {
   mpInjectRecentStyles();

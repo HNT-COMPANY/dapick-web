@@ -259,6 +259,7 @@ function renderDetail() {
   const _modelEl = document.getElementById('wdModel');
   if (_modelEl) _modelEl.textContent = p.modelName || '';
   document.getElementById('wdDesc').textContent = p.desc || '';
+  if (window.dpFavInit) dpFavInit(document.getElementById('wdFav'), p.id);
   document.getElementById('wdBackText').textContent =
     `‹ ${meta.name} 상품 목록`;
 

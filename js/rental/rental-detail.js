@@ -125,6 +125,7 @@ function renderDetail() {
 
   document.getElementById('wdName').textContent = p.name;
   document.getElementById('wdDesc').textContent = p.desc || '';
+  if (window.dpFavInit) dpFavInit(document.getElementById('wdFav'), p.id);
   document.getElementById('wdBackText').textContent = p.categoryName
     ? `‹ ${p.categoryName} 상품 목록`
     : '‹ 상품 목록';

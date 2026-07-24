@@ -98,7 +98,6 @@
       <button class="mp-menu__item" data-tab="favorites">
         <span class="mp-menu__icon">⭐</span>
         <span class="mp-menu__label">즐겨찾기</span>
-        <span class="mp-menu__badge">준비중</span>
       </button>
       <button class="mp-menu__item" data-tab="compare">
         <span class="mp-menu__icon">⚖️</span>
@@ -147,7 +146,6 @@
           <span class="mp-quick__icon mp-quick__icon--gold">⭐</span>
           <span class="mp-quick__label">즐겨찾기</span>
         </span>
-        <small class="mp-quick__soon">준비중</small>
       </button>
       <button class="mp-quick__item" data-tab="compare">
         <span class="mp-quick__left">
@@ -264,11 +262,10 @@
 
       <!-- 준비중 탭들 (즐겨찾기/비교함/공지사항/FAQ) -->
       <div class="mp-tab" id="tab-favorites" hidden>
-        <div class="empty-soon">
-          <div class="empty-soon__icon">⭐</div>
-          <h3>즐겨찾기 준비중</h3>
-          <p>곧 만나보실 수 있어요!</p>
+        <div class="mp-tab__head">
+          <h2 class="mp-tab__title">즐겨찾기</h2>
         </div>
+        <div class="mp-recent-list" id="mp-fav-list"></div>
       </div>
       <div class="mp-tab" id="tab-compare" hidden>
         <div class="empty-soon">

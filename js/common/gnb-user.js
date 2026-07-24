@@ -159,7 +159,7 @@
       '<div class="gnb-user-section">' +
       '<div class="gnb-user-section-title">서비스 이용</div>' +
       '<a class="gnb-user-link" href="mypage.html?tab=recent"><span><span class="gnb-user-ico">🕐</span>최근 본 게시글</span><span class="gnb-user-arrow-r">›</span></a>' +
-      '<div class="gnb-user-link is-soon"><span><span class="gnb-user-ico">♡</span>관심 목록</span><span class="gnb-user-badge">준비중</span></div>' +
+      '<a class="gnb-user-link" href="mypage.html?tab=favorites"><span><span class="gnb-user-ico">♡</span>관심 목록</span><span class="gnb-user-arrow-r">›</span></a>' +
       '<a class="gnb-user-link" href="mypage.html"><span><span class="gnb-user-ico">📄</span>신청 내역</span><span class="gnb-user-arrow-r">›</span></a>' +
       '</div>' +
       // 마이페이지 · 고객센터
