@@ -147,27 +147,27 @@
       '\uB2D8</span>' +
       '<span class="gnb-user-arrow-r">\u203A</span>' +
       '</a>' +
-      // \uB2E4\uD53D \uD3EC\uC778\uD2B8 (\uC900\uBE44\uC911)
+      // 다픽 포인트 (준비중)
       '<div class="gnb-user-section">' +
-      '<div class="gnb-user-section-title">\uB2E4\uD53D \uD3EC\uC778\uD2B8</div>' +
+      '<div class="gnb-user-section-title">다픽 포인트</div>' +
       '<div class="gnb-user-row gnb-user-row--soon">' +
-      '<span><span class="gnb-user-ico">\uD83E\uDE99</span>\uD3EC\uC778\uD2B8</span>' +
-      '<span class="gnb-user-soonwrap"><span class="gnb-user-badge">\uC900\uBE44\uC911</span><strong>0 P</strong></span>' +
+      '<span><span class="gnb-user-ico">🪙</span>포인트</span>' +
+      '<span class="gnb-user-soonwrap"><span class="gnb-user-badge">준비중</span><strong>0 P</strong></span>' +
       '</div>' +
       '</div>' +
-      // \uC11C\uBE44\uC2A4 \uC774\uC6A9
+      // 서비스 이용
       '<div class="gnb-user-section">' +
-      '<div class="gnb-user-section-title">\uC11C\uBE44\uC2A4 \uC774\uC6A9</div>' +
-      '<div class="gnb-user-link is-soon"><span><span class="gnb-user-ico">\uD83D\uDD50</span>\uCD5C\uADFC \uBCF8 \uAC8C\uC2DC\uAE00</span><span class="gnb-user-badge">\uC900\uBE44\uC911</span></div>' +
-      '<div class="gnb-user-link is-soon"><span><span class="gnb-user-ico">\u2661</span>\uAD00\uC2EC \uBAA9\uB85D</span><span class="gnb-user-badge">\uC900\uBE44\uC911</span></div>' +
-      '<a class="gnb-user-link" href="mypage.html"><span><span class="gnb-user-ico">\uD83D\uDCC4</span>\uC2E0\uCCAD \uB0B4\uC5ED</span><span class="gnb-user-arrow-r">\u203A</span></a>' +
+      '<div class="gnb-user-section-title">서비스 이용</div>' +
+      '<a class="gnb-user-link" href="mypage.html?tab=recent"><span><span class="gnb-user-ico">🕐</span>최근 본 게시글</span><span class="gnb-user-arrow-r">›</span></a>' +
+      '<div class="gnb-user-link is-soon"><span><span class="gnb-user-ico">♡</span>관심 목록</span><span class="gnb-user-badge">준비중</span></div>' +
+      '<a class="gnb-user-link" href="mypage.html"><span><span class="gnb-user-ico">📄</span>신청 내역</span><span class="gnb-user-arrow-r">›</span></a>' +
       '</div>' +
-      // \uB9C8\uC774\uD398\uC774\uC9C0 \u00B7 \uACE0\uAC1D\uC13C\uD130
+      // 마이페이지 · 고객센터
       '<div class="gnb-user-section">' +
-      '<div class="gnb-user-section-title">\uB9C8\uC774\uD398\uC774\uC9C0 \u00B7 \uACE0\uAC1D\uC13C\uD130</div>' +
-      '<a class="gnb-user-link" href="mypage.html"><span><span class="gnb-user-ico">\uD83D\uDC64</span>\uB9C8\uC774\uD398\uC774\uC9C0</span><span class="gnb-user-arrow-r">\u203A</span></a>' +
-      '<a class="gnb-user-link" href="support-inquiry.html"><span><span class="gnb-user-ico">\uD83D\uDCAC</span>\uBB38\uC758\uD558\uAE30</span><span class="gnb-user-arrow-r">\u203A</span></a>' +
-      '<a class="gnb-user-link" href="support-complaint.html"><span><span class="gnb-user-ico">\u26A0\uFE0F</span>\uBD88\uD3B8\uC0AC\uD56D</span><span class="gnb-user-arrow-r">\u203A</span></a>' +
+      '<div class="gnb-user-section-title">마이페이지 · 고객센터</div>' +
+      '<a class="gnb-user-link" href="mypage.html"><span><span class="gnb-user-ico">👤</span>마이페이지</span><span class="gnb-user-arrow-r">›</span></a>' +
+      '<a class="gnb-user-link" href="support-inquiry.html"><span><span class="gnb-user-ico">💬</span>문의하기</span><span class="gnb-user-arrow-r">›</span></a>' +
+      '<a class="gnb-user-link" href="support-complaint.html"><span><span class="gnb-user-ico">⚠️</span>불편사항</span><span class="gnb-user-arrow-r">›</span></a>' +
       adminLink +
       '</div>' +
       // \uB85C\uADF8\uC544\uC6C3 (\uAE30\uC874 \uB3D9\uC791 \uC720\uC9C0)

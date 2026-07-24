@@ -25,7 +25,7 @@
   <meta name="msapplication-TileImage" content="https://dapick.co.kr/assets/logos/dapicklogo.png" />
   <meta name="msapplication-TileColor" content="#000000" />
   <meta name="theme-color" content="#000000" />
-  <meta name="description" content="렌탈 상품 상세 — 약정·관리주기·색상 선택 후 월 렌탈료 확인 및 상담 신청."/>
+  <meta name="description" content="렌탈 상품 상세, 약정·관리주기·색상 선택 후 월 렌탈료 확인 및 상담 신청."/>
   <meta name="robots" content="index, follow"/>
 
   <meta property="og:type" content="website"/>
@@ -62,7 +62,7 @@
 <nav class="gnb"></nav>
 
 <!-- ══════════════════════════════════════
-     상세 본문 — 정수기 water-detail 과 동일 구조
+     상세 본문, 정수기 water-detail 과 동일 구조
 ══════════════════════════════════════ -->
 <div class="wd-wrap" id="wdRoot">
   <button class="wd-back" onclick="rdGoBack()"><span id="wdBackText">‹ 상품 목록</span></button>
@@ -131,7 +131,7 @@
 </div>
 
 <!-- ══════════════════════════════════════
-     상품 상세 다이얼로그 — 정수기 water.html 과 동일 (3단 + 색상)
+     상품 상세 다이얼로그, 정수기 water.html 과 동일 (3단 + 색상)
      "신청하기" 클릭 시 출력. 여기서 다시 자체 신청 폼으로 연결.
 ══════════════════════════════════════ -->
 <div class="w-dialog-overlay" id="wDialogOverlay" onclick="closeDialogOutside(event)">
@@ -187,7 +187,7 @@
 
 <!-- 카카오 플로팅 -->
 <div class="kakao-float" data-track="kakao_consult" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
-  <!-- 카카오 플러스친구 추가 (배너에서 이전 — 링크 유지, 이미지 자리 src 삽입 예정) -->
+  <!-- 카카오 플러스친구 추가 (배너에서 이전, 링크 유지, 이미지 자리 src 삽입 예정) -->
   <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-plus" aria-label="카카오 플러스친구 추가" onclick="event.stopPropagation()">
     <img src="/assets/kakaoplus/kakaoplus.png" alt="카카오 플러스친구 추가" class="kakao-plus__img">
   </a>
@@ -230,7 +230,7 @@
         <p><span>사업자등록번호</span> 620-14-55188 &nbsp;|&nbsp; <span>통신판매</span> 제 2026-울산남구-0324 호</p>
         <p><span>대표번호</span> (052) 1899-8478 &nbsp;|&nbsp; <span>주소</span> 울산 남구 달삼로 76, 3층 305-6호</p>
         <p><span>이메일</span> daconnect33@gmail.com &nbsp;|&nbsp; <span>책임관리자</span> 김혜진</p>
-        <!-- 통신판매중개 문구 비노출 (2026-07-03) — 재노출 시 주석 해제
+        <!-- 통신판매중개 문구 비노출 (2026-07-03), 재노출 시 주석 해제
         <p class="footer-disclaimer">다픽은 통신판매중개자이며 통신판매의 당사자가 아닙니다.<br>상품, 상품정보, 거래에 관한 의무와 책임은 거래당사자에게 있습니다.</p>
         -->
       </div>
@@ -269,12 +269,12 @@
 <script src="js/common/simple-apply.js"></script>
 <script src="js/common/reviews.js"></script>
 <script>
-  // 후기 모듈 초기화 — productId는 URL ?id= (= RD_PRODUCT.id 와 동일 UUID)
+  // 후기 모듈 초기화, productId는 URL ?id= (= RD_PRODUCT.id 와 동일 UUID)
   document.addEventListener('DOMContentLoaded', function () {
     var pid = new URLSearchParams(location.search).get('id');
     if (pid && typeof initReviews === 'function') initReviews(pid);
 
-    // 상세/리뷰 탭 전환 — 패널은 미리 렌더, 보이기/숨기기만
+    // 상세/리뷰 탭 전환, 패널은 미리 렌더, 보이기/숨기기만
     var tabbar = document.querySelector('.wd-detail-tabbar');
     var detailPanel = document.getElementById('wdDetailBody');
     var reviewPanel = document.getElementById('reviewSection');

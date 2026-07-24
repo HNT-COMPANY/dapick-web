@@ -17,6 +17,9 @@
   setupDetailModal();
   setupReviewModal();
   setupNotifications();
+  // 딥링크 ?tab= 로 특정 탭 열기 (예: GNB '최근 본 게시글' -> ?tab=recent)
+  var _tabParam = new URLSearchParams(location.search).get('tab');
+  if (_tabParam && document.getElementById('tab-' + _tabParam)) switchTab(_tabParam);
 
   await loadProfile();
   await loadReviewEligibility(); // 신청 렌더 전에 eligible 집합 확보
@@ -49,6 +52,7 @@ function switchTab(tabName) {
     target.hidden = false;
   }
   if (tabName === 'notifications') loadNotifications();
+  if (tabName === 'recent') loadRecentViews();
   if (window.innerWidth < 768) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -783,4 +787,52 @@ function markAllMpNoti() {
     loadNotifications();
     loadNotiCount();
   }).catch(function () {});
+}
+
+
+// ── 최근 본 상품 탭 ─────────────────────────────────
+var _mpRecentStyled = false;
+function mpInjectRecentStyles() {
+  if (_mpRecentStyled) return; _mpRecentStyled = true;
+  var css =
+    '.mp-recent-list{display:flex;flex-direction:column;gap:10px;}' +
+    '.mp-recent-row{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid #eeecf5;border-radius:12px;background:#fff;text-decoration:none;color:inherit;transition:background .12s;}' +
+    '.mp-recent-row:hover{background:#faf9ff;}' +
+    '.mp-recent-row.is-nolink{cursor:default;}' +
+    '.mp-recent-thumb{width:96px;height:64px;border-radius:8px;object-fit:cover;background:#f4f6fb;flex-shrink:0;border:1px solid #eceaf5;}' +
+    '.mp-recent-thumb--empty{display:flex;align-items:center;justify-content:center;color:#b7bccb;font-size:11px;text-align:center;line-height:1.3;}' +
+    '.mp-recent-info{flex:1;min-width:0;}' +
+    '.mp-recent-name{font-size:15px;font-weight:700;color:#221f38;}' +
+    '.mp-recent-meta{font-size:12.5px;color:#6a6880;margin-top:3px;}' +
+    '.mp-recent-time{font-size:12px;color:#b0aec2;margin-left:auto;padding-left:14px;white-space:nowrap;flex-shrink:0;align-self:center;}' +
+    '.mp-recent-empty{padding:40px 0;text-align:center;color:#a7a5b8;font-size:14px;}';
+  var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
+}
+function mpRecentUrl(r) {
+  if (r.categoryType === 'WATER') return 'water-detail.html?id=' + r.productId;
+  if (r.categoryType === 'RENTAL') return 'rental-detail.html?id=' + r.productId;
+  return null; // 인터넷 등은 현재 단일 상세 링크 없음
+}
+function loadRecentViews() {
+  mpInjectRecentStyles();
+  var list = document.getElementById('mp-recent-list');
+  if (!list || typeof api === 'undefined' || !api.get) return;
+  list.innerHTML = '<div class="mp-recent-empty">불러오는 중…</div>';
+  api.get('/api/recent-views/my').then(function (rows) {
+    var arr = Array.isArray(rows) ? rows : [];
+    if (!arr.length) { list.innerHTML = '<div class="mp-recent-empty">최근 본 상품이 없습니다.</div>'; return; }
+    list.innerHTML = arr.map(function (r) {
+      var url = mpRecentUrl(r);
+      var fee = (r.monthlyFee != null && r.monthlyFee !== '') ? ('월 ' + Number(r.monthlyFee).toLocaleString() + '원') : '';
+      var meta = [getCategoryLabel(r.categoryType), fee].filter(Boolean).join(' · ');
+      var img = r.imageUrl
+        ? '<img class="mp-recent-thumb" src="' + mpEsc(r.imageUrl) + '" alt="" />'
+        : '<div class="mp-recent-thumb mp-recent-thumb--empty">이미지<br>없음</div>';
+      var info = '<div class="mp-recent-info"><div class="mp-recent-name">' + mpEsc(r.productName || '상품') + '</div>' +
+        '<div class="mp-recent-meta">' + mpEsc(meta) + '</div></div>';
+      var time = '<div class="mp-recent-time">' + mpEsc(mpNotiTime(r.viewedAt)) + '</div>';
+      if (url) return '<a class="mp-recent-row" href="' + mpEsc(url) + '">' + img + info + time + '</a>';
+      return '<div class="mp-recent-row is-nolink">' + img + info + time + '</div>';
+    }).join('');
+  }).catch(function () { list.innerHTML = '<div class="mp-recent-empty">불러오지 못했습니다.</div>'; });
 }

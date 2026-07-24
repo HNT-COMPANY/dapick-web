@@ -15,7 +15,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <meta name="naver-site-verification" content="915416fea52343dca0655e46b44dcf0c0f35c044" />
   <title>마이페이지 | 다픽</title>
-  <meta name="description" content="다픽 마이페이지 — 내 정보, 신청 내역, 즐겨찾기, 비교함을 한 번에 관리하세요."/>
+  <meta name="description" content="다픽 마이페이지, 내 정보, 신청 내역, 즐겨찾기, 비교함을 한 번에 관리하세요."/>
 
   <!-- ── Canonical ── -->
   <link rel="canonical" href="https://dapick.co.kr/mypage.html" />
@@ -90,6 +90,10 @@
         <span class="mp-menu__icon">🔔</span>
         <span class="mp-menu__label">알림</span>
         <span id="mp-noti-badge" style="display:none;margin-left:auto;min-width:18px;height:18px;padding:0 5px;border-radius:999px;background:#e5484d;color:#fff;font-size:11px;font-weight:800;line-height:18px;text-align:center;"></span>
+      </button>
+      <button class="mp-menu__item" data-tab="recent">
+        <span class="mp-menu__icon">🕐</span>
+        <span class="mp-menu__label">최근 본 게시글</span>
       </button>
       <button class="mp-menu__item" data-tab="favorites">
         <span class="mp-menu__icon">⭐</span>
@@ -250,6 +254,14 @@
         <div class="mp-noti-list" id="mp-noti-list"></div>
       </div>
 
+      <!-- 최근 본 게시글 -->
+      <div class="mp-tab" id="tab-recent" hidden>
+        <div class="mp-tab__head">
+          <h2 class="mp-tab__title">최근 본 게시글</h2>
+        </div>
+        <div class="mp-recent-list" id="mp-recent-list"></div>
+      </div>
+
       <!-- 준비중 탭들 (즐겨찾기/비교함/공지사항/FAQ) -->
       <div class="mp-tab" id="tab-favorites" hidden>
         <div class="empty-soon">
@@ -395,7 +407,7 @@
           <span>이메일</span> daconnect33@gmail.com &nbsp;|&nbsp;
           <span>책임관리자</span> 김혜진
         </p>
-        <!-- 통신판매중개 문구 비노출 (2026-07-03) — 재노출 시 주석 해제
+        <!-- 통신판매중개 문구 비노출 (2026-07-03), 재노출 시 주석 해제
         <p class="footer-disclaimer">
           다픽은 통신판매중개자이며 통신판매의 당사자가 아닙니다.<br>
           상품, 상품정보, 거래에 관한 의무와 책임은 거래당사자에게 있습니다.
@@ -438,7 +450,7 @@
 
 <!-- 카카오 플로팅 -->
 <div class="kakao-float" data-track="kakao_consult" onclick="window.open('https://pf.kakao.com/_exaRjX/chat', '_blank')">
-  <!-- 카카오 플러스친구 추가 (배너에서 이전 — 링크 유지, 이미지 자리 src 삽입 예정) -->
+  <!-- 카카오 플러스친구 추가 (배너에서 이전, 링크 유지, 이미지 자리 src 삽입 예정) -->
   <a href="https://pf.kakao.com/_exaRjX" target="_blank" rel="noopener" class="kakao-plus" aria-label="카카오 플러스친구 추가" onclick="event.stopPropagation()">
     <img src="/assets/kakaoplus/kakaoplus.png" alt="카카오 플러스친구 추가" class="kakao-plus__img">
   </a>

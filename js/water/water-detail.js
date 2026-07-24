@@ -184,6 +184,7 @@ async function loadDetail(id) {
     const json = await res.json();
     const p = json?.data ?? json;
     if (!p || !p.id) throw new Error('빈 응답');
+    recordRecentView(p.id);
 
     WD_BRAND_KEY = p.brand;
     // water.js 의 카드 소비 형태로 정규화 (openDialog 호환)
@@ -785,4 +786,17 @@ function wdKakao() {
 function wdGoBack() {
   const back = WD_BACK_BRAND || WD_BRAND_KEY || '';
   location.href = back ? `water.html?brand=${back}` : 'water.html';
+}
+
+
+// ── 최근 본 상품 기록(로그인 시, fire-and-forget) ──
+function recordRecentView(productId) {
+  try {
+    var loggedIn = (typeof isLoggedIn === 'function') ? isLoggedIn()
+      : (typeof getToken === 'function' ? !!getToken() : !!localStorage.getItem('dapick_token'));
+    if (!loggedIn || !productId) return;
+    if (typeof api !== 'undefined' && api && api.post) {
+      api.post('/api/recent-views/' + productId, {}, { skipAuthRefresh: true }).catch(function () {});
+    }
+  } catch (e) {}
 }
