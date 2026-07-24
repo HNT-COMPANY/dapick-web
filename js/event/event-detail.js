@@ -168,11 +168,30 @@
     Q.__tblRegistered = true;
   }
 
+  function registerEventApplyBlot(Q) {
+    if (!Q || Q.__evApplyRegistered) return;
+    var BlockEmbed = Q.import('blots/block/embed');
+    class EventApplyBlot extends BlockEmbed {
+      static create() {
+        var node = super.create();
+        node.classList.add('evx-apply-slot');
+        node.setAttribute('data-apply-slot', '1');
+        return node;
+      }
+      static value() { return {}; }
+    }
+    EventApplyBlot.blotName = 'eventapplybutton';
+    EventApplyBlot.tagName = 'div';
+    Q.register(EventApplyBlot);
+    Q.__evApplyRegistered = true;
+  }
+
   function deltaToHtml(ops) {
     if (typeof Quill === 'undefined' || !Array.isArray(ops)) return '';
     registerCardButtonBlot(Quill);
     registerBenefitAccordionBlot(Quill);
     registerTableBlot(Quill);
+    registerEventApplyBlot(Quill);
     const tmp = document.createElement('div');
     const q = new Quill(tmp, { modules: { toolbar: false }, readOnly: true });
     q.setContents({ ops: ops });
@@ -388,6 +407,13 @@
   function evPlaceBox(box, placement) {
     var article = document.getElementById('cdArticle');
     if (!article) return;
+    // 인라인 위치 마커가 있으면 그 자리에 배치(최우선), 없으면 top/bottom 프리셋
+    var slot = article.querySelector('.evx-apply-slot');
+    if (slot && slot.parentNode) {
+      slot.parentNode.insertBefore(box, slot);
+      slot.parentNode.removeChild(slot);
+      return;
+    }
     var detail = article.querySelector('.ccd-detail');
     if (placement === 'bottom' && detail && detail.nextSibling !== box) {
       detail.parentNode.insertBefore(box, detail.nextSibling);
