@@ -49,6 +49,7 @@
   <link rel="stylesheet" href="css/warterpage/water.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
     <link rel="stylesheet" href="css/rental/rental.css"/>
+  <link rel="stylesheet" href="css/common/site-banner.css"/>
  
 </head>
 <body>
@@ -67,9 +68,15 @@
      화면 1: 품목(brand) 선택 보드
 ══════════════════════════════════════ -->
 <div id="boardView">
-  <div class="water-main-banner">
-    <img src="assets/rental/rental-01.png" alt="다픽 가전렌탈" />
+<!-- 사이트 배너(관리자 등록) — site-banner.js 주입, 활성 0장이면 자동 숨김 -->
+<section class="sb" data-banner-category="RENTAL" aria-label="렌탈 배너" hidden>
+  <div class="sb__viewport">
+    <div class="sb__track"></div>
+    <button class="sb__arrow prev" type="button" aria-label="이전 배너">‹</button>
+    <button class="sb__arrow next" type="button" aria-label="다음 배너">›</button>
+    <div class="sb__dots"></div>
   </div>
+</section>
  
   <div class="board-section">
     <div class="board-section-title">어떤 제품을 찾으세요?</div>
@@ -305,6 +312,7 @@
 <script src="js/common/gnb.js"></script>
 <script src="js/common/gnb-user.js"></script>
 
+<script src="js/common/site-banner.js"></script>
 <script src="js/rental/rental.js"></script>
  
  

@@ -197,6 +197,8 @@
         e.stopPropagation();
         var readall = e.target.closest && e.target.closest('.gnb-noti-readall');
         if (readall) { markAllNoti(); return; }
+        var goBtn = e.target.closest && e.target.closest('.gnb-noti-go');
+        if (goBtn) { onNotiGoClick(goBtn); return; }
         var item = e.target.closest && e.target.closest('.gnb-noti-item');
         if (item) onNotiItemClick(item);
       });
@@ -254,11 +256,20 @@
       var arr = Array.isArray(rows) ? rows : [];
       if (!arr.length) { list.innerHTML = '<div class="gnb-noti-empty">새 알림이 없습니다.</div>'; return; }
       list.innerHTML = arr.slice(0, 30).map(function (n) {
+        var dest = resolveNotiLink(n.linkUrl);
+        var goBtn = dest
+          ? '<button class="gnb-noti-go" type="button" data-go="' + escapeHtml(dest) + '">바로가기 <span aria-hidden="true">›</span></button>'
+          : '';
         return '<div class="gnb-noti-item' + (n.read ? '' : ' is-unread') + '" data-id="' + escapeHtml(n.id) +
           '" data-link="' + escapeHtml(n.linkUrl || '') + '">' +
-          '<div class="gnb-noti-item-title">' + (n.read ? '' : '<span class="gnb-noti-dot"></span>') + escapeHtml(n.title || '알림') + '</div>' +
+          '<div class="gnb-noti-item-title">' + (n.read ? '' : '<span class="gnb-noti-dot"></span>') +
+          '<span class="gnb-noti-item-titletext">' + escapeHtml(n.title || '알림') + '</span>' +
+          '<span class="gnb-noti-caret" aria-hidden="true">▾</span></div>' +
           '<div class="gnb-noti-item-body">' + escapeHtml(n.content || '') + '</div>' +
-          '<div class="gnb-noti-item-time">' + escapeHtml(fmtNotiTime(n.createdAt)) + '</div>' +
+          '<div class="gnb-noti-item-foot">' +
+          '<span class="gnb-noti-item-time">' + escapeHtml(fmtNotiTime(n.createdAt)) + '</span>' +
+          goBtn +
+          '</div>' +
           '</div>';
       }).join('');
     }).catch(function () {
@@ -280,20 +291,24 @@
     return null;                                                // 알 수 없는 경로 → 이동 안 함(404 방지)
   }
 
+  // 아이템 클릭 = 펼치기/접기 토글. 첫 펼침 시 읽음 처리. 이동은 '바로가기' 버튼으로 분리.
   function onNotiItemClick(item) {
+    item.classList.toggle('is-expanded');
     var id = item.getAttribute('data-id');
-    var link = item.getAttribute('data-link');
-    var dest = resolveNotiLink(link);
-    var go = function () { if (dest) window.location.href = dest; };
     if (item.classList.contains('is-unread') && notiApiReady() && id) {
       api.patch('/api/notifications/' + id + '/read', {}).then(function () {
         item.classList.remove('is-unread');
         var dot = item.querySelector('.gnb-noti-dot');
         if (dot) dot.remove();
         loadUnreadCount();
-        go();
-      }).catch(go);
-    } else { go(); }
+      }).catch(function () {});
+    }
+  }
+
+  // '바로가기' 버튼 = linkUrl 이동 (펼치기와 분리, 클릭 전파 차단).
+  function onNotiGoClick(btn) {
+    var dest = btn.getAttribute('data-go');
+    if (dest) window.location.href = dest;
   }
 
   function markAllNoti() {
@@ -327,8 +342,17 @@
       '.gnb-noti-item.is-unread:hover{background:#efe9ff;}' +
       '.gnb-noti-item-title{display:flex;align-items:center;gap:6px;font-size:13.5px;font-weight:700;color:#221f38;margin-bottom:3px;}' +
       '.gnb-noti-dot{width:7px;height:7px;border-radius:50%;background:#5b3fbe;flex-shrink:0;}' +
+      '.gnb-noti-item-title{cursor:pointer;}' +
+      '.gnb-noti-item-titletext{flex:1;min-width:0;}' +
+      '.gnb-noti-caret{margin-left:6px;color:#b0aec2;font-size:11px;flex-shrink:0;transition:transform .15s;}' +
+      '.gnb-noti-item.is-expanded .gnb-noti-caret{transform:rotate(180deg);}' +
       '.gnb-noti-item-body{font-size:12.5px;color:#6a6880;line-height:1.5;margin-bottom:4px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}' +
+      '.gnb-noti-item.is-expanded .gnb-noti-item-body{display:block;-webkit-line-clamp:none;overflow:visible;white-space:pre-wrap;word-break:break-word;}' +
+      '.gnb-noti-item-foot{display:flex;align-items:center;justify-content:space-between;gap:8px;}' +
       '.gnb-noti-item-time{font-size:11px;color:#b0aec2;}' +
+      '.gnb-noti-go{display:none;background:none;border:none;padding:0;color:#5b3fbe;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;}' +
+      '.gnb-noti-go:hover{text-decoration:underline;}' +
+      '.gnb-noti-item.is-expanded .gnb-noti-go{display:inline-flex;align-items:center;gap:2px;}' +
       '@media(max-width:520px){.gnb-noti-panel{width:min(340px,calc(100vw - 24px));}}';
     var st = document.createElement('style');
     st.textContent = css;

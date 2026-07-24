@@ -1,0 +1,33 @@
+/* ════════════════════════════════════════════════════
+   site-banner.css — 카테고리 공용 상단 배너(캐러셀)
+   DB 배너(관리자 등록)를 site-banner.js 가 주입. 활성 0장이면 숨김.
+   ════════════════════════════════════════════════════ */
+.sb { max-width:1180px; margin:28px auto; padding:0 64px; position:relative; }
+.sb[hidden] { display:none !important; }
+.sb__viewport { position:relative; overflow:hidden; border-radius:16px; }
+.sb__track { display:flex; transition:transform .55s cubic-bezier(.4,0,.2,1); }
+.sb__slide { flex:0 0 100%; min-width:100%; }
+.sb__slide img { width:100%; height:auto; display:block; }
+.sb__link { display:block; cursor:pointer; }
+.sb__arrow {
+  position:absolute; top:50%; transform:translateY(-50%);
+  width:44px; height:44px; border-radius:50%; border:1px solid #ece9f7;
+  cursor:pointer; background:#fff; color:#5b5bd6; font-size:22px; line-height:1;
+  display:flex; align-items:center; justify-content:center; z-index:3;
+  box-shadow:0 4px 14px rgba(91,91,214,.18);
+  transition:background .2s,color .2s,transform .2s,box-shadow .2s;
+}
+.sb__arrow:hover { background:#5b5bd6; color:#fff; box-shadow:0 6px 18px rgba(91,91,214,.35); }
+.sb__arrow:active { transform:translateY(-50%) scale(.94); }
+.sb__arrow.prev { left:20px; }
+.sb__arrow.next { right:20px; }
+.sb__dots { position:absolute; bottom:14px; left:0; right:0; display:flex; justify-content:center; gap:9px; z-index:3; }
+.sb__dot { width:9px; height:9px; border-radius:50%; border:none; cursor:pointer; background:rgba(255,255,255,.6); transition:all .25s; padding:0; }
+.sb__dot.active { background:#fff; width:26px; border-radius:5px; }
+@media (max-width:768px) {
+  .sb { padding:0 16px; }
+  .sb__viewport { border-radius:10px; }
+  .sb__arrow { width:36px; height:36px; font-size:18px; }
+  .sb__arrow.prev { left:-4px; }
+  .sb__arrow.next { right:-4px; }
+}

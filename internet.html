@@ -55,6 +55,7 @@
   <link rel="stylesheet" href="css/icon.css"/>
   <link rel="stylesheet" href="css/internet/internet.css"/>
     <link rel="stylesheet" href="css/internet/internet-banner.css"/>
+  <link rel="stylesheet" href="css/common/site-banner.css"/>
 
 
   <script src="js/seo/structured-data-internet.js" defer></script>
@@ -74,22 +75,13 @@
      화면: 메인보드 (통신사 선택만)
      클릭 시 통신사별 별도 페이지로 이동
 ══════════════════════════════════════ -->
-<section class="i-carousel" id="iCarousel" aria-label="인터넷 혜택 배너">
-  <div class="i-carousel__viewport">
-    <div class="i-carousel__track" id="iTrack">
-      <div class="i-carousel__slide">
-        <img src="assets/internet/interntTvbanner-02.png" alt="통신사별 혜택 차이 비교" />
-      </div>
-      <div class="i-carousel__slide">
-        <img src="assets/internet/interntTvbanner-01.png" alt="숨은 인터넷 지원금 한 번에 비교" />
-      </div>
-      <div class="i-carousel__slide">
-        <img src="assets/internet/interntTvbanner-03.png" alt="오늘 상담하고 빠르게 설치" />
-      </div>
-    </div>
-    <button class="i-carousel__arrow prev" id="iPrev" aria-label="이전 배너">‹</button>
-    <button class="i-carousel__arrow next" id="iNext" aria-label="다음 배너">›</button>
-    <div class="i-carousel__dots" id="iDots"></div>
+<!-- 사이트 배너(관리자 등록) — site-banner.js 가 주입, 활성 0장이면 자동 숨김 -->
+<section class="sb" data-banner-category="INTERNET" aria-label="인터넷 배너" hidden>
+  <div class="sb__viewport">
+    <div class="sb__track"></div>
+    <button class="sb__arrow prev" type="button" aria-label="이전 배너">‹</button>
+    <button class="sb__arrow next" type="button" aria-label="다음 배너">›</button>
+    <div class="sb__dots"></div>
   </div>
 </section>
 
@@ -249,6 +241,7 @@
 
 
 <!-- 페이지 전용 JS -->
+<script src="js/common/site-banner.js"></script>
 <script src="js/internet/internet.js"></script>
 
 <script src="/js/common/track.js"></script>

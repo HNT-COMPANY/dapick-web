@@ -56,6 +56,7 @@
   <link rel="stylesheet" href="css/common/footer.css"/>
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <link rel="stylesheet" href="css/warterpage/water.css"/>
+  <link rel="stylesheet" href="css/common/site-banner.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
 </head>
 <body>
@@ -75,15 +76,15 @@
      화면 1: 메인보드 (브랜드 선택)
 ══════════════════════════════════════ -->
 <div id="boardView">
-  <div class="water-main-banner">
-    <!-- 배너 캐러셀 — 슬라이드는 water-banner.js 가 banner 배열로 주입 -->
-    <div class="w-carousel" id="wCarousel">
-      <div class="w-carousel__track" id="wTrack"></div>
-      <button class="w-carousel__arrow w-carousel__arrow--prev" id="wPrev" type="button" aria-label="이전 배너">‹</button>
-      <button class="w-carousel__arrow w-carousel__arrow--next" id="wNext" type="button" aria-label="다음 배너">›</button>
-      <div class="w-carousel__dots" id="wDots"></div>
-    </div>
+<!-- 사이트 배너(관리자 등록) — site-banner.js 주입, 활성 0장이면 자동 숨김 -->
+<section class="sb" data-banner-category="WATER" aria-label="정수기 배너" hidden>
+  <div class="sb__viewport">
+    <div class="sb__track"></div>
+    <button class="sb__arrow prev" type="button" aria-label="이전 배너">‹</button>
+    <button class="sb__arrow next" type="button" aria-label="다음 배너">›</button>
+    <div class="sb__dots"></div>
   </div>
+</section>
 
   <div class="board-section">
     <div class="board-section-title">브랜드를 선택해주세요</div>
@@ -493,6 +494,7 @@
 <script src="js/products/cuckoo.js"></script>
 -->
 
+<script src="js/common/site-banner.js"></script>
 <script src="js/water/water.js"></script>
 <script src="js/water/water-board.js"></script>
 <script src="js/water/water-banner.js"></script>

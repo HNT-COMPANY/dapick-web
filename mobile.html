@@ -70,6 +70,7 @@
   <link rel="stylesheet" href="css/icon.css"/>
 
   <link rel="stylesheet" href="css/mobile/mobile.css"/>
+  <link rel="stylesheet" href="css/common/site-banner.css"/>
 
 
   <!-- Structured Data (JSON-LD) — 외부 분리 -->
@@ -93,6 +94,16 @@
 <!-- ════════════════════════════════════════════════════
      HERO — 다폰 가맹점 유입 브릿지 컨셉 (이미지 + 텍스트 2열)
      ════════════════════════════════════════════════════ -->
+<!-- 사이트 배너(관리자 등록) — site-banner.js 주입, 활성 0장이면 자동 숨김 -->
+<section class="sb" data-banner-category="MOBILE" aria-label="휴대폰 배너" hidden>
+  <div class="sb__viewport">
+    <div class="sb__track"></div>
+    <button class="sb__arrow prev" type="button" aria-label="이전 배너">‹</button>
+    <button class="sb__arrow next" type="button" aria-label="다음 배너">›</button>
+    <div class="sb__dots"></div>
+  </div>
+</section>
+
 <section class="m-hero">
   <div class="m-hero-inner m-hero-inner--two-col">
     <!-- 왼쪽: 메인 이미지 -->
@@ -480,6 +491,7 @@
 <script src="js/common/gnb.js"></script>
 <script src="js/common/gnb-user.js"></script>
 
+<script src="js/common/site-banner.js"></script>
 <script src="js/mobile/mobile.js"></script>
 
 
