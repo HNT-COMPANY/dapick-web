@@ -161,12 +161,12 @@
   function selectItem(item) {
     currentItem = item;
     document.getElementById('productViewBrand').textContent = item.name;
-    document.getElementById('productHeroTag').textContent =
-      (item.emoji || '🏠') + ' ' + item.name + ' 렌탈';
+    var listTitleEl = document.getElementById('listTitle');
+    if (listTitleEl) listTitleEl.textContent = item.name + ' 전체 상품';
     document.getElementById('boardView').style.display = 'none';
     document.getElementById('productView').style.display = 'block';
     window.scrollTo({ top: 0 });
-    loadProducts(item.brandId);
+    loadProducts(item.categoryId);
   }
 
   window.goBoard = function () {
@@ -175,18 +175,21 @@
     window.scrollTo({ top: 0 });
   };
 
-  function loadProducts(brandId) {
+  function loadProducts(categoryId) {
     var grid = document.getElementById('listGrid');
     grid.innerHTML = '<div class="r-loading">상품을 불러오는 중...</div>';
     fetch(
-      API_BASE + '/api/rental-products?brandId=' + encodeURIComponent(brandId),
+      API_BASE + '/api/rental-products?categoryId=' + encodeURIComponent(categoryId),
     )
       .then(function (r) {
         return r.json();
       })
       .then(function (res) {
         currentProducts = res && res.data ? res.data : [];
-        renderProducts();
+        selected = {};
+        axes = buildAxes(currentProducts);
+        renderFilterBar();
+        applyFilters();
       })
       .catch(function (e) {
         console.error('[rental] load products failed', e);
@@ -195,15 +198,294 @@
       });
   }
 
+  // ════════════════════════════════════════════════════
+  // 필터 바 — 데이터 주도(자동 수집)
+  // ────────────────────────────────────────────────────
+  // 품목마다 스펙 항목이 다르므로(안마의자 vs 공기청정기) 필터 목록을 하드코딩하지 않는다.
+  // 지금 화면에 올라온 상품들이 "실제로 가진 값"만 훑어서 축을 만든다.
+  //   • 고정 축 : 월 요금(구간 자동) / 약정 / 관리주기 / 색상
+  //   • 자유 축 : p.attributes = { "마사지방식": ["두드림","지압"], "적용평수": "20평" }
+  //                → 백엔드에 attributes 가 생기는 순간 이 파일 수정 없이 필터가 늘어난다.
+  // 규칙: 축 안은 OR, 축 사이는 AND (정수기 필터와 동일).
+  // 값이 1종뿐인 축은 선택 의미가 없으므로 감춘다.
+  // ════════════════════════════════════════════════════
+
+  var axes = []; // [{key,label,values:[],get:fn}]
+  var selected = {}; // { axisKey: [value,..] }
+  var viewProducts = []; // 필터+정렬이 끝난, 실제로 그리는 목록
+
+  var PRICE_ORDER = [
+    '1만원 미만',
+    '1만원대',
+    '2만원대',
+    '3만원대',
+    '4만원대',
+    '5만원 이상',
+  ];
+
+  function priceBucketOf(p) {
+    var m = monthlyOf(p);
+    if (m == null) return null;
+    var man = Math.floor(m / 10000);
+    if (man <= 0) return '1만원 미만';
+    if (man >= 5) return '5만원 이상';
+    return man + '만원대';
+  }
+
+  var FIXED_AXES = [
+    { key: 'price', label: '월 요금', get: priceBucketOf },
+    {
+      key: 'contract',
+      label: '약정',
+      get: function (p) {
+        return p.contractMonths ? p.contractMonths + '개월' : null;
+      },
+    },
+    {
+      key: 'care',
+      label: '관리주기',
+      get: function (p) {
+        return p.careInterval || null;
+      },
+    },
+    {
+      key: 'color',
+      label: '색상',
+      get: function (p) {
+        return p.colors || null;
+      },
+    },
+  ];
+
+  // 단일값/배열/null 을 전부 문자열 배열로 정규화
+  function toValues(v) {
+    if (v === null || v === undefined || v === '') return [];
+    if (Array.isArray(v)) {
+      var out = [];
+      for (var i = 0; i < v.length; i++) {
+        if (v[i] === null || v[i] === undefined || v[i] === '') continue;
+        out.push(String(v[i]));
+      }
+      return out;
+    }
+    return [String(v)];
+  }
+
+  function distinctValues(list, getter) {
+    var seen = [];
+    for (var i = 0; i < list.length; i++) {
+      var vals = toValues(getter(list[i]));
+      for (var j = 0; j < vals.length; j++) {
+        if (seen.indexOf(vals[j]) === -1) seen.push(vals[j]);
+      }
+    }
+    return seen;
+  }
+
+  function buildAxes(list) {
+    var out = [];
+    if (!list || !list.length) return out;
+
+    // 고정 축
+    for (var i = 0; i < FIXED_AXES.length; i++) {
+      var ax = FIXED_AXES[i];
+      var vals = distinctValues(list, ax.get);
+      if (vals.length < 2) continue;
+      if (ax.key === 'price') {
+        vals.sort(function (a, b) {
+          return PRICE_ORDER.indexOf(a) - PRICE_ORDER.indexOf(b);
+        });
+      } else if (ax.key === 'contract') {
+        vals.sort(function (a, b) {
+          return parseInt(a, 10) - parseInt(b, 10);
+        });
+      } else {
+        vals.sort();
+      }
+      out.push({ key: ax.key, label: ax.label, values: vals, get: ax.get });
+    }
+
+    // 자유 축(attributes) — 등장 순서 유지
+    var attrKeys = [];
+    for (var k = 0; k < list.length; k++) {
+      var a = list[k].attributes;
+      if (!a || typeof a !== 'object') continue;
+      var keys = Object.keys(a);
+      for (var m = 0; m < keys.length; m++) {
+        if (attrKeys.indexOf(keys[m]) === -1) attrKeys.push(keys[m]);
+      }
+    }
+    for (var n = 0; n < attrKeys.length; n++) {
+      var name = attrKeys[n];
+      var getter = (function (key) {
+        return function (p) {
+          return (p.attributes || {})[key];
+        };
+      })(name);
+      var avals = distinctValues(list, getter);
+      if (avals.length < 2) continue;
+      out.push({
+        key: 'attr:' + name,
+        label: name,
+        values: avals,
+        get: getter,
+      });
+    }
+
+    return out;
+  }
+
+  function renderFilterBar() {
+    var box = document.getElementById('rentalFilter');
+    var wrap = document.getElementById('rfAxes');
+    if (!box || !wrap) return;
+
+    if (!axes.length) {
+      wrap.innerHTML = '';
+      box.hidden = true;
+      return;
+    }
+    box.hidden = false;
+
+    var html = '';
+    for (var i = 0; i < axes.length; i++) {
+      var ax = axes[i];
+      var picked = selected[ax.key] || [];
+      html +=
+        '<div class="rf-axis">' +
+        '<span class="rf-axis-label">' +
+        esc(ax.label) +
+        '</span>' +
+        '<div class="rf-chips">' +
+        '<button type="button" class="rf-chip' +
+        (picked.length ? '' : ' is-on') +
+        '" data-axis="' +
+        esc(ax.key) +
+        '" data-value="">전체</button>';
+      for (var j = 0; j < ax.values.length; j++) {
+        var v = ax.values[j];
+        html +=
+          '<button type="button" class="rf-chip' +
+          (picked.indexOf(v) > -1 ? ' is-on' : '') +
+          '" data-axis="' +
+          esc(ax.key) +
+          '" data-value="' +
+          esc(v) +
+          '">' +
+          esc(v) +
+          '</button>';
+      }
+      html += '</div></div>';
+    }
+    wrap.innerHTML = html;
+
+    var chips = wrap.querySelectorAll('.rf-chip');
+    for (var c = 0; c < chips.length; c++) {
+      chips[c].addEventListener('click', function () {
+        toggleChip(
+          this.getAttribute('data-axis'),
+          this.getAttribute('data-value'),
+        );
+      });
+    }
+  }
+
+  function toggleChip(axisKey, value) {
+    if (!value) {
+      delete selected[axisKey]; // '전체' = 해당 축 해제
+    } else {
+      var cur = selected[axisKey] || [];
+      var i = cur.indexOf(value);
+      if (i > -1) cur.splice(i, 1);
+      else cur.push(value);
+      if (cur.length) selected[axisKey] = cur;
+      else delete selected[axisKey];
+    }
+    renderFilterBar();
+    applyFilters();
+  }
+
+  function matchesAll(p) {
+    for (var i = 0; i < axes.length; i++) {
+      var picked = selected[axes[i].key];
+      if (!picked || !picked.length) continue;
+      var have = toValues(axes[i].get(p));
+      var hit = false;
+      for (var j = 0; j < picked.length; j++) {
+        if (have.indexOf(picked[j]) > -1) {
+          hit = true;
+          break;
+        }
+      }
+      if (!hit) return false;
+    }
+    return true;
+  }
+
+  function sortList(list) {
+    var sel = document.getElementById('rfSort');
+    var mode = sel ? sel.value : 'default';
+    var arr = list.slice();
+    if (mode === 'priceAsc' || mode === 'priceDesc') {
+      arr.sort(function (a, b) {
+        var ma = monthlyOf(a);
+        var mb = monthlyOf(b);
+        if (ma == null && mb == null) return 0;
+        if (ma == null) return 1; // '가격 문의'는 항상 뒤로
+        if (mb == null) return -1;
+        return mode === 'priceAsc' ? ma - mb : mb - ma;
+      });
+    } else if (mode === 'rating') {
+      arr.sort(function (a, b) {
+        return (b.averageRating || 0) - (a.averageRating || 0);
+      });
+    } else if (mode === 'name') {
+      arr.sort(function (a, b) {
+        return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+      });
+    }
+    return arr; // default = 서버 sortOrder 순서 그대로
+  }
+
+  function applyFilters() {
+    var filtered = [];
+    for (var i = 0; i < currentProducts.length; i++) {
+      if (matchesAll(currentProducts[i])) filtered.push(currentProducts[i]);
+    }
+    viewProducts = sortList(filtered);
+
+    var cnt = document.getElementById('rfCount');
+    if (cnt) {
+      cnt.textContent =
+        viewProducts.length === currentProducts.length
+          ? '총 ' + viewProducts.length + '개'
+          : viewProducts.length + '개 / 전체 ' + currentProducts.length + '개';
+    }
+    renderProducts();
+  }
+
+  function resetFilters() {
+    selected = {};
+    var sel = document.getElementById('rfSort');
+    if (sel) sel.value = 'default';
+    renderFilterBar();
+    applyFilters();
+  }
+
   function renderProducts() {
     var grid = document.getElementById('listGrid');
-    if (!currentProducts.length) {
-      grid.innerHTML = '<div class="r-empty">등록된 상품이 없습니다.</div>';
+    if (!viewProducts.length) {
+      grid.innerHTML =
+        '<div class="r-empty">' +
+        (currentProducts.length
+          ? '조건에 맞는 상품이 없습니다. 필터를 조정해보세요.'
+          : '등록된 상품이 없습니다.') +
+        '</div>';
       return;
     }
     var html = '';
-    for (var i = 0; i < currentProducts.length; i++) {
-      var p = currentProducts[i];
+    for (var i = 0; i < viewProducts.length; i++) {
+      var p = viewProducts[i];
       var m = monthlyOf(p);
 
       var priceHtml =
@@ -244,7 +526,7 @@
     var cards = grid.querySelectorAll('.water-prod-card');
     for (var j = 0; j < cards.length; j++) {
       cards[j].addEventListener('click', function () {
-        var p = currentProducts[parseInt(this.getAttribute('data-idx'), 10)];
+        var p = viewProducts[parseInt(this.getAttribute('data-idx'), 10)];
         if (p && p.id) {
           window.location.href =
             'rental-detail.html?id=' + encodeURIComponent(p.id);
@@ -269,5 +551,9 @@
 
   document.addEventListener('DOMContentLoaded', function () {
     loadItems();
+    var sortSel = document.getElementById('rfSort');
+    if (sortSel) sortSel.addEventListener('change', applyFilters);
+    var resetBtn = document.getElementById('rfReset');
+    if (resetBtn) resetBtn.addEventListener('click', resetFilters);
   });
 })();

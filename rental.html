@@ -103,11 +103,22 @@
     <div class="product-view-brand" id="productViewBrand"></div>
   </div>
  
-  <div class="page-hero">
-    <div class="page-hero-inner">
-      <div class="page-hero-tag" id="productHeroTag">🏠 가전렌탈</div>
-      <h1 id="productHeroTitle">초기비용 0원<br><em>품목별 최저가</em> 직접 비교</h1>
-      <p id="productHeroSub">약정·색상 선택 후 월 렌탈료 바로 확인하고 상담 신청</p>
+  <!-- 필터 바 — rental.js 가 상품 데이터에서 축을 자동 수집해 렌더한다.
+       품목마다 스펙이 다르므로 체크박스를 마크업에 박지 않는다(정수기와 다른 점). -->
+  <div class="rf" id="rentalFilter" hidden>
+    <div class="rf-axes" id="rfAxes"></div>
+    <div class="rf-foot">
+      <span class="rf-count" id="rfCount"></span>
+      <div class="rf-foot-right">
+        <select class="rf-sort" id="rfSort" aria-label="정렬">
+          <option value="default">추천순</option>
+          <option value="priceAsc">낮은 가격순</option>
+          <option value="priceDesc">높은 가격순</option>
+          <option value="rating">평점순</option>
+          <option value="name">이름순</option>
+        </select>
+        <button type="button" class="rf-reset" id="rfReset">초기화</button>
+      </div>
     </div>
   </div>
  
