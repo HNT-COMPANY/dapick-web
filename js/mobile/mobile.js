@@ -225,19 +225,19 @@ function fillStoreModal(store) {
   }
 }
 
-// 자세히 보기 → store.html?id={id} (Phase 1-3에서 store.html 박힌 후 활성화)
+// 자세히 보기 → /store/{URL 식별자}
 function goStoreDetail() {
   if (!currentModalStoreId) {
     alert('매장 정보가 준비되지 않았습니다.');
     return;
   }
 
-  // 상세페이지 파일명은 관리자 '휴대폰 매장 관리'의 [상세페이지 파일명] 칸에서 온다.
-  // 비어 있으면 아직 파일을 안 만든 지점 → 준비중 안내로 떨어진다.
+  // 주소는 관리자 5단계 'URL 식별자'(slug) 하나로 정해진다.
+  // 목록 API 의 id 가 곧 그 slug 다. 상세페이지 주소 칸은 안 쓴다.
   const store = STORES.find((s) => s.id === currentModalStoreId);
-  const target = store && store.detailUrl;
-  if (target) {
-    window.location.href = target;
+  const slug = store && store.id;
+  if (slug) {
+    window.location.href = '/store/' + encodeURIComponent(slug);
   } else {
     alert(
       '상세 페이지는 곧 오픈 예정입니다.\n\n' +

@@ -3,7 +3,7 @@
 // 항목별 OG/메타 서버 주입(SSR-lite) — 카톡·페북 등 JS 미실행 봇 대응.
 //  · 후기: /reviews/{제목슬러그}-{id}
 //  · 상세(?id=): /event-detail /card-detail /water-detail /rental-detail /popup-detail
-//  · 매장: /store-{slug} → store-detail.html 틀에 메타 + 본문까지 주입
+//  · 매장: /store/{URL 식별자} → store-detail.html 틀에 메타 + 본문까지 주입 (옛 /store-{x} 는 301)
 // 그 외 요청은 정적 자산 위임. ※ Pages 고급 모드: env.ASSETS 자동 제공.
 // ════════════════════════════════════════════════════
 
@@ -116,11 +116,11 @@ async function injectReview(request, env, id) {
 }
 
 // ════════════════════════════════════════════════════
-// 매장 상세 — /store-{slug}
+// 매장 상세 — /store/{URL 식별자}
 //
-// 주소는 손으로 만들던 시절 그대로 둔다(/store-byeongyeong).
-// 네이버·구글이 이미 그 주소를 알고 있어서 바꾸면 처음부터 다시다.
-// 대신 그 주소가 가리키는 '내용'만 DB(stores + stores.detail_json)로 옮긴다.
+// 주소는 관리자 5단계 'URL 식별자'(stores.slug) 하나로 정해진다.
+// 상세페이지 주소(detail_url) 는 안 쓴다 — 그건 손으로 파일 만들던 시절 값이다.
+// 페이지는 매번 틀(/store-detail)로 새로 그린다. 옛 store-*.html 은 안 본다.
 //
 // ⚠️ 아래 sdEsc / sdSec* 는 js/store/store-detail.js 의 같은 이름 함수와
 //    '똑같은 HTML' 을 만들어야 한다. 여기가 봇(네이버 Yeti 는 JS 를 안 돌린다)과
@@ -128,11 +128,19 @@ async function injectReview(request, env, id) {
 //    한쪽만 고치면 두 화면이 갈린다.
 // ════════════════════════════════════════════════════
 
-/* 지점명이 한글이면 백엔드가 slug 를 'store', 'store-2' 로 떨어뜨린다
-   (StoreService.resolveSlug). 그러면 주소가 /store, /store-2 가 되므로
-   하이픈 없는 /store 도 받아야 한다. 정적 store.html 은 없다. */
-const STORE_RE = /^\/store(-[A-Za-z0-9_-]{1,60})?$/;
+/* /store/{slug} 만 매장이다. slug 는 백엔드 StoreService.resolveSlug 가
+   보증하는 문자열(영숫자·하이픈·밑줄)이고, 한글 지점명이면 'store','store-2'
+   같은 값이 되기도 한다. 어떤 값이든 여기서는 그냥 slug 로 넘긴다. */
+const STORE_RE = /^\/store\/([A-Za-z0-9_-]{1,60})$/;
 const STORE_TPL = '/store-detail'; // 틀. 이 주소 자체는 매장이 아니다.
+
+/* 옛 주소 /store-byeongyeong 은 검색엔진에 이미 올라가 있다.
+   더미가 든 옛 정적 파일을 그대로 보여주지 않고 새 주소로 넘긴다. */
+const STORE_LEGACY_RE = /^\/store-([A-Za-z0-9_-]{1,60})$/;
+
+/* 옛 store-*.html 은 legacy-static/ 에 자료로 남겨 뒀다(README.md 참고).
+   저장소에는 있지만 웹에는 없어야 한다. 이 경로는 통째로 막는다. */
+const LEGACY_DIR_RE = /^\/legacy-static\//;
 
 function sdEsc(v) {
   return String(v == null ? '' : v)
@@ -141,6 +149,16 @@ function sdEsc(v) {
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;')
     .replace(/'/g, '&#39;');
+}
+
+/* 주소가 /store/{slug} 라 상대경로가 /store/assets/... 로 샌다.
+   DB 에 'assets/store/...' 처럼 들어온 값은 앞에 / 를 붙여 뿌리 기준으로 만든다.
+   http(s):// · // · data: 로 시작하면 그대로 둔다. */
+function sdAsset(u) {
+  const v = String(u == null ? '' : u).trim();
+  if (!v) return '';
+  if (/^(https?:)?\/\//.test(v) || /^data:/.test(v)) return v;
+  return '/' + v.replace(/^\/+/, '');
 }
 
 function sdBadgeLabel(v) {
@@ -157,7 +175,7 @@ function sdSecTitleRow(s) {
 
 function sdSecHero(s) {
   if (!s.mainImage) return '';
-  return '<img src="' + sdEsc(s.mainImage) + '" alt="' + sdEsc(s.name) +
+  return '<img src="' + sdEsc(sdAsset(s.mainImage)) + '" alt="' + sdEsc(s.name) +
     ' 외관" class="store-hero-img" />';
 }
 
@@ -232,7 +250,7 @@ function sdSecGallery(gallery, name) {
   const gs = (gallery || []).filter((g) => g && g.url);
   if (!gs.length) return '';
   return gs.map((g) => {
-    const url = sdEsc(g.url);
+    const url = sdEsc(sdAsset(g.url));
     return '<a class="store-gallery-item" href="' + url + '" target="_blank" rel="noopener">' +
       '<img src="' + url + '" alt="' + sdEsc(g.alt || name) + '" loading="lazy" /></a>';
   }).join('');
@@ -252,12 +270,12 @@ function sdSecLinks(s) {
   let h = '';
   if (s.preconUrl) {
     h += sdLink('store-link--precon',
-      '<img src="assets/badges/precon.png" alt="" class="store-link-icon" />',
+      '<img src="/assets/badges/precon.png" alt="" class="store-link-icon" />',
       '이동통신 사전승낙 판매점', '정식 등록 인증 확인', s.preconUrl);
   }
   if (s.preconAlttulUrl) {
     h += sdLink('store-link--precon',
-      '<img src="assets/badges/precon.png" alt="" class="store-link-icon" />',
+      '<img src="/assets/badges/precon.png" alt="" class="store-link-icon" />',
       '알뜰폰 판매점 사전승낙', '정식 등록 인증 확인', s.preconAlttulUrl);
   }
   if (s.daangnUrl) {
@@ -305,6 +323,18 @@ async function sdFetchStores() {
   const j = await r.json();
   const d = j && (j.data != null ? j.data : j);
   return Array.isArray(d) ? d : (d && d.content) || [];
+}
+
+// 매장 1건. URL 식별자(slug)로 바로 찾는다 — 목록을 훑지 않는다.
+async function sdFetchStore(slug) {
+  const r = await fetch(`${API_BASE}/api/stores/${encodeURIComponent(slug)}`, {
+    headers: { accept: 'application/json' },
+    cf: { cacheTtl: 120, cacheEverything: true },
+  });
+  if (!r.ok) return null;
+  const j = await r.json();
+  const d = j && (j.data != null ? j.data : j);
+  return d && d.id ? d : null;
 }
 
 function sdRewrite(tplResp, s, canonical) {
@@ -365,37 +395,106 @@ function sdRewrite(tplResp, s, canonical) {
   return rw.transform(tplResp);
 }
 
-async function injectStore(request, env, key) {
+/* /store/{slug} — 관리자에 쓴 내용으로 페이지를 새로 그린다.
+   6단계 본문이 비어 있어도 그린다: 지점명·주소·전화·지도까지는 나온다.
+   DB 에 없는 slug 면 틀을 noindex 상태 그대로 내보낸다(안내문이 뜬다). */
+async function injectStore(request, env, slug) {
   const url = new URL(request.url);
-  const file = key.slice(1) + '.html'; // '/store-byeongyeong' → 'store-byeongyeong.html'
   try {
-    let store = null;
-    try {
-      const list = await sdFetchStores();
-      store = list.find((x) => x && x.detailUrl === file) || null;
-    } catch (e) { /* 조회 실패 → 옛 정적 파일로 떨어진다 */ }
-
-    /* 관리자에 등록된 매장이면 무조건 틀로 그린다.
-       6단계 본문이 비어 있어도 그렇다 — 지점명·주소·전화·지도까지는 나온다.
-       손으로 만든 옛 파일(store-byeongyeong.html)이 같은 이름으로 남아 있어도
-       그건 안 본다. 관리자에 쓴 것이 곧 그 매장의 페이지다.
-       옛 파일은 DB 에 없는 주소로 들어왔을 때만 쓰인다(옛 주소 살리기 용). */
-    if (store) {
-      const tpl = await env.ASSETS.fetch(new URL(STORE_TPL, url).toString());
-      if (tpl.ok) return sdRewrite(tpl, store, `${SITE}${key}`);
-    }
-
-    // DB 에 없는 주소 → 남아 있는 정적 파일, 그것도 없으면 원래의 404
-    return env.ASSETS.fetch(request);
+    const store = await sdFetchStore(slug);
+    const tpl = await env.ASSETS.fetch(new URL(STORE_TPL, url).toString());
+    if (!tpl.ok) return tpl;
+    if (!store) return new Response(tpl.body, { status: 404, headers: tpl.headers });
+    return sdRewrite(tpl, store, `${SITE}/store/${slug}`);
   } catch (e) {
-    try { return await env.ASSETS.fetch(request); } catch (e2) { return env.ASSETS.fetch(request); }
+    return env.ASSETS.fetch(new URL(STORE_TPL, url).toString());
   }
+}
+
+/* 옛 주소 /store-{x} → 새 주소 /store/{slug} 로 301.
+   옛 파일 이름은 slug 에서 'dapon-' 을 뗀 값이었다(관리자 stAutoDetailUrl).
+
+   ⚠️ 옛 정적 파일(store-byeongyeong.html 등)은 자료로 볼 게 있어 저장소에 남겨 뒀다.
+      남겨 뒀을 뿐 웹으로는 안 내보낸다. 그래서 여기서 절대
+      env.ASSETS.fetch(request) 로 떨어뜨리지 않는다 — 그러면 더미가 그대로 뜬다.
+      DB 에서 못 찾으면 매장 목록(/mobile)으로 보낸다. */
+async function redirectLegacyStore(request, env, x) {
+  try {
+    const list = await sdFetchStores();
+    const hit = list.find((s) => {
+      const slug = s && s.id ? String(s.id) : '';
+      return slug && (slug === x || slug.replace(/^dapon-/, '') === x);
+    });
+    if (hit) return Response.redirect(`${SITE}/store/${hit.id}`, 301);
+  } catch (e) { /* 조회 실패 → 아래 목록으로 */ }
+  /* 302 다: 나중에 그 slug 로 매장을 등록하면 301(영구)로 바뀌어야 한다. */
+  return Response.redirect(`${SITE}/mobile`, 302);
+}
+
+/* 옛 정적 파일은 legacy-static/ 에 자료로 남겨 뒀다. 웹으로는 안 내보낸다. */
+async function redirectLegacyDir(request, env) {
+  return Response.redirect(`${SITE}/mobile`, 302);
+}
+
+// ════════════════════════════════════════════════════
+// sitemap.xml — 매장 줄은 손으로 안 적는다
+//
+// 가맹점이 10곳이 되든 100곳이 되든 sitemap 을 고치러 들어올 일이 없어야 한다.
+// 그래서 매장 <url> 은 파일에 안 적고 API 로 채운다.
+// 잘 안 바뀌는 고정 페이지(메인·카테고리·정책)는 그대로 파일에 둔다 —
+// 그건 관리자에서 만드는 게 아니라 우리가 파일로 만드는 페이지라서다.
+// ════════════════════════════════════════════════════
+const SITEMAP_MARK = '<!--STORES-->';
+
+async function injectSitemap(request, env) {
+  const res = await env.ASSETS.fetch(request);
+  let xml;
+  try {
+    xml = await res.text();
+  } catch (e) {
+    return res;
+  }
+  if (xml.indexOf(SITEMAP_MARK) < 0) return new Response(xml, { headers: res.headers });
+
+  let block = '';
+  try {
+    const list = await sdFetchStores();
+    /* lastmod 는 안 적는다. StoreResponse 에 수정 시각이 없어서 지금 적을 수 있는 건
+       거짓말뿐이고, 틀린 lastmod 는 검색엔진이 통째로 무시한다. */
+    block = list
+      .filter((s) => s && s.id)
+      .map(
+        (s) =>
+          '  <url>\n' +
+          '    <loc>' + SITE + '/store/' + sdEsc(String(s.id)) + '</loc>\n' +
+          '    <changefreq>monthly</changefreq>\n' +
+          '    <priority>0.7</priority>\n' +
+          '  </url>'
+      )
+      .join('\n');
+  } catch (e) {
+    /* 조회 실패 → 매장 줄 없이 내보낸다. 없는 주소를 적어 보내는 것보다 낫다. */
+  }
+
+  return new Response(xml.replace(SITEMAP_MARK, block), {
+    status: 200,
+    headers: {
+      'content-type': 'application/xml; charset=utf-8',
+      'cache-control': 'public, max-age=600',
+    },
+  });
 }
 
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
     if (request.method !== 'GET') return env.ASSETS.fetch(request);
+
+    // 사이트맵: 매장 줄은 API 로 채운다
+    if (url.pathname === '/sitemap.xml') return injectSitemap(request, env);
+
+    // 옛 정적 파일 보관함 — 저장소에만 있고 웹에는 없다
+    if (LEGACY_DIR_RE.test(url.pathname)) return redirectLegacyDir(request, env);
 
     // 상세(?id=) 페이지: /xxx-detail(.html)?id=N
     const key = url.pathname.replace(/\.html$/, '');
@@ -406,9 +505,15 @@ export default {
       return env.ASSETS.fetch(request);
     }
 
-    // 매장 상세: /store-{slug}
-    // 틀 자체(/store-detail)는 매장이 아니므로 그냥 정적으로 내보낸다.
-    if (key !== STORE_TPL && STORE_RE.test(key)) return injectStore(request, env, key);
+    // 매장 상세: /store/{URL 식별자}
+    const sm = key.match(STORE_RE);
+    if (sm) return injectStore(request, env, sm[1]);
+
+    // 옛 주소 /store-{x} → 새 주소로 301. 틀(/store-detail)은 제외.
+    if (key !== STORE_TPL) {
+      const lm = key.match(STORE_LEGACY_RE);
+      if (lm) return redirectLegacyStore(request, env, lm[1]);
+    }
 
     // 후기 상세: /reviews/{제목슬러그}-{id}
     const m = url.pathname.match(/^\/reviews\/.+-(\d+)\/?$/);

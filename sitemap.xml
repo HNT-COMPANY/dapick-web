@@ -85,49 +85,15 @@
     <priority>0.8</priority>
   </url>
 
-  <!-- 매장 페이지 (지역 SEO) -->
-  <url>
-    <loc>https://dapick.co.kr/store-beomil</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://dapick.co.kr/store-byeongyeong</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://dapick.co.kr/store-cheongok</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://dapick.co.kr/store-guyeong</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://dapick.co.kr/store-mandeok</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://dapick.co.kr/store-mugeo</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
-    <loc>https://dapick.co.kr/store-onsan</loc>
-    <lastmod>2026-05-12</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>
+  <!-- ────────────────────────────────────────────────
+       매장 페이지 (지역 SEO)
+
+       여기는 손으로 안 적는다. 바로 아래 STORES 표식 자리를
+       _worker.js 가 /api/stores 로 채운다.
+       가맹점이 10곳이 되든 100곳이 되든 이 파일은 안 건드린다.
+       관리자에서 매장을 등록하면 그 주소가 자동으로 들어간다.
+       ──────────────────────────────────────────────── -->
+<!--STORES-->
 
   <!-- 실사용 후기 -->
   <url>

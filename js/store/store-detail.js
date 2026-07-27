@@ -26,6 +26,16 @@ function sdEsc(v) {
     .replace(/'/g, '&#39;');
 }
 
+/* 주소가 /store/{slug} 라 상대경로가 /store/assets/... 로 샌다.
+   DB 에 'assets/store/...' 처럼 들어온 값은 앞에 / 를 붙여 뿌리 기준으로 만든다.
+   http(s):// · // · data: 로 시작하면 그대로 둔다. */
+function sdAsset(u) {
+  const v = String(u == null ? '' : u).trim();
+  if (!v) return '';
+  if (/^(https?:)?\/\//.test(v) || /^data:/.test(v)) return v;
+  return '/' + v.replace(/^\/+/, '');
+}
+
 function sdBadgeLabel(v) {
   if (v === 'NEW') return 'NEW';
   if (v === 'READY') return '오픈 예정';
@@ -42,7 +52,7 @@ function sdSecTitleRow(s) {
 
 function sdSecHero(s) {
   if (!s.mainImage) return '';
-  return '<img src="' + sdEsc(s.mainImage) + '" alt="' + sdEsc(s.name) +
+  return '<img src="' + sdEsc(sdAsset(s.mainImage)) + '" alt="' + sdEsc(s.name) +
     ' 외관" class="store-hero-img" />';
 }
 
@@ -125,7 +135,7 @@ function sdSecGallery(gallery, name) {
   const gs = (gallery || []).filter(function (g) { return g && g.url; });
   if (!gs.length) return '';
   return gs.map(function (g) {
-    const url = sdEsc(g.url);
+    const url = sdEsc(sdAsset(g.url));
     return '<a class="store-gallery-item" href="' + url + '" target="_blank" rel="noopener">' +
       '<img src="' + url + '" alt="' + sdEsc(g.alt || name) + '" loading="lazy" /></a>';
   }).join('');
@@ -145,12 +155,12 @@ function sdSecLinks(s) {
   let h = '';
   if (s.preconUrl) {
     h += sdLink('store-link--precon',
-      '<img src="assets/badges/precon.png" alt="" class="store-link-icon" />',
+      '<img src="/assets/badges/precon.png" alt="" class="store-link-icon" />',
       '이동통신 사전승낙 판매점', '정식 등록 인증 확인', s.preconUrl);
   }
   if (s.preconAlttulUrl) {
     h += sdLink('store-link--precon',
-      '<img src="assets/badges/precon.png" alt="" class="store-link-icon" />',
+      '<img src="/assets/badges/precon.png" alt="" class="store-link-icon" />',
       '알뜰폰 판매점 사전승낙', '정식 등록 인증 확인', s.preconAlttulUrl);
   }
   if (s.daangnUrl) {
@@ -253,16 +263,16 @@ function sdRender(s) {
 }
 
 // ── 어느 매장인가 ───────────────────────────────────────────────
-//   운영: /store-byeongyeong  → detailUrl 'store-byeongyeong.html' 로 목록에서 찾는다.
-//   로컬: store-detail.html?id=dapon-byeongyeong → slug 로 바로 찾는다.
+//   기준은 하나뿐이다: 관리자 5단계 'URL 식별자'(stores.slug).
+//   운영: /store/dapon-byeongyeong
+//   로컬: store-detail.html?id=dapon-byeongyeong
+//   상세페이지 주소(detailUrl)는 안 쓴다.
 function sdTarget() {
   const q = new URLSearchParams(location.search).get('id');
   if (q) return { slug: q };
-  let f = location.pathname.replace(/^.*\//, '');
-  if (!f) return null;
-  if (!/\.html$/.test(f)) f += '.html';
-  if (f === 'store-detail.html') return null; // 템플릿 자체를 연 것
-  return { file: f };
+  const m = location.pathname.match(/^\/store\/([A-Za-z0-9_-]{1,60})\/?$/);
+  if (m) return { slug: m[1] };
+  return null; // 틀 자체를 연 것
 }
 
 async function sdLoad() {
@@ -272,14 +282,7 @@ async function sdLoad() {
     return;
   }
   try {
-    let s = null;
-    if (t.slug) {
-      s = await api.get('/api/stores/' + encodeURIComponent(t.slug));
-    } else {
-      const data = await api.get('/api/stores');
-      const list = Array.isArray(data) ? data : (data && data.content) || [];
-      s = list.find(function (x) { return x.detailUrl === t.file; }) || null;
-    }
+    const s = await api.get('/api/stores/' + encodeURIComponent(t.slug));
     if (!s) {
       sdFail('매장을 찾을 수 없습니다.', '주소가 바뀌었거나 노출이 중지된 매장일 수 있습니다.');
       return;
