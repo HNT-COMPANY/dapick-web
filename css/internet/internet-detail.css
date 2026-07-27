@@ -123,6 +123,22 @@
   line-height: 1.6;
 }
 
+/* 찜하기 + 신청하기 = 한 덩어리.
+   :not(:empty) 로 건 이유 — #idFav 는 JS 가 버튼을 그리기 전까진 빈 div 다.
+   JS 가 죽거나 아직 안 돌았을 때 신청하기 버튼이 위쪽 모서리를 잃은 채
+   패널에 떠 있으면 안 되므로, 붙이기 규칙은 버튼이 실제로 들어온 뒤에만 적용된다. */
+.id-fav:not(:empty) {
+  margin-top: 16px;
+}
+.id-fav:not(:empty) .dp-fav-btn--block {
+  border-radius: 12px 12px 0 0;
+}
+/* 둘 사이 경계선은 찜 버튼의 아래 테두리가 그대로 맡는다 (별도 divider 불필요) */
+.id-fav:not(:empty) + .id-apply {
+  margin-top: 0;
+  border-radius: 0 0 12px 12px;
+}
+
 .id-apply {
   width: 100%;
   margin-top: 16px;

@@ -8,6 +8,8 @@
 (function () {
   // ── 로그인 게이트 ──────────────────────────────────
   if (!localStorage.getItem('dapick_token')) {
+    // 로그인 후 문의 페이지로 돌아오게 한다 (auth.js)
+    if (typeof saveReturnUrl === 'function') saveReturnUrl();
     window.location.href = '/login.html';
     return;
   }
@@ -56,6 +58,7 @@
         submitBtn.textContent = '접수하기';
         if (err.status === 401) {
           alert('로그인이 만료되었습니다. 다시 로그인해주세요.');
+          if (typeof saveReturnUrl === 'function') saveReturnUrl();
           window.location.href = '/login.html';
           return;
         }

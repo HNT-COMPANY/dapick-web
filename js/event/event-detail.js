@@ -467,7 +467,11 @@
     document.body.appendChild(ov);
     ov.addEventListener('click', function (e) {
       if (e.target === ov || e.target.hasAttribute('data-x')) closeEvxModal();
-      else if (e.target.hasAttribute('data-go')) location.href = '/login';
+      else if (e.target.hasAttribute('data-go')) {
+        // 로그인 후 보던 이벤트로 돌아오게 한다 (auth.js)
+        if (typeof saveReturnUrl === 'function') saveReturnUrl();
+        location.href = '/login';
+      }
     });
   }
 

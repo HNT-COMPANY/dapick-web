@@ -59,6 +59,7 @@
   var _selectedRouter = null;
   var _wifiMode = 'normal'; // 'normal' | 'package' (메인에서 URL로 전달)
   var _toggles = { tv: false, router: false, wifi7d: false };
+  var _fav = null; // 찜 버튼 핸들 (조합이 바뀌면 refresh)
 
   // ── 유틸 ──
   function escapeHtml(s) {
@@ -114,6 +115,37 @@
       meta: _opts.meta,
     };
   }
+
+  // 현재 조합의 이름. 신청(productName)과 찜(optionLabel)이 같은 문자열을 쓴다.
+  function comboLabel() {
+    var m = CARRIER_MAP[_carrierKey] || { name: _carrierKey };
+    var parts = [m.name, (_selectedInternet && _selectedInternet.name) || ''];
+    if (_toggles.tv && _selectedTv) parts.push('+ ' + _selectedTv.name);
+    if (_toggles.tv && _selectedTv && _selectedSetTop)
+      parts.push('+ ' + _selectedSetTop.name);
+    if (_toggles.tv && _selectedTv && _selectedTv2)
+      parts.push('+ ' + _selectedTv2.name);
+    if (_selectedTv2 && _selectedSetTop2) parts.push('+ ' + _selectedSetTop2.name);
+    if (_toggles.router && _selectedRouter) parts.push('+ ' + _selectedRouter.name);
+    return parts.join(' ');
+  }
+
+  // 현재 조합 → 복원용 쿼리 파라미터.
+  // ★ 키 이름은 restoreSelection() 이 읽는 이름과 반드시 같아야 한다.
+  //   여기서 하나라도 어긋나면 찜 목록에서 돌아왔을 때 조용히 다른 조합이 뜬다.
+  function favOptions() {
+    var o = { carrier: _carrierKey };
+    if (_selectedInternet) o.net = _selectedInternet.name;
+    if (_toggles.tv && _selectedTv) o.tv = _selectedTv.name;
+    if (_toggles.tv && _selectedTv && _selectedSetTop) o.settop = _selectedSetTop.name;
+    if (_toggles.tv && _selectedTv && _selectedTv2) o.tv2 = _selectedTv2.name;
+    if (_selectedTv2 && _selectedSetTop2) o.settop2 = _selectedSetTop2.name;
+    if (_toggles.router && _selectedRouter) o.router = _selectedRouter.name;
+    if (_wifiMode === 'package') o.wifimode = 'package';
+    if (_toggles.wifi7d) o.wifi7d = '1';
+    return o;
+  }
+
   function selectedOf(kind) {
     return kind === 'internet'
       ? _selectedInternet
@@ -176,6 +208,7 @@
         }
         restoreSelection(params);
         render();
+        initFav();
 
         // 비로그인 신청 후 로그인 복귀 시 모달 자동 재개 (각 페이지가 직접 호출하는 패턴)
         if (
@@ -188,6 +221,21 @@
         console.error('[internet-detail] 상품 로드 실패', e);
         showError('상품 정보를 불러올 수 없습니다. 잠시 후 다시 시도해주세요.');
       });
+  }
+
+  // 찜 버튼 1회 생성. 이후 조합이 바뀔 때마다 renderLeft() 가 refresh 한다.
+  function initFav() {
+    if (typeof window.dpFavInit !== 'function' || !_product) return;
+    _fav = dpFavInit(document.getElementById('idFav'), _product.id, {
+      variant: 'block',
+      state: function () {
+        return {
+          options: favOptions(),
+          label: comboLabel(),
+          monthlyFee: InternetCalc.calculate(selection()).finalPrice,
+        };
+      },
+    });
   }
 
   // URL → 선택 상태 복원 (방어: 못 찾으면 인터넷 첫 옵션 기본, 부가옵션 off)
@@ -411,6 +459,9 @@
 
     var btn = document.getElementById('idApplyBtn');
     if (btn) btn.disabled = !_selectedInternet;
+
+    // 조합이 바뀌었으면 하트 상태를 다시 물어본다(같은 조합이면 요청 안 나간다).
+    if (_fav) _fav.refresh();
   }
 
   function showError(msg) {
@@ -554,21 +605,10 @@
       현금사은품: calc.gift,
     };
 
-    var nameParts = [providerName, (_selectedInternet && _selectedInternet.name) || ''];
-    if (_toggles.tv && _selectedTv) nameParts.push('+ ' + _selectedTv.name);
-    if (_toggles.tv && _selectedTv && _selectedSetTop)
-      nameParts.push('+ ' + _selectedSetTop.name);
-    if (_toggles.tv && _selectedTv && _selectedTv2)
-      nameParts.push('+ ' + _selectedTv2.name);
-    if (_selectedTv2 && _selectedSetTop2)
-      nameParts.push('+ ' + _selectedSetTop2.name);
-    if (_toggles.router && _selectedRouter)
-      nameParts.push('+ ' + _selectedRouter.name);
-
     DapickApplication.apply({
       category: 'INTERNET_TV',
       productId: _product.id,
-      productName: nameParts.join(' '),
+      productName: comboLabel(), // 찜 라벨과 같은 문자열 (한 곳에서만 만든다)
       brand: _carrierKey,
       selectedOptions: selectedOptions,
       monthlyPrice: calc.finalPrice,

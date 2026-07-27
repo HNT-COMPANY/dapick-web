@@ -413,7 +413,9 @@
       <div class="w-actions">
          <button class="w-btn-kakao" style="background:#5b5bd6;color:#fff;" onclick="openWaterApply()">상품 접수</button>
         <button class="w-btn-kakao" onclick="openKakaoWithProduct()">카카오 상담</button>
-        <button class="w-btn-heart" id="wDHeart" onclick="toggleFavInDialog()">🤍</button>
+        <!-- 찜(조합 모드) — fav-button.js 가 여기에 버튼을 심는다.
+             예전 🤍 하트는 서버에 안 남는 로컬 표시였다. -->
+        <div class="w-fav-slot" id="wDFav"></div>
       </div>
     </div>
   </div>

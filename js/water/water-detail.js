@@ -12,6 +12,7 @@
 let WD_PRODUCT = null; // 조회된 상품 (water.js groupByBrand 형태로 정규화)
 let WD_BRAND_KEY = null;
 let WD_COLOR = '';
+let WD_FAV = null; // 우 패널 찜 핸들(조합 모드) — 조합이 바뀌면 refresh()
 const WD_BACK_BRAND =
   new URLSearchParams(location.search).get('brand') || ''; // 뒤로가기용 브랜드
 
@@ -259,7 +260,7 @@ function renderDetail() {
   const _modelEl = document.getElementById('wdModel');
   if (_modelEl) _modelEl.textContent = p.modelName || '';
   document.getElementById('wdDesc').textContent = p.desc || '';
-  if (window.dpFavInit) dpFavInit(document.getElementById('wdFav'), p.id);
+  WD_FAV = null; // 아래 calc() 까지 끝난 뒤에 붙인다(첫 조회가 맞는 조합으로 나가야 한다)
   document.getElementById('wdBackText').textContent =
     `‹ ${meta.name} 상품 목록`;
 
@@ -294,6 +295,8 @@ function renderDetail() {
   fillType();
   renderColors();
   calc();
+  mountFav(p.id);
+  mountCompare(p.id);
   renderDetailBody(); // 하단 상세는 한 번만 렌더 (calc 와 분리)
   renderSpecBody(); // 제품사양 탭도 한 번만 렌더
 }
@@ -407,6 +410,66 @@ function fillType() {
   });
 }
 
+// ── 우 패널 찜(조합 모드) ────────────────────────────
+// 다이얼로그(water.js dialogFavState)와 같은 키를 만들어야 한다.
+// 키가 어긋나면 '신청하기'를 눌렀을 때 같은 조합인데 찜이 풀린 것처럼 보인다.
+function wdFavState() {
+  const p = WD_PRODUCT;
+  const contract = document.getElementById('wdContract').value;
+  const cycle = document.getElementById('wdCycle').value;
+  const type = document.getElementById('wdType').value;
+  const d = p ? p.pricing[contract]?.[cycle]?.[type] || {} : {};
+  const cardPrice = d.cardPrice || 0;
+  const monthly = d.monthly || 0;
+  const options = {};
+  if (contract) options.contract = contract;
+  if (cycle) options.cycle = cycle;
+  if (type) options.type = type;
+  if (WD_COLOR) options.color = WD_COLOR;
+  const label = [
+    p ? p.name : '',
+    (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[contract]) ||
+      contract,
+    cycleLabel(cycle),
+    type,
+    WD_COLOR,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return {
+    options: options,
+    label: label,
+    monthlyFee: cardPrice > 0 ? cardPrice : monthly,
+  };
+}
+
+function mountFav(productId) {
+  const mount = document.getElementById('wdFav');
+  if (!mount || typeof window.dpFavInit !== 'function') return;
+  WD_FAV = dpFavInit(mount, productId, { state: wdFavState });
+}
+
+// ── 이미지 아래 비교하기 ──────────────────────────────
+// 비교함은 상품 단위다(조합 단위 아님) — 담을 때의 조합만 요약해서 같이 넣는다.
+function wdCompareSnapshot() {
+  const p = WD_PRODUCT;
+  const st = wdFavState();
+  return {
+    category: 'WATER',
+    name: p ? p.name : '',
+    model: p ? p.modelName || '' : '',
+    image: p ? p.image || '' : '',
+    label: st.label,
+    monthlyFee: st.monthlyFee,
+  };
+}
+
+function mountCompare(productId) {
+  const mount = document.getElementById('wdCompare');
+  if (!mount || typeof window.dpCompareInit !== 'function') return;
+  dpCompareInit(mount, productId, { snapshot: wdCompareSnapshot });
+}
+
 function renderColors() {
   const p = WD_PRODUCT;
   document.getElementById('wdColors').innerHTML = p.colors
@@ -423,6 +486,8 @@ function renderColors() {
         .forEach((c) =>
           c.classList.toggle('active', c.dataset.color === WD_COLOR),
         );
+      // 색상은 가격을 안 바꿔서 calc() 를 안 탄다 → 찜은 여기서 직접 갱신.
+      if (WD_FAV) WD_FAV.refresh();
     };
   });
 }
@@ -456,6 +521,8 @@ function calc() {
   document.getElementById('wdSpecSupport').innerHTML = d.maxSupport
     ? `<span style="color:var(--purple);">₩ ${d.maxSupport.toLocaleString()}</span>`
     : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
+
+  if (WD_FAV) WD_FAV.refresh();
 }
 
 // ── 제품사양 표 ──────────────────────────────────────────────

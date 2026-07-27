@@ -30,7 +30,33 @@
   align-items: start;
 }
 
-/* 좌: 이미지 */
+/* 좌: 이미지 + 그 아래 보조 버튼 */
+.wd-media {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+/* 이미지 아래 여백에 찜/비교를 반반으로 깐다.
+   주 CTA(신청하기)는 우 패널에 있으므로 여기선 톤을 낮춘 아웃라인 버튼만 둔다. */
+.wd-media-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.wd-media-actions .dp-fav-btn,
+.wd-media-actions .dp-cmp-btn {
+  width: 100%;
+  padding: 14px 12px;
+  border-radius: 14px;
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+.wd-fav-slot,
+.wd-cmp-slot {
+  display: flex;
+}
+
 .wd-gallery {
   background: #fff;
   border: 1px solid var(--border-card, #e8e6f3);
@@ -199,6 +225,7 @@
   cursor: pointer;
   white-space: nowrap;
 }
+
 
 /* 하단 상세 */
 .wd-detail-section {

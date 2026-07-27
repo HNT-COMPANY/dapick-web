@@ -66,7 +66,7 @@ function buildGnbHtml() {
         <a href="faq.html">자주묻는질문</a>
       </nav>
       <div class="gnb-right">
-        <button class="btn-login" data-track="login_signup" onclick="window.location.href='/login'">로그인/회원가입</button>
+        <button class="btn-login" data-track="login_signup" onclick="if(typeof saveReturnUrl==='function')saveReturnUrl();window.location.href='/login'">로그인/회원가입</button>
       </div>
       <div class="gnb-more">
         <button class="gnb-more-btn" type="button" aria-label="바로가기 더보기" aria-expanded="false" onclick="toggleGnbMore(this)">

@@ -265,6 +265,9 @@ let favorites = {};
 let dialogProd = null;
 let dialogBrandKey = null;
 let dialogColor = '';
+// 다이얼로그 찜 핸들(fav-button.js). 조합이 바뀔 때마다 refresh() 로 상태를 다시 맞춘다.
+// ※ favorites 는 이것과 무관한 '다이얼로그 선택값 기억용' 로컬 객체다(서버 저장 아님).
+let dialogFav = null;
 
 // ════════════════════════════════════════════════════
 // 브랜드 전환
@@ -538,6 +541,8 @@ function openDialog(productId, brand) {
 
   dialogProd = p;
   dialogBrandKey = brand;
+  // 이전 상품의 핸들이 남아 있으면 아래 calcPrice() 가 엉뚱한 조합을 물어본다.
+  dialogFav = null;
   const prev = favorites[p.id] || {};
   dialogColor = prev.color || p.colors[0];
 
@@ -579,12 +584,8 @@ function openDialog(productId, brand) {
   updateTypeOptions(p, prev.type);
   renderColorChips(p);
 
-  const isFav = !!favorites[p.id];
-  const heartBtn = document.getElementById('wDHeart');
-  heartBtn.classList.toggle('active', isFav);
-  heartBtn.textContent = isFav ? '❤️' : '🤍';
-
   calcPrice();
+  mountDialogFav(p.id); // 옵션이 다 정해진 뒤에 붙여야 첫 조회가 맞는 조합으로 나간다
   document.getElementById('wDialogOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
 }
@@ -707,6 +708,48 @@ function selectColor(color) {
   document
     .querySelectorAll('.w-chip')
     .forEach((c) => c.classList.toggle('active', c.textContent === color));
+  // 색상도 조합의 일부다 — 색을 바꾸면 다른 찜이므로 상태를 다시 물어본다.
+  if (dialogFav) dialogFav.refresh();
+}
+
+// ── 다이얼로그 찜(조합 모드) ──────────────────────────
+// 같은 상품이라도 약정/관리주기/타사보상/색상이 다르면 다른 찜이다.
+// 키는 서버가 options 로 만든다(fav-button.js 주석 참고).
+function dialogFavState() {
+  const contract = document.getElementById('wDContract').value;
+  const cycle = document.getElementById('wDCycle').value;
+  const type = document.getElementById('wDType').value;
+  const d = dialogProd
+    ? dialogProd.pricing[contract]?.[cycle]?.[type] || {}
+    : {};
+  const cardPrice = d.cardPrice || 0;
+  const monthly = d.monthly || 0;
+  const options = {};
+  if (contract) options.contract = contract;
+  if (cycle) options.cycle = cycle;
+  if (type) options.type = type;
+  if (dialogColor) options.color = dialogColor;
+  const label = [
+    dialogProd ? dialogProd.name : '',
+    CONTRACT_LABELS[contract] || contract,
+    cycleLabel(cycle),
+    type,
+    dialogColor,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return {
+    options: options,
+    label: label,
+    // 화면에 크게 찍힌 값과 같은 걸 저장한다(제휴카드가 있으면 그게 메인).
+    monthlyFee: cardPrice > 0 ? cardPrice : monthly,
+  };
+}
+
+function mountDialogFav(productId) {
+  const mount = document.getElementById('wDFav');
+  if (!mount || typeof window.dpFavInit !== 'function') return;
+  dialogFav = dpFavInit(mount, productId, { state: dialogFavState });
 }
 
 function calcPrice() {
@@ -745,6 +788,9 @@ function calcPrice() {
     <div class="w-spec-item w-spec-support"><div class="w-spec-label">최대 지원금</div><div class="w-spec-val w-spec-val-big">${supportHtml}</div></div>`;
 
   document.getElementById('wDDesc').textContent = dialogProd.desc;
+
+  // 조합이 바뀌었으니 찜 상태를 다시 맞춘다(같은 조합이면 요청을 안 보낸다).
+  if (dialogFav) dialogFav.refresh();
 }
 
 function closeDialog() {
@@ -763,34 +809,8 @@ document.addEventListener('keydown', (e) => {
 // ════════════════════════════════════════════════════
 // 즐겨찾기
 // ════════════════════════════════════════════════════
-function toggleFavInDialog() {
-  if (!dialogProd) return;
-  const id = dialogProd.id;
-  const contract = document.getElementById('wDContract').value;
-  const cycle = document.getElementById('wDCycle').value;
-  const type = document.getElementById('wDType').value;
-  if (favorites[id]) {
-    delete favorites[id];
-  } else {
-    favorites[id] = {
-      contract,
-      cycle,
-      type,
-      color: dialogColor,
-      monthly: dialogProd.pricing[contract]?.[cycle]?.[type]?.monthly || 0,
-    };
-  }
-  const isFav = !!favorites[id];
-  document.getElementById('wDHeart').classList.toggle('active', isFav);
-  document.getElementById('wDHeart').textContent = isFav ? '❤️' : '🤍';
-  updateBottomBar();
-  if (
-    document.getElementById('bestGrid') ||
-    document.getElementById('listGrid')
-  ) {
-    renderBrand(currentBrand);
-  }
-}
+// (제거) toggleFavInDialog — 다이얼로그 하트가 찜 버튼으로 바뀌면서 호출부가 없어졌다.
+//        로컬 favorites 는 '다이얼로그 선택값 기억' 용도로만 남는다.
 
 function quickFav(e, productId, brand) {
   e.stopPropagation();

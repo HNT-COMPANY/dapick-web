@@ -43,7 +43,8 @@ let rvCatByType = null;
 document.addEventListener('DOMContentLoaded', async () => {
   // 딥링크: ?category=INTERNET_TV 등으로 초기 탭 선택 (internet-unified '더보기' 연동)
   var _rvUrlCat = new URLSearchParams(location.search).get('category');
-  if (_rvUrlCat && RV_CATEGORIES.some((c) => c.cat === _rvUrlCat)) rvCurrentCat = _rvUrlCat;
+  if (_rvUrlCat && RV_CATEGORIES.some((c) => c.cat === _rvUrlCat))
+    rvCurrentCat = _rvUrlCat;
   rvRenderTabs();
   rvBindWrite();
   rvBindModal();
@@ -59,7 +60,9 @@ async function rvLoadTop() {
   const list = document.getElementById('rvTopList');
   if (!wrap || !list) return;
   try {
-    const data = await api.get('/api/reviews?page=0&size=20&sort=likeCount,desc');
+    const data = await api.get(
+      '/api/reviews?page=0&size=20&sort=likeCount,desc',
+    );
     // 좋아요 1개 이상만 (좋아요 기준 — 전부 올릴 필요 없음)
     const items = ((data && data.content) || []).filter(
       (r) => r && !r.hidden && (Number(r.likeCount) || 0) > 0,
@@ -139,7 +142,8 @@ function rvSetupTopControls() {
         return;
       }
       const card = e.target.closest('.rv-card');
-      if (card && card.dataset.id) window.location.href = rvReviewUrl(card.dataset.id);
+      if (card && card.dataset.id)
+        window.location.href = rvReviewUrl(card.dataset.id);
     });
 
     vp.addEventListener('scroll', updateArrows);
@@ -166,7 +170,7 @@ async function rvLoadCategories() {
 // 특정 카테고리(정수기/렌탈)의 자식 카테고리 목록 (활성만, sortOrder 순 — 서버가 정렬해 내려줌)
 function rvSubCategories(cat) {
   const c = rvCatByType && rvCatByType[cat];
-  const children = (c && Array.isArray(c.children)) ? c.children : [];
+  const children = c && Array.isArray(c.children) ? c.children : [];
   return children.filter((ch) => ch && ch.id && ch.isActive !== false);
 }
 
@@ -235,7 +239,9 @@ function rvRenderSubtabs(cat) {
 function rvSelectSubtab(btn) {
   const el = document.getElementById('rvSubtabs');
   if (el) {
-    el.querySelectorAll('.rv-subtab').forEach((b) => b.classList.remove('is-active'));
+    el.querySelectorAll('.rv-subtab').forEach((b) =>
+      b.classList.remove('is-active'),
+    );
   }
   btn.classList.add('is-active');
   const val = btn.dataset.val || null;
@@ -391,9 +397,18 @@ function rvCountersHtml(r) {
   const comment = (r && r.commentCount) || 0;
   return (
     '<div class="rv-card__counters">' +
-    '<span class="rv-counter">' + RV_ICON_VIEW + rvNum(view) + '</span>' +
-    '<span class="rv-counter">' + RV_ICON_LIKE + rvNum(like) + '</span>' +
-    '<span class="rv-counter">' + RV_ICON_COMMENT + rvNum(comment) + '</span>' +
+    '<span class="rv-counter">' +
+    RV_ICON_VIEW +
+    rvNum(view) +
+    '</span>' +
+    '<span class="rv-counter">' +
+    RV_ICON_LIKE +
+    rvNum(like) +
+    '</span>' +
+    '<span class="rv-counter">' +
+    RV_ICON_COMMENT +
+    rvNum(comment) +
+    '</span>' +
     '</div>'
   );
 }
@@ -401,7 +416,9 @@ function rvCountersHtml(r) {
 // 카운트 표시 (1000+ → 1.2k)
 function rvNum(n) {
   n = Number(n) || 0;
-  return n >= 1000 ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k' : String(n);
+  return n >= 1000
+    ? (n / 1000).toFixed(1).replace(/\.0$/, '') + 'k'
+    : String(n);
 }
 
 // ── 페이지네이션 ───────────────────────────────────────
@@ -421,21 +438,28 @@ function rvRenderPagination(totalPages) {
   if (start > 1) {
     html +=
       '<button type="button" class="rv-pg-btn rv-pg-nav" data-page="' +
-      (start - 2) + '" aria-label="이전">\u2039</button>';
+      (start - 2) +
+      '" aria-label="이전">\u2039</button>';
   }
   for (let p = start; p <= end; p++) {
     html +=
       '<button type="button" class="rv-pg-btn' +
       (p === cur ? ' is-active' : '') +
-      '" data-page="' + (p - 1) + '">' + p + '</button>';
+      '" data-page="' +
+      (p - 1) +
+      '">' +
+      p +
+      '</button>';
   }
   if (cur < total) {
     html +=
       '<button type="button" class="rv-pg-btn rv-pg-nav" data-page="' +
-      cur + '" aria-label="다음">\u203a</button>';
+      cur +
+      '" aria-label="다음">\u203a</button>';
     html +=
       '<button type="button" class="rv-pg-btn rv-pg-nav" data-page="' +
-      (total - 1) + '" aria-label="마지막">\u00bb</button>';
+      (total - 1) +
+      '" aria-label="마지막">\u00bb</button>';
   }
   html += '</nav>';
   el.innerHTML = html;
@@ -463,6 +487,8 @@ function rvBindWrite() {
       rvOpenModal(
         '로그인 후 이용 가능합니다.\n로그인 페이지로 이동하시겠습니까?',
         () => {
+          // 로그인 후 후기 목록으로 돌아오게 한다 (auth.js)
+          if (typeof saveReturnUrl === 'function') saveReturnUrl();
           window.location.href = '/login';
         },
       );
@@ -588,7 +614,8 @@ function rvSetupDetail() {
   if (listEl) {
     listEl.addEventListener('click', (e) => {
       const card = e.target.closest('.rv-card');
-      if (card && card.dataset.id) window.location.href = rvReviewUrl(card.dataset.id);
+      if (card && card.dataset.id)
+        window.location.href = rvReviewUrl(card.dataset.id);
     });
     listEl.addEventListener('keydown', (e) => {
       if (e.key === 'Enter' || e.key === ' ') {
@@ -658,7 +685,8 @@ function rvDetailHtml(r) {
         .join('') +
       '</div>'
     : '';
-  const title = r && r.title ? '<h2 class="rvd-title">' + rvEscape(r.title) + '</h2>' : '';
+  const title =
+    r && r.title ? '<h2 class="rvd-title">' + rvEscape(r.title) + '</h2>' : '';
   const blocks = r && Array.isArray(r.contentBlocks) ? r.contentBlocks : [];
   let bodyHtml;
   if (blocks.length) {
@@ -670,7 +698,8 @@ function rvDetailHtml(r) {
   } else {
     // 구 데이터: 평문 + 이미지 갤러리
     const content = r && r.content ? rvEscape(r.content) : '';
-    bodyHtml = (content ? '<p class="rvd-content">' + content + '</p>' : '') + gallery;
+    bodyHtml =
+      (content ? '<p class="rvd-content">' + content + '</p>' : '') + gallery;
   }
 
   return (
@@ -1075,7 +1104,7 @@ function injectRvEditorStyles() {
     '.rve-modal{position:fixed;inset:0;z-index:1100;display:flex;align-items:flex-start;' +
     'justify-content:center;padding:20px 12px;overflow-y:auto;}' +
     '.rve-backdrop{position:fixed;inset:0;background:rgba(20,16,40,.55);}' +
-    ".rve-panel{position:relative;z-index:1;width:100%;max-width:640px;background:#fff;" +
+    '.rve-panel{position:relative;z-index:1;width:100%;max-width:640px;background:#fff;' +
     "border-radius:16px;overflow:hidden;font-family:'Noto Sans KR',sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.25);}" +
     '.rve-header{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;' +
     'border-bottom:1px solid #eee;font-weight:700;font-size:16px;}' +

@@ -6,6 +6,8 @@
 
 (async function init() {
   if (!localStorage.getItem('dapick_token')) {
+    // 로그인 후 마이페이지로 돌아오게 한다 (auth.js)
+    if (typeof saveReturnUrl === 'function') saveReturnUrl();
     window.location.href = '/login.html';
     return;
   }
@@ -802,6 +804,8 @@ function mpInjectRecentStyles() {
     '.mp-recent-row.is-nolink{cursor:default;}' +
     '.mp-recent-thumb{width:96px;height:64px;border-radius:8px;object-fit:cover;background:#f4f6fb;flex-shrink:0;border:1px solid #eceaf5;}' +
     '.mp-recent-thumb--empty{display:flex;align-items:center;justify-content:center;color:#b7bccb;font-size:11px;text-align:center;line-height:1.3;}' +
+    // 통신사 로고는 상품 사진이 아니라 마크다 — cover 로 자르면 글자가 잘린다.
+    '.mp-recent-thumb--logo{object-fit:contain;background:#fff;padding:10px 12px;}' +
     '.mp-recent-info{flex:1;min-width:0;}' +
     '.mp-recent-name{font-size:15px;font-weight:700;color:#221f38;}' +
     '.mp-recent-meta{font-size:12.5px;color:#6a6880;margin-top:3px;}' +
@@ -809,10 +813,65 @@ function mpInjectRecentStyles() {
     '.mp-recent-empty{padding:40px 0;text-align:center;color:#a7a5b8;font-size:14px;}';
   var st = document.createElement('style'); st.textContent = css; document.head.appendChild(st);
 }
+// 인터넷·TV 상품에는 상품 이미지가 없다(imageUrl = null).
+// 통신사가 곧 상품이라 상세페이지도 DB 이미지가 아니라 로고 자산을 쓴다 — 목록도 같은 자산을 쓴다.
+// ★ CARRIER_MAP 이 이미 internet-* 쪽에 흩어져 있다. 여기가 다섯 번째 사본이다.
+//   통신사가 늘어나면 이 표도 같이 고쳐야 한다 → 공용 모듈 추출은 백로그.
+var MP_CARRIER_LOGO = {
+  SKT: '/assets/logos/SKTLOGO.png',
+  KT: '/assets/logos/KT.png',
+  'LG U+': '/assets/logos/LG.png',
+  'LG HelloVision': '/assets/logos/LGhello.png',
+  'SK broadband': '/assets/logos/SKTLOGO1.png',
+  'KT Skylife': '/assets/logos/KTSkyLife.png',
+};
+// 긴 키부터 본다 — 'KT Skylife' 를 'KT' 가 먼저 채가면 로고가 틀린다.
+var MP_CARRIER_KEYS = Object.keys(MP_CARRIER_LOGO).sort(function (a, b) {
+  return b.length - a.length;
+});
+
+function mpCarrierLogo(r) {
+  if (!r || r.categoryType !== 'INTERNET_TV') return null;
+  // 1순위: 찜에 저장된 조합의 carrier (정확한 키)
+  var key = r.options && r.options.carrier;
+  if (key && MP_CARRIER_LOGO[key]) return MP_CARRIER_LOGO[key];
+  // 2순위: 상품명 앞부분 (최근 본 상품에는 조합이 없다. 'KT 상품' 같은 이름도 잡힌다)
+  var name = r.productName || '';
+  for (var i = 0; i < MP_CARRIER_KEYS.length; i++) {
+    if (name.indexOf(MP_CARRIER_KEYS[i]) === 0) return MP_CARRIER_LOGO[MP_CARRIER_KEYS[i]];
+  }
+  return null;
+}
+
+// 썸네일 한 곳에서만 만든다 (즐겨찾기·최근 본 상품이 같은 규칙을 쓴다)
+function mpThumb(r) {
+  if (r && r.imageUrl) {
+    return '<img class="mp-recent-thumb" src="' + mpEsc(r.imageUrl) + '" alt="" />';
+  }
+  var logo = mpCarrierLogo(r);
+  if (logo) {
+    return '<img class="mp-recent-thumb mp-recent-thumb--logo" src="' + mpEsc(logo) + '" alt="" />';
+  }
+  return '<div class="mp-recent-thumb mp-recent-thumb--empty">이미지<br>없음</div>';
+}
+
 function mpRecentUrl(r) {
   if (r.categoryType === 'WATER') return 'water-detail.html?id=' + r.productId;
   if (r.categoryType === 'RENTAL') return 'rental-detail.html?id=' + r.productId;
-  return null; // 인터넷 등은 현재 단일 상세 링크 없음
+  // 인터넷·TV 는 productId 가 '통신사'라서 id 만으로는 화면을 못 만든다.
+  // 찜에 저장된 조합(options)이 있을 때만 복원 링크가 생긴다.
+  // 최근 본 상품에는 options 가 없으므로 예전처럼 링크 없는 카드로 남는다.
+  if (r.categoryType === 'INTERNET_TV' && r.options && r.options.carrier) {
+    var qs = [];
+    for (var k in r.options) {
+      if (!Object.prototype.hasOwnProperty.call(r.options, k)) continue;
+      var v = r.options[k];
+      if (v === null || v === undefined || v === '') continue;
+      qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
+    }
+    if (qs.length) return 'internet-detail.html?' + qs.join('&');
+  }
+  return null; // 나머지 카테고리는 아직 단일 상세 링크 없음
 }
 function loadFavorites() {
   mpInjectRecentStyles();
@@ -821,15 +880,15 @@ function loadFavorites() {
   list.innerHTML = '<div class="mp-recent-empty">불러오는 중…</div>';
   api.get('/api/favorites/my').then(function (rows) {
     var arr = Array.isArray(rows) ? rows : [];
-    if (!arr.length) { list.innerHTML = '<div class="mp-recent-empty">즐겨찾기한 상품이 없습니다.</div>'; return; }
+    if (!arr.length) { list.innerHTML = '<div class="mp-recent-empty">찜한 상품이 없습니다.</div>'; return; }
     list.innerHTML = arr.map(function (r) {
       var url = mpRecentUrl(r);
       var fee = (r.monthlyFee != null && r.monthlyFee !== '') ? ('월 ' + Number(r.monthlyFee).toLocaleString() + '원') : '';
       var meta = [getCategoryLabel(r.categoryType), fee].filter(Boolean).join(' · ');
-      var img = r.imageUrl
-        ? '<img class="mp-recent-thumb" src="' + mpEsc(r.imageUrl) + '" alt="" />'
-        : '<div class="mp-recent-thumb mp-recent-thumb--empty">이미지<br>없음</div>';
-      var info = '<div class="mp-recent-info"><div class="mp-recent-name">' + mpEsc(r.productName || '상품') + '</div>' +
+      var img = mpThumb(r);
+      // 조합 찜이면 조합 이름을 보여준다 — 'SKT' 만 뜨면 뭘 찜했는지 알 수 없다.
+      var favName = r.optionLabel || r.productName || '상품';
+      var info = '<div class="mp-recent-info"><div class="mp-recent-name">' + mpEsc(favName) + '</div>' +
         '<div class="mp-recent-meta">' + mpEsc(meta) + '</div></div>';
       var time = '<div class="mp-recent-time">' + mpEsc(mpNotiTime(r.createdAt)) + '</div>';
       if (url) return '<a class="mp-recent-row" href="' + mpEsc(url) + '">' + img + info + time + '</a>';
@@ -849,9 +908,7 @@ function loadRecentViews() {
       var url = mpRecentUrl(r);
       var fee = (r.monthlyFee != null && r.monthlyFee !== '') ? ('월 ' + Number(r.monthlyFee).toLocaleString() + '원') : '';
       var meta = [getCategoryLabel(r.categoryType), fee].filter(Boolean).join(' · ');
-      var img = r.imageUrl
-        ? '<img class="mp-recent-thumb" src="' + mpEsc(r.imageUrl) + '" alt="" />'
-        : '<div class="mp-recent-thumb mp-recent-thumb--empty">이미지<br>없음</div>';
+      var img = mpThumb(r);
       var info = '<div class="mp-recent-info"><div class="mp-recent-name">' + mpEsc(r.productName || '상품') + '</div>' +
         '<div class="mp-recent-meta">' + mpEsc(meta) + '</div></div>';
       var time = '<div class="mp-recent-time">' + mpEsc(mpNotiTime(r.viewedAt)) + '</div>';

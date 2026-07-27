@@ -70,6 +70,55 @@ function markActive() {
   localStorage.setItem(STATUS_KEY, 'ACTIVE');
 }
 
+// ================================================================
+// 로그인 후 복귀 경로
+// ----------------------------------------------------------------
+// 로그인을 요구하는 지점이 사이트 곳곳에 흩어져 있는데(찜·후기·문의·
+// 마이페이지·세션만료 등) 대부분 현재 위치를 안 남기고 /login 으로만
+// 보냈다. 그래서 로그인하면 전부 홈으로 떨어졌다.
+// 저장과 복원을 여기 한 곳으로 모은다.
+//   보내기 전:  saveReturnUrl()
+//   로그인 후:  takeReturnUrl() || 'index.html'
+// ================================================================
+const RETURN_KEY = 'redirect_after_login';
+
+// 같은 사이트 안의 경로인가.
+//  - '//evil.com' / '/\evil.com' 은 브라우저가 외부 주소로 읽는다(오픈 리다이렉트)
+//  - 'http://…' 같은 절대 주소도 막는다
+//  - 로그인·가입 페이지로 돌려보내면 무한 루프가 된다
+function isSafeReturnUrl(u) {
+  if (typeof u !== 'string' || u.charAt(0) !== '/') return false;
+  if (u.charAt(1) === '/' || u.charAt(1) === '\\') return false;
+  const path = u.split('?')[0].split('#')[0];
+  return !/^\/(login|signup)(\.html)?$/.test(path);
+}
+
+// 로그인 페이지로 보내기 직전에 부른다. 인자 없으면 지금 페이지.
+function saveReturnUrl(url) {
+  try {
+    const target =
+      url ||
+      window.location.pathname + window.location.search + window.location.hash;
+    if (!isSafeReturnUrl(target)) return;
+    sessionStorage.setItem(RETURN_KEY, target);
+  } catch (e) {
+    // 시크릿 모드 등에서 sessionStorage 가 막힐 수 있다.
+    // 복귀를 못 해도 로그인 자체는 되어야 하므로 삼킨다.
+  }
+}
+
+// 로그인 성공 뒤 한 번만 꺼내 쓴다(읽으면 지운다).
+// 저장 후에 값이 변조됐을 수도 있으니 꺼낼 때 한 번 더 검사한다.
+function takeReturnUrl() {
+  try {
+    const u = sessionStorage.getItem(RETURN_KEY);
+    sessionStorage.removeItem(RETURN_KEY);
+    return isSafeReturnUrl(u) ? u : null;
+  } catch (e) {
+    return null;
+  }
+}
+
 // -- logout ------------------------------------------------------
 async function logout() {
   const token = localStorage.getItem(TOKEN_KEY);

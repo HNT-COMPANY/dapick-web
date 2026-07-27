@@ -97,11 +97,8 @@ function openKakaoConsult(info = null) {
     if (info) {
       sessionStorage.setItem('pending_kakao_consult', JSON.stringify(info));
     }
-    // 현재 페이지 경로 저장 (로그인 후 복귀용)
-    sessionStorage.setItem(
-      'redirect_after_login',
-      window.location.pathname + window.location.search,
-    );
+    // 현재 페이지 경로 저장 (로그인 후 복귀용) — auth.js 로 일원화
+    saveReturnUrl();
 
     showToast('상담을 위해 로그인이 필요합니다.', 'info');
     setTimeout(() => {

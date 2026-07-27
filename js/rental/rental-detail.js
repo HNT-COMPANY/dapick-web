@@ -21,6 +21,10 @@ const RD_API_BASE =
 
 const RD_KAKAO_URL = 'https://pf.kakao.com/_exaRjX/chat';
 
+// 찜 핸들(조합 모드). 패널과 다이얼로그가 각자 자기 화면의 선택값을 읽는다.
+let RD_FAV = null;
+let RD_DLG_FAV = null;
+
 const RD_CONTRACT_LABELS = {
   '의무36/계약60': '36개월(의무) · 60개월(계약)',
   '의무60/계약60': '60개월(의무) · 60개월(계약)',
@@ -125,7 +129,7 @@ function renderDetail() {
 
   document.getElementById('wdName').textContent = p.name;
   document.getElementById('wdDesc').textContent = p.desc || '';
-  if (window.dpFavInit) dpFavInit(document.getElementById('wdFav'), p.id);
+  RD_FAV = null; // 선택값이 다 채워진 뒤에 붙인다
   document.getElementById('wdBackText').textContent = p.categoryName
     ? `‹ ${p.categoryName} 상품 목록`
     : '‹ 상품 목록';
@@ -147,6 +151,8 @@ function renderDetail() {
       '<span style="font-size:16px;color:var(--text-muted);">상담 시 안내</span>';
     document.getElementById('wdTotal').innerHTML = '-';
     renderColors();
+    mountFav(p.id); // 요금표가 없으면 조합도 없다 → 옵션 없는 찜(예전 키와 동일)
+    mountCompare(p.id);
     renderDetailBody();
     return;
   }
@@ -167,7 +173,79 @@ function renderDetail() {
   fillType();
   renderColors();
   calc();
+  mountFav(p.id);
+  mountCompare(p.id);
   renderDetailBody();
+}
+
+// ── 찜(조합 모드) ────────────────────────────────────
+// prefix 로 패널(wd*)과 다이얼로그(wD*) 를 같은 함수로 처리한다.
+// 두 화면이 같은 조합이면 같은 키가 나와야 한다 — 안 그러면
+// '신청하기'를 눌렀을 때 찜이 풀린 것처럼 보인다.
+function rdFavState(useDialog) {
+  const p = RD_PRODUCT;
+  const cId = useDialog ? 'wDContract' : 'wdContract';
+  const cyId = useDialog ? 'wDCycle' : 'wdCycle';
+  const tId = useDialog ? 'wDType' : 'wdType';
+  const contract = document.getElementById(cId)?.value || '';
+  const cycle = document.getElementById(cyId)?.value || '';
+  const type = document.getElementById(tId)?.value || '';
+  const d = p ? p.pricing[contract]?.[cycle]?.[type] || {} : {};
+  const options = {};
+  if (contract) options.contract = contract;
+  if (cycle) options.cycle = cycle;
+  if (type) options.type = type;
+  if (RD_COLOR) options.color = RD_COLOR;
+  const label = [
+    p ? p.name : '',
+    contract ? contractLabel(contract) : '',
+    cycle ? `${cycle} 방문 관리` : '',
+    type,
+    RD_COLOR,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return { options: options, label: label, monthlyFee: d.monthly || 0 };
+}
+
+function mountFav(productId) {
+  const mount = document.getElementById('wdFav');
+  if (!mount || typeof window.dpFavInit !== 'function') return;
+  RD_FAV = dpFavInit(mount, productId, {
+    state: function () {
+      return rdFavState(false);
+    },
+  });
+}
+
+// ── 이미지 아래 비교하기 ──────────────────────────────
+function rdCompareSnapshot() {
+  const p = RD_PRODUCT;
+  const st = rdFavState(false);
+  return {
+    category: 'RENTAL',
+    name: p ? p.name : '',
+    model: '',
+    image: p ? p.image || '' : '',
+    label: st.label,
+    monthlyFee: st.monthlyFee,
+  };
+}
+
+function mountCompare(productId) {
+  const mount = document.getElementById('wdCompare');
+  if (!mount || typeof window.dpCompareInit !== 'function') return;
+  dpCompareInit(mount, productId, { snapshot: rdCompareSnapshot });
+}
+
+function mountDialogFav(productId) {
+  const mount = document.getElementById('wDFav');
+  if (!mount || typeof window.dpFavInit !== 'function') return;
+  RD_DLG_FAV = dpFavInit(mount, productId, {
+    state: function () {
+      return rdFavState(true);
+    },
+  });
 }
 
 function fillCycle() {
@@ -228,6 +306,8 @@ function renderColors() {
         .forEach((c) =>
           c.classList.toggle('active', c.dataset.color === RD_COLOR),
         );
+      // 색상은 가격을 안 바꿔서 calc() 를 안 탄다 → 찜은 여기서 직접 갱신.
+      if (RD_FAV) RD_FAV.refresh();
     };
   });
 }
@@ -257,6 +337,8 @@ function calc() {
   document.getElementById('wdSpecSupport').innerHTML = d.maxSupport
     ? `<span style="color:var(--purple);">₩ ${d.maxSupport.toLocaleString()}</span>`
     : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
+
+  if (RD_FAV) RD_FAV.refresh();
 }
 
 // ─── 하단 상세 ───────────────────────────────────────
@@ -359,10 +441,12 @@ function rdApply() {
     dlgCalc();
   };
 
+  RD_DLG_FAV = null; // 아래 dlgCalc() 가 이전 핸들을 건드리지 않게
   dlgFillCycle(cycle);
   dlgFillType(type);
   dlgRenderColors();
   dlgCalc();
+  mountDialogFav(p.id);
 
   document.getElementById('wDialogOverlay').classList.add('show');
   document.body.style.overflow = 'hidden';
@@ -423,6 +507,7 @@ function dlgRenderColors() {
         .forEach((c) =>
           c.classList.toggle('active', c.dataset.color === RD_COLOR),
         );
+      if (RD_DLG_FAV) RD_DLG_FAV.refresh();
     };
   });
 }
@@ -459,6 +544,8 @@ function dlgCalc() {
     <div class="w-spec-item"><div class="w-spec-label">최대 지원금</div><div class="w-spec-val">${supportHtml}</div></div>`;
 
   document.getElementById('wDDesc').textContent = p.desc || '';
+
+  if (RD_DLG_FAV) RD_DLG_FAV.refresh();
 }
 
 function closeDialog() {

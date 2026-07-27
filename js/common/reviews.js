@@ -395,14 +395,7 @@
 
   // ── 비로그인 → 로그인 페이지 (복귀 경로 저장) ─────────────────
   function goLoginForReview() {
-    try {
-      sessionStorage.setItem(
-        'redirect_after_login',
-        window.location.pathname + window.location.search,
-      );
-    } catch (e) {
-      /* 저장 실패는 무시 */
-    }
+    if (typeof saveReturnUrl === 'function') saveReturnUrl(); // auth.js
     toast('로그인 후 후기를 작성할 수 있어요.', 'info');
     setTimeout(function () {
       window.location.href = '/login';

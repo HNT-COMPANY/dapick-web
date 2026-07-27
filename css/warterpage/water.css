@@ -927,23 +927,20 @@
   transform: translateY(-1px);
   box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
 }
-.w-btn-heart {
-  width: 52px;
-  height: 52px;
-  border-radius: var(--radius-sm);
-  border: 1.5px solid var(--border-card);
-  background: var(--white);
-  font-size: 20px;
-  cursor: pointer;
+/* 다이얼로그 액션의 찜 자리. 예전 .w-btn-heart(52px 정사각 하트) 를 대체한다.
+   버튼 자체는 fav-button.js 가 .dp-fav-btn 으로 심으므로 여기선 '칸'만 잡는다.
+   높이는 stretch 로 옆 버튼(.w-btn-kakao)과 자동으로 맞춘다. */
+.w-fav-slot {
   display: flex;
-  align-items: center;
-  justify-content: center;
   flex-shrink: 0;
-  transition: all 0.2s;
 }
-.w-btn-heart.active {
-  border-color: #fecaca;
-  background: #fff5f5;
+.w-fav-slot .dp-fav-btn {
+  height: 100%;
+  padding: 0 18px;
+  border-radius: var(--radius-sm);
+  font-size: 15px;
+  font-weight: 700;
+  white-space: nowrap;
 }
 
 /* ══════════════════════════════════════════════════════

@@ -74,16 +74,12 @@ function handleOAuthCallback() {
 // Design: everyone (LV1~LV5) stays on web after login. No forced admin
 // redirect. Role no longer affects routing, so it's not a parameter.
 function handleAfterLogin() {
-  const pendingConsult = sessionStorage.getItem('pending_kakao_consult');
-  if (pendingConsult) {
-    const redirect =
-      sessionStorage.getItem('redirect_after_login') || 'index.html';
-    sessionStorage.removeItem('redirect_after_login');
-    window.location.href = redirect;
-    return;
-  }
-
-  window.location.href = 'index.html';
+  // 복귀 경로는 항상 본다.
+  // 예전엔 pending_kakao_consult 가 있을 때만 읽어서, 후기·찜처럼
+  // 상담이 아닌 로그인 유도는 저장을 해놔도 전부 홈으로 떨어졌다.
+  // (카카오 상담 재개는 복귀한 페이지의 resumePendingKakaoConsult() 가 맡는다 —
+  //  여기서 하던 일이 아니다)
+  window.location.href = takeReturnUrl() || 'index.html';
 }
 
 // ============================================================
@@ -959,6 +955,14 @@ function hideEmailAlert() {
 
 // init
 document.addEventListener('DOMContentLoaded', () => {
+  // 0) 콜백 파라미터는 handleOAuthCallback() 이 replaceState 로 지운다.
+  //    지우기 전에 미리 읽어두지 않으면 아래 3) 재진입 가드가
+  //    '콜백이 아니다 + 이미 로그인됨' 으로 오판해서, 카카오 로그인을
+  //    항상 index.html 로 튀겨버렸다(1초 뒤 예정된 handleAfterLogin 보다 빠르다).
+  const hasCallback = new URLSearchParams(window.location.search).get(
+    'accessToken',
+  );
+
   // 1) Handle Kakao callback params first.
   handleOAuthCallback();
 
@@ -966,9 +970,6 @@ document.addEventListener('DOMContentLoaded', () => {
   //    direct URL, or bounced here by the page guard) and is still
   //    PENDING_PROFILE, re-open the signup modal and lock again.
   //    This covers the "site closed mid-signup" case with no callback.
-  const hasCallback = new URLSearchParams(window.location.search).get(
-    'accessToken',
-  );
   if (!hasCallback && typeof isPending === 'function' && isPending()) {
     _csNickname = localStorage.getItem('dapick_nick') || '';
     openAgreementModal();

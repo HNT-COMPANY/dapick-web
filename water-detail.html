@@ -63,8 +63,15 @@
   <button class="wd-back" onclick="wdGoBack()"><span id="wdBackText">‹ 상품 목록</span></button>
 
   <div class="wd-top">
-    <!-- 좌: 이미지 -->
-    <div class="wd-gallery" id="wdGallery"></div>
+    <!-- 좌: 이미지 + 그 아래 여백(찜 / 비교) -->
+    <div class="wd-media">
+      <div class="wd-gallery" id="wdGallery"></div>
+      <div class="wd-media-actions">
+        <!-- 버튼 알맹이는 fav-button.js / compare-button.js 가 심는다 -->
+        <div class="wd-fav-slot" id="wdFav"></div>
+        <div class="wd-cmp-slot" id="wdCompare"></div>
+      </div>
+    </div>
 
     <!-- 우: 선택 패널 -->
     <div class="wd-panel">
@@ -72,7 +79,6 @@
       <div class="wd-name" id="wdName"></div>
       <div class="wd-model" id="wdModel"></div>
       <div class="wd-desc" id="wdDesc"></div>
-      <div class="wd-fav" id="wdFav"></div>
 
       <div class="wd-pricebox">
         <div>
@@ -185,7 +191,9 @@
       <div class="w-actions">
         <button class="w-btn-kakao" style="background:#5b5bd6;color:#fff;" onclick="openWaterApply()">상품 접수</button>
         <button class="w-btn-kakao" onclick="openKakaoWithProduct()">카카오 상담</button>
-        <button class="w-btn-heart" id="wDHeart" onclick="toggleFavInDialog()">🤍</button>
+        <!-- 찜(조합 모드) — fav-button.js 가 여기에 버튼을 심는다.
+             예전 🤍 하트는 서버에 안 남는 로컬 표시였다. -->
+        <div class="w-fav-slot" id="wDFav"></div>
       </div>
     </div>
   </div>
@@ -273,6 +281,7 @@
 <script src="js/common/application.js"></script>
 <script src="js/water/water.js"></script>
 <script src="js/common/fav-button.js"></script>
+<script src="js/common/compare-button.js"></script>
 <script src="js/water/water-detail.js"></script>
 <script src="js/common/simple-apply.js"></script>
 <script src="js/common/reviews.js"></script>

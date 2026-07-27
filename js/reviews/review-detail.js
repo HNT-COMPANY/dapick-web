@@ -260,6 +260,8 @@
       m.querySelector('.rd-lmodal-back').addEventListener('click', close);
       m.querySelector('.rd-lmodal-cancel').addEventListener('click', close);
       m.querySelector('.rd-lmodal-go').addEventListener('click', () => {
+        // 로그인 후 보던 후기로 돌아오게 한다 (auth.js)
+        if (typeof saveReturnUrl === 'function') saveReturnUrl();
         window.location.href = '/login';
       });
     }

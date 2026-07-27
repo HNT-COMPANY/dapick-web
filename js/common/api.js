@@ -71,6 +71,8 @@ async function silentRefresh() {
     localStorage.removeItem('dapick_role');
     localStorage.removeItem('dapick_nick');
     alert('로그인 세션이 만료되었습니다.\n다시 로그인해주세요.');
+    // 다시 로그인하면 보던 화면으로 돌아오게 한다 (auth.js)
+    if (typeof saveReturnUrl === 'function') saveReturnUrl();
     window.location.href = '/login.html';
     return null;
   }

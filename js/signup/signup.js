@@ -324,10 +324,9 @@ async function submitSignup() {
         return;
       }
 
-      // 3순위: 로그인 후 복귀 페이지 (utils.js의 redirect_after_login)
-      const redirectPath = sessionStorage.getItem('redirect_after_login');
+      // 3순위: 로그인 후 복귀 페이지 (auth.js의 saveReturnUrl/takeReturnUrl)
+      const redirectPath = takeReturnUrl();
       if (redirectPath) {
-        sessionStorage.removeItem('redirect_after_login');
         window.location.href = redirectPath;
         return;
       }
