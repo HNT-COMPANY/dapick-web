@@ -103,34 +103,53 @@
     <div class="product-view-brand" id="productViewBrand"></div>
   </div>
  
-  <!-- 필터 바 — rental.js 가 상품 데이터에서 축을 자동 수집해 렌더한다.
-       품목마다 스펙이 다르므로 체크박스를 마크업에 박지 않는다(정수기와 다른 점). -->
-  <div class="rf" id="rentalFilter" hidden>
-    <div class="rf-axes" id="rfAxes"></div>
-    <div class="rf-foot">
-      <span class="rf-count" id="rfCount"></span>
-      <div class="rf-foot-right">
-        <select class="rf-sort" id="rfSort" aria-label="정렬">
-          <option value="default">추천순</option>
-          <option value="priceAsc">낮은 가격순</option>
-          <option value="priceDesc">높은 가격순</option>
-          <option value="rating">평점순</option>
-          <option value="name">이름순</option>
-        </select>
-        <button type="button" class="rf-reset" id="rfReset">초기화</button>
-      </div>
-    </div>
-  </div>
- 
   <div class="section">
-    <div class="wrap">
-      <div class="sec-head">
-        <span class="sec-title" id="listTitle">전체 상품</span>
+    <!-- 정수기(water.html)와 동일한 2단 레이아웃(.water-layout + aside.water-filter).
+         water.css 의 #productView 스코프 규칙을 그대로 상속한다 → 렌탈 전용 CSS 불필요.
+         차이는 필터 "내용"뿐 — 품목마다 스펙이 달라(안마의자=마사지방식, 공기청정기=적용평수)
+         .wf-section 을 마크업에 박지 않고 rental.js 가 상품 데이터에서 만들어 넣는다. -->
+    <div class="water-layout">
+      <!-- 모바일 필터 손잡이 (데스크탑은 CSS로 숨김) -->
+      <button type="button" class="wf-toggle" id="wfToggleBtn" aria-expanded="false" aria-controls="waterFilter" hidden>
+        <span class="wf-toggle-ico" aria-hidden="true">≡</span> 필터
+      </button>
+
+      <aside class="water-filter" id="waterFilter" hidden>
+        <div class="wf-header">
+          <span class="wf-title">필터</span>
+          <button type="button" class="wf-reset" id="rfReset">초기화</button>
+          <!-- 모바일 드로어 닫기 — 데스크탑은 CSS로 숨김 -->
+          <button type="button" class="wf-close" id="wfCloseBtn" aria-label="필터 닫기">✕</button>
+        </div>
+
+        <!-- 축(.wf-section)은 rental.js 가 자동 수집해 채운다 -->
+        <div id="wfSections"></div>
+
+        <div class="wf-section">
+          <div class="wf-section-label">정렬</div>
+          <select class="wf-search wf-sort" id="rfSort" aria-label="정렬">
+            <option value="default">추천순</option>
+            <option value="priceAsc">낮은 가격순</option>
+            <option value="priceDesc">높은 가격순</option>
+            <option value="rating">평점순</option>
+            <option value="name">이름순</option>
+          </select>
+        </div>
+      </aside>
+
+      <div class="wrap">
+        <div class="sec-head">
+          <span class="sec-title" id="listTitle">전체 상품</span>
+          <span class="sec-count" id="rfCount"></span>
+        </div>
+        <p class="sec-sub">상품을 클릭하면 약정·색상을 확인하고 바로 상담을 신청할 수 있어요</p>
+        <div class="water-list-grid" id="listGrid"></div>
       </div>
-      <p class="sec-sub">상품을 클릭하면 약정·색상을 확인하고 바로 상담을 신청할 수 있어요</p>
-      <div class="water-list-grid" id="listGrid"></div>
-    </div>
+    </div><!-- /.water-layout -->
   </div>
+
+  <!-- 모바일 필터 드로어 배경 오버레이 (데스크탑은 CSS로 숨김) -->
+  <div class="wf-overlay" id="wfOverlay"></div>
 </div>
  
 <!-- ══════════════════════════════════════

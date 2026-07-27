@@ -268,154 +268,36 @@
 }
 
 /* ══════════════════════════════════════════════════════
-   렌탈 필터 바 (rf-*) — 구 .page-hero 자리
+   렌탈 필터 — 정수기와 동일 컨셉으로 통일
    ──────────────────────────────────────────────────────
-   정수기의 .water-filter / .wf-* 는 세로 사이드바 + ≤1024 드로어라
-   렌탈의 가로 밴드와 맞지 않고, water.css 의 #productView 스코프
-   미디어쿼리를 그대로 상속하게 되어 결합이 생긴다.
-   → 렌탈 전용 rf-* 로 분리한다. (톤/색만 정수기와 통일)
+   레이아웃·사이드바·드로어는 water.css 의 #productView 스코프
+   규칙(.water-layout / .water-filter / .wf-*)을 그대로 상속한다.
+   rental.html 이 water.css 를 이미 로드하므로 여기서 다시 정의하지 않는다.
+   아래는 "정수기에 없는 것" 3개만.
    ══════════════════════════════════════════════════════ */
-.rf {
-  max-width: 1200px;
-  margin: 16px auto 4px;
-  padding: 16px 18px 12px;
+
+/* ① 축이 0개면 사이드바·손잡이를 감춘다.
+   water.css 의 @media(max-width:1024px) 가 .water-filter 에 display:block,
+   .wf-toggle 에 display:inline-flex 를 주므로 [hidden] 기본값이 진다 → 명시적으로 이긴다.
+   정수기는 hidden 속성을 쓰지 않으므로 무영향. */
+#productView .water-filter[hidden],
+.wf-toggle[hidden] {
+  display: none !important;
+}
+
+/* ② 정렬 select — .wf-search(텍스트 입력) 스타일을 재사용하되 select 보정만 */
+.wf-sort {
+  height: 36px;
+  cursor: pointer;
   background: #fff;
-  border: 1px solid #ece9fb;
-  border-radius: 14px;
-  box-sizing: border-box;
-}
-.rf[hidden] {
-  display: none;
-}
-
-.rf-axes {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.rf-axis {
-  display: flex;
-  align-items: flex-start;
-  gap: 12px;
-}
-.rf-axis-label {
-  flex: none;
-  width: 68px;
-  padding-top: 7px;
-  font-size: 13px;
-  font-weight: 700;
-  color: #534ab7;
-  line-height: 1.2;
-}
-
-.rf-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  min-width: 0;
-}
-
-.rf-chip {
-  padding: 6px 13px;
   font-family: inherit;
+}
+
+/* ③ 목록 제목 옆 결과 개수 — 필터 바가 사라져 갈 곳이 없어졌다 */
+.sec-count {
+  margin-left: 8px;
   font-size: 13px;
   font-weight: 500;
-  color: #555;
-  background: #fff;
-  border: 1px solid #e2ddf3;
-  border-radius: 999px;
-  cursor: pointer;
-  white-space: nowrap;
-  transition:
-    background 0.15s ease,
-    border-color 0.15s ease,
-    color 0.15s ease;
-}
-.rf-chip:hover {
-  background: #f7f6fd;
-  border-color: #c9c1ee;
-}
-.rf-chip.is-on {
-  background: #7f77dd;
-  border-color: #7f77dd;
-  color: #fff;
-  font-weight: 600;
-}
-
-.rf-foot {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: 12px;
-  padding-top: 10px;
-  border-top: 1px solid #f1eefb;
-}
-.rf-count {
-  font-size: 13px;
-  font-weight: 600;
-  color: #534ab7;
-}
-.rf-foot-right {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.rf-sort {
-  padding: 6px 10px;
-  font-family: inherit;
-  font-size: 13px;
-  color: #444;
-  background: #fff;
-  border: 1px solid #ddd9f0;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.rf-sort:focus {
-  outline: none;
-  border-color: #7f77dd;
-}
-.rf-reset {
-  padding: 6px 10px;
-  font-family: inherit;
-  font-size: 12px;
-  color: #7f77dd;
-  background: none;
-  border: 1px solid transparent;
-  border-radius: 8px;
-  cursor: pointer;
-}
-.rf-reset:hover {
-  background: #f3f1fc;
-}
-
-/* 모바일: 라벨을 칩 위로 올리고, 칩 줄은 가로 스크롤 */
-@media (max-width: 768px) {
-  .rf {
-    margin: 12px 12px 4px;
-    padding: 14px 0 10px;
-    border-radius: 12px;
-  }
-  .rf-axis {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-  }
-  .rf-axis-label {
-    width: auto;
-    padding: 0 14px;
-  }
-  .rf-chips {
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding: 2px 14px;
-    scrollbar-width: none;
-  }
-  .rf-chips::-webkit-scrollbar {
-    display: none;
-  }
-  .rf-foot {
-    margin: 10px 14px 0;
-  }
+  color: #8a86a8;
+  vertical-align: middle;
 }

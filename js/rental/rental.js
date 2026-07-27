@@ -335,73 +335,79 @@
     return out;
   }
 
+  // 필터 사이드바 렌더 — 정수기와 동일한 마크업(.wf-section/.wf-options/.wf-opt)을 만든다.
+  // 정수기는 체크박스가 HTML에 박혀 있지만, 렌탈은 품목마다 스펙이 달라 여기서 생성한다.
   function renderFilterBar() {
-    var box = document.getElementById('rentalFilter');
-    var wrap = document.getElementById('rfAxes');
-    if (!box || !wrap) return;
+    var panel = document.getElementById('waterFilter');
+    var toggle = document.getElementById('wfToggleBtn');
+    var wrap = document.getElementById('wfSections');
+    if (!panel || !wrap) return;
 
     if (!axes.length) {
       wrap.innerHTML = '';
-      box.hidden = true;
+      panel.hidden = true;
+      if (toggle) toggle.hidden = true;
+      // 드로어가 열린 채 사이드바가 사라지면 body 스크롤 잠금이 남는다
+      panel.classList.remove('is-open');
+      var ov = document.getElementById('wfOverlay');
+      if (ov) ov.classList.remove('is-open');
+      document.body.style.overflow = '';
       return;
     }
-    box.hidden = false;
+    panel.hidden = false;
+    if (toggle) toggle.hidden = false;
 
     var html = '';
     for (var i = 0; i < axes.length; i++) {
       var ax = axes[i];
       var picked = selected[ax.key] || [];
       html +=
-        '<div class="rf-axis">' +
-        '<span class="rf-axis-label">' +
+        '<div class="wf-section">' +
+        '<div class="wf-section-label">' +
         esc(ax.label) +
-        '</span>' +
-        '<div class="rf-chips">' +
-        '<button type="button" class="rf-chip' +
-        (picked.length ? '' : ' is-on') +
-        '" data-axis="' +
-        esc(ax.key) +
-        '" data-value="">전체</button>';
+        '</div>' +
+        '<div class="wf-options">';
       for (var j = 0; j < ax.values.length; j++) {
         var v = ax.values[j];
         html +=
-          '<button type="button" class="rf-chip' +
-          (picked.indexOf(v) > -1 ? ' is-on' : '') +
-          '" data-axis="' +
+          '<label class="wf-opt"><input type="checkbox" data-axis="' +
           esc(ax.key) +
           '" data-value="' +
           esc(v) +
-          '">' +
+          '"' +
+          (picked.indexOf(v) > -1 ? ' checked' : '') +
+          '><span>' +
           esc(v) +
-          '</button>';
+          '</span></label>';
       }
       html += '</div></div>';
     }
     wrap.innerHTML = html;
 
-    var chips = wrap.querySelectorAll('.rf-chip');
-    for (var c = 0; c < chips.length; c++) {
-      chips[c].addEventListener('click', function () {
-        toggleChip(
+    var boxes = wrap.querySelectorAll('input[type="checkbox"]');
+    for (var c = 0; c < boxes.length; c++) {
+      boxes[c].addEventListener('change', function () {
+        toggleAxisValue(
           this.getAttribute('data-axis'),
           this.getAttribute('data-value'),
+          this.checked,
         );
       });
     }
   }
 
-  function toggleChip(axisKey, value) {
-    if (!value) {
-      delete selected[axisKey]; // '전체' = 해당 축 해제
-    } else {
-      var cur = selected[axisKey] || [];
-      var i = cur.indexOf(value);
-      if (i > -1) cur.splice(i, 1);
-      else cur.push(value);
-      if (cur.length) selected[axisKey] = cur;
-      else delete selected[axisKey];
+  // 체크박스 상태는 브라우저가 들고 있으므로 여기서 재렌더하지 않는다.
+  // (innerHTML 을 다시 갈면 스크롤 위치와 포커스가 튄다)
+  function toggleAxisValue(axisKey, value, on) {
+    var cur = selected[axisKey] || [];
+    var i = cur.indexOf(value);
+    if (on) {
+      if (i === -1) cur.push(value);
+    } else if (i > -1) {
+      cur.splice(i, 1);
     }
-    renderFilterBar();
+    if (cur.length) selected[axisKey] = cur;
+    else delete selected[axisKey];
     applyFilters();
   }
 
@@ -549,11 +555,51 @@
     };
   }
 
+  // 모바일 필터 드로어 — water.js 와 같은 동작(.is-open 토글).
+  // 슬라이드/오버레이 CSS 는 water.css 의 @media(max-width:1024px) 가 이미 갖고 있다.
+  function initFilterDrawer() {
+    var btn = document.getElementById('wfToggleBtn');
+    var panel = document.getElementById('waterFilter');
+    var overlay = document.getElementById('wfOverlay');
+    var closeBtn = document.getElementById('wfCloseBtn');
+    if (!btn || !panel || !overlay) return;
+
+    function openDrawer() {
+      panel.classList.add('is-open');
+      overlay.classList.add('is-open');
+      btn.classList.add('is-hidden');
+      btn.setAttribute('aria-expanded', 'true');
+      document.body.style.overflow = 'hidden';
+    }
+    function closeDrawer() {
+      panel.classList.remove('is-open');
+      overlay.classList.remove('is-open');
+      btn.classList.remove('is-hidden');
+      btn.setAttribute('aria-expanded', 'false');
+      document.body.style.overflow = '';
+    }
+
+    btn.addEventListener('click', openDrawer);
+    overlay.addEventListener('click', closeDrawer);
+    if (closeBtn) closeBtn.addEventListener('click', closeDrawer);
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && panel.classList.contains('is-open')) {
+        closeDrawer();
+      }
+    });
+    window.addEventListener('resize', function () {
+      if (window.innerWidth > 1024 && panel.classList.contains('is-open')) {
+        closeDrawer();
+      }
+    });
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
     loadItems();
     var sortSel = document.getElementById('rfSort');
     if (sortSel) sortSel.addEventListener('change', applyFilters);
     var resetBtn = document.getElementById('rfReset');
     if (resetBtn) resetBtn.addEventListener('click', resetFilters);
+    initFilterDrawer();
   });
 })();

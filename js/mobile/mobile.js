@@ -3,178 +3,45 @@
 // ══════════════════════════════════════════════════════
 // 매장 데이터
 // ──────────────────────────────────────────────────────
-// 지혁님 작업 영역:
-//   - mainImage: 간판 이미지 1장 (모달에 박힘)
-//   - images: 갤러리 5~6장 (Phase 1-3 상세 페이지용)
-//   - lat/lng: 비워두면 카카오 Geocoder가 주소→좌표 자동 변환
-//   - description: 매장 소개 (Phase 1-3 상세 페이지에서 표시)
+// 2026-07-25: 하드코딩 STORES 배열 → 백엔드 API(/api/stores) 조회로 전환.
+// 매장 추가/수정/노출은 관리자 페이지 '휴대폰 매장 관리'에서 한다.
+// 여기를 다시 고칠 일은 없다 — 고쳐야 하면 그건 API 스펙이 바뀐 것이다.
+//
+// 응답 필드명은 옛 배열과 일부러 맞춰뒀다:
+//   id = slug(문자열 식별자) / mainImage = 간판 / detailUrl = 상세페이지 파일명
+// 옛 필드 중 사라진 것: secretBenefit, images — 어디서도 렌더되지 않던 값이다.
 // ══════════════════════════════════════════════════════
-const STORES = [
-  {
-    id: 'dapon-byeongyeong',
-    region: 'ulsan',
-    name: '다폰 병영점',
-    address: '울산 중구 병영로 11',
-    phone: '010-5085-9891',
-    hours: '10:30~19:30',
-    closedDay: '매주 일요일 휴무',
-    description: '', // Phase 1-3 상세 페이지에서 표시
-    mainImage: 'assets/store/daphone-01/main.jpg', // 간판 (모달)
-    images: [
-      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
-    ],
-    badge: 'NEW',
-    lat: null, // 비워두면 카카오 Geocoder가 주소→좌표 자동 변환
-    lng: null,
-    kakaoChatUrl: 'https://pf.kakao.com/_LxifxmG',
-    daangnUrl:
-      'https://www.daangn.com/kr/local-profile/%ED%9C%B4%EB%8C%80%ED%8F%B0%EC%84%B1%EC%A7%80-%EB%8B%A4%ED%8F%B0-6zkix6tjmhar/',
-    secretBenefit: '비밀혜택', // Phase 1-3 상세 페이지에서 표시
-    preconUrl:
-      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000197945&YN=1',
-  },
-  {
-    id: 'dapon-beomil',
-    region: 'busan',
-    name: '다폰 범일점',
-    address: '부산 동구 범일로 21 상가동 103호',
-    phone: '010-9286-3210',
-    hours: '11:00~20:00',
-    closedDay: '매주 일요일 휴무',
-    description: '', // Phase 1-3 상세 페이지에서 표시
-    mainImage: 'assets/store/daphone-02/main.jpg', // 간판 (모달)
-    images: [
-      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
-    ],
-    badge: 'NEW',
-    lat: null, // 비워두면 카카오 Geocoder가 주소→좌표 자동 변환
-    lng: null,
-    kakaoChatUrl: 'https://pf.kakao.com/_WYqQn',
-    daangnUrl: 'https://www.daangn.com/kr/local-profile/197xdqmh9jd9/',
-    naverPlaceUrl: 'https://map.naver.com/p/entry/place/2047078345',
-    secretBenefit: '비밀혜택', // Phase 1-3 상세 페이지에서 표시
-    preconUrl:
-      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000198117&YN=1',
-    preconAlttulUrl:
-      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000198117&YN=2',
-  },
-  {
-    id: 'dapon-cheongok',
-    region: 'ulsan',
-    name: '다폰 천곡점',
-    address: '울산 북구 아진로 76 1층 다폰',
-    phone: '010-5085-9891',
-    hours: '10:30~19:30',
-    closedDay: '매주 일요일 휴무',
-    description: '', // Phase 1-3 상세 페이지에서 표시
-    mainImage: 'assets/store/daphone-03/main.jpg',
-    images: [
-      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
-    ],
-    badge: 'NEW',
-    lat: null,
-    lng: null,
-    kakaoChatUrl: 'https://pf.kakao.com/_DMdlX',
-    daangnUrl: 'https://www.daangn.com/kr/local-profile/kdwbpjg96rbu/',
-    naverPlaceUrl: 'https://naver.me/G1pdFWuc',
-    secretBenefit: '비밀혜택',
-    preconUrl:
-      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000145925&YN=1',
-  },
-  {
-    id: 'dapon-mandeok',
-    region: 'busan',
-    name: '다폰 만덕점',
-    address: '부산 북구 덕천로 234번길 24',
-    phone: '010-2045-9125',
-    hours: '10:00~19:30',
-    closedDay: '매주 일요일 휴무',
-    description: '', // Phase 1-3 상세 페이지에서 표시
-    mainImage: 'assets/store/daphone-04/main.jpg',
-    images: [
-      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
-    ],
-    badge: 'NEW',
-    lat: null,
-    lng: null,
-    kakaoChatUrl: 'https://pf.kakao.com/_ssdlX',
-    daangnUrl: 'https://www.daangn.com/kr/local-profile/6bd92e9qt289/',
-    naverPlaceUrl: 'https://map.naver.com/p/entry/place/2069788725',
-    secretBenefit: '비밀혜택',
-    preconUrl:
-      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000190290&YN=1',
-  },
-  {
-    id: 'dapon-guyeong',
-    region: 'ulsan',
-    name: '다폰 구영점',
-    address: '울산 울주군 범서읍 대리1길 26',
-    phone: '010-8140-0902',
-    hours: '11:00~20:00',
-    closedDay: '매주 일요일 휴무',
-    description: '', // Phase 1-3 상세 페이지에서 표시
-    mainImage: 'assets/store/daphone-05/main.jpg',
-    images: [
-      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
-    ],
-    badge: 'NEW',
-    lat: null,
-    lng: null,
-    kakaoChatUrl: 'https://pf.kakao.com/_xgxcgUG',
-    daangnUrl: 'https://www.daangn.com/kr/local-profile/ayg7hg2ueo8f/',
-    naverPlaceUrl: 'https://naver.me/xdpYfSRh',
-    secretBenefit: '비밀혜택',
-    preconUrl:
-      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000167277&YN=1',
-  },
-  {
-    id: 'dapon-onsan',
-    region: 'ulsan',
-    name: '다폰 온산점',
-    address: '울산 울주군 온산읍 영남6길 19',
-    phone: '010-8748-8188',
-    hours: '10:00~20:00',
-    closedDay: '매주 일요일 휴무',
-    description: '', // Phase 1-3 상세 페이지에서 표시
-    mainImage: 'assets/store/daphone-06/main.jpg',
-    images: [
-      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
-    ],
-    badge: 'NEW',
-    lat: null,
-    lng: null,
-    kakaoChatUrl: 'https://pf.kakao.com/_ssdlX',
-    daangnUrl: '', // 온산점 당근 채널 미박힘
-    naverPlaceUrl: 'https://map.naver.com/p/entry/place/1023746911',
-    secretBenefit: '비밀혜택',
-    preconUrl:
-      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000190944&YN=1',
-  },
-  {
-    id: 'dapon-mugeo',
-    region: 'ulsan',
-    name: '다폰 무거점',
-    address: '울산 남구 신복로 66',
-    phone: '010-4511-6660',
-    hours: '12:00~19:00',
-    closedDay: '매주 일요일 휴무',
-    description: '', // Phase 1-3 상세 페이지에서 표시
-    mainImage: 'assets/store/daphone-07/main.jpg',
-    images: [
-      // Phase 1-3 상세 페이지 갤러리용 (5~6장)
-    ],
-    badge: 'NEW',
-    lat: null,
-    lng: null,
-    kakaoChatUrl: 'https://pf.kakao.com/_WPxjpn',
-    daangnUrl:
-      'https://www.daangn.com/kr/local-profile/3b4ts7et8jia/?referrer=share',
-    naverPlaceUrl: '', // 무거점 네이버 플레이스 미박힘
-    secretBenefit: '비밀혜택',
-    preconUrl:
-      'https://ictmarket.or.kr:8443/precon/pop_CertIcon.do?PRECON_REQ_ID=PRE0000197319&YN=1',
-  },
-];
+let STORES = [];
+let storesLoaded = false; // 조회가 끝났는지 (실패해도 true)
+let storesLoadError = null; // 실패 사유. 있으면 '매장 없음'이 아니라 '불러오기 실패'를 띄운다
+
+async function loadStores() {
+  // 응답이 오기 전에도 그리드를 한 번 그린다.
+  // 안 그리면 조회가 느릴 때 빈 화면이 그대로 남는다.
+  renderStores(currentRegion);
+  try {
+    const data = await api.get('/api/stores');
+    STORES = Array.isArray(data) ? data : (data && data.content) || [];
+    storesLoadError = null;
+  } catch (e) {
+    console.error('[mobile] 매장 목록 조회 실패', e);
+    STORES = [];
+    storesLoadError = e;
+  } finally {
+    storesLoaded = true;
+    renderStores(currentRegion);
+  }
+}
+
+// 관리자가 입력한 값이 그대로 innerHTML 로 들어가므로 무조건 이스케이프한다.
+function mEsc(v) {
+  return String(v == null ? '' : v)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
 
 // 모달 상태
 let currentModalStoreId = null;
@@ -192,9 +59,7 @@ function selectRegion(region, btnEl) {
     t.classList.toggle('active', t === btnEl);
   });
 
-  if (STORES.length > 0) {
-    renderStores(region);
-  }
+  renderStores(region);
 }
 
 // ════════════════════════════════════════════════════
@@ -203,6 +68,20 @@ function selectRegion(region, btnEl) {
 function renderStores(region) {
   const grid = document.getElementById('mStoreGrid');
   if (!grid) return;
+
+  if (!storesLoaded) {
+    grid.innerHTML = `<div class="m-store-empty">매장 정보를 불러오는 중입니다...</div>`;
+    return;
+  }
+
+  if (storesLoadError) {
+    grid.innerHTML = `
+      <div class="m-store-empty">
+        매장 정보를 불러오지 못했습니다.<br>
+        잠시 후 새로고침해주세요.
+      </div>`;
+    return;
+  }
 
   const filtered = STORES.filter((s) => s.region === region);
 
@@ -218,18 +97,18 @@ function renderStores(region) {
   grid.innerHTML = filtered
     .map(
       (s) => `
-    <div class="m-store-card" onclick="openStoreModal('${s.id}')">
+    <div class="m-store-card" onclick="openStoreModal('${mEsc(s.id)}')">
       <div class="m-store-thumb">
         ${
           s.mainImage
-            ? `<img src="${s.mainImage}" alt="${s.name}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+            ? `<img src="${mEsc(s.mainImage)}" alt="${mEsc(s.name)}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
                <div class="m-store-thumb-fallback" style="display:none;">🏪</div>`
             : `<div class="m-store-thumb-fallback">🏪</div>`
         }
       </div>
       <div class="m-store-info">
-        <div class="m-store-name">${s.name}</div>
-        <div class="m-store-addr">${s.address}</div>
+        <div class="m-store-name">${mEsc(s.name)}</div>
+        <div class="m-store-addr">${mEsc(s.address)}</div>
       </div>
       ${s.badge === 'NEW' ? '<span class="m-store-badge m-store-badge--new">NEW</span>' : ''}
       ${s.badge === 'READY' ? '<span class="m-store-badge m-store-badge--ready">오픈 예정</span>' : ''}
@@ -353,18 +232,10 @@ function goStoreDetail() {
     return;
   }
 
-  const pageMap = {
-    'dapon-byeongyeong': 'store-byeongyeong.html',
-    'dapon-beomil': 'store-beomil.html',
-    'dapon-cheongok': 'store-cheongok.html', //'store-cheongok.html',
-    'dapon-mandeok': 'store-mandeok.html', //<!--store-mandeok.html-->
-    'dapon-guyeong': 'store-guyeong.html', //'store-guyeong.html',
-    'dapon-onsan': 'store-onsan.html',
-    'dapon-mugeo': 'store-mugeo.html',
-  };
-  // TODO Phase 1-3: store.html 박힌 후 아래 주석 해제
-  // window.location.href = `store.html?id=${currentModalStoreId}`;
-  const target = pageMap[currentModalStoreId];
+  // 상세페이지 파일명은 관리자 '휴대폰 매장 관리'의 [상세페이지 파일명] 칸에서 온다.
+  // 비어 있으면 아직 파일을 안 만든 지점 → 준비중 안내로 떨어진다.
+  const store = STORES.find((s) => s.id === currentModalStoreId);
+  const target = store && store.detailUrl;
   if (target) {
     window.location.href = target;
   } else {
@@ -497,7 +368,7 @@ function goPage(page) {
 }
 
 // ════════════════════════════════════════════════════
-// 7. 초기 렌더 — 첫 탭 자동 active + STORES 동적 렌더 + 페이드업 초기화
+// 7. 초기 렌더 — 첫 탭 자동 active + 매장 API 조회 + 페이드업 초기화
 // ════════════════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
   const activeTab = document.querySelector(
@@ -505,9 +376,7 @@ document.addEventListener('DOMContentLoaded', () => {
   );
   if (activeTab) activeTab.classList.add('active');
 
-  if (STORES.length > 0) {
-    renderStores(currentRegion);
-  }
+  loadStores();
   initFadeUp();
   initHeroTextRepeat();
 });

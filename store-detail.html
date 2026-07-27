@@ -1,0 +1,193 @@
+
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8"/>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-741SL0QH2E"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-741SL0QH2E');
+</script>
+
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="naver-site-verification" content="915416fea52343dca0655e46b44dcf0c0f35c044" />
+  <title>다픽 인증 휴대폰 매장</title>
+  <meta name="description" content="다픽 인증 휴대폰 매장 안내. 이동통신 사전승낙 판매점, 카카오톡 1:1 상담 가능."/>
+
+  <link rel="canonical" href="https://dapick.co.kr/mobile" />
+
+  <!-- 이 파일은 '틀'이다. 실제 매장 주소(/store-xxx)로 들어오면 _worker.js 가
+       아래 값들을 그 매장 것으로 바꾸고 robots 도 index 로 바꾼다.
+       틀 자체(/store-detail)는 검색에 잡히면 안 된다. -->
+  <meta name="robots" content="noindex, follow"/>
+  <meta name="googlebot" content="noindex, follow"/>
+  <meta name="Yeti" content="noindex, follow"/>
+  <meta name="author" content="다픽"/>
+
+  <link rel="icon" type="image/png" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="https://dapick.co.kr/assets/logos/dapicklogo.png" />
+  <meta name="theme-color" content="#5b3fbe" />
+
+  <meta property="og:type" content="website"/>
+  <meta property="og:site_name" content="다픽"/>
+  <meta property="og:title" content="다픽 인증 휴대폰 매장"/>
+  <meta property="og:description" content="다픽 인증 휴대폰 매장 안내. 이동통신 사전승낙 판매점, 카카오톡 1:1 상담 가능."/>
+  <meta property="og:url" content="https://dapick.co.kr/mobile"/>
+  <meta property="og:image" content="https://dapick.co.kr/assets/logos/dapicklogo.png"/>
+  <meta property="og:locale" content="ko_KR"/>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+
+  <link rel="stylesheet" href="css/reset.css"/>
+  <link rel="stylesheet" href="css/common/common.css"/>
+  <link rel="stylesheet" href="css/common/footer.css"/>
+  <link rel="stylesheet" href="css/common/gnb-user.css"/>
+  <link rel="stylesheet" href="css/icon.css"/>
+  <link rel="stylesheet" href="css/store/store-detail.css"/>
+
+  <!-- 내용이 없는 자리는 통째로 감춘다.
+       .store-features 처럼 CSS 가 display 를 정해둔 요소는
+       [hidden] 만으로는 안 숨는다. -->
+  <style>[hidden]{display:none !important;}</style>
+
+  <!-- 카카오맵 SDK -->
+  <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=33e40eaf10ae42730be369f1d1bf5828&libraries=services&autoload=false"></script>
+</head>
+<body>
+
+
+<!-- 공통 NAV -->
+<nav class="gnb"></nav>
+
+<!-- 매장을 못 찾았을 때만 나온다 (JS 가 채운다) -->
+<section class="store-page-head" id="storeDetailFail" hidden></section>
+
+<!-- ════════════════════════════════════════════════════
+     1. 페이지 헤더 (뒤로가기 + 매장명)
+     ════════════════════════════════════════════════════ -->
+<section class="store-page-head">
+  <a href="/mobile" class="store-back">
+    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+      <path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    매장 안내
+  </a>
+  <div class="store-page-title-row" data-ssr="titlerow" hidden></div>
+  <p class="store-page-tagline" data-ssr="tagline" hidden></p>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     2. 매장 메인 이미지
+     ════════════════════════════════════════════════════ -->
+<section class="store-hero" data-ssr="hero" hidden></section>
+
+<!-- ════════════════════════════════════════════════════
+     3. 카카오맵 + 매장 정보
+     ════════════════════════════════════════════════════ -->
+<section class="store-section" data-ssr-sec="info">
+  <div class="store-wrap">
+    <h2 class="store-section-title">위치 &amp; 연락처</h2>
+
+    <!-- 좌표는 DB 에 두지 않는다. 주소 하나로 카카오 Geocoder 가 잡는다.
+         (data-address / data-name 은 worker 또는 store-detail.js 가 채운다) -->
+    <div class="store-map" id="storeDetailMap" data-address="" data-name="">
+      <div class="store-map-fallback">지도 로딩 중...</div>
+    </div>
+
+    <ul class="store-info-list" data-ssr="info" hidden></ul>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     4. 매장 소개 (인트로 + 본문 + 체크리스트 + 특징)
+     ════════════════════════════════════════════════════ -->
+<section class="store-section store-section--bg" data-ssr-sec="about" hidden>
+  <div class="store-wrap">
+    <h2 class="store-section-title">매장 소개</h2>
+    <div class="store-intro" data-ssr="intro" hidden></div>
+    <div class="store-description" data-ssr="desc" hidden></div>
+    <div class="store-checklist" data-ssr="checklist" hidden></div>
+    <div class="store-features" data-ssr="features" hidden></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     5. 사진 갤러리
+     ════════════════════════════════════════════════════ -->
+<section class="store-section" data-ssr-sec="gallery" hidden>
+  <div class="store-wrap">
+    <h2 class="store-section-title">매장 사진</h2>
+    <div class="store-gallery" data-ssr="gallery"></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     6. 인증 / 외부 링크 (사전승낙 · 당근 · 네이버 플레이스)
+     ════════════════════════════════════════════════════ -->
+<section class="store-section store-section--bg" data-ssr-sec="links" hidden>
+  <div class="store-wrap">
+    <div class="store-links" data-ssr="links"></div>
+  </div>
+</section>
+
+<!-- ════════════════════════════════════════════════════
+     7. 하단 고정 CTA (길찾기 / 카카오 채널 상담)
+     ════════════════════════════════════════════════════ -->
+<div class="store-cta-bar" data-ssr-sec="cta" hidden>
+  <div class="store-cta-inner" data-ssr="cta"></div>
+</div>
+
+<!-- 푸터 -->
+<footer class="site-footer">
+  <div class="footer-top">
+    <div class="footer-wrap">
+      <div class="footer-logo">
+        <img src="assets/logos/dapicklogo.png" alt="다픽" class="footer-logo__img" />
+      </div>
+    </div>
+  </div>
+  <div class="footer-info-wrap">
+    <div class="footer-wrap">
+      <div class="footer-info">
+        <p><span>사이트명</span> 다픽(dapick) &nbsp;|&nbsp; <span>대표자</span> 강성현</p>
+        <p><span>사업자명</span> 다픽(dapick)</p>
+        <p><span>사업자등록번호</span> 620-14-55188 &nbsp;|&nbsp; <span>통신판매</span> 제 2026-울산남구-0324 호</p>
+        <p><span>대표번호</span> (052) 1899-8478 &nbsp;|&nbsp; <span>주소</span> 울산 남구 달삼로 76, 3층 305-6호</p>
+        <p><span>이메일</span> daconnect33@gmail.com &nbsp;|&nbsp; <span>책임관리자</span> 김혜진</p>
+        <!-- 통신판매중개 문구 비노출 (2026-07-03) — 재노출 시 주석 해제
+        <p class="footer-disclaimer">다픽은 통신판매중개자이며 통신판매의 당사자가 아닙니다.<br>상품, 상품정보, 거래에 관한 의무와 책임은 거래당사자에게 있습니다.</p>
+        -->
+      </div>
+    </div>
+  </div>
+  <div class="footer-bottom">
+    <div class="footer-wrap">
+      <div class="footer-policies">
+        <a href="/privacy">개인정보처리방침</a>
+        <a href="/terms">이용약관</a>
+        <a href="/marketing">정보수신 동의</a>
+        <a href="/email-policy">이메일 무단수집 거부</a>
+      </div>
+      <p class="footer-copy">Copyright © 2026 다픽. All rights reserved.</p>
+    </div>
+  </div>
+</footer>
+
+<!-- 공통 JS -->
+<script src="js/common/api.js"></script>
+<script src="js/common/auth.js"></script>
+<script src="js/common/utils.js"></script>
+<script src="js/common/gnb.js"></script>
+<script src="js/common/gnb-user.js"></script>
+
+<!-- 매장 본문 렌더 + 카카오맵 -->
+<script src="js/store/store-detail.js"></script>
+
+<script src="/js/common/track.js"></script>
+</body>
+</html>
