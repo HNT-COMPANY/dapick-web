@@ -128,7 +128,10 @@ async function injectReview(request, env, id) {
 //    한쪽만 고치면 두 화면이 갈린다.
 // ════════════════════════════════════════════════════
 
-const STORE_RE = /^\/store-[A-Za-z0-9_-]{1,60}$/;
+/* 지점명이 한글이면 백엔드가 slug 를 'store', 'store-2' 로 떨어뜨린다
+   (StoreService.resolveSlug). 그러면 주소가 /store, /store-2 가 되므로
+   하이픈 없는 /store 도 받아야 한다. 정적 store.html 은 없다. */
+const STORE_RE = /^\/store(-[A-Za-z0-9_-]{1,60})?$/;
 const STORE_TPL = '/store-detail'; // 틀. 이 주소 자체는 매장이 아니다.
 
 function sdEsc(v) {
@@ -291,12 +294,6 @@ function sdMetaDesc(s) {
   return parts.join(' - ').replace(/\s+/g, ' ').trim().slice(0, 150);
 }
 
-// 6단계에서 채운 본문이 있는가. 없으면 옛 정적 파일을 그대로 쓴다.
-function sdHasDetail(s) {
-  const d = s && s.detail;
-  return !!d && typeof d === 'object' && Object.keys(d).length > 0;
-}
-
 // 매장 목록. 페이지마다 부르므로 엣지에서 짧게 캐시한다.
 // 관리자가 고친 값이 늦어도 2분 안에는 반영된다.
 async function sdFetchStores() {
@@ -378,25 +375,18 @@ async function injectStore(request, env, key) {
       store = list.find((x) => x && x.detailUrl === file) || null;
     } catch (e) { /* 조회 실패 → 옛 정적 파일로 떨어진다 */ }
 
-    /* 순서가 곧 이관 계획이다.
-       1) 6단계 본문이 있으면 틀로 그린다 — 지점 하나씩 옮겨가며 비교할 수 있다.
-       2) 아니면 옛 정적 파일(store-byeongyeong.html)이 있으면 그대로 — 무손실.
-       3) 파일도 없고 매장만 있으면(=새로 등록한 지점) 틀로 그린다.
-          본문이 비어도 404 보다는 지점명·주소·전화가 나오는 편이 낫다.
-       4) 셋 다 아니면 원래의 404. */
-    if (store && sdHasDetail(store)) {
-      const tpl = await env.ASSETS.fetch(new URL(STORE_TPL, url).toString());
-      if (tpl.ok) return sdRewrite(tpl, store, `${SITE}${key}`);
-    }
-
-    const assetResp = await env.ASSETS.fetch(request);
-    if (assetResp.ok) return assetResp;
-
+    /* 관리자에 등록된 매장이면 무조건 틀로 그린다.
+       6단계 본문이 비어 있어도 그렇다 — 지점명·주소·전화·지도까지는 나온다.
+       손으로 만든 옛 파일(store-byeongyeong.html)이 같은 이름으로 남아 있어도
+       그건 안 본다. 관리자에 쓴 것이 곧 그 매장의 페이지다.
+       옛 파일은 DB 에 없는 주소로 들어왔을 때만 쓰인다(옛 주소 살리기 용). */
     if (store) {
       const tpl = await env.ASSETS.fetch(new URL(STORE_TPL, url).toString());
       if (tpl.ok) return sdRewrite(tpl, store, `${SITE}${key}`);
     }
-    return assetResp;
+
+    // DB 에 없는 주소 → 남아 있는 정적 파일, 그것도 없으면 원래의 404
+    return env.ASSETS.fetch(request);
   } catch (e) {
     try { return await env.ASSETS.fetch(request); } catch (e2) { return env.ASSETS.fetch(request); }
   }
