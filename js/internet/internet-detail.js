@@ -60,6 +60,7 @@
   var _wifiMode = 'normal'; // 'normal' | 'package' (메인에서 URL로 전달)
   var _toggles = { tv: false, router: false, wifi7d: false };
   var _fav = null; // 찜 버튼 핸들 (조합이 바뀌면 refresh)
+  var _cmp = null; // 비교함 핸들 (찜과 같은 조합 단위 → 같이 refresh)
 
   // ── 유틸 ──
   function escapeHtml(s) {
@@ -209,6 +210,8 @@
         restoreSelection(params);
         render();
         initFav();
+        initCompare();
+        registerPicker();
 
         // 비로그인 신청 후 로그인 복귀 시 모달 자동 재개 (각 페이지가 직접 호출하는 패턴)
         if (
@@ -235,6 +238,77 @@
           monthlyFee: InternetCalc.calculate(selection()).finalPrice,
         };
       },
+    });
+  }
+
+  // 비교함 버튼 1회 생성. 찜과 똑같이 조합이 바뀔 때마다 refresh 한다.
+  // ★ 인터넷·TV 는 상품 1개 = 통신사 1개라서, 조합(options)이 빠지면
+  //   같은 통신사의 기가1G / 기가500M 이 한 항목으로 뭉개진다.
+  function initCompare() {
+    if (typeof window.dpCompareInit !== 'function' || !_product) return;
+    _cmp = dpCompareInit(document.getElementById('idCompare'), _product.id, {
+      variant: 'block',
+      snapshot: function () {
+        var m = CARRIER_MAP[_carrierKey] || {};
+        return {
+          category: 'INTERNET_TV',
+          name: m.name || _carrierKey || '',
+          model: '',
+          image: logoOf(_carrierKey),
+          label: comboLabel(),
+          monthlyFee: InternetCalc.calculate(selection()).finalPrice,
+          options: favOptions(),
+        };
+      },
+    });
+  }
+
+  // 로고는 마이페이지(루트 기준)에서도 같은 자산을 쓰므로 절대경로로 넘긴다.
+  function logoOf(key) {
+    var m = CARRIER_MAP[key] || {};
+    var logo = m.logo || '';
+    if (logo && logo.charAt(0) !== '/' && logo.indexOf('http') !== 0) logo = '/' + logo;
+    return logo;
+  }
+
+  // ── 하단 트레이 '+' 카드 → 그 자리에서 다른 인터넷 조합 고르기 ────────
+  // ★ 여기서 목록을 페이지 이동 없이 받아온다. internet.html 로 보내면
+  //   담아둔 걸 두고 화면을 떠나는 셈이라 비교 흐름이 끊긴다.
+  // ★ 한 줄 = 통신사 × 인터넷 옵션 하나(TV·공유기 없는 인터넷 단독가).
+  //   TV 조합까지 여기서 고르게 하면 목록이 수백 줄이 된다. 인터넷 단독으로
+  //   담고, 세부 조합은 '자세히 보기'로 그 상세에서 다시 담는 흐름이다.
+  function registerPicker() {
+    if (!window.dpCompareView || typeof window.dpCompareView.registerPicker !== 'function') {
+      return;
+    }
+    window.dpCompareView.registerPicker('INTERNET_TV', function () {
+      return api.get('/api/internet-tv-products').then(function (list) {
+        var rows = [];
+        (Array.isArray(list) ? list : []).forEach(function (p) {
+          if (!p || !p.id || !p.carrier) return;
+          var m = CARRIER_MAP[p.carrier];
+          if (!m) return; // 모르는 통신사는 로고·표시명이 없다 → 안 넣는다
+          var opts = InternetCalc.extractOptions(p);
+          (opts.internets || []).forEach(function (it) {
+            if (!it || !it.name) return;
+            rows.push({
+              category: 'INTERNET_TV',
+              id: p.id,
+              name: m.name,
+              model: '',
+              image: logoOf(p.carrier),
+              label: m.name + ' ' + it.name,
+              monthlyFee: InternetCalc.calculate({
+                internet: it,
+                toggles: {},
+                meta: opts.meta,
+              }).finalPrice,
+              options: { carrier: p.carrier, net: it.name },
+            });
+          });
+        });
+        return rows;
+      });
     });
   }
 
@@ -462,6 +536,7 @@
 
     // 조합이 바뀌었으면 하트 상태를 다시 물어본다(같은 조합이면 요청 안 나간다).
     if (_fav) _fav.refresh();
+    if (_cmp) _cmp.refresh();
   }
 
   function showError(msg) {

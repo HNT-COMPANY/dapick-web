@@ -56,6 +56,7 @@ function switchTab(tabName) {
   if (tabName === 'notifications') loadNotifications();
   if (tabName === 'recent') loadRecentViews();
   if (tabName === 'favorites') loadFavorites();
+  if (tabName === 'compare') loadCompare();
   if (window.innerWidth < 768) {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
@@ -855,23 +856,16 @@ function mpThumb(r) {
   return '<div class="mp-recent-thumb mp-recent-thumb--empty">이미지<br>없음</div>';
 }
 
+// URL 규칙은 js/common/product-url.js 한 곳이 주인이다.
+// 여기 둘은 이름만 남긴 통로 — 찜/최근본/비교표/하단 트레이가 같은 규칙을 쓴다.
+// (예전에 이 파일 안에 규칙이 있었는데, 쓰는 화면이 셋으로 늘면서 사본이 생길
+//  자리가 됐다. CARRIER_MAP 이 다섯 개로 늘어난 것과 같은 경로다.)
+function mpOptionQs(options) {
+  return typeof window.dpOptionQs === 'function' ? window.dpOptionQs(options) : '';
+}
+
 function mpRecentUrl(r) {
-  if (r.categoryType === 'WATER') return 'water-detail.html?id=' + r.productId;
-  if (r.categoryType === 'RENTAL') return 'rental-detail.html?id=' + r.productId;
-  // 인터넷·TV 는 productId 가 '통신사'라서 id 만으로는 화면을 못 만든다.
-  // 찜에 저장된 조합(options)이 있을 때만 복원 링크가 생긴다.
-  // 최근 본 상품에는 options 가 없으므로 예전처럼 링크 없는 카드로 남는다.
-  if (r.categoryType === 'INTERNET_TV' && r.options && r.options.carrier) {
-    var qs = [];
-    for (var k in r.options) {
-      if (!Object.prototype.hasOwnProperty.call(r.options, k)) continue;
-      var v = r.options[k];
-      if (v === null || v === undefined || v === '') continue;
-      qs.push(encodeURIComponent(k) + '=' + encodeURIComponent(v));
-    }
-    if (qs.length) return 'internet-detail.html?' + qs.join('&');
-  }
-  return null; // 나머지 카테고리는 아직 단일 상세 링크 없음
+  return typeof window.dpProductUrl === 'function' ? window.dpProductUrl(r) : null;
 }
 function loadFavorites() {
   mpInjectRecentStyles();
@@ -916,4 +910,63 @@ function loadRecentViews() {
       return '<div class="mp-recent-row is-nolink">' + img + info + time + '</div>';
     }).join('');
   }).catch(function () { list.innerHTML = '<div class="mp-recent-empty">불러오지 못했습니다.</div>'; });
+}
+
+
+// ── 비교함 탭 ────────────────────────────────────────
+// 저장소: compare-button.js(window.dpCompareStore) — 아직 서버에 안 남는다.
+//         기기·브라우저를 바꾸면 목록이 사라진다.
+// 비교표: compare-view.js(window.dpCompareView.table) — 상세 하단 비교 시트와
+//         똑같은 표다. 여기서 다시 그리면 한쪽만 고쳐지는 사고가 난다.
+//
+// ★ 이 화면의 목적은 '월 요금 비교'다. 월 요금이 항상 첫 행이고,
+//   최저가에 표시가 붙고, 나머지는 최저가 대비 차액을 같이 보여준다.
+// ★ 카테고리는 서로 다른 서랍이다. 인터넷·TV 와 정수기는 비교할 행 자체가
+//   안 맞아서, 카테고리를 먼저 고르고 그 안에서만 비교한다.
+var _mpCmpCat = null; // 지금 보고 있는 카테고리
+
+function mpCmpRender() {
+  var store = window.dpCompareStore;
+  var view = window.dpCompareView;
+  var catsEl = document.getElementById('mp-cmp-cats');
+  var bodyEl = document.getElementById('mp-cmp-body');
+  if (!catsEl || !bodyEl) return;
+  if (!store || !view) {
+    catsEl.innerHTML = '';
+    bodyEl.innerHTML = '<div class="mp-recent-empty">비교함을 불러오지 못했습니다.</div>';
+    return;
+  }
+
+  var box = store.all();
+  var live = store.CATS.filter(function (c) { return (box[c] || []).length > 0; });
+
+  if (!live.length) {
+    catsEl.innerHTML = '';
+    bodyEl.innerHTML =
+      '<div class="mp-recent-empty">비교함이 비어 있습니다.<br>' +
+      '상품 상세에서 “비교하기”를 누르면 여기에 담깁니다.<br>' +
+      '<span class="dp-cmp-note">인터넷·TV / 정수기 / 렌탈은 각각 따로 담깁니다.</span></div>';
+    return;
+  }
+  // 보고 있던 카테고리를 다 빼면 남아있는 첫 카테고리로 옮긴다.
+  if (live.indexOf(_mpCmpCat) < 0) _mpCmpCat = live[0];
+
+  catsEl.className = 'dp-cmp-cats';
+  catsEl.innerHTML = live.map(function (c) {
+    return '<button type="button" class="dp-cmp-cat' + (c === _mpCmpCat ? ' is-on' : '') +
+      '" data-cat="' + mpEsc(c) + '">' + mpEsc(getCategoryLabel(c)) +
+      '<span class="dp-cmp-cnt">' + box[c].length + '</span></button>';
+  }).join('');
+  catsEl.querySelectorAll('.dp-cmp-cat').forEach(function (b) {
+    b.onclick = function () { _mpCmpCat = b.dataset.cat; mpCmpRender(); };
+  });
+
+  bodyEl.innerHTML = view.table(_mpCmpCat, box[_mpCmpCat]);
+  view.bind(bodyEl, mpCmpRender); // 빼기 / 이 카테고리 비우기
+}
+
+function loadCompare() {
+  mpInjectRecentStyles(); // .mp-recent-empty 를 같이 쓴다
+  if (window.dpCompareView) window.dpCompareView.injectStyles();
+  mpCmpRender();
 }

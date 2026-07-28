@@ -24,6 +24,7 @@ const RD_KAKAO_URL = 'https://pf.kakao.com/_exaRjX/chat';
 // 찜 핸들(조합 모드). 패널과 다이얼로그가 각자 자기 화면의 선택값을 읽는다.
 let RD_FAV = null;
 let RD_DLG_FAV = null;
+let RD_CMP = null; // 비교함 핸들 — 찜과 같은 '조합' 단위라 같이 refresh 한다
 
 const RD_CONTRACT_LABELS = {
   '의무36/계약60': '36개월(의무) · 60개월(계약)',
@@ -34,6 +35,24 @@ const RD_CONTRACT_LABELS = {
 
 let RD_PRODUCT = null;
 let RD_COLOR = '';
+
+// ── 찜 목록에서 돌아왔을 때 그 조합 그대로 열기 ─────────
+// ★ 키 이름은 rdFavState().options 가 내보내는 이름과 같아야 한다.
+//   (contract / cycle / type / color)
+// renderDetail() 끝에서 비운다 — 한 번만 강제하고 그 뒤엔 사용자 선택이 이긴다.
+let RD_WANT = (function () {
+  const q = new URLSearchParams(location.search);
+  const o = {};
+  ['contract', 'cycle', 'type', 'color'].forEach((k) => {
+    const v = q.get(k);
+    if (v) o[k] = v;
+  });
+  return o;
+})();
+
+function rdPick(keys, want, fallback) {
+  return want && Array.isArray(keys) && keys.indexOf(want) >= 0 ? want : fallback;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const id = new URLSearchParams(location.search).get('id');
@@ -108,7 +127,7 @@ async function loadDetail(id) {
       emoji: p.emoji || '📦',
     };
 
-    RD_COLOR = RD_PRODUCT.colors[0] || '';
+    RD_COLOR = rdPick(RD_PRODUCT.colors, RD_WANT.color, RD_PRODUCT.colors[0] || '');
     renderDetail();
   } catch (e) {
     console.error('[rental-detail] 로드 실패:', e);
@@ -153,14 +172,22 @@ function renderDetail() {
     renderColors();
     mountFav(p.id); // 요금표가 없으면 조합도 없다 → 옵션 없는 찜(예전 키와 동일)
     mountCompare(p.id);
+    rdRegisterPicker();
     renderDetailBody();
+    RD_WANT = {};
     return;
   }
 
+  // 기본은 예전과 동일(마지막 키). 찜에서 온 조합이 있으면 그쪽.
+  const contractDefault = rdPick(
+    contractKeys,
+    RD_WANT.contract,
+    contractKeys[contractKeys.length - 1],
+  );
   cSel.innerHTML = contractKeys
     .map(
-      (k, i) =>
-        `<option value="${k}" ${i === contractKeys.length - 1 ? 'selected' : ''}>${contractLabel(k)}</option>`,
+      (k) =>
+        `<option value="${k}" ${k === contractDefault ? 'selected' : ''}>${contractLabel(k)}</option>`,
     )
     .join('');
   cSel.onchange = () => {
@@ -175,7 +202,9 @@ function renderDetail() {
   calc();
   mountFav(p.id);
   mountCompare(p.id);
+  rdRegisterPicker();
   renderDetailBody();
+  RD_WANT = {}; // 복원 1회로 끝
 }
 
 // ── 찜(조합 모드) ────────────────────────────────────
@@ -219,6 +248,8 @@ function mountFav(productId) {
 }
 
 // ── 이미지 아래 비교하기 ──────────────────────────────
+// ★ 비교함도 '조합' 단위 — options 를 실어야 표에 약정·주기 행이 생기고
+//   같은 상품의 다른 조합이 서로 다른 항목으로 담긴다.
 function rdCompareSnapshot() {
   const p = RD_PRODUCT;
   const st = rdFavState(false);
@@ -229,13 +260,111 @@ function rdCompareSnapshot() {
     image: p ? p.image || '' : '',
     label: st.label,
     monthlyFee: st.monthlyFee,
+    options: st.options,
   };
 }
 
 function mountCompare(productId) {
   const mount = document.getElementById('wdCompare');
   if (!mount || typeof window.dpCompareInit !== 'function') return;
-  dpCompareInit(mount, productId, { snapshot: rdCompareSnapshot });
+  RD_CMP = dpCompareInit(mount, productId, { snapshot: rdCompareSnapshot });
+}
+
+// ── 하단 트레이 '+' 카드 → 그 자리에서 다른 렌탈 상품 고르기 ──────────
+// ★ 같은 렌탈 카테고리 안에서만 가져온다(안마의자는 안마의자끼리).
+//   렌탈은 카테고리 하나에 성격이 완전히 다른 물건이 섞여 있어서
+//   전체 목록을 뿌리면 정수기와 안마의자를 나란히 놓는 표가 된다.
+function rdPickCombo(pricing, want) {
+  if (!pricing) return null;
+  const w = want || {};
+  const hit =
+    pricing[w.contract] && pricing[w.contract][w.cycle]
+      ? pricing[w.contract][w.cycle][w.type]
+      : null;
+  if (hit) {
+    return {
+      contract: w.contract,
+      cycle: w.cycle,
+      type: w.type,
+      fee: hit.monthly || 0,
+    };
+  }
+  let best = null;
+  Object.keys(pricing).forEach((contract) => {
+    const byCycle = pricing[contract] || {};
+    Object.keys(byCycle).forEach((cycle) => {
+      const byType = byCycle[cycle] || {};
+      Object.keys(byType).forEach((type) => {
+        const fee = (byType[type] && byType[type].monthly) || 0;
+        if (fee <= 0) return;
+        if (!best || fee < best.fee) best = { contract, cycle, type, fee };
+      });
+    });
+  });
+  return best;
+}
+
+function rdPickRow(p, want) {
+  if (!p || !p.id) return null;
+  const pricing = p.pricing || {};
+  const combo = rdPickCombo(pricing, want);
+  const colors = Array.isArray(p.colors) && p.colors.length ? p.colors : [];
+  const color = colors.indexOf(want.color) >= 0 ? want.color : colors[0] || '';
+  const options = {};
+  if (combo) {
+    if (combo.contract) options.contract = combo.contract;
+    if (combo.cycle) options.cycle = combo.cycle;
+    if (combo.type) options.type = combo.type;
+  }
+  if (color) options.color = color;
+  const label = [
+    p.name,
+    combo && combo.contract ? contractLabel(combo.contract) : '',
+    combo && combo.cycle ? `${combo.cycle} 방문 관리` : '',
+    combo ? combo.type : '',
+    color,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return {
+    category: 'RENTAL',
+    id: p.id,
+    name: p.name || '',
+    model: '',
+    image: p.imageUrl || p.image || '',
+    label: label,
+    // 요금표가 없는 상품도 담을 수 있어야 한다 — 표에서 '상담 시 안내'로 나온다.
+    monthlyFee: combo ? combo.fee : 0,
+    options: options,
+  };
+}
+
+function rdRegisterPicker() {
+  if (!window.dpCompareView || typeof window.dpCompareView.registerPicker !== 'function') {
+    return;
+  }
+  window.dpCompareView.registerPicker('RENTAL', async () => {
+    const cid = RD_PRODUCT && RD_PRODUCT.categoryId;
+    if (!cid) return [];
+    const url = `${RD_API_BASE}/api/rental-products?categoryId=${encodeURIComponent(cid)}`;
+    const res = await fetch(url, { headers: { 'Content-Type': 'application/json' } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const list = Array.isArray(json) ? json : json?.data || [];
+    const want = {
+      contract: document.getElementById('wdContract')?.value || '',
+      cycle: document.getElementById('wdCycle')?.value || '',
+      type: document.getElementById('wdType')?.value || '',
+      color: RD_COLOR || '',
+    };
+    return list.map((p) => rdPickRow(p, want)).filter(Boolean);
+  });
+}
+
+// 조합이 바뀌면 찜·비교 버튼을 같이 갱신한다(모달 찜은 별도 핸들이라 제외).
+function rdRefreshButtons() {
+  if (RD_FAV) RD_FAV.refresh();
+  if (RD_CMP) RD_CMP.refresh();
 }
 
 function mountDialogFav(productId) {
@@ -253,10 +382,11 @@ function fillCycle() {
   const contract = document.getElementById('wdContract').value;
   const cycles = Object.keys(p.pricing[contract] || {});
   const sel = document.getElementById('wdCycle');
+  const cycleDefault = rdPick(cycles, RD_WANT.cycle, cycles[0]);
   sel.innerHTML = cycles
     .map(
-      (c, i) =>
-        `<option value="${c}" ${i === 0 ? 'selected' : ''}>${c} 방문 관리</option>`,
+      (c) =>
+        `<option value="${c}" ${c === cycleDefault ? 'selected' : ''}>${c} 방문 관리</option>`,
     )
     .join('');
   sel.onchange = () => {
@@ -271,10 +401,11 @@ function fillType() {
   const cycle = document.getElementById('wdCycle').value;
   const types = Object.keys((p.pricing[contract] || {})[cycle] || {});
   const sel = document.getElementById('wdType');
+  const typeDefault = rdPick(types, RD_WANT.type, types[0]);
   sel.innerHTML = types
     .map(
-      (t, i) =>
-        `<option value="${t}" ${i === 0 ? 'selected' : ''}>${t === '타사보상' ? '타사보상 (현재 다른 회사 제품 사용 중)' : t}</option>`,
+      (t) =>
+        `<option value="${t}" ${t === typeDefault ? 'selected' : ''}>${t === '타사보상' ? '타사보상 (현재 다른 회사 제품 사용 중)' : t}</option>`,
     )
     .join('');
   sel.onchange = () => calc();
@@ -306,8 +437,8 @@ function renderColors() {
         .forEach((c) =>
           c.classList.toggle('active', c.dataset.color === RD_COLOR),
         );
-      // 색상은 가격을 안 바꿔서 calc() 를 안 탄다 → 찜은 여기서 직접 갱신.
-      if (RD_FAV) RD_FAV.refresh();
+      // 색상은 가격을 안 바꿔서 calc() 를 안 탄다 → 여기서 직접 갱신.
+      rdRefreshButtons();
     };
   });
 }
@@ -338,7 +469,7 @@ function calc() {
     ? `<span style="color:var(--purple);">₩ ${d.maxSupport.toLocaleString()}</span>`
     : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
 
-  if (RD_FAV) RD_FAV.refresh();
+  rdRefreshButtons();
 }
 
 // ─── 하단 상세 ───────────────────────────────────────

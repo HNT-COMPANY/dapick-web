@@ -85,6 +85,9 @@
       <!-- 찜(서버) — 조합 단위. 버튼은 fav-button.js가 그린다. -->
       <div class="id-fav" id="idFav"></div>
       <button class="id-apply" id="idApplyBtn" type="button" disabled>신청하기</button>
+      <!-- 비교하기는 CTA 아래. 순서는 찜 → 신청하기 → 비교하기 로 고정한다.
+           (찜+신청 붙은 덩어리 사이에 끼우면 모서리 규칙이 깨진다) -->
+      <div class="id-compare" id="idCompare"></div>
     </aside>
 
     <!-- 우: 구성요소 리스트 (JS 렌더) -->
@@ -144,6 +147,9 @@
 <script src="js/common/gnb.js"></script>
 <script src="js/common/gnb-user.js"></script>
 <script src="js/common/fav-button.js"></script>
+<script src="js/common/compare-button.js"></script>
+<script src="js/common/product-url.js"></script>
+<script src="js/common/compare-view.js"></script>
 <script src="js/internet/internet-calc.js"></script>
 <script src="js/internet/internet-detail.js"></script>
 <script src="/js/common/track.js"></script>

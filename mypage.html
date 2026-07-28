@@ -268,11 +268,14 @@
         <div class="mp-recent-list" id="mp-fav-list"></div>
       </div>
       <div class="mp-tab" id="tab-compare" hidden>
-        <div class="empty-soon">
-          <div class="empty-soon__icon">⚖️</div>
-          <h3>비교함 준비중</h3>
-          <p>곧 만나보실 수 있어요!</p>
+        <div class="mp-tab__head">
+          <h2 class="mp-tab__title">비교함</h2>
         </div>
+        <!-- 카테고리 탭과 표는 mypage.js loadCompare() 가 그린다.
+             인터넷·TV / 정수기 / 렌탈은 비교할 항목 자체가 달라서
+             한 표에 안 섞는다 — 카테고리마다 완전히 별개의 서랍이다. -->
+        <div class="mp-cmp-cats" id="mp-cmp-cats"></div>
+        <div class="mp-cmp-body" id="mp-cmp-body"></div>
       </div>
       <div class="mp-tab" id="tab-notice" hidden>
         <div class="empty-soon">
@@ -468,6 +471,10 @@
 <script src="js/common/application.js"></script>
 <script src="js/common/gnb.js"></script>
 <script src="js/common/gnb-user.js"></script>
+<!-- 비교함 저장소(localStorage). mypage.js 가 dpCompareStore 로 읽는다. -->
+<script src="js/common/compare-button.js"></script>
+<script src="js/common/product-url.js"></script>
+<script src="js/common/compare-view.js"></script>
 
 <script src="js/mypage/mypage.js"></script>
 

@@ -156,6 +156,12 @@
   cursor: not-allowed;
 }
 
+/* 비교하기는 신청하기 아래 보조 CTA. 찜+신청 덩어리와 떨어뜨려 놓아야
+   '이건 신청이 아니다' 가 눈에 보인다. */
+.id-compare:not(:empty) {
+  margin-top: 10px;
+}
+
 /* ── 우측 구성요소 리스트 ── */
 .id-list {
   display: flex;

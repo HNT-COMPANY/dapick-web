@@ -13,8 +13,29 @@ let WD_PRODUCT = null; // 조회된 상품 (water.js groupByBrand 형태로 정�
 let WD_BRAND_KEY = null;
 let WD_COLOR = '';
 let WD_FAV = null; // 우 패널 찜 핸들(조합 모드) — 조합이 바뀌면 refresh()
+let WD_CMP = null; // 비교함 핸들 — 찜과 같은 '조합' 단위라 같이 refresh 한다
 const WD_BACK_BRAND =
   new URLSearchParams(location.search).get('brand') || ''; // 뒤로가기용 브랜드
+
+// ── 찜 목록에서 돌아왔을 때 그 조합 그대로 열기 ─────────
+// ★ 키 이름은 wdFavState().options 가 내보내는 이름과 반드시 같아야 한다.
+//   (contract / cycle / type / color) 한쪽만 바꾸면 조용히 다른 조합이 뜬다.
+// 한 번만 쓰고 renderDetail() 끝에서 비운다 — 안 그러면 사용자가 약정을
+// 바꿔도 주기가 계속 이 값으로 되돌아간다.
+let WD_WANT = (function () {
+  const q = new URLSearchParams(location.search);
+  const o = {};
+  ['contract', 'cycle', 'type', 'color'].forEach((k) => {
+    const v = q.get(k);
+    if (v) o[k] = v;
+  });
+  return o;
+})();
+
+// 원하는 값이 실제 선택지에 있을 때만 채택. 없으면 기존 기본값 그대로.
+function wdPick(keys, want, fallback) {
+  return want && Array.isArray(keys) && keys.indexOf(want) >= 0 ? want : fallback;
+}
 
 document.addEventListener('DOMContentLoaded', () => {
   const id = new URLSearchParams(location.search).get('id');
@@ -238,7 +259,7 @@ async function loadDetail(id) {
       if (!arr.find((x) => x.id === WD_PRODUCT.id)) arr.push(WD_PRODUCT);
     }
 
-    WD_COLOR = WD_PRODUCT.colors[0];
+    WD_COLOR = wdPick(WD_PRODUCT.colors, WD_WANT.color, WD_PRODUCT.colors[0]);
     renderDetail();
     initSpecRouting(); // view=spec 직진입/새로고침 대응 (renderDetail 후 = 패널 렌더 완료 시점)
   } catch (e) {
@@ -272,7 +293,12 @@ function renderDetail() {
   // 약정 박스 버튼 (기존 드롭다운 → 박스 4개)
   const contractKeys = Object.keys(p.pricing);
   const boxEl = document.getElementById('wdContractBox');
-  const defaultKey = contractKeys[contractKeys.length - 1]; // 기존과 동일: 마지막 키 기본
+  // 기본은 예전과 동일(마지막 키). 찜에서 온 조합이 있으면 그쪽을 쓴다.
+  const defaultKey = wdPick(
+    contractKeys,
+    WD_WANT.contract,
+    contractKeys[contractKeys.length - 1],
+  );
   document.getElementById('wdContract').value = defaultKey;
   boxEl.innerHTML = contractKeys
     .map(
@@ -297,8 +323,10 @@ function renderDetail() {
   calc();
   mountFav(p.id);
   mountCompare(p.id);
+  wdRegisterPicker();
   renderDetailBody(); // 하단 상세는 한 번만 렌더 (calc 와 분리)
   renderSpecBody(); // 제품사양 탭도 한 번만 렌더
+  WD_WANT = {}; // 복원 1회로 끝. 이후 클릭은 사용자 선택이 이긴다.
 }
 
 // 관리주기 라벨: '셀프형'(저장키)은 화면에 '자가관리'로 표시, 숫자형은 "방문관리" 붙임(중복 방지)
@@ -328,6 +356,11 @@ function fillCycle(preferMode) {
   const modes = [];
   if (groups.self.length) modes.push({ key: 'self', label: '자가관리' });
   if (groups.visit.length) modes.push({ key: 'visit', label: '방문관리' });
+
+  // 찜 복원: 원하는 주기가 자가/방문 중 어디에 있는지로 탭을 먼저 정한다.
+  if (!preferMode && WD_WANT.cycle && cycleKeys.indexOf(WD_WANT.cycle) >= 0) {
+    preferMode = isVisitCycle(WD_WANT.cycle) ? 'visit' : 'self';
+  }
 
   const toggleEl = document.getElementById('wdCareToggle');
   let mode =
@@ -364,7 +397,7 @@ function fillCycle(preferMode) {
 
   function renderCycleBoxes(keys) {
     const boxEl = document.getElementById('wdCycleBox');
-    const defaultKey = keys[0];
+    const defaultKey = wdPick(keys, WD_WANT.cycle, keys[0]);
     document.getElementById('wdCycle').value = defaultKey || '';
     boxEl.innerHTML = keys
       .map(
@@ -392,7 +425,7 @@ function fillType() {
   const cycle = document.getElementById('wdCycle').value;
   const typeKeys = Object.keys(p.pricing[contract]?.[cycle] || {});
   const boxEl = document.getElementById('wdTypeBox');
-  const defaultKey = typeKeys[0];
+  const defaultKey = wdPick(typeKeys, WD_WANT.type, typeKeys[0]);
   document.getElementById('wdType').value = defaultKey;
   boxEl.innerHTML = typeKeys
     .map(
@@ -450,7 +483,9 @@ function mountFav(productId) {
 }
 
 // ── 이미지 아래 비교하기 ──────────────────────────────
-// 비교함은 상품 단위다(조합 단위 아님) — 담을 때의 조합만 요약해서 같이 넣는다.
+// ★ 비교함도 '조합' 단위다. 같은 정수기라도 3년/6년은 다른 항목으로 담긴다.
+//   options 를 안 실으면 비교표에 약정·주기 행이 통째로 비고, 담기 키도
+//   겹쳐서 3년을 담은 뒤 6년을 담으면 '이미 담김'으로 보인다.
 function wdCompareSnapshot() {
   const p = WD_PRODUCT;
   const st = wdFavState();
@@ -461,13 +496,122 @@ function wdCompareSnapshot() {
     image: p ? p.image || '' : '',
     label: st.label,
     monthlyFee: st.monthlyFee,
+    options: st.options,
   };
 }
 
 function mountCompare(productId) {
   const mount = document.getElementById('wdCompare');
   if (!mount || typeof window.dpCompareInit !== 'function') return;
-  dpCompareInit(mount, productId, { snapshot: wdCompareSnapshot });
+  WD_CMP = dpCompareInit(mount, productId, { snapshot: wdCompareSnapshot });
+}
+
+// ── 하단 트레이 '+' 카드 → 그 자리에서 다른 정수기 고르기 ────────────
+// 목록 페이지로 보내면 담아둔 게 있는 채로 화면을 떠나게 된다. 그래서
+// 목록을 받아와 시트에 뿌리고, 고른 걸 바로 비교함에 넣는다.
+// ★ 가져오는 일은 여기(정수기 페이지)가 한다. compare-view.js 가 하면
+//   공용 파일이 카테고리마다 다른 가격 구조를 전부 알아야 한다.
+function wdComboFee(d) {
+  const card = (d && d.cardPrice) || 0;
+  const monthly = (d && d.monthly) || 0;
+  return card > 0 ? card : monthly;
+}
+
+// ★ 어떤 조합으로 담을 것인가 — 이 기능의 핵심은 '월 요금 비교'다.
+//   지금 화면이 3년·자가관리인데 상대를 6년·방문관리로 담으면 숫자가
+//   나란히 놓여도 비교가 아니다. 그래서 같은 조합을 먼저 찾고,
+//   그 상품에 그 조합이 없을 때만 가장 싼 조합으로 떨어진다.
+//   어느 쪽이 됐든 고른 조합을 목록 줄에 그대로 적어 감추지 않는다.
+function wdPickCombo(pricing, want) {
+  if (!pricing) return null;
+  const w = want || {};
+  const hit =
+    pricing[w.contract] && pricing[w.contract][w.cycle]
+      ? pricing[w.contract][w.cycle][w.type]
+      : null;
+  if (hit) {
+    return {
+      contract: w.contract,
+      cycle: w.cycle,
+      type: w.type,
+      fee: wdComboFee(hit),
+    };
+  }
+  let best = null;
+  Object.keys(pricing).forEach((contract) => {
+    const byCycle = pricing[contract] || {};
+    Object.keys(byCycle).forEach((cycle) => {
+      const byType = byCycle[cycle] || {};
+      Object.keys(byType).forEach((type) => {
+        const fee = wdComboFee(byType[type]);
+        if (fee <= 0) return;
+        if (!best || fee < best.fee) best = { contract, cycle, type, fee };
+      });
+    });
+  });
+  return best;
+}
+
+function wdPickRow(p, want) {
+  if (!p || !p.id) return null;
+  const combo = wdPickCombo(p.pricing, want);
+  if (!combo) return null;
+  const colors = Array.isArray(p.colors) && p.colors.length ? p.colors : [];
+  const color = colors.indexOf(want.color) >= 0 ? want.color : colors[0] || '';
+  const options = {};
+  if (combo.contract) options.contract = combo.contract;
+  if (combo.cycle) options.cycle = combo.cycle;
+  if (combo.type) options.type = combo.type;
+  if (color) options.color = color;
+  const label = [
+    p.name,
+    (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS[combo.contract]) ||
+      combo.contract,
+    cycleLabel(combo.cycle),
+    combo.type,
+    color,
+  ]
+    .filter(Boolean)
+    .join(' · ');
+  return {
+    category: 'WATER',
+    id: p.id,
+    name: p.name || '',
+    model: p.modelName || p.model_name || '',
+    image: p.imageUrl || p.image || '',
+    label: label,
+    monthlyFee: combo.fee,
+    options: options,
+  };
+}
+
+function wdRegisterPicker() {
+  if (!window.dpCompareView || typeof window.dpCompareView.registerPicker !== 'function') {
+    return;
+  }
+  window.dpCompareView.registerPicker('WATER', async () => {
+    const res = await fetch(`${DAPICK_CONFIG.API_BASE_URL}/api/water-products`, {
+      headers: { 'Content-Type': 'application/json' },
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const json = await res.json();
+    const list = Array.isArray(json) ? json : json?.data || [];
+    // 기준 조합은 '지금 화면' 이다 — 사용자가 보고 있는 조건이 비교의 기준선.
+    const want = {
+      contract: document.getElementById('wdContract')?.value || '',
+      cycle: document.getElementById('wdCycle')?.value || '',
+      type: document.getElementById('wdType')?.value || '',
+      color: WD_COLOR || '',
+    };
+    return list.map((p) => wdPickRow(p, want)).filter(Boolean);
+  });
+}
+
+// 조합이 바뀌면 찜·비교 버튼이 같이 따라와야 한다.
+// 한쪽만 갱신하면 다른 버튼이 이전 조합 상태로 남는다.
+function wdRefreshButtons() {
+  if (WD_FAV) WD_FAV.refresh();
+  if (WD_CMP) WD_CMP.refresh();
 }
 
 function renderColors() {
@@ -486,8 +630,8 @@ function renderColors() {
         .forEach((c) =>
           c.classList.toggle('active', c.dataset.color === WD_COLOR),
         );
-      // 색상은 가격을 안 바꿔서 calc() 를 안 탄다 → 찜은 여기서 직접 갱신.
-      if (WD_FAV) WD_FAV.refresh();
+      // 색상은 가격을 안 바꿔서 calc() 를 안 탄다 → 여기서 직접 갱신.
+      wdRefreshButtons();
     };
   });
 }
@@ -522,7 +666,7 @@ function calc() {
     ? `<span style="color:var(--purple);">₩ ${d.maxSupport.toLocaleString()}</span>`
     : '<span style="color:#8a8a99;font-size:12px;">상담 시 안내</span>';
 
-  if (WD_FAV) WD_FAV.refresh();
+  wdRefreshButtons();
 }
 
 // ── 제품사양 표 ──────────────────────────────────────────────
