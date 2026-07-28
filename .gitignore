@@ -13,3 +13,12 @@ _stage2/
 # 테스트용 로컬 의존성 (jsdom) — 커밋 금지
 node_modules/
 package-lock.json
+
+# 업무 기록 — 제품 코드가 아니고, dapick-web 은 레포 루트가 그대로 웹에 서빙된다
+KPI-*.md
+KPI-*.csv
+
+# 협업 규칙 파일 — 로컬 전용, 깃허브에 올리지 않음
+/CLAUDE.md
+
+/협업규칙-KPI.md
