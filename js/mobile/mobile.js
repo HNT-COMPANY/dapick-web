@@ -8,8 +8,10 @@
 // 여기를 다시 고칠 일은 없다 — 고쳐야 하면 그건 API 스펙이 바뀐 것이다.
 //
 // 응답 필드명은 옛 배열과 일부러 맞춰뒀다:
-//   id = slug(문자열 식별자) / mainImage = 간판 / detailUrl = 상세페이지 파일명
+//   id = slug(문자열 식별자) / mainImage = 간판
 // 옛 필드 중 사라진 것: secretBenefit, images — 어디서도 렌더되지 않던 값이다.
+// detailUrl(상세페이지 파일명)은 응답에 아직 오지만 이 파일은 쓰지 않는다 —
+// 상세 주소는 slug 하나로 정해진다(6bb1810). 백엔드에서 컬럼째 빼는 건 별도 백로그.
 // ══════════════════════════════════════════════════════
 let STORES = [];
 let storesLoaded = false; // 조회가 끝났는지 (실패해도 true)
@@ -226,24 +228,28 @@ function fillStoreModal(store) {
 }
 
 // 자세히 보기 → /store/{URL 식별자}
+//
+// 예전에는 '상세페이지가 아직 없는 매장'을 detailUrl 유무로 갈라 안내 alert 을 띄웠다.
+// 6bb1810 에서 상세 주소가 slug 하나로 바뀌면서 그 상태 자체가 사라졌고,
+// 남아 있던 else 는 store 를 id 로 찾아놓고 다시 store.id 를 검사하는 꼴이라
+// 도달할 수 없는 죽은 가지였다. 코드가 없는 분기를 있는 것처럼 읽히게 하므로 걷어낸다.
+//
+// '오픈 예정'(READY) 매장도 그대로 상세로 보낸다 — 주소·전화·지도는 이미 실제 정보이고,
+// 상세 페이지가 '오픈 예정' 배지를 직접 그린다. 여기서 막으면 정보를 가린 채 막다른 길이 된다.
 function goStoreDetail() {
-  if (!currentModalStoreId) {
+  // 주소는 관리자 5단계 'URL 식별자'(slug) 하나로 정해진다.
+  // 목록 API 의 id 가 곧 그 slug 다. 상세페이지 주소 칸(detailUrl)은 안 쓴다.
+  const store = currentModalStoreId
+    ? STORES.find((s) => s.id === currentModalStoreId)
+    : null;
+
+  // 실제로 일어날 수 있는 경우만 남긴다 — 목록을 다시 불러오는 사이에 모달이 열려 있던 때.
+  if (!store) {
     alert('매장 정보가 준비되지 않았습니다.');
     return;
   }
 
-  // 주소는 관리자 5단계 'URL 식별자'(slug) 하나로 정해진다.
-  // 목록 API 의 id 가 곧 그 slug 다. 상세페이지 주소 칸은 안 쓴다.
-  const store = STORES.find((s) => s.id === currentModalStoreId);
-  const slug = store && store.id;
-  if (slug) {
-    window.location.href = '/store/' + encodeURIComponent(slug);
-  } else {
-    alert(
-      '상세 페이지는 곧 오픈 예정입니다.\n\n' +
-        '현재는 카카오톡으로 문의해주시면\n자세한 안내를 드립니다.',
-    );
-  }
+  window.location.href = '/store/' + encodeURIComponent(store.id);
 }
 
 // ESC 키로 모달 닫기
