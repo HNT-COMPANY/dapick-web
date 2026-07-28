@@ -4,6 +4,9 @@
 // 5/30: 신청 카드 클릭형 + 월 요금 표시 + 자세히 보기 모달
 // ════════════════════════════════════════════════════
 
+// 딥링크로 지정된 공지 id (?notice=). 공지 탭을 열 때 그 글을 자동으로 펼친다.
+var _pendingNoticeId = null;
+
 (async function init() {
   if (!localStorage.getItem('dapick_token')) {
     // 로그인 후 마이페이지로 돌아오게 한다 (auth.js)
@@ -20,7 +23,10 @@
   setupReviewModal();
   setupNotifications();
   // 딥링크 ?tab= 로 특정 탭 열기 (예: GNB '최근 본 게시글' -> ?tab=recent)
-  var _tabParam = new URLSearchParams(location.search).get('tab');
+  var _qs = new URLSearchParams(location.search);
+  var _tabParam = _qs.get('tab');
+  // 공지 알림의 linkUrl 이 /mypage.html?tab=notice&notice={id} 로 온다.
+  _pendingNoticeId = _qs.get('notice');
   if (_tabParam && document.getElementById('tab-' + _tabParam)) switchTab(_tabParam);
 
   await loadProfile();
@@ -54,6 +60,7 @@ function switchTab(tabName) {
     target.hidden = false;
   }
   if (tabName === 'notifications') loadNotifications();
+  if (tabName === 'notice' && typeof window.mpLoadNotice === 'function') window.mpLoadNotice(_pendingNoticeId);
   if (tabName === 'recent') loadRecentViews();
   if (tabName === 'favorites') loadFavorites();
   if (tabName === 'compare') loadCompare();

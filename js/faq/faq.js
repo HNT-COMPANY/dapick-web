@@ -226,10 +226,15 @@
     if (t && t.dataset.cat) { activeCat = t.dataset.cat; renderTabs(); renderList(); }
   });
   // 답변 내부 혜택 아코디언 펼치기(있을 때) — FAQ 토글과 별개 요소
-  document.addEventListener('click', function (e) {
-    const h = e.target.closest && e.target.closest('.bacc-head');
-    if (h && h.parentElement) h.parentElement.classList.toggle('open');
-  });
+  // ※ js/common/rich-render.js 에도 같은 위임 핸들러가 있다. 마이페이지는 둘 다 싣기 때문에
+  //   깃발 없이 두면 한 번 클릭에 두 번 토글돼서 아코디언이 안 열린다. 먼저 붙은 쪽이 담당.
+  if (!window.__dpBaccToggleBound) {
+    window.__dpBaccToggleBound = true;
+    document.addEventListener('click', function (e) {
+      const h = e.target.closest && e.target.closest('.bacc-head');
+      if (h && h.parentElement) h.parentElement.classList.toggle('open');
+    });
+  }
 
   function injectStyles() {
     const css =

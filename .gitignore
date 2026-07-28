@@ -6,3 +6,10 @@
 !.env.example
 # Claude 반응형 감사용 임시 폴더 (커밋 금지)
 _to_delete/
+
+# 파일 전송용 임시 사본 — 커밋 금지
+_stage2/
+
+# 테스트용 로컬 의존성 (jsdom) — 커밋 금지
+node_modules/
+package-lock.json
