@@ -325,7 +325,7 @@ async function renderBrand(brand) {
     return;
   }
 
-  const best = data.products.filter((p) => p.best);
+  const best = data.products.filter((p) => p.best).slice(0, 5); // 베스트는 가로 5칸 한 줄
   const contractKeys = Object.keys(CONTRACT_LABELS);
 
   const bestSection = document.getElementById('bestSection');
@@ -412,9 +412,42 @@ async function renderBrand(brand) {
   if (listTitleEl) listTitleEl.textContent = `${data.name} 전체 상품`;
 
   // 카드 렌더는 renderProductCard로 추출 (통합 필터와 공유). 브랜드별 화면은 brand/emoji 주입해 동일 결과.
-  listGridEl.innerHTML = data.products
-    .map((p) => renderProductCard({ ...p, brand, emoji: data.emoji }))
-    .join('');
+  // 4열 × 5줄(20개) 먼저 보여주고 '더보기 +'로 20개씩 추가 (renderListPaged).
+  renderListPaged(data.products.map((p) => ({ ...p, brand, emoji: data.emoji })));
+}
+
+// ════════════════════════════════════════════════════
+// 전체 상품 페이징 — 처음 20개(4×5) + '더보기 +' 클릭마다 +20
+// 브랜드 화면(renderBrand)과 필터 결과(renderFilteredGrid)가 공용으로 사용
+// ════════════════════════════════════════════════════
+const WLIST_PAGE = 20;
+let wlistItems = [];
+let wlistShown = WLIST_PAGE;
+
+function renderListPaged(items) {
+  wlistItems = items || [];
+  wlistShown = WLIST_PAGE;
+  paintListPaged();
+}
+
+function paintListPaged() {
+  const listGridEl = document.getElementById('listGrid');
+  if (!listGridEl) return;
+  if (!wlistItems.length) {
+    listGridEl.innerHTML = '<div class="wpg-empty">조건에 맞는 상품이 없습니다.</div>';
+  } else {
+    listGridEl.innerHTML = wlistItems
+      .slice(0, wlistShown)
+      .map((p) => renderProductCard(p))
+      .join('');
+  }
+  const wrap = document.getElementById('listMoreWrap');
+  if (wrap) wrap.style.display = wlistItems.length > wlistShown ? '' : 'none';
+}
+
+function waterListMore() {
+  wlistShown += WLIST_PAGE;
+  paintListPaged();
 }
 
 // ── 카드 렌더 (renderBrand .map에서 추출 — 결과 동일). p에 brand/emoji 주입 필수.
@@ -466,13 +499,7 @@ function getAllProductsFlat() {
 
 // ── 필터 결과 그리드 렌더 (평면 풀 상품은 brand/emoji 주입돼 있어 renderProductCard 그대로) ──
 function renderFilteredGrid(products) {
-  const listGridEl = document.getElementById('listGrid');
-  if (!listGridEl) return;
-  if (!products.length) {
-    listGridEl.innerHTML = '<div class="wpg-empty">조건에 맞는 상품이 없습니다.</div>';
-    return;
-  }
-  listGridEl.innerHTML = products.map((p) => renderProductCard(p)).join('');
+  renderListPaged(products); // 빈 결과 메시지·더보기 표시까지 페이징 렌더가 처리
 }
 
 // ── 브랜드 배너: assets/{brand}/{brand}-01.png 시도, 없으면 숨김 ──
@@ -498,6 +525,8 @@ function renderLoading() {
   if (bestSection) bestSection.style.display = '';
   if (bg) bg.innerHTML = html;
   if (lg) lg.innerHTML = '';
+  const lm = document.getElementById('listMoreWrap');
+  if (lm) lm.style.display = 'none'; // 로딩 중엔 더보기 숨김 (paintListPaged 가 복원)
 }
 
 function renderError() {
@@ -1014,6 +1043,8 @@ function applyFilters() {
   if (c.tradeIn) list = list.filter((p) => p.tradeIn === true);
   if (c.modelName) list = list.filter((p) => (p.modelName || '').includes(c.modelName));
   if (c.name) list = list.filter((p) => (p.name || '').includes(c.name));
+  // 통합 검색(상단 검색창) — 제품명 OR 모델명 부분일치
+  if (c.q) list = list.filter((p) => (p.name || '').includes(c.q) || (p.modelName || '').includes(c.q));
 
   renderFilteredGrid(list); // 층1
   updateListTitle(`검색 결과 (${list.length})`);
@@ -1073,7 +1104,45 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 // ════════════════════════════════════════════════════
-// 모바일 필터 드로어 토글 (조각2-B)
+// 상단 필터 바: '상세필터 ▾' 펼침/접힘 (2026-07-28 검색창 중심 개편)
+// ════════════════════════════════════════════════════
+(function () {
+  const btn = document.getElementById('wtfMoreBtn');
+  const panel = document.getElementById('wtfDetail');
+  if (!btn || !panel) return;
+  btn.addEventListener('click', () => {
+    const willOpen = panel.hasAttribute('hidden');
+    if (willOpen) panel.removeAttribute('hidden');
+    else panel.setAttribute('hidden', '');
+    btn.classList.toggle('is-open', willOpen);
+    btn.setAttribute('aria-expanded', String(willOpen));
+  });
+})();
+
+// ════════════════════════════════════════════════════
+// 검색창 ✕ 지우기 버튼 — 입력 있을 때만 표시, 클릭 시 비우고 필터 재적용
+// ════════════════════════════════════════════════════
+(function () {
+  const input = document.querySelector('.wtf-search[data-filter="q"]');
+  const clearBtn = document.getElementById('wtfClearBtn');
+  if (!input || !clearBtn) return;
+  const sync = () => {
+    if (input.value) clearBtn.removeAttribute('hidden');
+    else clearBtn.setAttribute('hidden', '');
+  };
+  input.addEventListener('input', sync);
+  clearBtn.addEventListener('click', () => {
+    input.value = '';
+    sync();
+    applyFilters();
+    input.focus();
+  });
+  sync();
+})();
+
+// ════════════════════════════════════════════════════
+// (레거시) 모바일 필터 드로어 토글 (조각2-B) — 사이드바 폐기로 요소 없음 → 가드 return
+// 렌탈 페이지 개편 시 참고용으로만 남김
 // 정수기 전용 id(#wfToggleBtn/#waterFilter/#wfOverlay/#wfCloseBtn) → 렌탈 무영향.
 // CSS(조각2-A)가 .is-open으로 슬라이드/오버레이 처리. JS는 클래스 토글만.
 // ════════════════════════════════════════════════════

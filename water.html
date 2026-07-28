@@ -133,42 +133,34 @@
       <div class="water-best-grid" id="bestGrid"></div>
     </div>
 
-    <!-- 조각1: 리모컨 필터 2단 레이아웃 (UI만 — 동작은 조각2). 기존 .wrap 은 우측 컬럼으로 그대로 유지 -->
-    <div class="water-layout">
-      <!-- 모바일 전용 필터 토글 버튼 (데스크탑은 CSS로 숨김). 동작(.is-open 토글)은 다음 조각(JS). -->
-      <button type="button" class="wf-toggle" id="wfToggleBtn" aria-expanded="false" aria-controls="waterFilter">
-        <span class="wf-toggle-ico" aria-hidden="true">≡</span> 필터
-      </button>
-      <aside class="water-filter" id="waterFilter">
-        <div class="wf-header">
-          <span class="wf-title">필터</span>
-          <button type="button" class="wf-reset" id="wfReset">초기화</button>
-          <!-- 모바일 드로어 닫기(X) — 데스크탑은 CSS로 숨김. 동작은 다음 조각(JS). -->
-          <button type="button" class="wf-close" id="wfCloseBtn" aria-label="필터 닫기">✕</button>
+    <!-- 상단 필터 바 — 검색창 중심 (좌측 사이드바 폐기, 2026-07-28)
+         필터 엔진(collectFilters/applyFilters, data-filter AND/OR)은 기존 그대로 — 마크업만 이동.
+         브랜드 알약은 water-board.js(renderBrandFilterOptions)가 /api/brands 로 채움 -->
+    <div class="wtf" id="waterFilter">
+      <!-- 줄1: 통합 검색 + 상세필터 + 초기화 -->
+      <div class="wtf-row wtf-row-search">
+        <div class="wtf-search-wrap">
+          <input type="text" class="wtf-search" data-filter="q" placeholder="제품명·모델명으로 검색해보세요 (예: 아이콘, CHP-264)" />
+          <button type="button" class="wtf-clear" id="wtfClearBtn" aria-label="검색어 지우기" hidden>✕</button>
+          <svg class="wtf-search-ico" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
         </div>
+        <button type="button" class="wtf-more" id="wtfMoreBtn" aria-expanded="false" aria-controls="wtfDetail">상세필터 <span class="wtf-caret">▾</span></button>
+        <button type="button" class="wtf-reset" id="wfReset">초기화</button>
+      </div>
 
-        <!-- 1. 브랜드 (다중) — water-board.js 가 /api/brands 로 렌더 (등록 브랜드 전체) -->
-        <div class="wf-section">
-          <div class="wf-section-label">브랜드</div>
-          <div class="wf-options" id="wfBrandOptions"></div>
+      <!-- 상세필터 (접힘 기본, wtfMoreBtn 토글 — water.js)
+           펼치면: 브랜드/정수 기능/월 렌탈료(가운데 정렬 세로 쌓기) + 나머지 8구획 그리드 -->
+      <div class="wtf-detail" id="wtfDetail" hidden>
+      <div class="wtf-row wtf-core">
+        <div class="wtf-group">
+          <span class="wtf-label">브랜드</span>
+          <div class="wtf-pills" id="wfBrandOptions"></div>
         </div>
-
-        <!-- 2. 모델명 (검색) -->
-        <div class="wf-section">
-          <div class="wf-section-label">모델명</div>
-          <input type="text" class="wf-search" data-filter="modelName" placeholder="모델명 검색">
-        </div>
-
-        <!-- 3. 제품명 (검색) -->
-        <div class="wf-section">
-          <div class="wf-section-label">제품명</div>
-          <input type="text" class="wf-search" data-filter="name" placeholder="제품명 검색">
-        </div>
-
-        <!-- 4. 정수 기능 (다중) -->
-        <div class="wf-section">
-          <div class="wf-section-label">정수 기능</div>
-          <div class="wf-options">
+        <div class="wtf-group">
+          <span class="wtf-label">정수 기능</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="PURIFIED"><span>정수</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD"><span>냉/정</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="HOT"><span>온/정</span></label>
@@ -177,22 +169,30 @@
             <label class="wf-opt"><input type="checkbox" data-filter="waterFunction" data-value="COLD_HOT_ICE"><span>냉/온/정/얼음</span></label>
           </div>
         </div>
+        <div class="wtf-group">
+          <span class="wtf-label">월 렌탈료</span>
+          <div class="wtf-pills">
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_10K"><span>1만원대</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_20K"><span>2만원대</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_30K"><span>3만원대</span></label>
+            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="OVER_40K"><span>4만원 이상</span></label>
+          </div>
+        </div>
+      </div>
 
-        <!-- 4-1. 가구 규모 (다중) -->
-        <div class="wf-section">
-          <div class="wf-section-label">가구 규모</div>
-          <div class="wf-options">
+      <div class="wtf-detail-grid">
+        <div class="wtf-group">
+          <span class="wtf-label">가구 규모</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="householdSize" data-value="SMALL"><span>1~2인 가구</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="householdSize" data-value="MEDIUM"><span>3~4인 가구</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="householdSize" data-value="LARGE"><span>5인 이상</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="householdSize" data-value="OFFICE"><span>사무실/매장</span></label>
           </div>
         </div>
-
-        <!-- 4-2. 사용 목적 (다중) -->
-        <div class="wf-section">
-          <div class="wf-section-label">사용 목적</div>
-          <div class="wf-options">
+        <div class="wtf-group">
+          <span class="wtf-label">사용 목적</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="purposeTags" data-value="ICE"><span>얼음정수기</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="purposeTags" data-value="COLD_HOT"><span>냉온정수기</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="purposeTags" data-value="PURIFIED"><span>정수전용</span></label>
@@ -201,80 +201,55 @@
             <label class="wf-opt"><input type="checkbox" data-filter="purposeTags" data-value="PET"><span>반려동물가구</span></label>
           </div>
         </div>
-
-        <!-- 5. 월 렌탈료 (다중) -->
-        <div class="wf-section">
-          <div class="wf-section-label">월 렌탈료</div>
-          <div class="wf-options">
-            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_10K"><span>1만원대</span></label>
-            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_20K"><span>2만원대</span></label>
-            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="RANGE_30K"><span>3만원대</span></label>
-            <label class="wf-opt"><input type="checkbox" data-filter="priceRange" data-value="OVER_40K"><span>4만원 이상</span></label>
-          </div>
-        </div>
-
-        <!-- 6. 설치 형태 (다중) -->
-        <div class="wf-section">
-          <div class="wf-section-label">설치 형태</div>
-          <div class="wf-options">
+        <div class="wtf-group">
+          <span class="wtf-label">설치 형태</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="DESK"><span>데스크형</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="BUILT_IN"><span>빌트인형</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="installType" data-value="STAND"><span>스탠드형</span></label>
           </div>
         </div>
-
-        <!-- 7. 필터 방식 (다중) -->
-        <div class="wf-section">
-          <div class="wf-section-label">필터 방식</div>
-          <div class="wf-options">
+        <div class="wtf-group">
+          <span class="wtf-label">필터 방식</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="RO"><span>RO필터</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="NANO"><span>나노필터</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="HOLLOW_FIBER"><span>중공사막필터</span></label>
           </div>
         </div>
-
-        <!-- 8. 추출 방식 (다중) -->
-        <div class="wf-section">
-          <div class="wf-section-label">추출 방식</div>
-          <div class="wf-options">
+        <div class="wtf-group">
+          <span class="wtf-label">추출 방식</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="extractType" data-value="DIRECT"><span>직수</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="extractType" data-value="TANK"><span>저수조형</span></label>
           </div>
         </div>
-
-        <!-- 9. 직수관 재질 (다중) -->
-        <div class="wf-section">
-          <div class="wf-section-label">직수관 재질</div>
-          <div class="wf-options">
+        <div class="wtf-group">
+          <span class="wtf-label">직수관 재질</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="pipeMaterial" data-value="STAINLESS"><span>스테인리스</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="pipeMaterial" data-value="TRITAN"><span>트라이탄</span></label>
           </div>
         </div>
-
-        <!-- 10. 살균 방식 (다중) — sanitizing 기준. 저장은 단일값이나 필터는 OR 다중 대응 -->
-        <div class="wf-section">
-          <div class="wf-section-label">살균 방식</div>
-          <div class="wf-options">
+        <div class="wtf-group">
+          <span class="wtf-label">살균 방식</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="UV"><span>UV살균</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="HIGH_TEMP"><span>고온살균</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="ELECTROLYTIC"><span>전해수살균</span></label>
           </div>
         </div>
-
-        <!-- 11. 타사보상 (단일 축) -->
-        <div class="wf-section">
-          <div class="wf-section-label">타사보상</div>
-          <div class="wf-options">
+        <div class="wtf-group">
+          <span class="wtf-label">타사보상</span>
+          <div class="wtf-pills">
             <label class="wf-opt"><input type="checkbox" data-filter="tradeIn" data-value="true"><span>타사보상 가능</span></label>
           </div>
         </div>
+      </div>
+      </div>
+    </div>
 
-        <!-- 12. 비활성 슬롯 (데이터 없음 — data 속성 없이 회색/준비중) -->
-        <div class="wf-section wf-disabled">
-          <div class="wf-section-label">관리 주기<span class="wf-badge-soon">준비중</span></div>
-        </div>
-      </aside>
-
+    <div class="water-layout">
     <div class="wrap">
       <!-- 전체 상품 섹션 -->
       <div class="sec-head">
@@ -282,11 +257,13 @@
       </div>
       <p class="sec-sub">클릭하면 약정·색상·관리주기를 직접 선택하고 월 렌탈료를 바로 확인할 수 있어요</p>
       <div class="water-list-grid" id="listGrid"></div>
+      <!-- 20개(4×5) 초과 시 표시 — water.js paintListPaged 가 토글 -->
+      <div class="wlist-more" id="listMoreWrap" style="display:none">
+        <button type="button" class="wlist-more-btn" onclick="waterListMore()">더보기 +</button>
+      </div>
     </div>
     </div><!-- /.water-layout -->
   </div>
-  <!-- 모바일 필터 드로어 배경 오버레이 (데스크탑은 CSS로 숨김). 동작은 다음 조각(JS). -->
-  <div class="wf-overlay" id="wfOverlay"></div>
 </div>
 
 <!-- 다이얼로그 -->

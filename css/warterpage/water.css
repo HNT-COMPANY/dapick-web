@@ -1930,3 +1930,343 @@
   font-size: 13px;
   color: var(--text-muted);
 }
+
+/* ════════════════════════════════════════════════════
+   상단 필터 바 (검색창 중심 개편, 2026-07-28)
+   좌측 사이드바(.water-filter)·드로어(.wf-toggle/.wf-overlay)는 마크업에서 제거됨.
+   .wf-opt(체크박스 라벨)를 알약 버튼으로 — 기존 필터 엔진(data-filter) 그대로.
+   ════════════════════════════════════════════════════ */
+.wtf {
+  background: var(--white);
+  border: 1.5px solid var(--border-card);
+  border-radius: var(--radius);
+  padding: 18px 20px;
+  margin-bottom: 26px;
+}
+.wtf-row-search {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+.wtf-search-wrap {
+  flex: 1;
+  position: relative;
+  min-width: 0;
+}
+.wtf-search-ico {
+  position: absolute;
+  left: 15px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-muted);
+  pointer-events: none;
+}
+.wtf-search {
+  width: 100%;
+  padding: 13px 16px 13px 44px;
+  font-size: 15px;
+  border: 1.5px solid var(--border-card);
+  border-radius: 12px;
+  font-family: inherit;
+  color: var(--text-main);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.wtf-search::placeholder { color: var(--text-muted); }
+.wtf-search:focus {
+  outline: none;
+  border-color: var(--purple);
+  box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.12);
+}
+.wtf-more,
+.wtf-reset {
+  flex-shrink: 0;
+  padding: 12px 18px;
+  border: 1.5px solid var(--border-card);
+  border-radius: 12px;
+  background: var(--white);
+  color: var(--text-sub);
+  font-size: 14px;
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.wtf-more:hover,
+.wtf-reset:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+.wtf-more.is-open {
+  border-color: var(--purple);
+  color: var(--purple);
+  background: var(--purple-pale, #f3efff);
+}
+.wtf-more.is-open .wtf-caret { display: inline-block; transform: rotate(180deg); }
+.wtf-caret { transition: transform 0.15s; display: inline-block; }
+
+.wtf-core {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 28px;
+  margin-top: 14px;
+}
+.wtf-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+.wtf-label {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+.wtf-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+/* 체크박스 → 알약 버튼 (input 은 시각적으로 숨기고 span 이 버튼) */
+.wtf .wf-opt { margin: 0; position: relative; }
+.wtf .wf-opt input {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+.wtf .wf-opt span {
+  display: inline-block;
+  padding: 7px 13px;
+  border: 1.5px solid var(--border-card);
+  border-radius: 10px;
+  font-size: 13px;
+  color: var(--text-sub);
+  background: var(--white);
+  cursor: pointer;
+  transition: all 0.15s;
+  user-select: none;
+}
+.wtf .wf-opt span:hover {
+  border-color: #c7b8ff;
+  color: var(--purple);
+}
+.wtf .wf-opt input:checked + span {
+  background: var(--purple);
+  border-color: var(--purple);
+  color: #fff;
+  font-weight: 600;
+}
+.wtf .wf-opt input:focus-visible + span {
+  box-shadow: 0 0 0 3px rgba(124, 77, 255, 0.25);
+}
+
+.wtf-detail {
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid #f1f2f5;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px 24px;
+}
+.wtf-detail .wtf-group {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.wtf-detail[hidden] { display: none; }
+
+/* 레이아웃: 사이드바 폐기 → 단일 컬럼 (기존 .water-layout 2단 grid 무력화 — append 라 이 규칙이 이김) */
+#productView .water-layout {
+  display: block;
+}
+#productView .water-layout > .wrap {
+  max-width: none;
+  padding: 0;
+}
+
+@media (max-width: 768px) {
+  .wtf { padding: 14px; }
+  .wtf-row-search { flex-wrap: wrap; }
+  .wtf-search-wrap { flex-basis: 100%; }
+  .wtf-more, .wtf-reset { flex: 1; }
+}
+
+/* ════════════════════════════════════════════════════
+   전체 상품 그리드: 데스크탑 4열 고정 (4×5=20개 + 더보기, 2026-07-28)
+   기존 auto-fill 을 append 규칙으로 덮음. ≤768px 2열은 기존 규칙 유지.
+   ════════════════════════════════════════════════════ */
+@media (min-width: 1025px) {
+  .water-list-grid {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+@media (min-width: 769px) and (max-width: 1024px) {
+  .water-list-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+.wlist-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 28px;
+}
+.wlist-more-btn {
+  padding: 13px 48px;
+  border: 1px solid var(--border-card);
+  background: var(--white);
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-main);
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.wlist-more-btn:hover {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+
+/* ── 상단 필터 바 폭 제한 (2026-07-28 피드백: 풀폭이 보기 싫음) ──
+   콘텐츠와 같은 정렬: .water-layout(max 1200px, 패딩 40px)의 내부 폭과 일치.
+   append 규칙이라 위의 .wtf 기본 정의를 덮는다. */
+.wtf {
+  width: calc(100% - 80px);
+  max-width: calc(var(--max-w) - 80px);
+  margin-left: auto;
+  margin-right: auto;
+}
+@media (max-width: 768px) {
+  .wtf {
+    width: calc(100% - 32px);
+  }
+}
+
+/* ── 핵심 필터 세로 쌓기 + 가운데 정렬 (브랜드 → 정수 기능 → 월 렌탈료, 2026-07-28) ── */
+.wtf-core {
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+.wtf-core .wtf-group {
+  justify-content: center;
+}
+.wtf-core .wtf-pills {
+  justify-content: center;
+}
+
+/* ── 상품 카드 hover 테두리 ──
+   회색면 카드 규칙(#productView .water-layout .water-prod-card)이 ID 특이도로
+   border-color:transparent 를 이겨 hover 테두리가 안 보였음 → 같은 스코프 hover 로 복원 */
+#productView .water-layout .water-prod-card:hover {
+  border-color: var(--purple);
+}
+
+/* ── 상품 영역·필터 바 확폭 — 4열 카드가 참고 시안보다 좁아 보이는 문제 ──
+   1200px 컨테이너를 정수기 상품뷰에서만 1400px 로 (전역 --max-w 무변경) */
+#productView .water-layout {
+  max-width: 1400px;
+}
+.wtf {
+  max-width: calc(1400px - 80px);
+}
+.water-list-grid {
+  gap: 20px;
+}
+
+/* ── 핵심 필터를 상세필터 패널 안으로 (2026-07-28 피드백: 평소엔 검색줄만) ──
+   .wtf-detail 은 세로 컨테이너, 8구획 그리드는 내부 .wtf-detail-grid 가 담당 */
+.wtf-detail {
+  display: block;
+}
+.wtf-detail[hidden] {
+  display: none;
+}
+.wtf-detail .wtf-core {
+  margin-top: 0;
+}
+.wtf-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 14px 24px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #f1f2f5;
+}
+.wtf-detail-grid .wtf-group {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+.wtf-detail-grid .wtf-pills {
+  justify-content: flex-start;
+}
+
+/* ── 검색창 밑줄형 (참고 시안: 밑줄 + 우측 ✕/돋보기) + 핵심 3구획 좌측 정렬 (2026-07-28) ── */
+.wtf-search {
+  border: none;
+  border-bottom: 2px solid var(--text-main);
+  border-radius: 0;
+  background: transparent;
+  padding: 12px 72px 12px 2px;
+  font-size: 15.5px;
+}
+.wtf-search:focus {
+  box-shadow: none;
+  border-bottom-color: var(--purple);
+}
+.wtf-search-ico {
+  left: auto;
+  right: 4px;
+  color: var(--text-main);
+}
+.wtf-clear {
+  position: absolute;
+  right: 38px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 50%;
+  background: #c9ccd6;
+  color: #fff;
+  font-size: 11px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+.wtf-clear:hover { background: var(--text-muted); }
+.wtf-clear[hidden] { display: none; }
+
+/* 핵심 3구획(브랜드/정수 기능/월 렌탈료) — 가운데 쌓기 → 좌측 정렬로.
+   하단 상세 그리드와 같은 '라벨 위 + 알약 아래' 스타일로 통일해 정렬선을 맞춘다. */
+.wtf-core {
+  align-items: stretch;
+  gap: 14px;
+}
+.wtf-core .wtf-group {
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: flex-start;
+  gap: 8px;
+}
+.wtf-core .wtf-pills {
+  justify-content: flex-start;
+}
+
+/* ── BEST 섹션도 상품 영역과 같은 1400px 프레임으로 (2026-07-28 피드백) ──
+   5칸 카드가 1200px 기준이라 4열 상품 카드보다 작아 보이던 것 → 프레임 통일 */
+#productView .best-fullwidth {
+  max-width: 1400px;
+}
+
+/* ── BEST = 한 줄 5칸 유지 (2026-07-28 확정) ──
+   1400px 프레임에서 5칸이라 전체 상품(4열) 카드보다 약간 작은 게 의도.
+   간격만 상품 그리드와 통일. */
+.water-best-grid {
+  gap: 20px;
+}
