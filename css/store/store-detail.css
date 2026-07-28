@@ -6,7 +6,7 @@
 
 /* ── 공통 wrap ──────────────────────────────────── */
 .store-wrap {
-  max-width: 920px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 24px;
 }
@@ -15,7 +15,7 @@
    1. 페이지 헤더
    ════════════════════════════════════════════════════════ */
 .store-page-head {
-  max-width: 920px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 24px 24px 16px;
 }
@@ -72,15 +72,21 @@
    2. 매장 메인 이미지
    ════════════════════════════════════════════════════════ */
 .store-hero {
-  max-width: 920px;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 24px 24px;
 }
 
+/* 매장 간판 사진은 가로세로 비율이 제각각이다.
+   높이를 320px 로 고정하고 cover 를 쓰면 4:3 사진의 간판 위아래가 그대로 잘렸다.
+   -> 높이를 사진에 맡긴다(잘라내지 않음).
+      max-height 는 세로로 긴 사진 하나가 화면을 다 먹는 것만 막는 안전장치이고,
+      그 경우에만 contain 이 동작해 좌우에 배경이 보인다. */
 .store-hero-img {
   width: 100%;
-  height: 320px;
-  object-fit: cover;
+  height: auto;
+  max-height: 70vh;
+  object-fit: contain;
   border-radius: 16px;
   background: linear-gradient(135deg, #f3eeff 0%, #e9e2fa 100%);
   display: block;
@@ -403,7 +409,8 @@
     padding: 0 16px 20px;
   }
   .store-hero-img {
-    height: 220px;
+    height: auto;
+    max-height: none;
     border-radius: 12px;
   }
   .store-section {
