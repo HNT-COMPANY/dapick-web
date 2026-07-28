@@ -1,44 +1,145 @@
-// ── 브랜드 정보 (메인보드용) ──
-const BRAND_INFO = {
-  coway: {
-    name: '코웨이',
-    logo: '/assets/coway/logos/coway_logo.png',
-    tag: '코웨이 정수기',
-    title: '코웨이 정수기<br><em>인기 모델 전체 비교</em>',
-    sub: '아이콘·노블·한뼘 시리즈 약정·관리주기 선택 후 월 렌탈료 확인',
-  },
-  sk: {
-    name: 'SK매직',
-    logo: '/assets/skmagic/logos/skmagic.png',
-    tag: 'SK매직 정수기',
-    title: 'SK매직 정수기<br><em>올인원 자동세척 라인업</em>',
-    sub: '올인원·스파클링·올클린 시리즈 약정·관리주기 선택 후 월 렌탈료 확인',
-  },
-  chungho: {
-    name: '청호나이스',
-    logo: '/assets/chungho/logos/chungho.png',
-    tag: '청호나이스 정수기',
-    title: '청호나이스 정수기<br><em>합리적 가격 고성능</em>',
-    sub: 'SLIM·에코·MAISON 시리즈 약정·관리주기 선택 후 월 렌탈료 확인',
-  },
-  cuckoo: {
-    name: '쿠쿠',
-    logo: '/assets/cuckoo/logos/cuckoo.png',
-    tag: '쿠쿠 정수기',
-    title: '쿠쿠 정수기<br><em>나노필터 자연살균</em>',
-    sub: 'CP 시리즈 전체 라인업 약정·관리주기 선택 후 월 렌탈료 확인',
-  },
-};
+// ════════════════════════════════════════════════════
+// water-board.js — 메인보드(브랜드 선택) ↔ 상품뷰 전환 + 브랜드 동적 렌더
+// 브랜드 데이터 = 어드민 '브랜드 관리' → GET /api/brands?categoryType=WATER
+//   (로더는 gnb.js 의 dpFetchWaterBrands — GNB 드롭다운과 같은 fetch 를 공유)
+// - 보드 카드: 로고(등록된 경우만)/이름/설명(줄바꿈 유지), 가로 4개 그리드
+// - 20개(4×5) 초과 시 페이지네이션
+// - 상품뷰 브랜드 탭 · 필터 브랜드 체크박스도 같은 데이터로 렌더
+// 의존: utils.js(escapeHtml/escapeAttr), gnb.js(dpFetchWaterBrands/dpBrandLogoSrc),
+//       water.js(switchBrand/applyFilters — BRAND_INFO 는 여기 전역을 읽음)
+// ════════════════════════════════════════════════════
+
+// 코드 → { name, logo, desc }. water.js(switchBrand 헤더)와 공유하는 페이지 전역.
+let BRAND_INFO = {};
+let WATER_BRANDS = [];        // API 원본 (sortOrder 순)
+const BRAND_PAGE_SIZE = 20;   // 4열 × 5줄
+let brandBoardPage = 0;
+
+// ── 초기화: 브랜드 로드 → 보드/탭/필터 렌더 → 딥링크 처리 ──
+async function initBrandBoard() {
+  WATER_BRANDS = await dpFetchWaterBrands(); // 실패 시 [] (gnb.js 에서 catch)
+  BRAND_INFO = {};
+  WATER_BRANDS.forEach((b) => {
+    BRAND_INFO[b.code] = {
+      name: b.name,
+      logo: dpBrandLogoSrc(b.logoUrl || ''),
+      desc: b.description || '',
+    };
+  });
+
+  const grid = document.getElementById('brandSelectGrid');
+  if (!WATER_BRANDS.length) {
+    if (grid)
+      grid.innerHTML =
+        '<div style="grid-column:1/-1;text-align:center;color:var(--text-muted);padding:40px 0;">브랜드 정보를 불러오지 못했습니다. 잠시 후 새로고침 해주세요.</div>';
+    return;
+  }
+
+  renderBrandBoard();
+  renderBrandTabs();
+  renderBrandFilterOptions();
+  handleBrandDeepLink();
+}
+
+// ── 보드 카드 렌더 (+ 페이지네이션) ──
+function renderBrandBoard() {
+  const grid = document.getElementById('brandSelectGrid');
+  if (!grid) return;
+
+  const pages = Math.max(1, Math.ceil(WATER_BRANDS.length / BRAND_PAGE_SIZE));
+  if (brandBoardPage >= pages) brandBoardPage = pages - 1;
+  const slice = WATER_BRANDS.slice(
+    brandBoardPage * BRAND_PAGE_SIZE,
+    (brandBoardPage + 1) * BRAND_PAGE_SIZE
+  );
+  grid.innerHTML = slice.map(brandCardHtml).join('');
+
+  const pager = document.getElementById('brandBoardPager');
+  if (!pager) return;
+  if (pages <= 1) {
+    pager.style.display = 'none';
+    pager.innerHTML = '';
+    return;
+  }
+  pager.style.display = 'flex';
+  pager.innerHTML =
+    `<button type="button" class="bbp-btn" ${brandBoardPage <= 0 ? 'disabled' : ''} onclick="brandBoardGo(${brandBoardPage - 1})">이전</button>` +
+    `<span class="bbp-info">${brandBoardPage + 1} / ${pages}</span>` +
+    `<button type="button" class="bbp-btn" ${brandBoardPage >= pages - 1 ? 'disabled' : ''} onclick="brandBoardGo(${brandBoardPage + 1})">다음</button>`;
+}
+
+function brandBoardGo(p) {
+  const pages = Math.max(1, Math.ceil(WATER_BRANDS.length / BRAND_PAGE_SIZE));
+  if (p < 0 || p >= pages) return;
+  brandBoardPage = p;
+  renderBrandBoard();
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 카드 1장: 로고(등록된 경우만) / 브랜드명 / 설명(줄바꿈 → <br>) / 자세히 보기
+function brandCardHtml(b) {
+  const info = BRAND_INFO[b.code] || {};
+  const logo = info.logo
+    ? `<div class="brand-select-logo"><img src="${escapeAttr(info.logo)}" alt="${escapeAttr(b.name)}"></div>`
+    : '';
+  const desc = info.desc
+    ? `<div class="brand-select-desc">${escapeHtml(info.desc).replace(/\n/g, '<br>')}</div>`
+    : '';
+  return `
+      <div class="brand-select-card" onclick="selectBrand('${escapeAttr(b.code)}')">
+        ${logo}
+        <div class="brand-select-info">
+          <div class="brand-select-name">${escapeHtml(b.name)}</div>
+          ${desc}
+        </div>
+        <span class="brand-select-badge">자세히 보기</span>
+      </div>`;
+}
+
+// ── 상품뷰 브랜드 탭 — 로고 있으면 로고, 없으면 이름 텍스트 ──
+function renderBrandTabs() {
+  const wrap = document.getElementById('brandTabs');
+  if (!wrap) return;
+  wrap.innerHTML = WATER_BRANDS.map((b) => {
+    const info = BRAND_INFO[b.code] || {};
+    const inner = info.logo
+      ? `<img src="${escapeAttr(info.logo)}" alt="${escapeAttr(b.name)}" class="brand-logo-img">`
+      : `<span>${escapeHtml(b.name)}</span>`;
+    return `<div class="brand-tab" data-brand="${escapeAttr(b.code)}" onclick="switchBrand('${escapeAttr(b.code)}')">${inner}</div>`;
+  }).join('');
+}
+
+// ── 필터 '브랜드' 체크박스 — 등록 브랜드 전체 ──
+// initWaterFilter(DOMContentLoaded) 이후에 삽입되므로 change 바인딩을 여기서 직접 건다.
+function renderBrandFilterOptions() {
+  const wrap = document.getElementById('wfBrandOptions');
+  if (!wrap) return;
+  wrap.innerHTML = WATER_BRANDS.map(
+    (b) =>
+      `<label class="wf-opt"><input type="checkbox" data-filter="brand" data-value="${escapeAttr(b.code)}"><span>${escapeHtml(b.name)}</span></label>`
+  ).join('');
+  wrap.querySelectorAll('input[data-filter]').forEach((el) => {
+    el.addEventListener('change', applyFilters);
+  });
+}
+
+// ── 진입 시 ?brand=… 있으면 해당 브랜드 상품뷰로 (상세 뒤로가기·GNB 드롭다운 진입) ──
+function handleBrandDeepLink() {
+  const bp = new URLSearchParams(location.search).get('brand');
+  if (bp && BRAND_INFO[bp]) selectBrand(bp);
+}
 
 // ── 메인보드 → 상품뷰 전환 ──
 function selectBrand(brand) {
   const info = BRAND_INFO[brand];
+  if (!info) return;
 
-  // hero(.page-hero)는 제거됨 — productHeroTag/Title/Sub set도 제거(요소 없어 null 에러 방지).
-  // productViewBrand(상단 브랜드 로고+이름)는 hero 아님 → 유지.
+  // 상단 브랜드 헤더 — 로고는 등록된 경우만 (switchBrand 의 갱신 로직과 동일 규칙)
   document.getElementById('productViewBrand').innerHTML =
-    `<img src="${info.logo}" alt="${info.name}" style="height:24px;object-fit:contain;">
-     <span class="product-view-brand-name">${info.name}</span>`;
+    (info.logo
+      ? `<img src="${escapeAttr(info.logo)}" alt="${escapeAttr(info.name)}" style="height:24px;object-fit:contain;">`
+      : '') +
+    `<span class="product-view-brand-name">${escapeHtml(info.name)}</span>`;
 
   document
     .querySelectorAll('.brand-tab')
@@ -75,11 +176,7 @@ window.addEventListener('popstate', () => {
   }
 });
 
-// ── 진입 시 ?brand=… 있으면 해당 브랜드 목록 자동 표시 (상세 뒤로가기 복원) ──
-// selectBrand → switchBrand → renderBrand 가 데이터 로드를 직접 처리하므로 즉시 호출 안전.
+// ── 진입: 브랜드 로드 → 렌더 (딥링크 처리는 initBrandBoard 안에서) ──
 document.addEventListener('DOMContentLoaded', () => {
-  const bp = new URLSearchParams(location.search).get('brand');
-  if (bp && BRAND_INFO[bp]) {
-    selectBrand(bp);
-  }
+  initBrandBoard().catch((e) => console.error('[water-board] 초기화 실패:', e));
 });

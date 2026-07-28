@@ -70,7 +70,12 @@ function groupByBrand(list) {
 
     if (!groups[brandKey]) {
       groups[brandKey] = {
-        name: p.brandName || BRAND_META[brandKey]?.name || brandKey,
+        // 이름 우선순위: 상품 응답 brandName → 브랜드 API(BRAND_INFO) → 레거시 BRAND_META → 코드
+        name:
+          p.brandName ||
+          (typeof BRAND_INFO !== 'undefined' && BRAND_INFO[brandKey]?.name) ||
+          BRAND_META[brandKey]?.name ||
+          brandKey,
         emoji: BRAND_META[brandKey]?.emoji || '💧',
         products: [],
       };
@@ -290,8 +295,11 @@ async function switchBrand(brand) {
   if (info) {
     const pvb = document.getElementById('productViewBrand');
     if (pvb)
-      pvb.innerHTML = `<img src="${info.logo}" alt="${info.name}" style="height:24px;object-fit:contain;">
-     <span class="product-view-brand-name">${info.name}</span>`;
+      pvb.innerHTML =
+        (info.logo
+          ? `<img src="${escapeAttr(info.logo)}" alt="${escapeAttr(info.name)}" style="height:24px;object-fit:contain;">`
+          : '') +
+        `<span class="product-view-brand-name">${escapeHtml(info.name)}</span>`;
   }
 
   clearFilterInputs(); // 브랜드 바뀌면 필터 입력만 초기화 (renderBrand는 아래서 — 중복 호출 방지)

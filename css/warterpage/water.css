@@ -1897,3 +1897,36 @@
   background: #f7f6fe;
 }
 
+
+/* ── 브랜드 보드 페이지네이션 (20개 초과 시 water-board.js 가 표시) ── */
+.brand-board-pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 14px;
+  margin-top: 24px;
+}
+.brand-board-pager .bbp-btn {
+  padding: 8px 18px;
+  border: 1.5px solid var(--border-card);
+  background: var(--white);
+  color: var(--text-sub);
+  border-radius: 999px;
+  font-size: 13.5px;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.15s;
+}
+.brand-board-pager .bbp-btn:hover:not(:disabled) {
+  border-color: var(--purple);
+  color: var(--purple);
+}
+.brand-board-pager .bbp-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+.brand-board-pager .bbp-info {
+  font-size: 13px;
+  color: var(--text-muted);
+}

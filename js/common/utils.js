@@ -234,3 +234,19 @@ function createToastContainer() {
   document.body.appendChild(el);
   return el;
 }
+
+// ── HTML/속성 이스케이프 (공용) ──────────────────────────
+// 사용자·서버 데이터를 innerHTML 에 넣을 땐 반드시 이 함수를 경유한다 (CLAUDE.md 규칙).
+// 일부 페이지 파일에 같은 이름의 로컬/전역 사본이 남아 있으나 동작 동일 — 점진 통합 예정.
+function escapeHtml(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s);
+}

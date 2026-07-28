@@ -45,7 +45,7 @@ function buildGnbHtml() {
           <div class="cat-dropdown">${subLinks}</div>
         </div>`;
     }
-    return `<div class="cat-item${activeCls}" onclick="goPage('${c.cat}')">${c.label}</div>`;
+    return `<div class="cat-item${activeCls}" data-cat="${c.cat}" onclick="goPage('${c.cat}')">${c.label}</div>`;
   }).join('');
 
   // ↓ internet-unified.html 원본 gnb-top 그대로 (로고 경로/클래스, gnb-right onclick 포함)
@@ -112,31 +112,99 @@ function gnbIsActiveCat(cat, path) {
 }
 
 // 모바일: 드롭다운 클릭 토글 (데스크탑은 CSS hover)
+// 라벨 1개 바인딩 — 동적으로 추가되는 드롭다운(정수기)도 이 함수를 재사용한다.
+// setupGnbDropdownToggle 을 다시 부르면 기존 라벨에 리스너가 중복 붙어 토글이 2번 돌므로 금지.
+function bindGnbDropdownLabel(label) {
+  label.addEventListener('click', (e) => {
+    // 모바일(터치/좁은 화면)에서만 토글, 데스크탑은 hover라 이동 우선
+    if (
+      window.matchMedia('(hover: none)').matches ||
+      window.innerWidth <= 768
+    ) {
+      e.stopPropagation();
+      const item = label.closest('.cat-item');
+      const wasOpen = item.classList.contains('is-open');
+      document
+        .querySelectorAll('.cat-item.has-dropdown')
+        .forEach((i) => i.classList.remove('is-open'));
+      if (!wasOpen) item.classList.add('is-open');
+    }
+  });
+}
+
 function setupGnbDropdownToggle() {
   document
     .querySelectorAll('.cat-item.has-dropdown .cat-label')
-    .forEach((label) => {
-      label.addEventListener('click', (e) => {
-        // 모바일(터치/좁은 화면)에서만 토글, 데스크탑은 hover라 이동 우선
-        if (
-          window.matchMedia('(hover: none)').matches ||
-          window.innerWidth <= 768
-        ) {
-          e.stopPropagation();
-          const item = label.closest('.cat-item');
-          const wasOpen = item.classList.contains('is-open');
-          document
-            .querySelectorAll('.cat-item.has-dropdown')
-            .forEach((i) => i.classList.remove('is-open'));
-          if (!wasOpen) item.classList.add('is-open');
-        }
-      });
-    });
+    .forEach(bindGnbDropdownLabel);
   // 바깥 클릭 시 닫힘
   document.addEventListener('click', () => {
     document
       .querySelectorAll('.cat-item.has-dropdown.is-open')
       .forEach((i) => i.classList.remove('is-open'));
+  });
+}
+
+// ── 정수기 브랜드 로더 (공개 API) — GNB 드롭다운·정수기 페이지(water-board.js) 공용 ──
+// 어드민 '브랜드 관리' 등록/숨김/정렬이 그대로 반영된다. 페이지당 1회 fetch(프로미스 캐시).
+let _dpWaterBrandsPromise = null;
+function dpFetchWaterBrands() {
+  if (_dpWaterBrandsPromise) return _dpWaterBrandsPromise;
+  if (typeof DAPICK_CONFIG === 'undefined') return Promise.resolve([]);
+  _dpWaterBrandsPromise = fetch(
+    `${DAPICK_CONFIG.API_BASE_URL}/api/brands?categoryType=WATER`,
+    { headers: { 'Content-Type': 'application/json' } }
+  )
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((json) => (Array.isArray(json) ? json : json?.data || []))
+    .catch((err) => {
+      console.error('[gnb] 정수기 브랜드 로드 실패:', err);
+      _dpWaterBrandsPromise = null; // 다음 호출에서 재시도
+      return [];
+    });
+  return _dpWaterBrandsPromise;
+}
+
+// 로고 src 보정 — /uploads/... 는 API 서버 상대경로라 API_BASE 를 붙인다. /assets/...·절대 URL 은 그대로.
+function dpBrandLogoSrc(url) {
+  if (!url) return '';
+  if (url.indexOf('/uploads/') === 0 && typeof DAPICK_CONFIG !== 'undefined') {
+    return DAPICK_CONFIG.API_BASE_URL + url;
+  }
+  return url;
+}
+
+function dpGnbEsc(s) {
+  return String(s == null ? '' : s)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+// 정수기 카테고리를 브랜드 드롭다운으로 전환 (인터넷 드롭다운과 같은 마크업/CSS 재사용)
+// 브랜드 0개·API 실패 시 기존 일반 링크 그대로 유지 (안전 폴백)
+function injectWaterGnbDropdown() {
+  const item = document.querySelector('.cat-bar .cat-item[data-cat="water"]');
+  if (!item || item.classList.contains('has-dropdown')) return;
+  dpFetchWaterBrands().then((brands) => {
+    if (!brands.length) return;
+    const subLinks = brands
+      .map(
+        (b) =>
+          `<a class="cat-sub-item" href="water.html?brand=${encodeURIComponent(b.code)}">${dpGnbEsc(b.name)}</a>`
+      )
+      .join('');
+    // div 자체의 onclick(goPage)을 제거하고 라벨로 옮긴다 — 서브링크 클릭이 버블돼 목록으로 튀는 것 방지
+    item.removeAttribute('onclick');
+    item.onclick = null;
+    item.classList.add('has-dropdown');
+    item.innerHTML = `<span class="cat-label" onclick="goPage('water')">정수기</span><div class="cat-dropdown">${subLinks}</div>`;
+    const label = item.querySelector('.cat-label');
+    if (label) bindGnbDropdownLabel(label);
   });
 }
 
@@ -166,6 +234,7 @@ function toggleGnbMore(btn) {
   if (!nav) return; // login/signup 등 nav.gnb 없으면 스킵
   nav.innerHTML = buildGnbHtml();
   setupGnbDropdownToggle();
+  injectWaterGnbDropdown(); // 정수기 브랜드 드롭다운 (비동기 — 실패 시 일반 링크 유지)
   document.addEventListener('click', (e) => {
     const more = document.querySelector('.gnb-more');
     const card = document.getElementById('gnbMoreCard');

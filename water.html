@@ -90,55 +90,11 @@
     <div class="board-section-title">브랜드를 선택해주세요</div>
     <div class="board-section-sub">브랜드별 베스트 상품과 전체 라인업을 확인할 수 있어요</div>
 
-    <div class="brand-select-grid">
-      <!-- 코웨이 -->
-      <div class="brand-select-card" onclick="selectBrand('coway')">
-        <div class="brand-select-logo">
-          <img src="/assets/coway/logos/coway_logo.png" alt="코웨이">
-        </div>
-        <div class="brand-select-info">
-          <div class="brand-select-name">코웨이</div>
-          <div class="brand-select-desc">국내 정수기 점유율 1위<br>아이콘·노블·한뼘 시리즈</div>
-        </div>
-        <span class="brand-select-badge">자세히 보기 </span>
-      </div>
-
-      <!-- SK매직 -->
-      <div class="brand-select-card" onclick="selectBrand('sk')">
-        <div class="brand-select-logo">
-          <img src="/assets/skmagic/logos/skmagic.png" alt="SK매직">
-        </div>
-        <div class="brand-select-info">
-          <div class="brand-select-name">SK매직</div>
-          <div class="brand-select-desc">올인원 자동 세척 특허<br>스파클링·올클린 시리즈</div>
-        </div>
-        <span class="brand-select-badge">자세히 보기 </span>
-      </div>
-
-      <!-- 청호나이스 -->
-      <div class="brand-select-card" onclick="selectBrand('chungho')">
-        <div class="brand-select-logo">
-          <img src="/assets/chungho/logos/chungho.png" alt="청호나이스">
-        </div>
-        <div class="brand-select-info">
-          <div class="brand-select-name">청호나이스</div>
-          <div class="brand-select-desc">합리적 가격 고성능<br>SLIM·에코·MAISON</div>
-        </div>
-        <span class="brand-select-badge">자세히 보기</span>
-      </div>
-
-      <!-- 쿠쿠 -->
-      <div class="brand-select-card" onclick="selectBrand('cuckoo')">
-        <div class="brand-select-logo">
-          <img src="/assets/cuckoo/logos/cuckoo.png" alt="쿠쿠">
-        </div>
-        <div class="brand-select-info">
-          <div class="brand-select-name">쿠쿠</div>
-          <div class="brand-select-desc">자연 살균 나노필터<br>CP 시리즈 전문 라인업</div>
-        </div>
-        <span class="brand-select-badge">자세히 보기 </span>
-      </div>
-    </div>
+    <!-- 브랜드 카드: water-board.js 가 GET /api/brands?categoryType=WATER 로 렌더
+         (어드민 '브랜드 관리' 연동 — 로고는 등록된 경우만, 가로 4개, 20개 초과 시 페이지네이션) -->
+    <div class="brand-select-grid" id="brandSelectGrid"></div>
+    <div class="brand-board-pager" id="brandBoardPager" style="display:none;"></div>
+  </div>
   </div>
 </div>
 
@@ -160,20 +116,8 @@
 
   <!-- 브랜드 탭 (상품뷰 내부) -->
   <nav class="brand-nav">
-    <div class="brand-inner">
-      <div class="brand-tab" data-brand="coway" onclick="switchBrand('coway')">
-        <img src="/assets/coway/logos/coway_logo.png" alt="코웨이" class="brand-logo-img">
-      </div>
-      <div class="brand-tab" data-brand="sk" onclick="switchBrand('sk')">
-        <img src="/assets/skmagic/logos/skmagic.png" alt="SK매직" class="brand-logo-img">
-      </div>
-      <div class="brand-tab" data-brand="chungho" onclick="switchBrand('chungho')">
-        <img src="/assets/chungho/logos/chungho.png" alt="청호나이스" class="brand-logo-img">
-      </div>
-      <div class="brand-tab" data-brand="cuckoo" onclick="switchBrand('cuckoo')">
-        <img src="/assets/cuckoo/logos/cuckoo.png" alt="쿠쿠" class="brand-logo-img">
-      </div>
-    </div>
+    <!-- 브랜드 탭: water-board.js 가 렌더 (로고 등록 시 로고, 없으면 이름 텍스트) -->
+    <div class="brand-inner" id="brandTabs"></div>
   </nav>
 
   <!-- 상품 컨텐츠 -->
@@ -203,14 +147,10 @@
           <button type="button" class="wf-close" id="wfCloseBtn" aria-label="필터 닫기">✕</button>
         </div>
 
-        <!-- 1. 브랜드 (다중) -->
+        <!-- 1. 브랜드 (다중) — water-board.js 가 /api/brands 로 렌더 (등록 브랜드 전체) -->
         <div class="wf-section">
           <div class="wf-section-label">브랜드</div>
-          <div class="wf-options">
-            <label class="wf-opt"><input type="checkbox" data-filter="brand" data-value="coway"><span>코웨이</span></label>
-            <label class="wf-opt"><input type="checkbox" data-filter="brand" data-value="sk"><span>SK매직</span></label>
-            <label class="wf-opt"><input type="checkbox" data-filter="brand" data-value="chungho"><span>청호나이스</span></label>
-          </div>
+          <div class="wf-options" id="wfBrandOptions"></div>
         </div>
 
         <!-- 2. 모델명 (검색) -->
