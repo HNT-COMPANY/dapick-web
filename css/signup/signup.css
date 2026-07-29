@@ -24,9 +24,9 @@ body {
   background: #fff;
   border: 1px solid #efedf6;
   border-radius: 20px;
-  padding: 44px 40px 36px;
+  padding: 44px 36px 36px;
   width: 100%;
-  max-width: 440px;
+  max-width: 520px;
   box-shadow: 0 10px 40px rgba(24, 23, 43, 0.08);
   position: relative;
   overflow: visible;
@@ -469,4 +469,123 @@ body {
   .agree-group {
     padding: 14px;
   }
+}
+
+
+/* ════════════════════════════════════════════════════
+   이메일 아이디 + 도메인 분리 입력
+   ════════════════════════════════════════════════════ */
+.email-split {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+/* 아이디·주소는 남는 폭을 나눠 갖고, 드롭다운만 고정 폭을 쓴다. */
+.email-split .form-input { flex: 1 1 0; min-width: 0; }
+.email-at {
+  color: var(--text-muted);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.email-domain-select {
+  flex: 0 0 114px;
+  height: 52px;
+  padding: 0 8px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: #fff;
+  font-size: 14px;
+  color: var(--text-main);
+  cursor: pointer;
+}
+.email-domain-select:focus {
+  outline: none;
+  border-color: var(--purple-soft);
+}
+
+/* .btn-action 은 .input-with-btn 안에서 옆칸과 높이를 맞추는 전제로 만들어져 있다.
+   단독으로 쓰면 높이가 글자만큼으로 주저앉으므로 여기서 직접 잡아준다. */
+.btn-action--block {
+  width: 100%;
+  min-height: 52px;
+  font-size: 15px;
+}
+@media (max-width: 480px) {
+  .email-split { flex-wrap: wrap; }
+  .email-split .form-input { flex: 1 1 100%; }
+  .email-at { display: none; }
+  .email-domain-select { flex: 1 1 100%; }
+}
+
+/* ════════════════════════════════════════════════════
+   휴대폰 인증 모달
+   ════════════════════════════════════════════════════ */
+.dp-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(23, 20, 40, 0.55);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+.dp-modal.open { opacity: 1; pointer-events: auto; }
+
+.dp-modal-box {
+  width: 100%;
+  max-width: 380px;
+  background: #fff;
+  border-radius: 18px;
+  padding: 26px 22px 22px;
+  box-shadow: 0 18px 50px rgba(23, 20, 40, 0.22);
+  transform: translateY(12px);
+  transition: transform 0.18s;
+}
+.dp-modal.open .dp-modal-box { transform: translateY(0); }
+
+.dp-modal-title {
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-main);
+  margin-bottom: 6px;
+}
+.dp-modal-desc {
+  font-size: 13px;
+  color: var(--text-muted);
+  line-height: 1.5;
+  margin-bottom: 18px;
+}
+.dp-modal-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 20px;
+}
+.dp-modal-actions button { flex: 1; height: 46px; border-radius: 10px; font-size: 15px; font-weight: 700; }
+.dp-btn-ghost {
+  background: var(--purple-pale);
+  color: var(--purple);
+  border: none;
+  cursor: pointer;
+}
+.dp-btn-primary {
+  background: var(--purple);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+}
+.dp-btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* 인증 완료 표시 */
+.phone-verified {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--purple);
 }

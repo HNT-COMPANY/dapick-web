@@ -13,6 +13,15 @@ let verifiedEmail = null;
 let codeTimerInterval = null;
 let codeRemainingSeconds = 300; // 5분
 
+// ── 문자 인증 상태 ───────────────────────────────────────────────
+// 2026-07-28 이벤트 대량가입(105건) 대응. 전에는 전화번호가 형식만 맞으면
+// 그대로 저장돼서, 뒷자리가 연속인 가짜 번호가 무더기로 들어왔다.
+// 이제 실제로 문자를 받은 번호만 가입할 수 있다.
+let verifiedPhone = null;      // 인증을 마친 번호. 번호를 고치면 즉시 무효화된다.
+let verifiedSmsCode = null;    // 가입 요청에 함께 보낼 코드
+let smsTimerInterval = null;
+let smsRemainingSeconds = 180; // 서버 보관 시간과 같은 3분
+
 // ── 단계 이동 ────────────────────────────────────────────────────
 function goToStep(step) {
   // 패널 전환
@@ -116,12 +125,14 @@ function buildAddressString() {
 
 // ── Step 1: 인증코드 발송 ─────────────────────────────────────────
 async function sendVerificationCode() {
-  const emailInput = document.getElementById('input-email');
-  const email = emailInput.value.trim();
+  const email = composeEmail();
 
   if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
-    showSignupAlert('올바른 이메일 형식을 입력해주세요.');
-    emailInput.classList.add('err');
+    showSignupAlert('이메일 아이디와 주소를 모두 입력해주세요.');
+    const localEl = document.getElementById('input-email-local');
+    const domainEl = document.getElementById('input-email-domain');
+    if (localEl && !localEl.value.trim()) localEl.classList.add('err');
+    if (domainEl && !domainEl.value.trim()) domainEl.classList.add('err');
     return;
   }
 
@@ -145,8 +156,11 @@ async function sendVerificationCode() {
     }
     startCodeTimer();
 
-    // 이메일 input 잠금 (변경 방지)
-    emailInput.disabled = true;
+    // 이메일 입력 잠금 (변경 방지) — 아이디/도메인/드롭다운 세 칸 모두
+    ['input-email-local', 'input-email-domain', 'select-email-domain'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (el) el.disabled = true;
+    });
 
     setTimeout(() => {
       const codeInput = document.getElementById('input-code');
@@ -258,6 +272,12 @@ async function submitSignup() {
     document.getElementById('input-phone').classList.add('err');
     return;
   }
+  // 인증한 번호와 제출 번호가 같아야 한다. 인증 후 번호를 고쳤다면 여기서 걸린다.
+  if (!verifiedPhone || verifiedPhone !== phone) {
+    showSignupAlert('전화번호 인증을 완료해주세요.');
+    document.getElementById('input-phone').classList.add('err');
+    return;
+  }
   // 주소: 우편번호 검색으로 기본주소가 채워졌는지 확인 (백엔드 @NotBlank)
   if (!address) {
     showSignupAlert('주소를 입력해주세요. (주소 검색 버튼을 눌러주세요)');
@@ -289,6 +309,7 @@ async function submitSignup() {
       nickname,
       name,
       phone,
+      smsCode: verifiedSmsCode,
       address,
       agreeTerms,
       agreePrivacy,
@@ -378,6 +399,211 @@ function updateTimerDisplay() {
 }
 
 // ── 전화번호 자동 포맷 (010-XXXX-XXXX) ──────────────────────────
+// ── 이메일 아이디 + 도메인 조합 ──────────────────────────────────
+// 화면은 [아이디] @ [도메인] [드롭다운] 세 칸이지만,
+// 실제 값은 숨은 #input-email 하나로 합쳐 둔다. 기존 코드가 그 필드를 읽는다.
+function composeEmail() {
+  const local = (document.getElementById('input-email-local').value || '').trim();
+  const domain = (document.getElementById('input-email-domain').value || '').trim();
+  const hidden = document.getElementById('input-email');
+  const full = local && domain ? `${local}@${domain}` : '';
+  if (hidden) hidden.value = full;
+  return full;
+}
+
+/** 드롭다운에서 도메인을 고르면 도메인 칸을 채우고 잠근다. '직접입력'이면 비우고 연다. */
+function onEmailDomainPicked() {
+  const sel = document.getElementById('select-email-domain');
+  const domainInput = document.getElementById('input-email-domain');
+  if (!sel || !domainInput) return;
+
+  if (sel.value) {
+    domainInput.value = sel.value;
+    domainInput.readOnly = true;
+  } else {
+    domainInput.value = '';
+    domainInput.readOnly = false;
+    domainInput.focus();
+  }
+  domainInput.classList.remove('err');
+  composeEmail();
+}
+
+// ── 휴대폰 인증 모달 ─────────────────────────────────────────────
+function openPhoneModal() {
+  if (verifiedPhone) return;             // 이미 인증했으면 다시 열지 않는다
+  const m = document.getElementById('phone-modal');
+  if (!m) return;
+  m.classList.add('open');
+  document.body.style.overflow = 'hidden';
+  setTimeout(() => {
+    const el = document.getElementById('modal-phone');
+    if (el) el.focus();
+  }, 150);
+}
+
+function closePhoneModal() {
+  const m = document.getElementById('phone-modal');
+  if (!m) return;
+  m.classList.remove('open');
+  document.body.style.overflow = '';
+  hidePhoneAlert();
+}
+
+/** 배경(어두운 영역)을 눌렀을 때만 닫는다. 상자 안 클릭으로 닫히면 안 된다. */
+function onPhoneModalBackdrop(e) {
+  if (e.target && e.target.id === 'phone-modal') closePhoneModal();
+}
+
+function showPhoneAlert(msg, type = 'error') {
+  const el = document.getElementById('phone-modal-alert');
+  if (!el) return;
+  el.textContent = msg;
+  el.className = `alert-banner show ${type}`;
+}
+
+function hidePhoneAlert() {
+  const el = document.getElementById('phone-modal-alert');
+  if (!el) return;
+  el.textContent = '';
+  el.className = 'alert-banner';
+}
+
+// ── 전화번호 문자 인증 ───────────────────────────────────────────
+async function sendPhoneCode() {
+  const phoneInput = document.getElementById('modal-phone');
+  const phone = phoneInput.value.trim();
+
+  if (!/^010-\d{4}-\d{4}$/.test(phone)) {
+    showPhoneAlert('전화번호를 010-0000-0000 형식으로 입력해주세요.');
+    phoneInput.classList.add('err');
+    return;
+  }
+
+  setButtonLoading('btn-send-sms', 'send-sms-text', 'send-sms-spinner', true);
+  try {
+    await api.post('/api/auth/sms/send', { phone });
+    document.getElementById('phone-verify-row').style.display = '';
+    showPhoneAlert('인증번호를 문자로 보냈습니다.', 'success');
+    startSmsTimer();
+    setTimeout(() => {
+      const el = document.getElementById('input-sms-code');
+      if (el) el.focus();
+    }, 300);
+  } catch (e) {
+    showPhoneAlert(e.message || '인증번호 발송에 실패했습니다.');
+  } finally {
+    setButtonLoading('btn-send-sms', 'send-sms-text', 'send-sms-spinner', false);
+  }
+}
+
+async function verifyPhoneCode() {
+  const phone = document.getElementById('modal-phone').value.trim();
+  const codeInput = document.getElementById('input-sms-code');
+  const code = codeInput.value.trim();
+
+  if (!/^\d{6}$/.test(code)) {
+    showPhoneAlert('문자로 받은 6자리 숫자를 입력해주세요.');
+    codeInput.classList.add('err');
+    return;
+  }
+
+  setButtonLoading('btn-verify-sms', 'verify-sms-text', 'verify-sms-spinner', true);
+  try {
+    await api.post('/api/auth/sms/verify', { phone, code });
+    stopSmsTimer();
+    // 서버는 확인만 하고 코드를 남겨둔다(peek). 실제 소비는 가입이 끝날 때 서버가 한다.
+    verifiedPhone = phone;
+    verifiedSmsCode = code;
+
+    // 본 화면에 인증된 번호를 옮겨 적고, 다시 못 열게 잠근다.
+    const mainPhone = document.getElementById('input-phone');
+    if (mainPhone) {
+      mainPhone.value = phone;
+      mainPhone.classList.remove('err');
+      mainPhone.style.cursor = 'default';
+      mainPhone.onclick = null;
+    }
+    const mark = document.getElementById('phone-verified-mark');
+    if (mark) mark.style.display = '';
+    const openBtn = document.getElementById('btn-open-phone');
+    if (openBtn) {
+      openBtn.disabled = true;
+      openBtn.textContent = '인증 완료';
+    }
+
+    closePhoneModal();
+    showSignupAlert('휴대폰 인증이 완료되었습니다.', 'success');
+  } catch (e) {
+    showPhoneAlert(e.message || '인증번호가 올바르지 않습니다.');
+    codeInput.classList.add('err');
+  } finally {
+    setButtonLoading('btn-verify-sms', 'verify-sms-text', 'verify-sms-spinner', false);
+  }
+}
+
+/** 번호를 고치면 이미 받은 인증을 버린다. 인증한 번호와 제출 번호가 어긋나면 안 된다. */
+function resetPhoneVerification() {
+  if (!verifiedPhone) return;
+  verifiedPhone = null;
+  verifiedSmsCode = null;
+  stopSmsTimer();
+  const row = document.getElementById('phone-verify-row');
+  if (row) row.style.display = 'none';
+  const codeInput = document.getElementById('input-sms-code');
+  if (codeInput) {
+    codeInput.value = '';
+    codeInput.disabled = false;
+  }
+  const vBtn = document.getElementById('btn-verify-sms');
+  if (vBtn) vBtn.disabled = false;
+  const sBtn = document.getElementById('btn-send-sms');
+  if (sBtn) sBtn.disabled = false;
+
+  const mainPhone = document.getElementById('input-phone');
+  if (mainPhone) {
+    mainPhone.value = '';
+    mainPhone.style.cursor = 'pointer';
+    mainPhone.onclick = openPhoneModal;
+  }
+  const mark = document.getElementById('phone-verified-mark');
+  if (mark) mark.style.display = 'none';
+  const openBtn = document.getElementById('btn-open-phone');
+  if (openBtn) {
+    openBtn.disabled = false;
+    openBtn.textContent = '휴대폰 인증';
+  }
+}
+
+function startSmsTimer() {
+  stopSmsTimer();
+  smsRemainingSeconds = 180;
+  updateSmsTimerDisplay();
+  smsTimerInterval = setInterval(() => {
+    smsRemainingSeconds -= 1;
+    updateSmsTimerDisplay();
+    if (smsRemainingSeconds <= 0) {
+      stopSmsTimer();
+      showPhoneAlert('인증번호가 만료되었습니다. 다시 받아주세요.');
+    }
+  }, 1000);
+}
+
+function stopSmsTimer() {
+  if (smsTimerInterval) {
+    clearInterval(smsTimerInterval);
+    smsTimerInterval = null;
+  }
+}
+
+function updateSmsTimerDisplay() {
+  const el = document.getElementById('sms-timer');
+  if (!el) return;
+  const m = String(Math.floor(Math.max(smsRemainingSeconds, 0) / 60)).padStart(2, '0');
+  const s = String(Math.max(smsRemainingSeconds, 0) % 60).padStart(2, '0');
+  el.textContent = `${m}:${s}`;
+}
+
 function formatPhone(input) {
   let v = input.value.replace(/\D/g, '');
   if (v.length > 11) v = v.slice(0, 11);
@@ -469,6 +695,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const phoneInput = document.getElementById('input-phone');
   if (phoneInput) {
     phoneInput.addEventListener('input', () => formatPhone(phoneInput));
+  }
+
+  // 모달 안 휴대폰 번호 — 고치면 이미 받은 인증을 버린다
+  const modalPhone = document.getElementById('modal-phone');
+  if (modalPhone) {
+    modalPhone.addEventListener('input', () => {
+      formatPhone(modalPhone);
+      resetPhoneVerification();
+    });
   }
 
   // 약관 체크박스 → 전체 선택 동기화

@@ -80,16 +80,39 @@
     <!-- Step 1: 이메일 입력 -->
     <div class="step-panel active" id="step-1">
       <div class="form-group">
-        <label class="form-label" for="input-email">이메일</label>
-        <div class="input-with-btn">
+        <label class="form-label" for="input-email-local">이메일</label>
+        <div class="email-split">
           <input
-            type="email"
-            id="input-email"
+            type="text"
+            id="input-email-local"
             class="form-input"
-            placeholder="이메일을 입력하세요"
-            autocomplete="email"
+            placeholder="이메일 아이디"
+            autocomplete="username"
           >
-          <button class="btn-action" id="btn-send-code" onclick="sendVerificationCode()">
+          <span class="email-at">@</span>
+          <input
+            type="text"
+            id="input-email-domain"
+            class="form-input"
+            placeholder="직접 입력"
+            autocomplete="off"
+          >
+          <select class="email-domain-select" id="select-email-domain" onchange="onEmailDomainPicked()">
+            <option value="">직접입력</option>
+            <option value="naver.com">naver.com</option>
+            <option value="gmail.com">gmail.com</option>
+            <option value="daum.net">daum.net</option>
+            <option value="hanmail.net">hanmail.net</option>
+            <option value="kakao.com">kakao.com</option>
+            <option value="nate.com">nate.com</option>
+            <option value="outlook.com">outlook.com</option>
+            <option value="icloud.com">icloud.com</option>
+          </select>
+        </div>
+        <!-- 아이디 + 도메인을 합친 실제 값. 기존 코드가 이 필드를 읽는다. -->
+        <input type="hidden" id="input-email">
+        <div style="margin-top:10px;">
+          <button class="btn-action btn-action--block" id="btn-send-code" onclick="sendVerificationCode()">
             <span id="send-code-text">인증코드 발송</span>
             <div class="btn-spinner" id="send-code-spinner"></div>
           </button>
@@ -174,16 +197,27 @@
         >
       </div>
 
+      <!-- 전화번호 — 입력·인증은 모달에서 한다.
+           2026-07-28 이벤트 대량가입 대응. 전에는 형식만 맞으면 아무 번호나 통과했다. -->
       <div class="form-group">
         <label class="form-label" for="input-phone">전화번호</label>
-        <input
-          type="tel"
-          id="input-phone"
-          class="form-input"
-          placeholder="010-0000-0000"
-          maxlength="13"
-          autocomplete="tel"
-        >
+        <div class="input-with-btn">
+          <input
+            type="tel"
+            id="input-phone"
+            class="form-input"
+            placeholder="휴대폰 인증이 필요합니다"
+            readonly
+            onclick="openPhoneModal()"
+            style="cursor:pointer;background:#fff;"
+          >
+          <button type="button" class="btn-action" id="btn-open-phone" onclick="openPhoneModal()">
+            휴대폰 인증
+          </button>
+        </div>
+        <div class="phone-verified" id="phone-verified-mark" style="display:none;">
+          인증 완료된 번호입니다
+        </div>
       </div>
 
       <!-- 주소 (다음 우편번호 API) -->
@@ -277,6 +311,67 @@
 </div>
 
 <!-- ── 다음(카카오) 우편번호 API ── -->
+<!-- ════════════════════════════════════════════════════
+     휴대폰 인증 모달
+     ════════════════════════════════════════════════════ -->
+<div class="dp-modal" id="phone-modal" onclick="onPhoneModalBackdrop(event)">
+  <div class="dp-modal-box" role="dialog" aria-modal="true" aria-labelledby="phone-modal-title">
+    <div class="dp-modal-title" id="phone-modal-title">휴대폰 인증</div>
+    <div class="dp-modal-desc">
+      본인 명의의 휴대폰 번호로 인증번호를 보내드립니다.<br>
+      인증된 번호로만 가입할 수 있습니다.
+    </div>
+
+    <div class="form-group">
+      <label class="form-label" for="modal-phone">휴대폰 번호</label>
+      <div class="input-with-btn">
+        <input
+          type="tel"
+          id="modal-phone"
+          class="form-input"
+          placeholder="010-0000-0000"
+          maxlength="13"
+          inputmode="numeric"
+          autocomplete="tel"
+        >
+        <button type="button" class="btn-action" id="btn-send-sms" onclick="sendPhoneCode()">
+          <span id="send-sms-text">인증번호</span>
+          <div class="btn-spinner" id="send-sms-spinner"></div>
+        </button>
+      </div>
+    </div>
+
+    <div class="form-group" id="phone-verify-row" style="display:none;">
+      <label class="form-label" for="input-sms-code">인증번호</label>
+      <div class="input-with-btn">
+        <input
+          type="text"
+          id="input-sms-code"
+          class="form-input"
+          placeholder="6자리 숫자"
+          maxlength="6"
+          inputmode="numeric"
+          autocomplete="one-time-code"
+        >
+        <button type="button" class="btn-action" id="btn-verify-sms" onclick="verifyPhoneCode()">
+          <span id="verify-sms-text">확인</span>
+          <div class="btn-spinner" id="verify-sms-spinner"></div>
+        </button>
+      </div>
+      <div class="code-helper">
+        <span class="code-timer" id="sms-timer">03:00</span>
+        <button type="button" class="code-resend" onclick="sendPhoneCode()">재발송</button>
+      </div>
+    </div>
+
+    <div class="alert-banner" id="phone-modal-alert"></div>
+
+    <div class="dp-modal-actions">
+      <button type="button" class="dp-btn-ghost" onclick="closePhoneModal()">닫기</button>
+    </div>
+  </div>
+</div>
+
 <script src="//t1.daumcdn.net/mapjsapi/bundle/postcode/prod/postcode.v2.js"></script>
 
 <!-- ── JS (공통 → 회원가입 전용 순서) ── -->
