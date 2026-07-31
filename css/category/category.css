@@ -1,0 +1,190 @@
+/* ════════════════════════════════════════════════════════
+   관리자가 만든 카테고리 페이지 (/c/{slug}) — 2026-07-30
+   상품 카드는 배경 없이 흰 카드 + 모델명(제목 위) + 월 요금 강조.
+   ════════════════════════════════════════════════════════ */
+
+.cg-wrap {
+  max-width: var(--max-w, 1200px);
+  margin: 0 auto;
+  padding: 0 24px 80px;
+}
+
+.cg-head {
+  padding: 28px 0 8px;
+}
+.cg-title {
+  font-size: 26px;
+  font-weight: 800;
+  color: var(--text-main, #111827);
+}
+.cg-desc {
+  margin-top: 6px;
+  font-size: 14px;
+  color: var(--text-muted, #9ca3af);
+}
+
+/* ── 서브카테고리 바 ── */
+.cg-subs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 16px 0 4px;
+  border-bottom: 1px solid var(--border, #eceaf8);
+}
+.cg-sub {
+  padding: 9px 16px;
+  border-radius: 999px;
+  border: 1px solid var(--border, #eceaf8);
+  background: #fff;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-main, #374151);
+  cursor: pointer;
+  white-space: nowrap;
+}
+.cg-sub:hover {
+  border-color: var(--purple, #6c3fc5);
+  color: var(--purple, #6c3fc5);
+}
+.cg-sub.is-on {
+  background: var(--purple, #6c3fc5);
+  border-color: var(--purple, #6c3fc5);
+  color: #fff;
+  font-weight: 700;
+}
+
+/* ── 정렬 줄 ── */
+.cg-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 20px 0 14px;
+  flex-wrap: wrap;
+}
+.cg-count {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-main, #111827);
+}
+.cg-count em {
+  font-style: normal;
+  color: var(--purple, #6c3fc5);
+  margin-left: 4px;
+}
+.cg-sorts {
+  display: flex;
+  gap: 6px;
+}
+.cg-sort {
+  padding: 7px 14px;
+  border-radius: 999px;
+  border: 1px solid var(--border, #eceaf8);
+  background: #fff;
+  font-size: 13px;
+  color: var(--text-muted, #6b7280);
+  cursor: pointer;
+}
+.cg-sort.is-on {
+  border-color: var(--purple, #6c3fc5);
+  color: var(--purple, #6c3fc5);
+  font-weight: 700;
+}
+
+/* ── 상품 그리드 ── */
+.cg-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 20px;
+}
+@media (max-width: 1024px) {
+  .cg-grid { grid-template-columns: repeat(3, 1fr); }
+}
+@media (max-width: 768px) {
+  .cg-grid { grid-template-columns: repeat(2, 1fr); }
+  .cg-wrap { padding: 0 16px 60px; }
+}
+
+.cg-card {
+  border: 1px solid var(--border, #eceaf8);
+  border-radius: 14px;
+  background: #fff;
+  padding: 18px 18px 20px;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+  display: flex;
+  flex-direction: column;
+}
+.cg-card:hover {
+  border-color: var(--purple, #6c3fc5);
+  box-shadow: 0 6px 18px rgba(108, 63, 197, 0.1);
+  transform: translateY(-2px);
+}
+
+/* 이미지 영역 — 회색 배경 없이 흰 바탕에 상품만 */
+.cg-thumb {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  margin-bottom: 14px;
+}
+.cg-thumb img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+.cg-thumb .cg-noimg {
+  font-size: 12px;
+  color: var(--text-muted, #9ca3af);
+}
+
+/* 모델명 — 제목 위, 작게 */
+.cg-model {
+  font-size: 12px;
+  color: var(--text-muted, #9ca3af);
+  margin-bottom: 4px;
+  min-height: 16px;
+}
+
+/* 상품명 — 검정 */
+.cg-name {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: var(--text-main, #111827);
+  margin-bottom: 12px;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 월 요금 — 이 카드의 중심 */
+.cg-fee {
+  margin-top: auto;
+  font-size: 20px;
+  font-weight: 800;
+  color: var(--text-main, #111827);
+  letter-spacing: -0.3px;
+}
+.cg-fee small {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted, #6b7280);
+  margin-right: 4px;
+}
+.cg-fee.cg-fee--none {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted, #9ca3af);
+}
+
+.cg-empty {
+  padding: 60px 20px;
+  text-align: center;
+  color: var(--text-muted, #9ca3af);
+  font-size: 14px;
+}

@@ -23,18 +23,27 @@
 
   function hide(el) { el.hidden = true; el.style.display = 'none'; }
 
-  function fetchBanners(cat) {
+  // qs 예: 'category=WATER' 또는 'categoryId=uuid'
+  function fetchBanners(qs) {
     // 주의: 웹 api는 const 전역이라 window.api 로는 안 잡힘 → bare 참조를 typeof 로 가드
     if (typeof api !== 'undefined' && api && typeof api.get === 'function') {
-      return api.get('/api/banners?category=' + encodeURIComponent(cat));
+      return api.get('/api/banners?' + qs);
     }
     return Promise.reject(new Error('api.js 미로드'));
   }
 
   function initOne(el) {
+    // 관리자가 만든 카테고리는 (구) enum 값이 없어서 id 로 부른다 (2026-07-30).
+    // 기존 페이지는 계속 data-banner-category(enum)를 쓴다 — 서버가 둘 다 받는다.
+    var catId = el.getAttribute('data-banner-category-id');
     var cat = el.getAttribute('data-banner-category');
-    if (!cat) return;
-    fetchBanners(cat).then(function (d) {
+    var qs = catId
+      ? 'categoryId=' + encodeURIComponent(catId)
+      : cat
+        ? 'category=' + encodeURIComponent(cat)
+        : null;
+    if (!qs) return;
+    fetchBanners(qs).then(function (d) {
       var rows = Array.isArray(d) ? d : (d && d.content) || [];
       if (!rows.length) { hide(el); return; }
       build(el, rows);
@@ -112,9 +121,12 @@
   }
 
   function init() {
-    var list = document.querySelectorAll('.sb[data-banner-category]');
+    var list = document.querySelectorAll('.sb[data-banner-category], .sb[data-banner-category-id]');
     for (var i = 0; i < list.length; i++) initOne(list[i]);
   }
+  // 카테고리 id 를 API 로 받아온 뒤에야 부를 수 있는 페이지(/c/{slug})용 수동 창구
+  window.dpInitBanner = initOne;
+
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', init);
   else init();
 })();

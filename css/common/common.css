@@ -274,7 +274,9 @@ body {
   margin: 0 auto;
   padding: 10px 40px;
   display: flex;
-  justify-content: center;
+  /* 좌측 정렬 (2026-07-30) — 가운데 정렬이면 카테고리를 하나 추가할 때마다
+     기존 항목이 전부 옆으로 밀려 위치가 바뀐다. 왼쪽부터 쌓이게 한다. */
+  justify-content: flex-start;
   gap: 40px;
   overflow-x: auto;
   scrollbar-width: none;
@@ -322,6 +324,21 @@ body {
 /* 이모지 아이콘 (기존 유지) */
 .cat-icon {
   font-size: 22px;
+}
+
+/* GNB 라인 아이콘 (2026-07-30) — .cat-icon 안에 들어가는 단색 SVG.
+   fill:none + stroke:currentColor 라 .cat-item 의 글자색을 그대로 따라간다
+   (평소 검정, hover/active 시 보라). 어드민 사이드바와 같은 결. */
+.cat-icon svg {
+  display: block;
+  width: 22px;
+  height: 22px;
+}
+@media (max-width: 768px) {
+  .cat-icon svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 /* 이미지 아이콘 — bounce 애니메이션 */
@@ -378,6 +395,13 @@ body {
 @media (hover: hover) {
   .cat-inner {
     overflow: visible;
+    /* 카테고리가 늘어나면 한 줄을 채우고 아래로 내려간다 (2026-07-30).
+       개수가 아니라 폭 기준이라 이름이 길면 9개에서, 짧으면 11개에서 넘어갈 수 있다.
+       정확히 N개로 끊으려면 항목을 균등 폭으로 고정해야 하는데
+       그러면 '카드' 같은 짧은 이름 칸에 빈 공간이 크게 남는다.
+       터치 기기는 이 블록 밖이라 지금처럼 가로 스크롤을 유지한다. */
+    flex-wrap: wrap;
+    row-gap: 12px;
   }
 }
 

@@ -21,7 +21,9 @@ const GNB_CATS = [
   { cat: 'internet', label: '인터넷', dropdown: GNB_CARRIERS },
   { cat: 'card', label: '카드' },
   { cat: 'water', label: '정수기' },
-  { cat: 'rental', label: '렌탈' },
+  // 렌탈 제거 (2026-07-30) — 카테고리를 is_active=false 로 내렸다(V20260730005).
+  // 파일(rental.html)과 rental_products 데이터는 그대로 남아 있어 직접 주소로는 열린다.
+  // 되살리려면 이 한 줄과 아래 gnbIsActiveCat 분기를 되돌리면 된다.
 ];
 
 function buildGnbHtml() {
@@ -107,7 +109,6 @@ function gnbIsActiveCat(cat, path) {
   if (cat === 'mobile') return path.startsWith('mobile');
   if (cat === 'card') return path.startsWith('card');
   if (cat === 'water') return path.startsWith('water');
-  if (cat === 'rental') return path.startsWith('rental');
   return false;
 }
 
@@ -208,6 +209,166 @@ function injectWaterGnbDropdown() {
   });
 }
 
+// ════════════════════════════════════════════════════════════════
+// GNB 카테고리 아이콘 세트 (2026-07-30)
+// 단색 스트로크 아이콘 — 어드민 사이드바(admin-nav.js)와 같은 결.
+// fill:none + stroke:currentColor 이라 글자색을 그대로 따라간다(hover 시 보라).
+//
+// ★ 이 배열은 dapick-admin/js/category.js(CAT_ICON_SET) 와 dapick-web/js/common/gnb.js(DP_CAT_ICON_SET)
+//   두 곳에 같은 내용으로 들어간다. 저장소가 분리돼 있어 공유가 안 된다.
+//   아이콘을 추가·삭제하면 반드시 양쪽을 함께 고칠 것.
+//   (어드민에만 추가하면 관리자는 고를 수 있는데 웹에서는 안 그려진다)
+// ════════════════════════════════════════════════════════════════
+const DP_CAT_ICON_SET = [
+  { key: 'smartphone', label: '휴대폰', p: '<rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/>' },
+  { key: 'tv', label: 'TV', p: '<rect x="2" y="7" width="20" height="15" rx="2"/><polyline points="17 2 12 7 7 2"/>' },
+  { key: 'monitor', label: '모니터', p: '<rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>' },
+  { key: 'wifi', label: '인터넷', p: '<path d="M5 12.55a11 11 0 0 1 14.08 0"/><path d="M1.42 9a16 16 0 0 1 21.16 0"/><path d="M8.53 16.11a6 6 0 0 1 6.95 0"/><line x1="12" y1="20" x2="12.01" y2="20"/>' },
+  { key: 'droplet', label: '정수기', p: '<path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/>' },
+  { key: 'credit-card', label: '카드', p: '<rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/>' },
+  { key: 'snowflake', label: '냉난방', p: '<line x1="12" y1="2" x2="12" y2="22"/><line x1="2" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="19" y2="19"/><line x1="19" y1="5" x2="5" y2="19"/>' },
+  { key: 'thermometer', label: '온도', p: '<path d="M14 14.76V3.5a2.5 2.5 0 0 0-5 0v11.26a4 4 0 1 0 5 0z"/>' },
+  { key: 'washer', label: '세탁기', p: '<rect x="4" y="2" width="16" height="20" rx="2"/><circle cx="12" cy="14" r="5"/><line x1="8" y1="6" x2="8.01" y2="6"/>' },
+  { key: 'bed', label: '침대·가구', p: '<path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8"/><line x1="2" y1="16" x2="22" y2="16"/><path d="M6 10V7a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/>' },
+  { key: 'home', label: '집·생활', p: '<path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>' },
+  { key: 'coffee', label: '주방·커피', p: '<path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/>' },
+  { key: 'zap', label: '전기', p: '<polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/>' },
+  { key: 'shield', label: '보험·보안', p: '<path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>' },
+  { key: 'heart', label: '건강', p: '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>' },
+  { key: 'bank', label: '금융', p: '<line x1="3" y1="21" x2="21" y2="21"/><line x1="5" y1="21" x2="5" y2="10"/><line x1="19" y1="21" x2="19" y2="10"/><polyline points="2 10 12 3 22 10"/>' },
+  { key: 'wallet', label: '지갑', p: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="2"/><line x1="6" y1="12" x2="6.01" y2="12"/><line x1="18" y1="12" x2="18.01" y2="12"/>' },
+  { key: 'trending-up', label: '투자', p: '<polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/><polyline points="17 6 23 6 23 12"/>' },
+  { key: 'car', label: '자동차', p: '<path d="M3 13l2-5a2 2 0 0 1 2-1h10a2 2 0 0 1 2 1l2 5v5h-3v-2H6v2H3z"/><circle cx="7" cy="15" r="1"/><circle cx="17" cy="15" r="1"/>' },
+  { key: 'truck', label: '이사·배송', p: '<rect x="1" y="5" width="14" height="11" rx="1"/><polygon points="15 9 19 9 22 12 22 16 15 16 15 9"/><circle cx="6" cy="18.5" r="2"/><circle cx="18" cy="18.5" r="2"/>' },
+  { key: 'plane', label: '여행', p: '<path d="M2 12l20-8-8 20-2-8-8-4z"/>' },
+  { key: 'package', label: '상품', p: '<path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/>' },
+  { key: 'gift', label: '사은품', p: '<polyline points="20 12 20 22 4 22 4 12"/><rect x="2" y="7" width="20" height="5"/><line x1="12" y1="22" x2="12" y2="7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/>' },
+  { key: 'tag', label: '할인', p: '<path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/>' },
+  { key: 'cart', label: '쇼핑', p: '<circle cx="9" cy="21" r="1"/><circle cx="20" cy="21" r="1"/><path d="M1 1h4l2.68 13.39a2 2 0 0 0 2 1.61h9.72a2 2 0 0 0 2-1.61L23 6H6"/>' },
+  { key: 'users', label: '제휴·단체', p: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/>' },
+  { key: 'file-text', label: '서류', p: '<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/>' },
+  { key: 'star', label: '추천', p: '<polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>' },
+  { key: 'grid', label: '기타', p: '<rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/>' },
+];
+
+// 키 → SVG 마크업. 없는 키면 빈 문자열(아이콘 없이 글자만 뜬다).
+function dpCatIconSvg(key, size) {
+  const found = DP_CAT_ICON_SET.find((i) => i.key === key);
+  if (!found) return '';
+  return (
+    `<svg viewBox="0 0 24 24" width="${size}" height="${size}" fill="none" stroke="currentColor" ` +
+    `stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${found.p}</svg>`
+  );
+}
+
+// ── 카테고리 로더 (공개 API) — 관리자가 만든 카테고리를 GNB 에 붙이기 위한 것 ──
+// 페이지당 1회 fetch(프로미스 캐시). 실패해도 하드코딩 4개는 이미 그려져 있어 GNB 가 비지 않는다.
+let _dpCategoriesPromise = null;
+function dpFetchCategories() {
+  if (_dpCategoriesPromise) return _dpCategoriesPromise;
+  if (typeof DAPICK_CONFIG === 'undefined') return Promise.resolve([]);
+  _dpCategoriesPromise = fetch(`${DAPICK_CONFIG.API_BASE_URL}/api/categories`, {
+    headers: { 'Content-Type': 'application/json' },
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      return res.json();
+    })
+    .then((json) => (Array.isArray(json) ? json : json?.data || []))
+    .catch((err) => {
+      console.error('[gnb] 카테고리 로드 실패:', err);
+      _dpCategoriesPromise = null; // 다음 호출에서 재시도
+      return [];
+    });
+  return _dpCategoriesPromise;
+}
+
+// 카테고리 하나를 GNB 항목 HTML 로 만든다.
+// 아이콘은 이미지 > 이모지 > 없음 순. .cat-icon / .cat-icon-img CSS 는 이미 있다.
+function buildDynamicCatHtml(c) {
+  const href = `/c/${encodeURIComponent(c.slug)}`;
+  const icon = c.iconImageUrl
+    ? `<img class="cat-icon-img" src="${dpGnbEsc(dpBrandLogoSrc(c.iconImageUrl))}" alt="" />`
+    : c.iconKey && dpCatIconSvg(c.iconKey, 22)
+      ? `<span class="cat-icon">${dpCatIconSvg(c.iconKey, 22)}</span>`
+      : '';
+  const kids = (c.children || []).filter((s) => s.isActive !== false);
+  const path = location.pathname;
+  const activeCls = path === href || path.startsWith(href + '/') ? ' is-active' : '';
+
+  if (kids.length) {
+    const subs = kids
+      .map(
+        (s) =>
+          `<a class="cat-sub-item" href="${href}?sub=${encodeURIComponent(s.id)}">${dpGnbEsc(s.name)}</a>`,
+      )
+      .join('');
+    return `
+      <div class="cat-item has-dropdown${activeCls}" data-cat="c-${dpGnbEsc(c.slug)}">
+        <span class="cat-label" onclick="location.href='${href}'">${icon}${dpGnbEsc(c.name)}</span>
+        <div class="cat-dropdown">${subs}</div>
+      </div>`;
+  }
+  return `
+    <div class="cat-item${activeCls}" data-cat="c-${dpGnbEsc(c.slug)}" onclick="location.href='${href}'">${icon}${dpGnbEsc(c.name)}</div>`;
+}
+
+// 관리자가 만든 카테고리(GENERIC)를 정수기 뒤에 이어 붙인다.
+//
+// 기존 4개(휴대폰·인터넷·카드·정수기)를 API 이름으로 갈아끼우지 않는 이유:
+// 라벨과 이동 경로가 페이지마다 굳어 있어서(goPage 의 하드코딩 맵) DB 이름을 그대로 쓰면
+// GNB 글자가 예고 없이 바뀌고 링크가 어긋난다. 검증된 4개는 그대로 두고 새 것만 붙인다.
+// 위 GNB_CATS 가 이미 고정으로 그리는 타입. 이 넷만 빼고 나머지는 전부 붙인다.
+// 'GENERIC 인 것만' 으로 좁히면 type 이 비었거나 값이 늘었을 때
+// 관리자가 만든 카테고리가 아무 말 없이 사라진다.
+const DP_LEGACY_GNB_TYPES = ['PHONE', 'INTERNET_TV', 'CARD', 'WATER'];
+
+function injectDynamicGnbCats() {
+  const inner = document.querySelector('.cat-bar .cat-inner');
+  if (!inner) return;
+  dpFetchCategories().then((cats) => {
+    const all = cats || [];
+    const extras = all
+      .filter(
+        (c) =>
+          c &&
+          !c.parentId &&
+          c.showInGnb !== false &&
+          c.isActive !== false &&
+          DP_LEGACY_GNB_TYPES.indexOf(c.type) === -1,
+      )
+      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+    // 안 뜰 때 어디서 걸렸는지 바로 보이게 남긴다
+    console.info(
+      `[gnb] 카테고리 ${all.length}건 중 추가 대상 ${extras.length}건`,
+      all.map(
+        (c) =>
+          `${c.name} | type=${c.type} | slug=${c.slug} | gnb=${c.showInGnb} | 하위=${(c.children || []).length}건 [${(c.children || []).map((s) => s.name).join(', ')}]`,
+      ),
+    );
+
+    extras.forEach((c) => {
+        // 주소가 없으면 갈 곳이 없다. 조용히 넘기지 않고 이유를 남긴다.
+        if (!c.slug) {
+          console.warn(`[gnb] "${c.name}" 은 웹 주소(slug)가 없어 GNB 에 못 붙입니다`);
+          return;
+        }
+        // 같은 카테고리를 두 번 붙이지 않는다(스크립트가 두 번 실행되는 경우 방어)
+        if (inner.querySelector(`.cat-item[data-cat="c-${CSS.escape(c.slug)}"]`)) return;
+        const holder = document.createElement('div');
+        holder.innerHTML = buildDynamicCatHtml(c).trim();
+        const item = holder.firstElementChild;
+        if (!item) return;
+        inner.appendChild(item);
+        // 방금 붙인 것만 바인딩한다 — setupGnbDropdownToggle 을 다시 부르면
+        // 기존 라벨에 리스너가 중복 붙어 모바일에서 토글이 두 번 돈다.
+        const label = item.querySelector('.cat-label');
+        if (label) bindGnbDropdownLabel(label);
+      });
+  });
+}
+
 // 모바일 햄버거 메뉴 토글 (≤768px 에서 노출)
 function toggleGnbMobileMenu(btn) {
   const menu = document.getElementById('gnbMobile');
@@ -235,6 +396,7 @@ function toggleGnbMore(btn) {
   nav.innerHTML = buildGnbHtml();
   setupGnbDropdownToggle();
   injectWaterGnbDropdown(); // 정수기 브랜드 드롭다운 (비동기 — 실패 시 일반 링크 유지)
+  injectDynamicGnbCats(); // 관리자가 만든 카테고리 이어붙이기 (비동기 — 실패 시 기본 4개만)
   document.addEventListener('click', (e) => {
     const more = document.querySelector('.gnb-more');
     const card = document.getElementById('gnbMoreCard');

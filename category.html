@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>카테고리 | 다픽</title>
+
+<!--
+  관리자가 만든 카테고리 페이지의 공용 틀 (2026-07-30).
+  주소는 /c/{slug} 이고 _worker.js 가 이 파일을 내려준다.
+  카테고리마다 파일을 만들지 않는다 — 정적 사이트라 관리자가 만든 만큼 파일을 늘릴 수 없다.
+  로컬(Live Server)은 워커가 안 도니까 category.html?slug=xxx 로 연다.
+-->
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css"/>
+<link rel="stylesheet" href="css/common/common.css"/>
+<link rel="stylesheet" href="css/common/components.css"/>
+<link rel="stylesheet" href="css/common/footer.css"/>
+<link rel="stylesheet" href="css/common/gnb-user.css"/>
+<link rel="stylesheet" href="css/common/site-banner.css"/>
+<link rel="stylesheet" href="css/icon.css"/>
+<link rel="stylesheet" href="css/category/category.css"/>
+</head>
+<body>
+
+<!-- 공통 NAV (gnb.js가 주입) -->
+<nav class="gnb"></nav>
+
+<!-- 사이트 배너 — category.js 가 카테고리 id 를 넣고 site-banner.js 를 부른다.
+     등록된 배너가 0장이면 이 영역은 스스로 숨는다. -->
+<section class="sb" id="cg-banner" aria-label="카테고리 배너" hidden>
+  <div class="sb__viewport">
+    <div class="sb__track"></div>
+  </div>
+  <button class="sb__arrow prev" type="button" aria-label="이전">‹</button>
+  <button class="sb__arrow next" type="button" aria-label="다음">›</button>
+  <div class="sb__dots"></div>
+</section>
+
+<main class="cg-wrap">
+  <div class="cg-head">
+    <h1 class="cg-title" id="cg-title">&nbsp;</h1>
+    <p class="cg-desc" id="cg-desc"></p>
+  </div>
+
+  <!-- 서브카테고리(품목) 바 — 없으면 통째로 숨는다 -->
+  <div class="cg-subs" id="cg-subs"></div>
+
+  <div class="cg-toolbar">
+    <div class="cg-count" id="cg-count"></div>
+    <div class="cg-sorts">
+      <button type="button" class="cg-sort is-on" data-sort="default" onclick="cgSetSort('default')">기본순</button>
+      <button type="button" class="cg-sort" data-sort="low" onclick="cgSetSort('low')">낮은 가격순</button>
+      <button type="button" class="cg-sort" data-sort="high" onclick="cgSetSort('high')">높은 가격순</button>
+    </div>
+  </div>
+
+  <div class="cg-grid" id="cg-grid"></div>
+</main>
+
+<footer class="site-footer">
+  <div class="footer-top">
+    <nav class="footer-nav">
+      <a href="/support">고객센터</a>
+      <a href="/reviews">후기</a>
+      <a href="faq.html">자주묻는질문</a>
+      <a href="terms.html">이용약관</a>
+      <a href="privacy.html">개인정보처리방침</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="js/common/config.js"></script>
+<script src="js/common/api.js"></script>
+<script src="js/common/auth.js"></script>
+<script src="js/common/utils.js"></script>
+<script src="js/common/gnb.js"></script>
+<script src="js/common/gnb-user.js"></script>
+<script src="js/common/site-banner.js"></script>
+<script src="js/category/category.js"></script>
+<script src="/js/common/track.js"></script>
+</body>
+</html>

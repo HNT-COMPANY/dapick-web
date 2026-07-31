@@ -515,6 +515,14 @@ export default {
       if (lm) return redirectLegacyStore(request, env, lm[1]);
     }
 
+    // 카테고리 페이지: /c/{slug} → category.html
+    // 정적 사이트라 관리자가 카테고리를 만들어도 파일이 생기지 않는다.
+    // 공용 틀 하나를 내려주고 slug 는 category.js 가 주소에서 읽는다.
+    // '/c/' 접두사를 쓰는 이유 = /water·/card·/store-xxx 같은 기존 주소와 절대 안 겹치게.
+    if (/^\/c\/[a-z0-9-]+$/.test(key)) {
+      return env.ASSETS.fetch(new URL('/category.html', url).toString());
+    }
+
     // 후기 상세: /reviews/{제목슬러그}-{id}
     const m = url.pathname.match(/^\/reviews\/.+-(\d+)\/?$/);
     if (m) return injectReview(request, env, m[1]);
