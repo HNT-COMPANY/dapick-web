@@ -176,22 +176,32 @@
     return q.root.innerHTML;
   }
 
-  // ── FAQ 카테고리 5탭 + 아코디언 (홈 faq-* 스타일/toggleFaq 재사용) ──
-  const FAQ_CATS = [
-    { code: 'PHONE', label: '휴대폰' },
-    { code: 'INTERNET_TV', label: '인터넷TV' },
-    { code: 'CARD', label: '카드' },
-    { code: 'WATER', label: '정수기' },
-    { code: 'RENTAL', label: '렌탈' },
-  ];
+  // ── FAQ 분류 탭 + 아코디언 (홈 faq-* 스타일/toggleFaq 재사용) ──
+  //
+  // ★ 2026-08-01 — 분류를 코드에 적어두지 않는다. 카테고리를 그대로 따라간다.
+  //   전에는 다섯 개를 배열로 박아 뒀다. 그래서 내린 카테고리(렌탈)는 탭에 남고,
+  //   관리자가 만든 카테고리(에어컨)는 FAQ 를 등록해도 볼 방법이 없었다.
+  //   서버는 이미 categoryId 를 정본으로 내려준다(FaqResponse).
+  //
+  //   질문이 하나도 없는 분류는 탭을 만들지 않는다 - 눌러도 빈 화면만 나오는 탭은
+  //   고객에게 '준비 안 된 서비스' 로 읽힌다.
   let faqData = [];
-  let activeCat = 'PHONE';
+  let faqCats = [];       // 최상위 카테고리 [{id, name}]
+  let activeCat = null;   // 카테고리 id
+
+  // 질문이 한 개라도 있는 분류만 남긴다.
+  function visibleCats() {
+    return faqCats.filter((c) => faqData.some((f) => f.categoryId === c.id));
+  }
 
   function renderTabs() {
     const bar = document.getElementById('faqTabs');
     if (!bar) return;
-    bar.innerHTML = FAQ_CATS.map((c) =>
-      '<button class="cfaq-tab' + (c.code === activeCat ? ' on' : '') + '" data-cat="' + c.code + '">' + esc(c.label) + '</button>'
+    const cats = visibleCats();
+    if (!cats.length) { bar.innerHTML = ''; return; }
+    if (!cats.some((c) => c.id === activeCat)) activeCat = cats[0].id;
+    bar.innerHTML = cats.map((c) =>
+      '<button class="cfaq-tab' + (c.id === activeCat ? ' on' : '') + '" data-cat="' + esc(c.id) + '">' + esc(c.name) + '</button>'
     ).join('');
   }
 
@@ -213,7 +223,7 @@
   function renderList() {
     const wrap = document.getElementById('faqList');
     if (!wrap) return;
-    const rows = faqData.filter((f) => f.category === activeCat);
+    const rows = faqData.filter((f) => f.categoryId === activeCat);
     wrap.innerHTML = rows.length
       ? rows.map(itemHtml).join('')
       : '<div class="cfaq-empty2">등록된 질문이 없습니다.</div>';
@@ -280,11 +290,25 @@
     document.head.appendChild(style);
   }
 
+  // 분류와 질문을 함께 받아야 탭을 그릴 수 있다. 둘 중 하나만 와도 화면은 뜬다.
   document.addEventListener('DOMContentLoaded', () => {
     injectStyles();
-    renderTabs();
-    api.get('/api/faqs')
-      .then((list) => { faqData = Array.isArray(list) ? list : (list && list.content) || []; renderList(); })
-      .catch(() => { const w = document.getElementById('faqList'); if (w) w.innerHTML = '<div class="cfaq-empty2">FAQ를 불러오지 못했습니다.</div>'; });
+    Promise.all([
+      api.get('/api/categories').catch(() => []),
+      api.get('/api/faqs').catch(() => null),
+    ]).then(([cats, list]) => {
+      faqCats = (Array.isArray(cats) ? cats : [])
+        .filter((c) => c && !c.parentId && c.isActive !== false)
+        .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+
+      if (list === null) {
+        const w = document.getElementById('faqList');
+        if (w) w.innerHTML = '<div class="cfaq-empty2">FAQ를 불러오지 못했습니다.</div>';
+        return;
+      }
+      faqData = Array.isArray(list) ? list : (list && list.content) || [];
+      renderTabs();
+      renderList();
+    });
   });
 })();
