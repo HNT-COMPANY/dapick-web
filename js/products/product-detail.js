@@ -136,6 +136,7 @@ function pdFieldList() {
   pdRenderView();
   pdRenderNote();
   pdRenderDetail();
+  pdMountBottomBar();
 })();
 
 function pdRenderCrumb() {
@@ -315,7 +316,10 @@ function pdHasFee() {
 //   어드민 미리보기가 원래 세로 3개였고 화면마다 개수가 달랐다.
 //   가로로 놓으면 폭이 좁은 화면에서 "카카오톡 문의" 가 두 줄로 접힌다.
 //   상품 신청이 맨 위인 것은 이 화면의 목적이 정식 접수이기 때문이다.
-function pdActionsHtml() {
+// withTip - 하단 고정 바에서는 말풍선을 뺀다.
+// 말풍선은 버튼 위로 삐져나오는데, 화면 맨 아래 바에서는 그 위가 본문이라 글자를 덮는다.
+function pdActionsHtml(withTip) {
+  var tip = withTip === false ? '' : '<span class="sapply-tip">3초만에 간편신청하기</span>';
   var btns = [];
   if (pdHasFee()) {
     btns.push('<button type="button" class="pd-btn pd-btn--main" onclick="pdApplyProduct()" data-track="product_apply">상품 신청</button>');
@@ -323,9 +327,91 @@ function pdActionsHtml() {
   // 간편 신청은 다른 화면(.sapply-inline)과 같은 파란 버튼 + 말풍선으로 통일한다.
   // 말풍선(.sapply-tip) 스타일은 simple-apply.js 가 주입한다 - 여기서 다시 만들면 사본이 된다.
   btns.push('<button type="button" class="pd-btn pd-btn--simple" onclick="pdApplySimple()" data-track="product_simple_apply">' +
-    '<span class="sapply-tip">3초만에 간편신청하기</span>간편 신청</button>');
+    tip + '간편 신청</button>');
   btns.push('<button type="button" class="pd-btn pd-btn--kakao" onclick="pdApplyKakao()" data-track="product_kakao">카카오톡 문의</button>');
   return btns.join('');
+}
+
+// ── 하단 고정 바 + 맨 위로 ──────────────────────────────
+//
+// 상세 정보 영역까지 내려오면 위쪽 신청 버튼은 화면 밖으로 나간다.
+// 거기서부터는 화면 아래에 같은 버튼을 붙여 둔다. 상품명을 왼쪽에 함께 적는 이유는
+// 한참 내려온 뒤에는 지금 보고 있는 게 어느 상품인지 흐려지기 때문이다.
+//
+// ★ 화면 아래를 나눠 쓰는 것들이 셋이다 — 비교 트레이 / 이 바 / 카카오 플로팅.
+//   각자 bottom:0 을 잡으면 서로 겹친다. 아래에서부터 트레이 → 바 → 카카오 순으로 쌓고,
+//   앞엣것의 높이를 재서 뒤엣것을 밀어 올린다. 트레이는 열고 닫히므로 그때마다 다시 잰다.
+function pdMountBottomBar() {
+  var sec = document.getElementById('pd-detail');
+  if (!sec || sec.hidden) return;   // 상세 영역이 없으면 바도 만들지 않는다
+
+  var bar = document.createElement('div');
+  bar.className = 'pd-bottombar';
+  bar.id = 'pd-bottombar';
+  bar.hidden = true;
+  bar.innerHTML =
+    '<div class="pd-bb-inner">' +
+      '<div class="pd-bb-name">' + pdEsc(pdProduct.name || '') + '</div>' +
+      '<div class="pd-bb-btns">' + pdActionsHtml(false) + '</div>' +
+    '</div>';
+  document.body.appendChild(bar);
+
+  // 맨 위로. 바와 함께 나타났다 사라진다 - 늘 떠 있으면 화면만 가린다.
+  var top = document.createElement('button');
+  top.type = 'button';
+  top.className = 'pd-totop';
+  top.id = 'pd-totop';
+  top.hidden = true;
+  top.setAttribute('aria-label', '맨 위로');
+  top.innerHTML =
+    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"' +
+    ' stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>';
+  top.onclick = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
+  document.body.appendChild(top);
+
+  // 상세 영역이 화면에 걸치면 켠다.
+  // 조금 걸쳐도 켜야 한다 - 다 들어와야 켜지면 긴 상세에서는 영영 안 나온다.
+  if (typeof IntersectionObserver === 'function') {
+    new IntersectionObserver(function (entries) {
+      entries.forEach(function (e) {
+        bar.hidden = !e.isIntersecting;
+        top.hidden = !e.isIntersecting;
+        pdSyncFloats();
+      });
+    }).observe(sec);
+  } else {
+    // 아주 오래된 브라우저 - 그냥 계속 보여준다. 안 보이는 것보다 낫다.
+    bar.hidden = false;
+    top.hidden = false;
+  }
+
+  pdSyncFloats();
+  window.addEventListener('resize', pdSyncFloats);
+  // 비교 트레이가 열리거나 닫히면 높이가 바뀐다(compare-button.js 가 쏘는 신호).
+  window.addEventListener('dp-compare-change', function () {
+    setTimeout(pdSyncFloats, 60);   // 트레이가 다시 그려진 뒤에 잰다
+  });
+}
+
+function pdSyncFloats() {
+  var bar = document.getElementById('pd-bottombar');
+  var top = document.getElementById('pd-totop');
+  var kakao = document.querySelector('.kakao-float');
+
+  // 비교 트레이는 자기 높이만큼 body 아래 여백을 잡아 둔다. 그 값이 곧 트레이 높이다.
+  var trayH = parseFloat(document.body.style.paddingBottom) || 0;
+
+  if (bar) bar.style.bottom = trayH + 'px';
+  var barH = bar && !bar.hidden ? bar.offsetHeight : 0;
+
+  if (top) top.style.bottom = (trayH + barH + 16) + 'px';
+  var topH = top && !top.hidden ? top.offsetHeight + 10 : 0;
+
+  // 카카오는 맨 위에 얹는다. 원래 자리를 밑값으로 두고 그 위로 민다.
+  // 밑값이 화면 크기마다 다르다 - common.css 에서 PC 28px / 모바일 80px 로 잡아 뒀다.
+  // 여기서 28 로 고정하면 모바일에서 카카오가 원래보다 아래로 내려간다.
+  var base = window.innerWidth <= 900 ? 80 : 28;
+  if (kakao) kakao.style.bottom = (trayH + barH + topH + base) + 'px';
 }
 
 // 카카오 상담 — 화면 오른쪽 아래 플로팅 버튼과 같은 주소다.
