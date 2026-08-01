@@ -1,0 +1,20 @@
+# Cloudflare 자산에서 제외할 것 (2026-08-01)
+#
+# wrangler.jsonc 의 assets.directory 가 "." 라 레포 루트 전체가 자산이 된다.
+# 그래서 npx wrangler pages dev . 가 .git 폴더(수백 MB)까지 읽으려다 실패한다.
+#   X [ERROR] Asset too large. ... .git/objects/pack/pack-*.pack (300 MiB)
+# 여기 적은 것은 로컬 개발과 실제 배포 양쪽에서 자산에 포함되지 않는다.
+
+.git
+node_modules
+.wrangler
+.idea
+_to_delete
+_stage2
+
+# 로컬 테스트 스크립트 — 웹에 나갈 이유가 없다
+tests
+
+# 업무 문서 — 웹 주소로 열리면 안 된다.
+# .gitignore 로도 막고 있지만, 실수로 커밋돼도 여기서 한 번 더 걸린다.
+*.md
