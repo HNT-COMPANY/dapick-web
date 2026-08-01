@@ -3,6 +3,19 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+
+<!--
+  ⚠ 이 한 줄이 없으면 화면이 통째로 깨진다 (2026-08-01).
+
+  이 파일은 /c/{slug} 주소에서 내려간다(_worker.js). 그런데 안의 경로는 전부 상대경로라,
+  브라우저가 /c/aircon 을 기준으로 css/reset.css 를 /c/css/reset.css 에서 찾는다 → 전부 404.
+  CSS·JS·이미지·푸터 링크가 다 깨지고 스타일 없는 날것이 뜬다.
+
+  base 를 / 로 고정하면 이 파일 안의 모든 상대경로가 루트 기준이 된다.
+  gnb.js 가 만들어 내는 링크(events.html 등)까지 함께 잡히므로 경로를 하나씩 고치는 것보다 안전하다.
+  ※ 부작용: href="#" 링크는 홈으로 간다. 푸터의 회사소개·공지사항이 그런데, 원래 빈 링크라 무해하다.
+-->
+<base href="/"/>
 <title>카테고리 | 다픽</title>
 
 <!--
