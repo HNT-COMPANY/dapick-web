@@ -1,14 +1,14 @@
 // ── 공통 헤더(GNB) 주입 ──────────────────────────────────
 // gnb-user.js보다 먼저 실행되어야 함 (gnb-user.js가 .gnb-right를 찾으므로)
 // ※ 마크업은 internet-unified.html의 기존 gnb-top을 그대로 미러링
-//   (gnb-extras 바는 이 헤더에 없음 — 원본과 동일하게 유지)
+//   (gnb-extras 바는 이 헤더에 없음 - 원본과 동일하게 유지)
 
-// 통신사 6사 (하드코딩 — 백엔드 무수정. 페이지 파일명은 CARRIER_MAP과 일치)
+// 통신사 6사 (하드코딩 - 백엔드 무수정. 페이지 파일명은 CARRIER_MAP과 일치)
 const GNB_CARRIERS = [
   // carrier: unified 페이지로 넘길 정확한 코드값(CARRIER_MAP 키, 공백·대소문자 원본)
-  // page: 독립 HTML 경로(롤백/직접진입용 보존 — 현재 렌더에선 미사용)
+  // page: 독립 HTML 경로(롤백/직접진입용 보존 - 현재 렌더에선 미사용)
   { label: 'SKT', carrier: 'SKT', page: 'internet-skt.html' },
-  // 알뜰 3사 비노출 (2026-07-03, 3사 통신사만 운영) — 재개 시 주석 해제
+  // 알뜰 3사 비노출 (2026-07-03, 3사 통신사만 운영) - 재개 시 주석 해제
   // { label: 'SK브로드밴드', carrier: 'SK broadband', page: 'internet-sk-broadband.html' },
   { label: 'KT', carrier: 'KT', page: 'internet-kt.html' },
   // { label: 'KT스카이라이프', carrier: 'KT Skylife', page: 'internet-kt-skylife.html' },
@@ -21,7 +21,7 @@ const GNB_CATS = [
   { cat: 'internet', label: '인터넷', dropdown: GNB_CARRIERS },
   { cat: 'card', label: '카드' },
   { cat: 'water', label: '정수기' },
-  // 렌탈 제거 (2026-07-30) — 카테고리를 is_active=false 로 내렸다(V20260730005).
+  // 렌탈 제거 (2026-07-30) - 카테고리를 is_active=false 로 내렸다(V20260730005).
   // 파일(rental.html)과 rental_products 데이터는 그대로 남아 있어 직접 주소로는 열린다.
   // 되살리려면 이 한 줄과 아래 gnbIsActiveCat 분기를 되돌리면 된다.
 ];
@@ -113,7 +113,7 @@ function gnbIsActiveCat(cat, path) {
 }
 
 // 모바일: 드롭다운 클릭 토글 (데스크탑은 CSS hover)
-// 라벨 1개 바인딩 — 동적으로 추가되는 드롭다운(정수기)도 이 함수를 재사용한다.
+// 라벨 1개 바인딩 - 동적으로 추가되는 드롭다운(정수기)도 이 함수를 재사용한다.
 // setupGnbDropdownToggle 을 다시 부르면 기존 라벨에 리스너가 중복 붙어 토글이 2번 돌므로 금지.
 function bindGnbDropdownLabel(label) {
   label.addEventListener('click', (e) => {
@@ -145,7 +145,7 @@ function setupGnbDropdownToggle() {
   });
 }
 
-// ── 정수기 브랜드 로더 (공개 API) — GNB 드롭다운·정수기 페이지(water-board.js) 공용 ──
+// ── 정수기 브랜드 로더 (공개 API) - GNB 드롭다운·정수기 페이지(water-board.js) 공용 ──
 // 어드민 '브랜드 관리' 등록/숨김/정렬이 그대로 반영된다. 페이지당 1회 fetch(프로미스 캐시).
 let _dpWaterBrandsPromise = null;
 function dpFetchWaterBrands() {
@@ -168,7 +168,7 @@ function dpFetchWaterBrands() {
   return _dpWaterBrandsPromise;
 }
 
-// 로고 src 보정 — /uploads/... 는 API 서버 상대경로라 API_BASE 를 붙인다. /assets/...·절대 URL 은 그대로.
+// 로고 src 보정 - /uploads/... 는 API 서버 상대경로라 API_BASE 를 붙인다. /assets/...·절대 URL 은 그대로.
 function dpBrandLogoSrc(url) {
   if (!url) return '';
   if (url.indexOf('/uploads/') === 0 && typeof DAPICK_CONFIG !== 'undefined') {
@@ -199,7 +199,7 @@ function injectWaterGnbDropdown() {
           `<a class="cat-sub-item" href="water.html?brand=${encodeURIComponent(b.code)}">${dpGnbEsc(b.name)}</a>`
       )
       .join('');
-    // div 자체의 onclick(goPage)을 제거하고 라벨로 옮긴다 — 서브링크 클릭이 버블돼 목록으로 튀는 것 방지
+    // div 자체의 onclick(goPage)을 제거하고 라벨로 옮긴다 - 서브링크 클릭이 버블돼 목록으로 튀는 것 방지
     item.removeAttribute('onclick');
     item.onclick = null;
     item.classList.add('has-dropdown');
@@ -211,7 +211,7 @@ function injectWaterGnbDropdown() {
 
 // ════════════════════════════════════════════════════════════════
 // GNB 카테고리 아이콘 세트 (2026-07-30)
-// 단색 스트로크 아이콘 — 어드민 사이드바(admin-nav.js)와 같은 결.
+// 단색 스트로크 아이콘 - 어드민 사이드바(admin-nav.js)와 같은 결.
 // fill:none + stroke:currentColor 이라 글자색을 그대로 따라간다(hover 시 보라).
 //
 // ★ 이 배열은 dapick-admin/js/category.js(CAT_ICON_SET) 와 dapick-web/js/common/gnb.js(DP_CAT_ICON_SET)
@@ -261,7 +261,7 @@ function dpCatIconSvg(key, size) {
   );
 }
 
-// ── 카테고리 로더 (공개 API) — 관리자가 만든 카테고리를 GNB 에 붙이기 위한 것 ──
+// ── 카테고리 로더 (공개 API) - 관리자가 만든 카테고리를 GNB 에 붙이기 위한 것 ──
 // 페이지당 1회 fetch(프로미스 캐시). 실패해도 하드코딩 4개는 이미 그려져 있어 GNB 가 비지 않는다.
 let _dpCategoriesPromise = null;
 function dpFetchCategories() {
@@ -287,11 +287,11 @@ function dpFetchCategories() {
 // 아이콘은 이미지 > 이모지 > 없음 순. .cat-icon / .cat-icon-img CSS 는 이미 있다.
 function buildDynamicCatHtml(c) {
   const href = `/c/${encodeURIComponent(c.slug)}`;
-  const icon = c.iconImageUrl
-    ? `<img class="cat-icon-img" src="${dpGnbEsc(dpBrandLogoSrc(c.iconImageUrl))}" alt="" />`
-    : c.iconKey && dpCatIconSvg(c.iconKey, 22)
-      ? `<span class="cat-icon">${dpCatIconSvg(c.iconKey, 22)}</span>`
-      : '';
+  // 아이콘은 웹 상단 메뉴에 안 그린다 (2026-07-31).
+  // 기존 4개(휴대폰·인터넷·카드·정수기)가 글자만 쓰는데 새 카테고리만 아이콘이 붙어
+  // 줄 높이와 정렬이 어긋났다. 아이콘은 어드민 사이드바 전용이다.
+  // 값은 그대로 저장·전달되므로 나중에 웹에도 쓰려면 이 한 줄만 되돌리면 된다.
+  const icon = '';
   const kids = (c.children || []).filter((s) => s.isActive !== false);
   const path = location.pathname;
   const activeCls = path === href || path.startsWith(href + '/') ? ' is-active' : '';
@@ -361,7 +361,7 @@ function injectDynamicGnbCats() {
         const item = holder.firstElementChild;
         if (!item) return;
         inner.appendChild(item);
-        // 방금 붙인 것만 바인딩한다 — setupGnbDropdownToggle 을 다시 부르면
+        // 방금 붙인 것만 바인딩한다 - setupGnbDropdownToggle 을 다시 부르면
         // 기존 라벨에 리스너가 중복 붙어 모바일에서 토글이 두 번 돈다.
         const label = item.querySelector('.cat-label');
         if (label) bindGnbDropdownLabel(label);
@@ -395,8 +395,8 @@ function toggleGnbMore(btn) {
   if (!nav) return; // login/signup 등 nav.gnb 없으면 스킵
   nav.innerHTML = buildGnbHtml();
   setupGnbDropdownToggle();
-  injectWaterGnbDropdown(); // 정수기 브랜드 드롭다운 (비동기 — 실패 시 일반 링크 유지)
-  injectDynamicGnbCats(); // 관리자가 만든 카테고리 이어붙이기 (비동기 — 실패 시 기본 4개만)
+  injectWaterGnbDropdown(); // 정수기 브랜드 드롭다운 (비동기 - 실패 시 일반 링크 유지)
+  injectDynamicGnbCats(); // 관리자가 만든 카테고리 이어붙이기 (비동기 - 실패 시 기본 4개만)
   document.addEventListener('click', (e) => {
     const more = document.querySelector('.gnb-more');
     const card = document.getElementById('gnbMoreCard');

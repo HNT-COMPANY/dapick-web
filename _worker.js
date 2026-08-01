@@ -18,6 +18,8 @@ const DETAILS = {
   '/water-detail':  { api: '/api/water-products',  titleField: 'name',  suffix: '다픽 정수기', descFrom: 'text', descField: 'description' },
   '/rental-detail': { api: '/api/rental-products', titleField: 'name',  suffix: '다픽 렌탈',   descFrom: 'text', descField: 'description' },
   '/popup-detail':  { api: '/api/popups',          titleField: 'title', suffix: '다픽',        descFrom: 'delta' },
+  // 관리자가 만든 카테고리의 상품 상세 (2026-08-01). id 는 UUID — ID_RE 가 이미 허용한다.
+  '/product-detail':{ api: '/api/products',        titleField: 'name',  suffix: '다픽',        descFrom: 'text', descField: 'description' },
 };
 const ID_RE = /^[A-Za-z0-9-]{1,64}$/; // 숫자(Long) + UUID 모두 허용, 슬래시 등 차단
 

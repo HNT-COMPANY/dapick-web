@@ -1,0 +1,86 @@
+/* ════════════════════════════════════════════════════
+   product-detail.css — 관리자 카테고리 상품 상세 (2026-08-01)
+   category.css 와 같은 톤(둥근 모서리 14px, 연회색 테두리)을 따른다.
+   ════════════════════════════════════════════════════ */
+
+.pd-wrap { max-width: 1180px; margin: 0 auto; padding: 24px 20px 80px; }
+
+/* 현재 위치 */
+.pd-crumb { font-size: 13px; color: #8a8fa3; margin-bottom: 18px; }
+.pd-crumb a { color: #8a8fa3; text-decoration: none; }
+.pd-crumb a:hover { color: #5b3fbe; text-decoration: underline; }
+.pd-crumb-sep { margin: 0 7px; color: #c9ccd6; }
+
+/* 상단 2단 */
+.pd-top { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 40px; align-items: start; }
+
+/* 왼쪽 이미지 */
+.pd-main-img {
+  width: 100%; aspect-ratio: 1/1; background: #f7f7fb; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center; overflow: hidden;
+}
+.pd-main-img img { width: 100%; height: 100%; object-fit: contain; }
+.pd-noimg { color: #b7bccb; font-size: 14px; }
+
+.pd-thumbs { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.pd-thumb {
+  width: 66px; height: 66px; border: 1.5px solid #eceaf5; border-radius: 10px;
+  background: #fff; padding: 0; overflow: hidden; cursor: pointer; transition: border-color .15s;
+}
+.pd-thumb img { width: 100%; height: 100%; object-fit: contain; }
+.pd-thumb.is-on { border-color: #5b3fbe; }
+
+/* 오른쪽 요약 */
+.pd-summary { padding-top: 4px; }
+.pd-brand { min-height: 26px; margin-bottom: 10px; }
+.pd-brand-logo { height: 26px; width: auto; object-fit: contain; }
+.pd-brand-name { font-size: 13px; font-weight: 700; color: #6b6880; }
+
+.pd-model { font-size: 13px; color: #8a8fa3; min-height: 18px; }
+.pd-name { font-size: 26px; font-weight: 800; color: #18172b; line-height: 1.35; margin: 4px 0 14px; }
+
+.pd-fee { font-size: 15px; color: #18172b; padding-bottom: 18px; border-bottom: 1px solid #f0eff5; }
+.pd-fee small { color: #8a8fa3; margin-right: 4px; }
+.pd-fee b { font-size: 30px; font-weight: 900; color: #5b3fbe; letter-spacing: -.5px; }
+.pd-months { margin-left: 10px; font-size: 13px; color: #8a8fa3; font-weight: 500; }
+.pd-fee-none { font-size: 20px; font-weight: 800; color: #6b6880; }
+
+/* 자유 항목 표 */
+.pd-specs { margin: 18px 0 0; padding: 0; }
+.pd-spec-row { display: flex; padding: 9px 0; border-bottom: 1px solid #f7f7fb; font-size: 14px; }
+.pd-spec-row dt { flex: 0 0 130px; color: #8a8fa3; margin: 0; }
+.pd-spec-row dd { flex: 1; margin: 0; color: #3a3a48; font-weight: 500; word-break: break-word; }
+
+/* 버튼 */
+.pd-actions { display: flex; gap: 10px; margin-top: 26px; }
+.pd-btn {
+  flex: 1; padding: 17px; border-radius: 12px; font-family: inherit;
+  font-size: 16px; font-weight: 800; cursor: pointer; transition: background .15s, transform .15s;
+}
+.pd-btn:active { transform: translateY(1px); }
+.pd-btn--main { border: none; background: #5b3fbe; color: #fff; }
+.pd-btn--main:hover { background: #4a32a0; }
+.pd-btn--sub { border: 1.5px solid #5b3fbe; background: #fff; color: #5b3fbe; }
+.pd-btn--sub:hover { background: #f6f3ff; }
+
+.pd-note { margin: 12px 0 0; font-size: 12.5px; color: #8a8fa3; line-height: 1.6; }
+
+/* 아래 섹션 */
+.pd-sec-title {
+  font-size: 18px; font-weight: 800; color: #18172b;
+  margin: 0 0 16px; padding-bottom: 12px; border-bottom: 2px solid #18172b;
+}
+.pd-desc, .pd-detail-imgs { margin-top: 64px; }
+.pd-desc-body { font-size: 15px; line-height: 1.75; color: #3a3a48; word-break: break-word; }
+.pd-detail-img { width: 100%; display: block; }
+
+/* 모바일 */
+@media (max-width: 900px) {
+  .pd-wrap { padding: 16px 16px 60px; }
+  .pd-top { grid-template-columns: 1fr; gap: 24px; }
+  .pd-name { font-size: 21px; }
+  .pd-fee b { font-size: 26px; }
+  .pd-spec-row dt { flex: 0 0 104px; }
+  .pd-actions { position: sticky; bottom: 0; background: #fff; padding: 12px 0; margin: 20px -16px 0; padding-left: 16px; padding-right: 16px; box-shadow: 0 -4px 16px rgba(0,0,0,.06); }
+  .pd-desc, .pd-detail-imgs { margin-top: 44px; }
+}

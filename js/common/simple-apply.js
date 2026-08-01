@@ -10,7 +10,14 @@
 
   var path = (location.pathname || '').toLowerCase();
   var CAT;
-  if (path.indexOf('rental') >= 0) CAT = { key: 'RENTAL', api: 'rental', label: '렌탈' };
+  // ⚠ 순서 주의 (2026-08-01): 관리자 카테고리 판별을 맨 앞에 둔다.
+  //   /c/water 같은 주소는 'water' 를 포함하므로, 아래 정수기 분기가 먼저 걸리면
+  //   관리자가 만든 카테고리가 정수기로 접수된다.
+  if (path.indexOf('/c/') === 0 || path.indexOf('product-detail') >= 0 || path.indexOf('category.html') >= 0 || path.indexOf('banner-detail') >= 0) {
+    // 관리자가 만든 카테고리(GENERIC). 실제 값은 open() 호출 시 넘어온 것으로 덮어쓴다.
+    CAT = { key: 'GENERIC', api: 'generic', label: '상담' };
+  }
+  else if (path.indexOf('rental') >= 0) CAT = { key: 'RENTAL', api: 'rental', label: '렌탈' };
   else if (path.indexOf('water') >= 0) CAT = { key: 'WATER', api: 'water', label: '정수기' };
   else if (path.indexOf('internet') >= 0) CAT = { key: 'INTERNET_TV', api: 'internet', label: '인터넷' };
   else return; // 대상 페이지 아님
@@ -115,7 +122,29 @@
     agreeEls().forEach(function(el){ el.addEventListener('change', function(){ agreeAllEl.checked = agreeEls().every(function(c){return c.checked;}); }); });
   }
 
-  function open(){ resetToForm(); ov.classList.add('on'); }
+  /**
+   * 모달 열기.
+   *
+   * 인자 없이 부르면 예전과 똑같이 동작한다 — 정수기·렌탈·인터넷 상세의 인라인 버튼이 그렇게 부른다.
+   * 카테고리/상품 상세는 값을 넘겨 카테고리와 상품명을 갈아끼운다.
+   *
+   * @param catApi      접수에 실을 카테고리 값. 서버가 20자까지만 받아 잘라 보낸다.
+   * @param productName 어떤 상품을 보고 눌렀는지. 문의 내용에 미리 채운다.
+   * @param catLabel    모달 우상단에 표시할 이름(예: '에어컨').
+   */
+  function open(catApi, productName, catLabel){
+    if (catApi) CAT.api = String(catApi).slice(0, 20);
+    if (catLabel) {
+      CAT.label = catLabel;
+      var headEl = document.querySelector('.sapply-head .cat');
+      if (headEl) headEl.textContent = catLabel;
+    }
+    resetToForm();
+    // 상품명은 '덮어쓰기'다 — 다른 상품에서 다시 열었을 때 앞 상품명이 남으면 안 된다.
+    // 고객이 지우고 다시 쓸 수 있게 placeholder 가 아니라 실제 값으로 넣는다.
+    if (productName) memoEl.value = productName + ' 문의합니다.';
+    ov.classList.add('on');
+  }
   function close(){ ov.classList.remove('on'); }
   function resetToForm(){ form.style.display=''; foot.style.display=''; confirmEl.classList.remove('on'); done.classList.remove('on'); }
 

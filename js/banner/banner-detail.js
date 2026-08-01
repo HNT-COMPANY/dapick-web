@@ -129,18 +129,59 @@
     return q.root.innerHTML;
   }
 
+  // 접수용 카테고리 값. 서버(normalizeCategory)가 rental/water/internet 은 정규화하고
+  // 나머지는 소문자 그대로 받는다. 카테고리가 비어 있으면 'etc' 로 들어간다.
+  var bdCategory = 'etc';
+  var bdTitle = '';
+
   function render(b) {
+    bdCategory = b.category ? String(b.category).toLowerCase().slice(0, 20) : 'etc';
+    bdTitle = b.altText || '';
+
     var ops = detailOps(b.detailContent);
     var bodyHtml = ops && ops.length
       ? '<div class="ql-snow"><div class="ql-editor bd-ql">' + deltaToHtml(ops) + '</div></div>'
       : '<p class="bd-empty">상세 정보가 아직 등록되지 않았습니다.</p>';
+
+    // 배너 이미지 — 고객이 방금 누른 그 이미지다. 안 보여주면 다른 곳에 온 것처럼 느껴진다.
+    var heroHtml = b.imageUrl
+      ? '<div class="bd-hero"><img src="' + esc(b.imageUrl) + '" alt="' + esc(bdTitle) + '" /></div>'
+      : '';
+
+    // 제목 — altText 는 원래 접근성용 대체 텍스트지만, 배너에 따로 제목 칸이 없다.
+    // 관리자가 실제로 배너 이름을 적어 넣는 칸이라 제목으로 쓴다.
+    var titleHtml = bdTitle ? '<h1 class="bd-title">' + esc(bdTitle) + '</h1>' : '';
+
+    if (bdTitle) document.title = bdTitle + ' | 다픽';
+
     document.getElementById('bdArticle').innerHTML =
+      heroHtml +
+      titleHtml +
       '<div class="bd-detail">' + bodyHtml + '</div>' +
+      bdActionsHtml() +
       '<a class="bd-list" href="javascript:history.length>1?history.back():location.assign(\'/\')">← 이전으로</a>';
     document.getElementById('bdArticle').hidden = false;
     var load = document.getElementById('bdLoading'); if (load) load.remove();
     if (window.lucide && lucide.createIcons) lucide.createIcons();
   }
+
+  // 본문 끝 접수 버튼 두 개 (2026-08-01).
+  // 간편 신청 = 사이트 안에서 바로 접수. 카카오 상담 = 대화로 넘어가고 싶은 고객용.
+  function bdActionsHtml() {
+    return '<div class="bd-actions">' +
+      '<button type="button" class="bd-btn bd-btn--main" onclick="bdOpenSimple()" data-track="banner_simple_apply">간편 신청</button>' +
+      '<a class="bd-btn bd-btn--kakao" href="https://pf.kakao.com/_exaRjX/chat" target="_blank" rel="noopener" data-track="banner_kakao">카카오 상담</a>' +
+      '</div>';
+  }
+
+  // simple-apply.js 가 못 붙은 경우(스크립트 로드 실패 등)에도 고객이 막히지 않게 고객센터로 보낸다.
+  window.bdOpenSimple = function () {
+    if (typeof openSimpleApply === 'function') {
+      openSimpleApply(bdCategory, bdTitle || null, null);
+      return;
+    }
+    location.href = '/support';
+  };
 
   function renderError(msg) {
     var load = document.getElementById('bdLoading'); if (load) load.textContent = msg || '배너를 불러오지 못했습니다.';
@@ -181,7 +222,18 @@
       '.bd-detail .ql-ctable{border-collapse:collapse;width:100%;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;}' +
       '.bd-detail .ql-ctable th,.bd-detail .ql-ctable td{border:1px solid #e5e7eb;padding:11px 14px;font-size:14px;text-align:left;color:#374151;line-height:1.5;}' +
       '.bd-detail .ql-ctable th{background:#f8f9fb;font-weight:700;color:#111827;}' +
-      '.bd-list{display:block;text-align:center;background:#fff;border:1px solid #d7d2e6;border-radius:12px;padding:13px;font-size:14px;font-weight:600;color:#555;text-decoration:none;margin-top:28px;}';
+      '.bd-list{display:block;text-align:center;background:#fff;border:1px solid #d7d2e6;border-radius:12px;padding:13px;font-size:14px;font-weight:600;color:#555;text-decoration:none;margin-top:28px;}' +
+      // ── 2026-08-01: 배너 이미지·제목·접수 버튼 ──
+      '.bd-hero{margin:0 0 22px;border-radius:14px;overflow:hidden;background:#f7f7fb;}' +
+      '.bd-hero img{width:100%;height:auto;display:block;}' +
+      '.bd-title{font-size:24px;font-weight:800;color:#18172b;line-height:1.4;margin:0 0 20px;padding-bottom:18px;border-bottom:1px solid #f0eff5;}' +
+      '.bd-actions{display:flex;gap:10px;margin-top:36px;}' +
+      '.bd-btn{flex:1;padding:17px;border-radius:12px;font-family:inherit;font-size:16px;font-weight:800;cursor:pointer;text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center;transition:background .15s;}' +
+      '.bd-btn--main{border:none;background:#5b3fbe;color:#fff;}' +
+      '.bd-btn--main:hover{background:#4a32a0;}' +
+      '.bd-btn--kakao{border:none;background:#ffce2e;color:#1c1c22;}' +
+      '.bd-btn--kakao:hover{background:#f0be1a;}' +
+      '@media(max-width:768px){.bd-title{font-size:20px;}.bd-btn{padding:15px;font-size:15px;}}';
     var style = document.createElement('style'); style.textContent = css; document.head.appendChild(style);
   }
 

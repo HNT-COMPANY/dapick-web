@@ -183,14 +183,10 @@ function cgRender() {
     .join('');
 }
 
-// 상세 페이지는 아직 없다. 상담으로 보낸다 —
-// 빈 페이지로 보내는 것보다 접수로 잇는 편이 낫다.
+// 상품 상세로 보낸다 (2026-08-01, product-detail.html 신설).
+// 주소 방식은 card-detail·water-detail 과 같은 ?id= 형태로 맞췄다.
 function cgOpen(id) {
   const p = cgRows.find((x) => x.id === id);
   if (!p) return;
-  if (typeof openSimpleApply === 'function') {
-    openSimpleApply(cgCategory.slug, p.name);
-    return;
-  }
-  location.href = '/support';
+  location.href = '/product-detail?id=' + encodeURIComponent(p.id);
 }

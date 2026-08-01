@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>상품 상세 | 다픽</title>
+<meta name="description" content="다픽에서 상품 정보와 월 요금을 확인하고 바로 신청하세요."/>
+
+<!-- 카톡·페북 공유용. 실제 값은 _worker.js 가 서버에서 갈아끼운다(봇은 JS를 실행하지 않는다). -->
+<meta property="og:type" content="product"/>
+<meta property="og:title" content="상품 상세 | 다픽"/>
+<meta property="og:description" content="다픽에서 상품 정보와 월 요금을 확인하고 바로 신청하세요."/>
+<meta property="og:image" content="/assets/logos/dapicklogo.png"/>
+<meta property="og:url" content="https://dapick.co.kr/product-detail"/>
+<link rel="canonical" href="https://dapick.co.kr/product-detail"/>
+
+<!--
+  관리자가 만든 카테고리(GENERIC)의 상품 상세 (2026-08-01).
+  주소는 /product-detail?id={상품 UUID} — card-detail·water-detail 과 같은 방식이다.
+  자유 입력 항목(specs)의 한글 이름은 카테고리 정의에서 찾아 붙인다. 아래 js 참고.
+-->
+
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;600;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/reset.css"/>
+<link rel="stylesheet" href="css/common/common.css"/>
+<link rel="stylesheet" href="css/common/components.css"/>
+<link rel="stylesheet" href="css/common/footer.css"/>
+<link rel="stylesheet" href="css/common/gnb-user.css"/>
+<link rel="stylesheet" href="css/icon.css"/>
+<link rel="stylesheet" href="css/category/category.css"/>
+<link rel="stylesheet" href="css/category/product-detail.css"/>
+</head>
+<body>
+
+<nav class="gnb"></nav>
+
+<main class="pd-wrap">
+
+  <!-- 위치 표시: 홈 > 카테고리 > 품목 -->
+  <nav class="pd-crumb" id="pd-crumb" aria-label="현재 위치"></nav>
+
+  <div class="pd-top">
+    <!-- 왼쪽: 이미지 -->
+    <div class="pd-gallery">
+      <div class="pd-main-img" id="pd-main-img"></div>
+      <div class="pd-thumbs" id="pd-thumbs"></div>
+    </div>
+
+    <!-- 오른쪽: 요약 + 신청 -->
+    <div class="pd-summary">
+      <div class="pd-brand" id="pd-brand"></div>
+      <div class="pd-model" id="pd-model"></div>
+      <h1 class="pd-name" id="pd-name">&nbsp;</h1>
+      <div class="pd-fee" id="pd-fee"></div>
+
+      <dl class="pd-specs" id="pd-specs"></dl>
+
+      <div class="pd-actions" id="pd-actions"></div>
+      <p class="pd-note" id="pd-note"></p>
+    </div>
+  </div>
+
+  <!-- 상세 설명 -->
+  <section class="pd-desc" id="pd-desc" hidden>
+    <h2 class="pd-sec-title">상품 설명</h2>
+    <div class="pd-desc-body" id="pd-desc-body"></div>
+  </section>
+
+  <!-- 상세 이미지 -->
+  <section class="pd-detail-imgs" id="pd-detail-imgs" hidden>
+    <h2 class="pd-sec-title">상세 정보</h2>
+    <div id="pd-detail-imgs-body"></div>
+  </section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="footer-top">
+    <nav class="footer-nav">
+      <a href="/support">고객센터</a>
+      <a href="/reviews">후기</a>
+      <a href="faq.html">자주묻는질문</a>
+      <a href="terms.html">이용약관</a>
+      <a href="privacy.html">개인정보처리방침</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="js/common/config.js"></script>
+<script src="js/common/api.js"></script>
+<script src="js/common/auth.js"></script>
+<script src="js/common/utils.js"></script>
+<script src="js/common/gnb.js"></script>
+<script src="js/common/gnb-user.js"></script>
+<script src="js/common/application.js"></script>
+<script src="js/common/simple-apply.js"></script>
+<script src="js/products/product-detail.js"></script>
+<script src="/js/common/track.js"></script>
+</body>
+</html>
