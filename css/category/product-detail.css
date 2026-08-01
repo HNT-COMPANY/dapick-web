@@ -90,9 +90,29 @@
   font-size: 18px; font-weight: 800; color: #18172b;
   margin: 0 0 16px; padding-bottom: 12px; border-bottom: 2px solid #18172b;
 }
-.pd-desc, .pd-detail-imgs { margin-top: 64px; }
+.pd-detail { margin-top: 64px; }
 .pd-desc-body { font-size: 15px; line-height: 1.75; color: #3a3a48; word-break: break-word; }
+.pd-detail-imgs { margin-top: 20px; }
 .pd-detail-img { width: 100%; display: block; }
+
+/* 상세 정보 접기 — 상세 이미지가 여러 장이면 화면이 수천 픽셀이 된다.
+   1000px 만 보여주고 나머지는 버튼으로 펼친다. */
+.pd-collapse { position: relative; max-height: 1000px; overflow: hidden; }
+.pd-collapse.is-open { max-height: none; }
+.pd-collapse-fade {
+  position: absolute; left: 0; right: 0; bottom: 0; height: 160px; pointer-events: none;
+  background: linear-gradient(to bottom, rgba(255,255,255,0), #fff 88%);
+}
+.pd-expand-btn {
+  display: flex; align-items: center; justify-content: center; gap: 7px;
+  width: 100%; margin-top: 14px; padding: 17px;
+  border: 1px solid #e6e4ef; border-radius: 10px; background: #fff;
+  font-family: inherit; font-size: 15px; font-weight: 700; color: #18172b;
+  cursor: pointer; transition: border-color .15s, background .15s;
+}
+.pd-expand-btn:hover { border-color: #c9c4dc; background: #fafaff; }
+.pd-expand-btn svg { transition: transform .2s; color: #8a8fa3; }
+.pd-expand-btn.is-open svg { transform: rotate(180deg); }
 
 /* 모바일 */
 @media (max-width: 900px) {
@@ -108,5 +128,8 @@
      모바일에서도 세 버튼은 같은 폭·같은 높이로 세로로 쌓인다. */
   .pv2-actions { gap: 8px; }
   .pv2-actions .pd-btn { padding: 14px; font-size: 15px; }
-  .pd-desc, .pd-detail-imgs { margin-top: 44px; }
+  .pd-detail { margin-top: 44px; }
+  /* 모바일은 화면이 좁아 같은 내용도 훨씬 길어진다. 접힘 높이를 줄인다. */
+  .pd-collapse { max-height: 640px; }
+  .pd-collapse.is-open { max-height: none; }
 }

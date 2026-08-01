@@ -456,37 +456,58 @@
       '</div>';
   }
 
+  // 목록 부분만 만든다. 검색어가 바뀔 때 이 조각만 갈아끼운다.
+  function pickerBodyHtml() {
+    var s = store();
+    if (_pickRows === null) return '<div class="dp-pick__msg">불러오는 중…</div>';
+    if (_pickRows === false) {
+      return '<div class="dp-pick__msg">목록을 불러오지 못했습니다.' +
+        '<br><button type="button" class="dp-pick__retry" data-retry="1">다시 시도</button></div>';
+    }
+    // 검색 — 이름과 조합(label) 둘 다에 걸린다. 인터넷은 조합이 곧 요금제라서.
+    var q = _pickQ.trim().toLowerCase();
+    var rows = _pickRows;
+    var idx = [];
+    rows.forEach(function (r, i) {
+      if (!q) { idx.push(i); return; }
+      var hay = ((r.name || '') + ' ' + (r.label || '') + ' ' + (r.model || '')).toLowerCase();
+      if (hay.indexOf(q) >= 0) idx.push(i);
+    });
+    if (!idx.length) return '<div class="dp-pick__msg">해당하는 상품이 없습니다.</div>';
+    return idx.map(function (i) {
+      var r = rows[i];
+      var key = s ? s.keyOf(r.id, r.options) : '';
+      var taken = !!(s && s.has(_pickCat, key));
+      return pickRowHtml(r, i, taken);
+    }).join('');
+  }
+
+  function pickerNoteHtml() {
+    var s = store();
+    var cnt = s ? s.count(_pickCat) : 0;
+    if (_pickMsg) return '<b>' + esc(_pickMsg) + '</b>';
+    return '비교함 ' + cnt + '/' + maxCount() +
+      ' · 지금 화면과 같은 조합으로 담습니다(그 상품에 없으면 가장 싼 조합).';
+  }
+
+  // ★ 검색 중에는 이 함수만 부른다 — 입력 칸을 건드리지 않는다.
+  //
+  //   한글은 여러 자모가 모여 한 글자가 되는데, 조합이 끝나기 전까지 그 글자는
+  //   입력 칸 안에서 '만들어지는 중' 이다. 칸을 통째로 다시 만들면 그 조합이 끊겨
+  //   "박자" 를 치면 "ㅂㅏㄱㅈㅏ" 가 된다. 영어는 한 글자가 한 번에 끝나서 티가 안 난다.
+  //   그래서 목록과 안내문만 갈아끼우고 입력 칸은 화면에 그대로 둔다.
+  function renderPickerBody() {
+    if (!_pickEl) return;
+    var b = _pickEl.querySelector('.dp-pick__body');
+    var n = _pickEl.querySelector('.dp-pick__note');
+    if (b) b.innerHTML = pickerBodyHtml();
+    if (n) n.innerHTML = pickerNoteHtml();
+    bindPickerBody();
+  }
+
   function renderPicker() {
     if (!_pickEl || !_pickCat) return;
-    var s = store();
-    var body;
 
-    if (_pickRows === null) body = '<div class="dp-pick__msg">불러오는 중…</div>';
-    else if (_pickRows === false) {
-      body = '<div class="dp-pick__msg">목록을 불러오지 못했습니다.' +
-        '<br><button type="button" class="dp-pick__retry" data-retry="1">다시 시도</button></div>';
-    } else {
-      // 검색 — 이름과 조합(label) 둘 다에 걸린다. 인터넷은 조합이 곧 요금제라서.
-      var q = _pickQ.trim().toLowerCase();
-      var rows = _pickRows;
-      var idx = [];
-      rows.forEach(function (r, i) {
-        if (!q) { idx.push(i); return; }
-        var hay = ((r.name || '') + ' ' + (r.label || '') + ' ' + (r.model || '')).toLowerCase();
-        if (hay.indexOf(q) >= 0) idx.push(i);
-      });
-      if (!idx.length) body = '<div class="dp-pick__msg">해당하는 상품이 없습니다.</div>';
-      else {
-        body = idx.map(function (i) {
-          var r = rows[i];
-          var key = s ? s.keyOf(r.id, r.options) : '';
-          var taken = !!(s && s.has(_pickCat, key));
-          return pickRowHtml(r, i, taken);
-        }).join('');
-      }
-    }
-
-    var cnt = s ? s.count(_pickCat) : 0;
     _pickEl.innerHTML =
       '<div class="dp-pick">' +
       '<div class="dp-pick__head">' +
@@ -495,11 +516,8 @@
       '</div>' +
       '<div class="dp-pick__search"><input type="text" placeholder="상품 이름으로 찾기" ' +
       'value="' + esc(_pickQ) + '" /></div>' +
-      '<div class="dp-pick__note">' +
-      (_pickMsg ? '<b>' + esc(_pickMsg) + '</b>' : '비교함 ' + cnt + '/' + maxCount() +
-        ' · 지금 화면과 같은 조합으로 담습니다(그 상품에 없으면 가장 싼 조합).') +
-      '</div>' +
-      '<div class="dp-pick__body">' + body + '</div>' +
+      '<div class="dp-pick__note">' + pickerNoteHtml() + '</div>' +
+      '<div class="dp-pick__body">' + pickerBodyHtml() + '</div>' +
       '</div>';
 
     _pickEl.querySelector('.dp-pick__close').onclick = closePicker;
@@ -508,14 +526,21 @@
     inp.oninput = function () {
       _pickQ = inp.value;
       _pickMsg = '';
-      renderPicker();
-      // 다시 그리면 포커스가 날아간다 — 글자를 계속 칠 수 있어야 한다.
-      var n = _pickEl.querySelector('.dp-pick__search input');
-      if (n) { n.focus(); try { n.setSelectionRange(n.value.length, n.value.length); } catch (e) {} }
+      renderPickerBody();   // 입력 칸은 그대로 둔다 - 포커스도 조합도 안 끊긴다
     };
 
+    bindPickerBody();
+  }
+
+  // 목록 안의 버튼들만 다시 묶는다. 목록을 갈아끼울 때마다 부른다.
+  // 담기를 눌러도 renderPicker(전체 다시 그리기)를 부르지 않는다 -
+  // 검색어를 치던 중이었다면 그 순간 조합이 끊긴다.
+  function bindPickerBody() {
+    if (!_pickEl) return;
+    var s = store();
+
     var rt = _pickEl.querySelector('[data-retry]');
-    if (rt) rt.onclick = function () { _pickRows = null; renderPicker(); loadPicker(); };
+    if (rt) rt.onclick = function () { _pickRows = null; renderPickerBody(); loadPicker(); };
 
     _pickEl.querySelectorAll('[data-add]').forEach(function (b) {
       b.onclick = function () {
@@ -529,17 +554,19 @@
         } else {
           _pickMsg = '';
         }
-        renderPicker();
+        renderPickerBody();
         // 3칸이 다 차면 더 고를 게 없다 — 바로 닫아준다.
         if (res.ok && s.count(_pickCat) >= maxCount()) closePicker();
       };
     });
   }
 
+  // 목록이 도착하면 목록 부분만 갈아끼운다.
+  // 전체를 다시 그리면, 불러오는 동안 검색어를 치고 있던 사람의 입력이 끊긴다.
   function loadPicker() {
     var cat = _pickCat;
     var fn = _pickers[cat];
-    if (!fn) { _pickRows = false; renderPicker(); return; }
+    if (!fn) { _pickRows = false; renderPickerBody(); return; }
     var out;
     try { out = fn(); } catch (e) { out = null; }
     Promise.resolve(out).then(function (rows) {
@@ -548,11 +575,11 @@
       _pickRows = (Array.isArray(rows) ? rows : []).filter(function (r) {
         return r && r.category === cat && r.id !== null && r.id !== undefined;
       });
-      renderPicker();
+      renderPickerBody();
     }).catch(function () {
       if (_pickCat !== cat) return;
       _pickRows = false;
-      renderPicker();
+      renderPickerBody();
     });
   }
 

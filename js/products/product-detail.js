@@ -135,8 +135,7 @@ function pdFieldList() {
   pdRenderCrumb();
   pdRenderView();
   pdRenderNote();
-  pdRenderDesc();
-  pdRenderDetailImages();
+  pdRenderDetail();
 })();
 
 function pdRenderCrumb() {
@@ -397,25 +396,99 @@ function pdApplySimple() {
   location.href = '/support';
 }
 
-function pdRenderDesc() {
-  var sec = document.getElementById('pd-desc');
-  var body = document.getElementById('pd-desc-body');
+// ── 상세 정보 (설명 + 상세 이미지) ─────────────────────
+//
+// 둘을 한 덩어리로 묶고 처음에는 잘라서 보여준다.
+// 상세 이미지가 열 장이면 화면이 수천 픽셀이 되고, 그 아래에 뭐가 더 있는지
+// 아무도 모른 채 스크롤만 하게 된다. 정수기 상세(wdDetailBody)와 같은 방식이다.
+//
+// 내용이 접힘 높이보다 짧으면 버튼과 흐림 효과를 지운다 -
+// 눌러도 아무 일 없는 버튼은 고장으로 읽힌다.
+var PD_COLLAPSED_PX = 1000;
+
+function pdRenderDetail() {
+  var sec = document.getElementById('pd-detail');
+  var body = document.getElementById('pd-detail-body');
+  if (!sec || !body) return;
+
+  var inner = '';
+
   var d = pdProduct.description;
-  if (!d || !String(d).trim()) return;
-  // 관리자가 넣은 평문이다. 줄바꿈만 살리고 태그는 escape 한다.
-  body.innerHTML = pdEsc(d).replace(/\n/g, '<br/>');
+  if (d && String(d).trim()) {
+    // 관리자가 넣은 평문이다. 줄바꿈만 살리고 태그는 escape 한다.
+    inner += '<div class="pd-desc-body">' + pdEsc(d).replace(/\n/g, '<br/>') + '</div>';
+  }
+
+  var imgs = pdProduct.galleryImages || [];
+  if (imgs.length) {
+    inner += '<div class="pd-detail-imgs">' + imgs.map(function (u) {
+      return '<img src="' + pdEsc(u) + '" alt="" loading="lazy" class="pd-detail-img"/>';
+    }).join('') + '</div>';
+  }
+
+  if (!inner) return;   // 보여줄 게 없으면 섹션 자체를 안 띄운다
+
+  body.innerHTML =
+    '<div class="pd-collapse" id="pd-collapse">' + inner +
+      '<div class="pd-collapse-fade" id="pd-collapse-fade"></div>' +
+    '</div>' +
+    '<button type="button" class="pd-expand-btn" id="pd-expand-btn" onclick="pdToggleDetail()">' +
+      '<span>상세정보 펼쳐보기</span>' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"' +
+      ' stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
+    '</button>';
   sec.hidden = false;
+
+  // 이미지가 아직 안 실렸으면 높이가 0에 가깝다. 그 상태로 재면 항상 "짧다" 가 나온다.
+  // 그래서 지금 한 번, 이미지가 다 실린 뒤에 한 번 더 잰다.
+  pdMeasureCollapse();
+  var imgEls = body.querySelectorAll('img');
+  var pending = 0;
+  imgEls.forEach(function (im) {
+    if (im.complete) return;
+    pending++;
+    im.addEventListener('load', pdMeasureCollapse);
+    im.addEventListener('error', pdMeasureCollapse);
+  });
+  if (!pending) requestAnimationFrame(pdMeasureCollapse);
 }
 
-function pdRenderDetailImages() {
-  var sec = document.getElementById('pd-detail-imgs');
-  var body = document.getElementById('pd-detail-imgs-body');
-  var imgs = pdProduct.galleryImages || [];
-  // 위 갤러리에 이미 다 나온 경우(대표 이미지 없고 갤러리만 있을 때)에도
-  // 아래에 길게 한 번 더 보여준다 — 상세 이미지는 세로로 이어 보는 것이 익숙하다.
-  if (!imgs.length) return;
-  body.innerHTML = imgs.map(function (u) {
-    return '<img src="' + pdEsc(u) + '" alt="" loading="lazy" class="pd-detail-img"/>';
-  }).join('');
-  sec.hidden = false;
+function pdMeasureCollapse() {
+  var wrap = document.getElementById('pd-collapse');
+  var btn = document.getElementById('pd-expand-btn');
+  var fade = document.getElementById('pd-collapse-fade');
+  if (!wrap || !btn) return;
+  if (wrap.classList.contains('is-open')) return;   // 이미 펼쳐 봤으면 건드리지 않는다
+
+  // 접힘 높이를 JS 에 숫자로 박아두지 않고 CSS 에서 읽는다.
+  // 모바일은 화면이 좁아 같은 내용도 훨씬 길어지므로 CSS 에서 값을 줄여 두는데,
+  // 여기서 1000 으로 고정해 재면 640~1060px 짜리 상세가 '짧다' 로 판정돼
+  // 버튼이 사라진 채 내용만 잘린다.
+  wrap.style.maxHeight = '';
+  var limit = parseFloat(getComputedStyle(wrap).maxHeight);
+  if (isNaN(limit)) limit = PD_COLLAPSED_PX;
+
+  var short = wrap.scrollHeight <= limit + 60;
+  wrap.style.maxHeight = short ? 'none' : '';
+  btn.style.display = short ? 'none' : '';
+  if (fade) fade.style.display = short ? 'none' : '';
+}
+
+function pdToggleDetail() {
+  var wrap = document.getElementById('pd-collapse');
+  var btn = document.getElementById('pd-expand-btn');
+  var fade = document.getElementById('pd-collapse-fade');
+  if (!wrap || !btn) return;
+
+  var open = wrap.classList.toggle('is-open');
+  btn.classList.toggle('is-open', open);
+  btn.querySelector('span').textContent = open ? '접기' : '상세정보 펼쳐보기';
+  if (fade) fade.style.display = open ? 'none' : '';
+
+  // 접을 때는 상세 영역 맨 위로 돌려준다.
+  // 안 그러면 한참 아래에 있던 화면이 갑자기 짧아져 어디를 보고 있었는지 알 수 없다.
+  if (!open) {
+    var sec = document.getElementById('pd-detail');
+    if (sec) sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
 }
