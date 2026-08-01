@@ -178,31 +178,26 @@
       '</div>';
   }
 
-  // 왼쪽 — 이미지. 대표 + 갤러리를 한 줄로 합치고 중복은 뺀다.
+  // 왼쪽 — 전시 이미지.
+  //
+  // ★ galleryImages 를 여기 넣지 않는다 (2026-08-01 수정).
+  //   어드민에서 그 칸의 이름은 '상세 이미지' 다. 쿠팡처럼 화면 아래에 세로로
+  //   길게 이어 붙이라고 올리는 이미지라, 세로가 수천 픽셀인 경우가 흔하다.
+  //   그걸 정사각형 전시 자리에 넣으면 상품 사진 대신 긴 안내문이 대표로 뜨고,
+  //   정작 아래 상세 영역은 비어 보인다. 실제로 그렇게 나갔다.
+  //
+  //   전시 이미지 = imageUrl 한 장. 상세 이미지 = galleryImages (화면 아래).
+  //   전시용으로 여러 장이 필요해지면 그때 칸을 따로 만든다 -
+  //   여기서 상세 이미지를 빌려 쓰면 관리자는 왜 그렇게 되는지 알 수 없다.
   function galleryHtml(p, opts) {
-    var imgs = [];
-    if (p.imageUrl) imgs.push(p.imageUrl);
-    (p.galleryImages || []).forEach(function (u) {
-      if (u && imgs.indexOf(u) === -1) imgs.push(u);
-    });
-
-    if (!imgs.length) {
+    if (!p.imageUrl) {
       return '<div class="pv2-gallery"><div class="pv2-mainimg">' +
         (opts.showMissing ? '<span class="pv2-miss">대표 이미지 없음</span>' : '<span class="pv2-noimg">이미지 준비중</span>') +
         '</div></div>';
     }
 
-    // 이미지가 하나뿐이면 썸네일 줄을 만들지 않는다.
-    var thumbs = imgs.length > 1
-      ? '<div class="pv2-thumbs">' + imgs.map(function (u, i) {
-          return '<button type="button" class="pv2-thumb' + (i === 0 ? ' is-on' : '') +
-            '" data-pv2-img="' + i + '"><img src="' + esc(u) + '" alt=""/></button>';
-        }).join('') + '</div>'
-      : '';
-
     return '<div class="pv2-gallery">' +
-      thumbs +
-      '<div class="pv2-mainimg"><img id="pv2-mainimg-el" src="' + esc(imgs[0]) + '" alt="' + esc(p.name || '') + '"/></div>' +
+      '<div class="pv2-mainimg"><img id="pv2-mainimg-el" src="' + esc(p.imageUrl) + '" alt="' + esc(p.name || '') + '"/></div>' +
       '</div>';
   }
 
@@ -453,7 +448,11 @@
     return el.querySelector('.pv2-root') || el;
   }
 
-  // 썸네일 클릭 — 그린 뒤 한 번 불러 연결한다. 미리보기에서도 눌러볼 수 있다.
+  // 썸네일 클릭 — 그린 뒤 한 번 불러 연결한다.
+  //
+  // 지금은 전시 이미지가 한 장뿐이라 썸네일이 그려지지 않는다(2026-08-01).
+  // 이 코드를 지우지 않고 두는 이유 - 전시 이미지를 여러 장 받는 칸이 생기면
+  // 바로 다시 쓰인다. 선택자가 안 잡히면 아무 일도 하지 않으므로 해가 없다.
   function bindGallery(rootEl) {
     if (!rootEl) return;
     rootEl.addEventListener('click', function (e) {
