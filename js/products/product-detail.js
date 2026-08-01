@@ -44,6 +44,14 @@ function pdId() {
   return new URLSearchParams(location.search).get('id') || '';
 }
 
+// 마이페이지 찜·비교함에서 눌러 들어오면 ?id=…&months=48 로 온다.
+// 그 약정이 처음부터 켜져 있어야 "내가 보던 그 화면" 이 된다.
+// ⚠ 키 이름 months 는 product-url.js 가 만드는 것과 짝이다. 한쪽만 바꾸면
+//   링크는 열리는데 약정만 기본값으로 돌아간다 - 눈치채기 어려운 오류다.
+function pdWantMonths() {
+  return new URLSearchParams(location.search).get('months') || '';
+}
+
 // 화면을 못 그릴 때 쓰는 안내. 빈 화면을 두면 고장인지 없는 상품인지 알 수 없다.
 function pdFail(message) {
   var el = document.getElementById('pd-view');
@@ -162,11 +170,134 @@ function pdRenderView() {
   DapickProductView.injectStyles();
   el.innerHTML = DapickProductView.render(pdProduct, pdFieldList(), {
     showMissing: false,
+    wantMonths: pdWantMonths(),
     actionsHtml: pdActionsHtml()
   });
   DapickProductView.bind(el);
 
+  pdMountFav(el);
+  pdMountCompare(el);
+  pdRegisterPicker();
+
+  // 약정을 바꾸면 찜·비교의 '담긴 상태'가 달라진다. 버튼에게 다시 확인하라고 알린다.
+  el.addEventListener('pv2-selection-change', function () {
+    if (pdFav && pdFav.refresh) pdFav.refresh();
+    if (pdCmp && pdCmp.refresh) pdCmp.refresh();
+  });
+
   document.title = (pdProduct.name || '상품 상세') + ' | 다픽';
+}
+
+// ── 찜 / 비교 ──────────────────────────────────────────
+//
+// 담는 단위가 '상품' 이 아니라 '조합' 이다 — 같은 에어컨이라도 36개월과 60개월은
+// 월 요금이 다르니 비교표에서 별개 항목이어야 한다. 정수기·인터넷과 같은 규칙이다.
+// 지금 이 화면의 조합은 약정 하나뿐이므로 options = { months: 60 } 이 된다.
+//
+// ⚠ options 의 키 이름(months)은 product-url.js 가 링크를 만들 때도 쓴다.
+//   한쪽만 바꾸면 마이페이지에서 눌러 돌아왔을 때 약정이 기본값으로 리셋된다.
+var pdFav = null;
+var pdCmp = null;
+
+function pdComboLabel() {
+  var sel = pdSelection();
+  var bits = [pdProduct.name || ''];
+  if (pdProduct.modelName) bits.push(pdProduct.modelName);
+  if (sel.months) bits.push(sel.months + '개월');
+  return bits.filter(Boolean).join(' · ');
+}
+
+function pdComboOptions() {
+  var sel = pdSelection();
+  return sel.months ? { months: sel.months } : {};
+}
+
+function pdMountFav(root) {
+  var mount = root.querySelector('.pv2-fav-slot');
+  if (!mount || typeof dpFavInit !== 'function') return;
+  pdFav = dpFavInit(mount, pdProduct.id, {
+    state: function () {
+      var sel = pdSelection();
+      return {
+        options: pdComboOptions(),
+        label: pdComboLabel(),
+        monthlyFee: sel.monthlyFee
+      };
+    }
+  });
+}
+
+// 비교 트레이의 '+' 카드 — 목록 페이지로 내보내지 않고 그 자리에서 고르게 한다.
+//
+// 목록을 가져오는 일을 공용 파일이 아니라 여기서 하는 이유(정수기와 같은 판단):
+//   카테고리마다 상품 API 도 가격 구조도 다르다. compare-view.js 가 그걸 전부 알면
+//   카테고리를 하나 만들 때마다 공용 파일을 고쳐야 한다.
+//
+// 같은 카테고리 안에서만 고른다 - 에어컨 비교표에 안마의자가 끼면 표가 성립하지 않는다.
+function pdRegisterPicker() {
+  if (!window.dpCompareView || typeof window.dpCompareView.registerPicker !== 'function') return;
+  if (!pdProduct.categoryId) return;
+
+  window.dpCompareView.registerPicker('GENERIC', function () {
+    return api
+      .get('/api/products?categoryId=' + encodeURIComponent(pdProduct.categoryId))
+      .then(function (list) {
+        return (Array.isArray(list) ? list : [])
+          .filter(function (r) { return r && r.id !== pdProduct.id; })
+          .map(function (r) {
+            // 상대 상품에는 지금 화면과 같은 약정이 없을 수 있다.
+            // 그때는 가장 싼 줄로 떨어뜨린다 - 빈 칸을 두면 비교가 안 된다.
+            var plans = (r.options && r.options.rentalPlans) || [];
+            var want = pdSelection().months;
+            var hit = null;
+            for (var i = 0; i < plans.length; i++) {
+              if (want && String(plans[i].months) === String(want)) { hit = plans[i]; break; }
+            }
+            if (!hit && plans.length) {
+              hit = plans.slice().sort(function (a, b) {
+                return (a.monthlyFee || 0) - (b.monthlyFee || 0);
+              })[0];
+            }
+            var months = hit ? hit.months : r.contractMonths;
+            var fee = hit ? hit.monthlyFee : r.monthlyFee;
+            var bits = [r.name || ''];
+            if (r.modelName) bits.push(r.modelName);
+            if (months) bits.push(months + '개월');
+            return {
+              category: 'GENERIC',
+              id: r.id,
+              name: r.name,
+              model: r.modelName,
+              image: r.imageUrl,
+              label: bits.filter(Boolean).join(' · '),
+              monthlyFee: fee,
+              options: months ? { months: months } : {}
+            };
+          });
+      })
+      .catch(function () { return []; });
+  });
+}
+
+function pdMountCompare(root) {
+  var mount = root.querySelector('.pv2-cmp-slot');
+  if (!mount || typeof dpCompareInit !== 'function') return;
+  pdCmp = dpCompareInit(mount, pdProduct.id, {
+    snapshot: function () {
+      var sel = pdSelection();
+      return {
+        // 관리자가 만든 카테고리의 상품은 전부 이 서랍에 담긴다.
+        // compare-button.js 의 CATS 에 GENERIC 이 없으면 조용히 담기지 않는다.
+        category: 'GENERIC',
+        name: pdProduct.name,
+        model: pdProduct.modelName,
+        image: pdProduct.imageUrl,
+        label: pdComboLabel(),
+        monthlyFee: sel.monthlyFee,
+        options: pdComboOptions()
+      };
+    }
+  });
 }
 
 // 신청할 수 있는 상품인가. 렌탈기간 표가 있으면 그중 하나라도 요금이 있으면 된다.
@@ -190,7 +321,10 @@ function pdActionsHtml() {
   if (pdHasFee()) {
     btns.push('<button type="button" class="pd-btn pd-btn--main" onclick="pdApplyProduct()" data-track="product_apply">상품 신청</button>');
   }
-  btns.push('<button type="button" class="pd-btn pd-btn--sub" onclick="pdApplySimple()" data-track="product_simple_apply">간편 신청</button>');
+  // 간편 신청은 다른 화면(.sapply-inline)과 같은 파란 버튼 + 말풍선으로 통일한다.
+  // 말풍선(.sapply-tip) 스타일은 simple-apply.js 가 주입한다 - 여기서 다시 만들면 사본이 된다.
+  btns.push('<button type="button" class="pd-btn pd-btn--simple" onclick="pdApplySimple()" data-track="product_simple_apply">' +
+    '<span class="sapply-tip">3초만에 간편신청하기</span>간편 신청</button>');
   btns.push('<button type="button" class="pd-btn pd-btn--kakao" onclick="pdApplyKakao()" data-track="product_kakao">카카오톡 문의</button>');
   return btns.join('');
 }

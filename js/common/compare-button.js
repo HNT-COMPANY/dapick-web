@@ -29,10 +29,13 @@
 (function () {
   var KEY = 'dapick_compare';
   var MAX = 3; // 카테고리당
-  var CATS = ['INTERNET_TV', 'WATER', 'RENTAL'];
+  // GENERIC = 관리자가 만든 카테고리의 상품(에어컨·안마의자 …). 2026-08-01 추가.
+  // 서랍을 하나 더 늘린 이유 - 에어컨과 정수기는 비교할 항목이 아예 달라서 한 표에 못 올린다.
+  // 여기 없는 카테고리로 담으려 하면 addItem 이 reason:'bad' 로 조용히 거절한다.
+  var CATS = ['INTERNET_TV', 'WATER', 'RENTAL', 'GENERIC'];
 
   function emptyBox() {
-    return { INTERNET_TV: [], WATER: [], RENTAL: [] };
+    return { INTERNET_TV: [], WATER: [], RENTAL: [], GENERIC: [] };
   }
 
   function read() {

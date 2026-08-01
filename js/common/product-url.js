@@ -44,6 +44,14 @@
       var q = optionQs(r.options);
       return page + '?id=' + encodeURIComponent(r.productId) + (q ? '&' + q : '');
     }
+    // 관리자가 만든 카테고리의 상품(에어컨·안마의자 …). 2026-08-01 추가.
+    // 화면이 하나뿐이라 정수기와 같은 방식이다 - id 로 열고, 조합이 있으면 붙인다.
+    // 받는 쪽은 product-detail.js 의 pdWantMonths() 다. 키 이름(months)이 어긋나면
+    // 링크는 열리는데 약정만 기본값으로 돌아간다 - 티가 안 나는 종류의 오류다.
+    if (r.categoryType === 'GENERIC') {
+      var qg = optionQs(r.options);
+      return 'product-detail.html?id=' + encodeURIComponent(r.productId) + (qg ? '&' + qg : '');
+    }
     // 인터넷·TV 는 productId 가 '통신사'라서 id 만으로는 화면을 못 만든다.
     // 조합(options.carrier)이 있을 때만 복원 링크가 생긴다.
     if (r.categoryType === 'INTERNET_TV' && r.options && r.options.carrier) {

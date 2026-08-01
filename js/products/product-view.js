@@ -98,6 +98,21 @@
     })[0];
   }
 
+  // 처음에 켜 둘 기간.
+  // 찜·비교·마이페이지에서 "48개월로 보던 그 화면"으로 돌아올 수 있어야 하므로,
+  // 부르는 쪽이 wantMonths 를 주면 그 줄을 켠다. 없거나 못 찾으면 가장 싼 줄.
+  function pickedPlan(p, opts) {
+    var plans = (p.options && p.options.rentalPlans) || [];
+    if (!plans.length) return null;
+    var want = opts && opts.wantMonths;
+    if (want !== null && want !== undefined && want !== '') {
+      for (var i = 0; i < plans.length; i++) {
+        if (String(plans[i].months) === String(want)) return plans[i];
+      }
+    }
+    return cheapestPlan(plans);
+  }
+
   function fieldByKey(fields, key) {
     for (var i = 0; i < (fields || []).length; i++) {
       if (fields[i] && fields[i].key === key) return fields[i];
@@ -191,6 +206,28 @@
       '</div>';
   }
 
+  // 이미지 아래 — 찜하기 / 비교하기 자리.
+  //
+  // 버튼을 여기서 만들지 않고 빈 칸만 내주는 이유:
+  //   찜은 서버(/api/favorites), 비교는 브라우저 저장소를 쓰고 로그인 처리까지 붙는다.
+  //   그건 fav-button.js / compare-button.js 가 이미 하고 있고, 정수기·렌탈·인터넷이
+  //   같은 파일을 쓴다. 여기서 또 만들면 네 벌째 사본이 된다.
+  //   웹은 이 칸에 진짜 버튼을 꽂고, 어드민 미리보기는 눌리지 않는 흉내를 보여준다.
+  //
+  // 자리를 이미지 아래로 잡은 것은 정수기 상세(.wd-media-actions)와 같은 위치이기 때문이다.
+  function mediaActionsHtml(opts) {
+    if (opts.showMissing) {
+      return '<div class="pv2-media-actions">' +
+        '<span class="pv2-fake-btn">♡ 찜하기</span>' +
+        '<span class="pv2-fake-btn">+ 비교하기</span>' +
+        '</div>';
+    }
+    return '<div class="pv2-media-actions">' +
+      '<div class="pv2-fav-slot"></div>' +
+      '<div class="pv2-cmp-slot"></div>' +
+      '</div>';
+  }
+
   // 기간 표에 고를 게 둘 이상 있는지. 하나뿐이면 버튼을 만들지 않는다 -
   // 누를 수 없는 버튼 하나는 "왜 안 눌리지" 만 만든다.
   function hasPlanChoice(p) {
@@ -205,8 +242,8 @@
   //   "최저 월 렌탈료" 라고 써두고 48개월 값을 보여주면 거짓말이 된다.
   function feeBoxHtml(p, opts) {
     var plans = (p.options && p.options.rentalPlans) || [];
-    var cheap = cheapestPlan(plans);
-    var fee = cheap ? cheap.monthlyFee : p.monthlyFee;
+    var picked = pickedPlan(p, opts);
+    var fee = picked ? picked.monthlyFee : p.monthlyFee;
     var discount = p.options ? p.options.cardDiscount : null;
     var label = hasPlanChoice(p) ? '월 렌탈료' : '최저 월 렌탈료';
 
@@ -242,16 +279,16 @@
     }
     if (plans.length < 2) return '';
 
-    var cheap = cheapestPlan(plans);
-    var picked = false;
+    var want = pickedPlan(p, opts);
+    var marked = false;
 
     return '<div class="pv2-plans">' +
       '<div class="pv2-plans-label">약정 기간</div>' +
       '<div class="pv2-plans-btns">' +
       plans.map(function (pl, i) {
         // 같은 요금이 두 줄이면 앞엣것 하나만 켠다. 둘 다 켜지면 어느 값이 실릴지 알 수 없다.
-        var on = !picked && cheap && pl.monthlyFee === cheap.monthlyFee && pl.months === cheap.months;
-        if (on) picked = true;
+        var on = !marked && want && pl.monthlyFee === want.monthlyFee && pl.months === want.months;
+        if (on) marked = true;
         return '<button type="button" class="pv2-plan' + (on ? ' is-on' : '') + '"' +
           ' data-pv2-plan="' + i + '"' +
           ' data-months="' + esc(pl.months == null ? '' : pl.months) + '"' +
@@ -366,12 +403,19 @@
 
   // ══ 조립 ═════════════════════════════════════════════════
 
-  // 오른쪽 열 순서: 요금 상자 → 약정 버튼 → 신청 버튼 → 요약정보 표.
+  // 화면 구성 (2026-08-01 개편):
+  //
+  //   [뱃지 · 렌탈사 · 상품명 · 모델명 · 해시태그]
+  //   [ 이미지 ]  [ 요금 → 약정 → 신청 버튼 → 안내 줄 ]
+  //   [ 요약정보 표 — 폭 전체 ]
+  //
+  // 요약표를 2열 밖으로 뺀 이유:
+  //   오른쪽 좁은 칸에 두면 "냉방능력 / 2.30 kW" 같은 짧은 값이 두 줄로 접히고
+  //   표가 세로로 길게 늘어져 신청 영역이 한참 위로 밀린다.
+  //   폭 전체를 쓰면 같은 항목 수가 절반 높이에 들어간다.
   //
   // 약정 버튼을 요금 바로 아래에 두는 이유 - 눌렀을 때 바뀌는 숫자가 바로 위에 있어야
   // "이 버튼이 저 숫자를 바꾼다" 가 눈에 보인다. 멀리 떨어뜨리면 바뀐 줄도 모른다.
-  // 신청 버튼이 요약표보다 위인 이유 - 요약표는 길이가 상품마다 다르다.
-  // 표 아래에 두면 어떤 상품은 한참 내려야 신청 버튼이 나온다.
   function render(product, fields, options) {
     var p = product || {};
     var opts = options || {};
@@ -380,24 +424,24 @@
     // 처음 선택값을 루트에 적어둔다. 신청 버튼을 만드는 쪽이 이걸 읽어
     // "고객이 지금 보고 있는 요금" 을 그대로 접수한다.
     // 이게 없으면 48개월을 고른 고객의 신청서에 60개월 최저가가 실린다.
-    var cheap = cheapestPlan((p.options && p.options.rentalPlans) || []);
-    var initFee = cheap ? cheap.monthlyFee : p.monthlyFee;
-    var initMonths = cheap ? cheap.months : p.contractMonths;
+    var init = pickedPlan(p, opts);
+    var initFee = init ? init.monthlyFee : p.monthlyFee;
+    var initMonths = init ? init.months : p.contractMonths;
 
     return '<div class="pv2-root' + (opts.narrow ? ' pv2-root--narrow' : '') + '"' +
       ' data-selected-fee="' + esc(initFee == null ? '' : initFee) + '"' +
       ' data-selected-months="' + esc(initMonths == null ? '' : initMonths) + '">' +
       headHtml(p, opts) +
       '<div class="pv2-body">' +
-        '<div class="pv2-left">' + galleryHtml(p, opts) + '</div>' +
+        '<div class="pv2-left">' + galleryHtml(p, opts) + mediaActionsHtml(opts) + '</div>' +
         '<div class="pv2-right">' +
           feeBoxHtml(p, opts) +
           plansHtml(p, opts) +
           (opts.actionsHtml ? '<div class="pv2-actions">' + opts.actionsHtml + '</div>' : '') +
           notesHtml(p, fields, opts) +
-          specHtml(p, fields, opts) +
         '</div>' +
       '</div>' +
+      specHtml(p, fields, opts) +
       '</div>';
   }
 
@@ -444,6 +488,14 @@
         root.setAttribute('data-selected-fee', feeText || '');
         root.setAttribute('data-selected-months', btn.getAttribute('data-months') || '');
       }
+
+      // 찜·비교는 '상품' 이 아니라 '조합' 단위다(정수기와 같은 규칙).
+      // 약정을 바꾸면 담긴 상태가 달라지므로 버튼을 다시 물어봐야 한다.
+      // 알리지 않으면 60개월을 찜한 뒤 36개월로 바꿔도 하트가 켜진 채로 남는다.
+      hostEl.dispatchEvent(new CustomEvent('pv2-selection-change', {
+        bubbles: true,
+        detail: selection(hostEl)
+      }));
     });
   }
 
@@ -499,6 +551,10 @@
       '.pv2-mainimg{flex:1;aspect-ratio:1/1;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;}',
       '.pv2-mainimg img{width:100%;height:100%;object-fit:contain;}',
       '.pv2-noimg{color:#c9ccd6;font-size:14px;}',
+      /* 찜 / 비교 자리 — 버튼 자체 모양은 fav-button.js · compare-button.js 가 정한다 */
+      '.pv2-media-actions{display:flex;gap:8px;margin-top:16px;justify-content:center;flex-wrap:wrap;}',
+      '.pv2-media-actions:empty{display:none;}',
+      '.pv2-fake-btn{display:inline-flex;align-items:center;gap:6px;border:1.5px solid #e2ddf0;background:#fff;color:#b5b2c4;border-radius:12px;padding:9px 16px;font-size:14px;font-weight:700;}',
       /* 요금 상자 */
       '.pv2-feebox{display:flex;border:1px solid #eceaf5;border-radius:12px;background:#fff;overflow:hidden;}',
       '.pv2-feecell{flex:1;padding:20px 16px;text-align:center;}',
@@ -528,8 +584,10 @@
       '.pv2-note-key{flex:0 0 92px;color:#9a97ad;font-weight:500;}',
       '.pv2-note-val{flex:1;color:#2a2a35;font-weight:600;word-break:break-word;line-height:1.5;}',
       /* 요약정보 */
-      '.pv2-specbox{margin-top:14px;background:#f7f7fa;border-radius:12px;padding:24px 22px;}',
-      '.pv2-specgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 18px;}',
+      /* 2열 밖으로 나와 폭 전체를 쓴다. 그만큼 칸을 4개로 늘려 표가 세로로 안 늘어지게 한다.
+         auto-fit 을 안 쓰는 이유 - 폭이 넓으면 7~8열까지 벌어져 어느 줄이 짝인지 안 보인다. */
+      '.pv2-specbox{margin-top:34px;background:#f7f7fa;border-radius:12px;padding:26px 24px;}',
+      '.pv2-specgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px 24px;}',
       '.pv2-speckey{font-size:13px;color:#9a97ad;font-weight:500;}',
       '.pv2-specval{font-size:14.5px;color:#2a2a35;font-weight:600;margin-top:5px;word-break:break-word;line-height:1.45;}',
       /* 미리보기 전용 */
@@ -549,8 +607,8 @@
       '.pv2-root--narrow .pv2-brand img{height:18px;}',
       '.pv2-root--narrow .pv2-note{padding:10px 12px;font-size:12.5px;}',
       '.pv2-root--narrow .pv2-note-key{flex:0 0 88px;}',  /* 72px 이면 "가입가능연령" 이 두 줄로 접힌다 */
-      '.pv2-root--narrow .pv2-specbox{padding:16px 14px;}',
-      '.pv2-root--narrow .pv2-specgrid{gap:14px 10px;}',
+      '.pv2-root--narrow .pv2-specbox{margin-top:20px;padding:16px 14px;}',
+      '.pv2-root--narrow .pv2-specgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;}',
       '.pv2-root--narrow .pv2-specval{font-size:13.5px;}',
       /* 모바일 */
       '@media(max-width:900px){',
@@ -563,8 +621,8 @@
       '.pv2-plan{padding:11px 13px;}',
       '.pv2-plan-m,.pv2-plan-f{font-size:13px;}',
       '.pv2-note-key{flex:0 0 80px;}',
-      '.pv2-specbox{padding:18px 16px;}',
-      '.pv2-specgrid{gap:16px 12px;}',
+      '.pv2-specbox{margin-top:24px;padding:18px 16px;}',
+      '.pv2-specgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px;}',
       '}'
     ].join('');
     var el = document.createElement('style');
