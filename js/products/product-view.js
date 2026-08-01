@@ -1,0 +1,550 @@
+// ════════════════════════════════════════════════════════════════
+// product-view.js — 상품 상세 화면을 그리는 공용 모듈 (2026-08-01)
+//
+// ⚠ 이 파일은 dapick-web 과 dapick-admin 양쪽에 같은 내용으로 둔다.
+//   web  : dapick-web/js/products/product-view.js
+//   admin: dapick-admin/js/products/product-view.js
+//   한쪽만 고치면 "관리자 미리보기와 실제 화면이 다르다" 는 문제가 다시 생긴다.
+//
+// 왜 공용으로 만드는가:
+//   관리자가 상품을 등록할 때 "내가 지금 만드는 게 결국 어떤 화면이 되는가" 를 알아야 한다.
+//   미리보기를 따로 그리면 언젠가 실물과 어긋나고, 관리자는 그걸 확인할 방법이 없다.
+//   그래서 웹 상세와 어드민 미리보기가 '같은 함수'로 같은 HTML 을 만든다.
+//
+// 쓰는 법:
+//   DapickProductView.injectStyles()                                   → CSS 1회 주입
+//   el.innerHTML = DapickProductView.render(product, fields, opts)     → HTML 문자열
+//   DapickProductView.bind(el)                                         → 클릭 동작 연결 (그린 뒤 1회)
+//
+//   opts.showMissing  : true 면 빈 칸에 "미입력" 을 보여준다. 관리자 미리보기용.
+//                       실제 웹 화면은 false — 고객에게 빈 칸을 보여줄 이유가 없다.
+//   opts.narrow       : 좁은 칸에 그릴 때 켠다(어드민 미리보기). 2열을 1열로 접고 글자를 줄인다.
+//                       화면 폭이 아니라 '그려지는 칸' 이 좁은 경우라서 미디어쿼리로는 안 된다 -
+//                       미디어쿼리는 브라우저 창 크기를 보지 미리보기 칸 크기를 보지 않는다.
+//   opts.actionsHtml  : 요금 상자 아래에 끼워 넣을 버튼 HTML. 넣지 않으면 자리가 안 생긴다.
+//                       웹은 진짜 신청 버튼을, 어드민 미리보기는 눌리지 않는 흉내 버튼을 넣는다.
+//                       버튼을 이 모듈이 직접 만들지 않는 이유 - 웹과 어드민이 눌렀을 때
+//                       할 일이 완전히 다르다. 모양만 같으면 되고 동작은 부르는 쪽이 정한다.
+//
+// product 모양 = 서버 ProductResponse 와 동일하게 맞춘다.
+//   { name, modelName, description, imageUrl, galleryImages,
+//     monthlyFee, contractMonths, brandName, brandLogoUrl,
+//     specs:  { 자유칸key: 값 },
+//     options:{ rentalPlans:[{months,monthlyFee}], cardDiscount:숫자,
+//               partnerCards:[...], summary:[{label,value}], panelNotes:[{label,value}] } }
+//   ⚠ options 안의 이름은 어드민 저장 코드(product-edit.js 의 peSubmit)가 정한 것이다.
+//     여기서 다른 이름으로 읽으면 관리자가 넣은 값이 화면에서 조용히 사라진다.
+//
+// fields = 카테고리에 정의된 입력 칸 목록.
+//   [{ key, label, type, unit, base, showOnCard, showInPanel, showOnSpec }]
+//   여기 없는 specs key 는 key 를 그대로 이름으로 써서 보여준다 - 감추면 값이 사라진 것처럼 보인다.
+// ════════════════════════════════════════════════════════════════
+(function (global) {
+  'use strict';
+
+  // ── 뱃지 종류 ──────────────────────────────────────────────
+  // ⚠ 어드민 상품 등록 화면의 선택지도 이 목록을 쓴다. 여기만 고치면 양쪽에 반영된다.
+  //   색을 관리자가 자유롭게 고르게 하지 않는 이유: 상품마다 색이 제각각이면 목록이 지저분해진다.
+  var BADGES = [
+    { key: 'fast_install',   label: '빠른설치',      color: '#2563eb' },
+    { key: 'special_promo',  label: '특가 프로모션',  color: '#d0342c' },
+    { key: 'install_3days',  label: '3일이내 설치',   color: '#17803d' },
+    { key: 'direct',         label: '다이렉트',      color: '#6c3fc5' },
+    { key: 'best',           label: 'BEST',         color: '#d0342c' },
+    { key: 'new',            label: '신상품',        color: '#0f766e' },
+    { key: 'lowest_price',   label: '최저가',        color: '#b45309' },
+    { key: 'free_install',   label: '설치비 무료',    color: '#2563eb' },
+    { key: 'gift',           label: '사은품 증정',    color: '#be185d' }
+  ];
+
+  function esc(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  }
+
+  function won(v) {
+    if (v == null || v === '') return '';
+    return Number(v).toLocaleString() + '원';
+  }
+
+  // 미리보기에서만 "○○ 없음" 을 보여준다. 실제 화면에서는 빈 자리를 조용히 접는다.
+  function miss(opts, text) {
+    return opts.showMissing ? '<span class="pv2-miss">' + esc(text) + '</span>' : '';
+  }
+
+  function isEmptyValue(v) {
+    if (v == null) return true;
+    if (Array.isArray(v)) return v.length === 0;
+    return String(v).trim() === '';
+  }
+
+  // 값 하나를 사람이 읽는 글자로. 단위가 정의돼 있으면 뒤에 붙인다.
+  function displayValue(v, field) {
+    if (isEmptyValue(v)) return '';
+    if (Array.isArray(v)) return v.join(', ');
+    if (v === true) return '예';
+    if (v === false) return '아니오';
+    var unit = field && field.unit ? ' ' + field.unit : '';
+    if (field && field.type === 'number') return Number(v).toLocaleString() + unit;
+    return String(v) + unit;
+  }
+
+  // 기간 표에서 가장 싼 줄. 대표 월요금으로 쓴다.
+  function cheapestPlan(plans) {
+    if (!Array.isArray(plans) || !plans.length) return null;
+    return plans.slice().sort(function (a, b) {
+      return (a.monthlyFee || 0) - (b.monthlyFee || 0);
+    })[0];
+  }
+
+  function fieldByKey(fields, key) {
+    for (var i = 0; i < (fields || []).length; i++) {
+      if (fields[i] && fields[i].key === key) return fields[i];
+    }
+    return null;
+  }
+
+  // ══ 조각들 ═══════════════════════════════════════════════
+
+  // 제목 줄 — 상품명 / 모델명 / 해시태그
+  function headHtml(p, opts) {
+    var tags = (p.options && p.options.hashtags) || [];
+    var badges = (p.options && p.options.badges) || [];
+
+    var badgeHtml = badges.length
+      ? '<div class="pv2-badges">' + badges.map(function (k) {
+          var b = null;
+          for (var i = 0; i < BADGES.length; i++) if (BADGES[i].key === k) b = BADGES[i];
+          if (!b) return '';
+          return '<span class="pv2-badge" style="background:' + b.color + '">' + esc(b.label) + '</span>';
+        }).join('') + '</div>'
+      : '';
+
+    var tagHtml = tags.length
+      ? '<div class="pv2-tags">' + tags.map(function (t) {
+          return '<span class="pv2-tag">#' + esc(t) + '</span>';
+        }).join('') + '</div>'
+      : '';
+
+    return '<div class="pv2-head">' +
+      badgeHtml +
+      '<h1 class="pv2-name">' + (p.name ? esc(p.name) : miss(opts, '제목 없음')) + '</h1>' +
+      '<div class="pv2-model">' + (p.modelName ? esc(p.modelName) : miss(opts, '모델명 없음')) + '</div>' +
+      tagHtml +
+      '</div>';
+  }
+
+  // 왼쪽 — 이미지. 대표 + 갤러리를 한 줄로 합치고 중복은 뺀다.
+  function galleryHtml(p, opts) {
+    var imgs = [];
+    if (p.imageUrl) imgs.push(p.imageUrl);
+    (p.galleryImages || []).forEach(function (u) {
+      if (u && imgs.indexOf(u) === -1) imgs.push(u);
+    });
+
+    if (!imgs.length) {
+      return '<div class="pv2-gallery"><div class="pv2-mainimg">' +
+        (opts.showMissing ? '<span class="pv2-miss">대표 이미지 없음</span>' : '<span class="pv2-noimg">이미지 준비중</span>') +
+        '</div></div>';
+    }
+
+    // 이미지가 하나뿐이면 썸네일 줄을 만들지 않는다.
+    var thumbs = imgs.length > 1
+      ? '<div class="pv2-thumbs">' + imgs.map(function (u, i) {
+          return '<button type="button" class="pv2-thumb' + (i === 0 ? ' is-on' : '') +
+            '" data-pv2-img="' + i + '"><img src="' + esc(u) + '" alt=""/></button>';
+        }).join('') + '</div>'
+      : '';
+
+    return '<div class="pv2-gallery">' +
+      thumbs +
+      '<div class="pv2-mainimg"><img id="pv2-mainimg-el" src="' + esc(imgs[0]) + '" alt="' + esc(p.name || '') + '"/></div>' +
+      '</div>';
+  }
+
+  // 기간 표에 고를 게 둘 이상 있는지. 하나뿐이면 버튼을 만들지 않는다 -
+  // 누를 수 없는 버튼 하나는 "왜 안 눌리지" 만 만든다.
+  function hasPlanChoice(p) {
+    var plans = (p.options && p.options.rentalPlans) || [];
+    return plans.length > 1;
+  }
+
+  // 오른쪽 위 — 요금 상자. 월 렌탈료 / 제휴카드 할인 두 칸.
+  //
+  // 왼쪽 칸 라벨이 두 가지인 이유:
+  //   기간을 고를 수 있는 상품은 고른 순간 그 값이 최저가가 아니다.
+  //   "최저 월 렌탈료" 라고 써두고 48개월 값을 보여주면 거짓말이 된다.
+  function feeBoxHtml(p, opts) {
+    var plans = (p.options && p.options.rentalPlans) || [];
+    var cheap = cheapestPlan(plans);
+    var fee = cheap ? cheap.monthlyFee : p.monthlyFee;
+    var discount = p.options ? p.options.cardDiscount : null;
+    var label = hasPlanChoice(p) ? '월 렌탈료' : '최저 월 렌탈료';
+
+    var left = '<div class="pv2-feecell pv2-feecell--main">' +
+      '<div class="pv2-feelabel">' + label + '</div>' +
+      '<div class="pv2-feeval">' + (fee != null && fee !== '' ? esc(won(fee)) : miss(opts, '미입력')) + '</div>' +
+      '</div>';
+
+    // 할인이 없으면 칸을 아예 안 만든다. 빈 칸이 있으면 "값이 빠졌나" 로 읽힌다.
+    var right = (discount != null && discount !== '')
+      ? '<div class="pv2-feecell pv2-feecell--discount">' +
+        '<div class="pv2-feelabel">제휴카드할인</div>' +
+        '<div class="pv2-feeval">' + esc(won(discount)) + '</div>' +
+        '</div>'
+      : '';
+
+    return '<div class="pv2-feebox">' + left + right + '</div>';
+  }
+
+  // 약정 기간 고르기 — 누르면 위 요금 상자의 숫자가 바뀐다.
+  //
+  // 처음 선택은 '가장 싼 기간' 이다. 요금 상자가 이미 그 값을 보여주고 있으니
+  // 다른 기간이 켜져 있으면 화면과 숫자가 어긋난다.
+  //
+  // 보여주는 순서는 관리자가 입력한 순서 그대로 둔다. 여기서 정렬하면
+  // 관리자가 "내가 넣은 순서와 다르게 나온다" 를 겪는다. 정렬이 필요하면 입력 쪽에서 한다.
+  function plansHtml(p, opts) {
+    var plans = (p.options && p.options.rentalPlans) || [];
+    if (!plans.length) {
+      return opts.showMissing
+        ? '<div class="pv2-plans"><div class="pv2-miss">렌탈기간이 아직 없습니다</div></div>'
+        : '';
+    }
+    if (plans.length < 2) return '';
+
+    var cheap = cheapestPlan(plans);
+    var picked = false;
+
+    return '<div class="pv2-plans">' +
+      '<div class="pv2-plans-label">약정 기간</div>' +
+      '<div class="pv2-plans-btns">' +
+      plans.map(function (pl, i) {
+        // 같은 요금이 두 줄이면 앞엣것 하나만 켠다. 둘 다 켜지면 어느 값이 실릴지 알 수 없다.
+        var on = !picked && cheap && pl.monthlyFee === cheap.monthlyFee && pl.months === cheap.months;
+        if (on) picked = true;
+        return '<button type="button" class="pv2-plan' + (on ? ' is-on' : '') + '"' +
+          ' data-pv2-plan="' + i + '"' +
+          ' data-months="' + esc(pl.months == null ? '' : pl.months) + '"' +
+          ' data-fee="' + esc(pl.monthlyFee == null ? '' : pl.monthlyFee) + '">' +
+          '<span class="pv2-plan-m">' + esc(pl.months == null ? '?' : pl.months) + '개월</span>' +
+          '<span class="pv2-plan-f">' + (pl.monthlyFee != null ? esc(won(pl.monthlyFee)) : '') + '</span>' +
+          '</button>';
+      }).join('') +
+      '</div></div>';
+  }
+
+  // 신청 패널 안내 줄 — A/S 기간·가입가능연령처럼 "요금 옆에서 알려줘야 하는" 것들.
+  //
+  // 요약표와 나누는 이유:
+  //   요약표는 제품 사양(냉방면적·배관길이)이고 여기는 계약 조건이다.
+  //   관리자도 showInPanel / showOnSpec 두 체크박스로 따로 고르게 되어 있어
+  //   화면에서 합쳐 버리면 그 선택이 아무 의미가 없어진다.
+  //
+  // 담기는 것 두 가지:
+  //   1) 항목 정의에서 showInPanel 이 켜진 칸
+  //   2) 이 상품에만 적은 자유 줄 (options.panelNotes)
+  //
+  // ⚠ panelNotes 라는 이름은 어드민 저장 코드(peSubmit)가 정한 것이다. 바꾸면 값이 미아가 된다.
+  //    notes 도 같이 읽는 이유 - 초기에 그 이름으로 저장된 상품이 있을 수 있다.
+  function notesHtml(p, fields, opts) {
+    var rows = [];
+
+    (fields || []).forEach(function (f) {
+      if (!f || !f.showInPanel || f.base) return;
+      var text = displayValue((p.specs || {})[f.key], f);
+      if (!text && !opts.showMissing) return;
+      rows.push({ label: f.label, value: text });
+    });
+
+    var free = (p.options && (p.options.panelNotes || p.options.notes)) || [];
+    free.forEach(function (n) {
+      if (!n) return;
+      var text = (n.value == null ? '' : String(n.value)).trim();
+      if (!text && !opts.showMissing) return;
+      rows.push({ label: n.label || '(항목 없음)', value: text });
+    });
+
+    if (!rows.length) return '';
+
+    return '<div class="pv2-notes">' +
+      rows.map(function (r) {
+        return '<div class="pv2-note">' +
+          '<span class="pv2-note-key">' + esc(r.label) + '</span>' +
+          '<span class="pv2-note-val">' + (r.value ? esc(r.value) : miss(opts, '내용 없음')) + '</span>' +
+          '</div>';
+      }).join('') +
+      '</div>';
+  }
+
+  // 오른쪽 아래 — 회색 요약정보 2열 표.
+  // 타입에 정의된 칸(showOnSpec) + 이 상품에만 적은 자유 줄(options.summary) 을 이어 붙인다.
+  function specHtml(p, fields, opts) {
+    var rows = [];
+
+    // 이미지·기간표·제휴카드는 값이 URL이나 배열이라 표에 한 줄로 못 적는다.
+    // 거르지 않으면 요약표에 "https://…/a.png" 같은 주소가 그대로 뜬다.
+    // 이 네 타입은 화면의 다른 자리(갤러리·약정 버튼·카드 영역)가 이미 맡고 있다.
+    // ⚠ 어드민 peDrawSpec 의 필터와 같은 목록이다. 한쪽만 고치면 미리보기와 실물이 갈린다.
+    var NOT_IN_TABLE = ['plans', 'cards', 'image', 'images'];
+
+    (fields || []).forEach(function (f) {
+      if (!f || f.showOnSpec === false) return;
+      if (NOT_IN_TABLE.indexOf(f.type) !== -1) return;
+      var v = f.base ? baseValue(p, f.key) : (p.specs || {})[f.key];
+      var text = displayValue(v, f);
+      if (!text && !opts.showMissing) return;
+      rows.push({ label: f.label, value: text });
+    });
+
+    // 정의에 없는 specs 키도 버리지 않는다. 관리자가 넣은 값이 사라진 것처럼 보이면 안 된다.
+    Object.keys(p.specs || {}).forEach(function (k) {
+      if (fieldByKey(fields, k)) return;
+      var text = displayValue(p.specs[k], null);
+      if (!text) return;
+      rows.push({ label: k, value: text });
+    });
+
+    ((p.options && p.options.summary) || []).forEach(function (r) {
+      if (!r) return;
+      var text = (r.value == null ? '' : String(r.value)).trim();
+      if (!text && !opts.showMissing) return;
+      rows.push({ label: r.label || '(항목 없음)', value: text });
+    });
+
+    if (!rows.length) {
+      return opts.showMissing
+        ? '<div class="pv2-specbox"><div class="pv2-miss">요약정보가 아직 없습니다</div></div>'
+        : '';
+    }
+
+    return '<div class="pv2-specbox"><div class="pv2-specgrid">' +
+      rows.map(function (r) {
+        return '<div class="pv2-speccell">' +
+          '<div class="pv2-speckey">' + esc(r.label) + '</div>' +
+          '<div class="pv2-specval">' + (r.value ? esc(r.value) : miss(opts, '미입력')) + '</div>' +
+          '</div>';
+      }).join('') +
+      '</div></div>';
+  }
+
+  // base 칸은 specs 가 아니라 상품의 진짜 항목에서 값을 찾는다.
+  function baseValue(p, key) {
+    if (key === 'brandId') return p.brandName;
+    if (key === 'monthlyFee') return p.monthlyFee;
+    return p[key];
+  }
+
+  // ══ 조립 ═════════════════════════════════════════════════
+
+  // 오른쪽 열 순서: 요금 상자 → 약정 버튼 → 신청 버튼 → 요약정보 표.
+  //
+  // 약정 버튼을 요금 바로 아래에 두는 이유 - 눌렀을 때 바뀌는 숫자가 바로 위에 있어야
+  // "이 버튼이 저 숫자를 바꾼다" 가 눈에 보인다. 멀리 떨어뜨리면 바뀐 줄도 모른다.
+  // 신청 버튼이 요약표보다 위인 이유 - 요약표는 길이가 상품마다 다르다.
+  // 표 아래에 두면 어떤 상품은 한참 내려야 신청 버튼이 나온다.
+  function render(product, fields, options) {
+    var p = product || {};
+    var opts = options || {};
+    if (!p.options) p.options = {};
+
+    // 처음 선택값을 루트에 적어둔다. 신청 버튼을 만드는 쪽이 이걸 읽어
+    // "고객이 지금 보고 있는 요금" 을 그대로 접수한다.
+    // 이게 없으면 48개월을 고른 고객의 신청서에 60개월 최저가가 실린다.
+    var cheap = cheapestPlan((p.options && p.options.rentalPlans) || []);
+    var initFee = cheap ? cheap.monthlyFee : p.monthlyFee;
+    var initMonths = cheap ? cheap.months : p.contractMonths;
+
+    return '<div class="pv2-root' + (opts.narrow ? ' pv2-root--narrow' : '') + '"' +
+      ' data-selected-fee="' + esc(initFee == null ? '' : initFee) + '"' +
+      ' data-selected-months="' + esc(initMonths == null ? '' : initMonths) + '">' +
+      headHtml(p, opts) +
+      '<div class="pv2-body">' +
+        '<div class="pv2-left">' + galleryHtml(p, opts) + '</div>' +
+        '<div class="pv2-right">' +
+          feeBoxHtml(p, opts) +
+          plansHtml(p, opts) +
+          (opts.actionsHtml ? '<div class="pv2-actions">' + opts.actionsHtml + '</div>' : '') +
+          notesHtml(p, fields, opts) +
+          specHtml(p, fields, opts) +
+        '</div>' +
+      '</div>' +
+      '</div>';
+  }
+
+  // data-selected-* 는 render 가 만든 .pv2-root 에 붙어 있다.
+  // 부르는 쪽이 담는 칸(#pd-view)을 넘길 수도 있고 .pv2-root 를 바로 넘길 수도 있어 둘 다 받는다.
+  function rootOf(el) {
+    if (!el) return null;
+    if (el.classList && el.classList.contains('pv2-root')) return el;
+    return el.querySelector('.pv2-root') || el;
+  }
+
+  // 썸네일 클릭 — 그린 뒤 한 번 불러 연결한다. 미리보기에서도 눌러볼 수 있다.
+  function bindGallery(rootEl) {
+    if (!rootEl) return;
+    rootEl.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('[data-pv2-img]');
+      if (!btn) return;
+      var img = btn.querySelector('img');
+      var main = rootEl.querySelector('#pv2-mainimg-el');
+      if (img && main) main.src = img.src;
+      rootEl.querySelectorAll('[data-pv2-img]').forEach(function (b) {
+        b.classList.toggle('is-on', b === btn);
+      });
+    });
+  }
+
+  // 약정 버튼 클릭 — 요금 상자 숫자를 바꾸고 선택값을 루트에 적는다.
+  function bindPlans(hostEl) {
+    if (!hostEl) return;
+    hostEl.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('[data-pv2-plan]');
+      if (!btn) return;
+
+      var root = rootOf(hostEl);
+      var feeText = btn.getAttribute('data-fee');
+      var val = hostEl.querySelector('.pv2-feecell--main .pv2-feeval');
+      if (val) val.textContent = feeText === '' ? '' : won(feeText);
+
+      hostEl.querySelectorAll('[data-pv2-plan]').forEach(function (b) {
+        b.classList.toggle('is-on', b === btn);
+      });
+
+      if (root) {
+        root.setAttribute('data-selected-fee', feeText || '');
+        root.setAttribute('data-selected-months', btn.getAttribute('data-months') || '');
+      }
+    });
+  }
+
+  // 그린 뒤 한 번 부른다.
+  //
+  // ⚠ 담는 칸(hostEl)에 리스너를 붙이므로, 다시 그려도 리스너는 살아 있다.
+  //   어드민 미리보기처럼 입력할 때마다 다시 그리는 화면에서 매번 bind 를 부르면
+  //   리스너가 쌓여 클릭 한 번에 수십 번 실행된다. 그래서 한 번만 붙인다.
+  function bind(hostEl) {
+    if (!hostEl || hostEl.__pv2Bound) return;
+    hostEl.__pv2Bound = true;
+    bindGallery(hostEl);
+    bindPlans(hostEl);
+  }
+
+  // 지금 고객이 보고 있는 요금·약정. 신청 접수에 이 값을 실어야 한다.
+  function selection(hostEl) {
+    var root = rootOf(hostEl);
+    if (!root) return { monthlyFee: null, months: null };
+    var f = root.getAttribute('data-selected-fee');
+    var m = root.getAttribute('data-selected-months');
+    return {
+      monthlyFee: f === null || f === '' ? null : Number(f),
+      months: m === null || m === '' ? null : Number(m)
+    };
+  }
+
+  var styled = false;
+  function injectStyles() {
+    if (styled) return;
+    styled = true;
+    var css = [
+      '.pv2-root{font-family:inherit;color:#18172b;}',
+      /* 제목 */
+      '.pv2-head{padding:0 0 22px;}',
+      '.pv2-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}',
+      '.pv2-badge{font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:3px 7px;line-height:1.3;}',
+      '.pv2-name{font-size:27px;font-weight:800;line-height:1.35;margin:0;letter-spacing:-.5px;}',
+      '.pv2-model{font-size:16px;color:#b0aec2;margin-top:4px;font-weight:500;}',
+      '.pv2-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}',
+      '.pv2-tag{font-size:12px;color:#6b6880;background:#f4f4f7;border-radius:5px;padding:5px 9px;line-height:1.3;}',
+      /* 본문 2열 */
+      '.pv2-body{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:40px;align-items:start;}',
+      /* 이미지 */
+      '.pv2-gallery{display:flex;gap:14px;align-items:flex-start;}',
+      '.pv2-thumbs{display:flex;flex-direction:column;gap:8px;flex-shrink:0;}',
+      '.pv2-thumb{width:62px;height:62px;border:1px solid #eceaf5;border-radius:8px;background:#fff;padding:4px;cursor:pointer;overflow:hidden;}',
+      '.pv2-thumb img{width:100%;height:100%;object-fit:contain;}',
+      '.pv2-thumb.is-on{border-color:#18172b;}',
+      '.pv2-mainimg{flex:1;aspect-ratio:1/1;background:#fff;display:flex;align-items:center;justify-content:center;overflow:hidden;border-radius:10px;}',
+      '.pv2-mainimg img{width:100%;height:100%;object-fit:contain;}',
+      '.pv2-noimg{color:#c9ccd6;font-size:14px;}',
+      /* 요금 상자 */
+      '.pv2-feebox{display:flex;border:1px solid #eceaf5;border-radius:12px;background:#fff;overflow:hidden;}',
+      '.pv2-feecell{flex:1;padding:20px 16px;text-align:center;}',
+      '.pv2-feecell + .pv2-feecell{border-left:1px solid #f0eff5;}',
+      '.pv2-feelabel{font-size:13px;color:#8a8fa3;font-weight:500;}',
+      '.pv2-feeval{font-size:24px;font-weight:800;margin-top:6px;letter-spacing:-.5px;color:#18172b;}',
+      '.pv2-feecell--discount .pv2-feeval{color:#e8590c;}',
+      /* 약정 기간 고르기 */
+      '.pv2-plans{margin-top:14px;}',
+      '.pv2-plans-label{font-size:13px;color:#8a8fa3;font-weight:600;margin-bottom:8px;}',
+      '.pv2-plans-btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;}',
+      '.pv2-plan{border:1px solid #e4e2ee;border-radius:9px;background:#fff;padding:10px 6px;cursor:pointer;text-align:center;line-height:1.3;transition:border-color .12s,background .12s;}',
+      '.pv2-plan:hover{border-color:#c8c4dc;}',
+      '.pv2-plan-m{display:block;font-size:13px;font-weight:700;color:#4a4860;}',
+      '.pv2-plan-f{display:block;font-size:12px;color:#9a97ad;margin-top:3px;}',
+      '.pv2-plan.is-on{border-color:#18172b;background:#18172b;}',
+      '.pv2-plan.is-on .pv2-plan-m{color:#fff;}',
+      '.pv2-plan.is-on .pv2-plan-f{color:#c9c6dc;}',
+      /* 신청 버튼 자리 */
+      '.pv2-actions{display:flex;gap:8px;margin-top:14px;}',
+      '.pv2-actions > *{flex:1;}',
+      /* 신청 안내 줄 */
+      '.pv2-notes{margin-top:14px;border:1px solid #eceaf5;border-radius:12px;overflow:hidden;}',
+      '.pv2-note{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;font-size:13.5px;}',
+      '.pv2-note + .pv2-note{border-top:1px solid #f4f3f8;}',
+      '.pv2-note-key{flex:0 0 92px;color:#9a97ad;font-weight:500;}',
+      '.pv2-note-val{flex:1;color:#2a2a35;font-weight:600;word-break:break-word;line-height:1.5;}',
+      /* 요약정보 */
+      '.pv2-specbox{margin-top:14px;background:#f7f7fa;border-radius:12px;padding:24px 22px;}',
+      '.pv2-specgrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:22px 18px;}',
+      '.pv2-speckey{font-size:13px;color:#9a97ad;font-weight:500;}',
+      '.pv2-specval{font-size:14.5px;color:#2a2a35;font-weight:600;margin-top:5px;word-break:break-word;line-height:1.45;}',
+      /* 미리보기 전용 */
+      '.pv2-miss{color:#c9ccd6;font-weight:400;font-size:13px;}',
+      /* 좁은 칸(어드민 미리보기) — 모바일 규칙과 같은 모양을 창 크기와 무관하게 적용한다 */
+      '.pv2-root--narrow .pv2-body{grid-template-columns:1fr;gap:20px;}',
+      '.pv2-root--narrow .pv2-head{padding-bottom:16px;}',
+      '.pv2-root--narrow .pv2-name{font-size:19px;}',
+      '.pv2-root--narrow .pv2-model{font-size:13px;}',
+      '.pv2-root--narrow .pv2-gallery{flex-direction:column-reverse;}',
+      '.pv2-root--narrow .pv2-thumbs{flex-direction:row;flex-wrap:wrap;}',
+      '.pv2-root--narrow .pv2-thumb{width:52px;height:52px;}',
+      '.pv2-root--narrow .pv2-feecell{padding:16px 10px;}',
+      '.pv2-root--narrow .pv2-feeval{font-size:19px;}',
+      '.pv2-root--narrow .pv2-plans-btns{grid-template-columns:repeat(auto-fit,minmax(76px,1fr));}',
+      '.pv2-root--narrow .pv2-note{padding:10px 12px;font-size:12.5px;}',
+      '.pv2-root--narrow .pv2-note-key{flex:0 0 88px;}',  /* 72px 이면 "가입가능연령" 이 두 줄로 접힌다 */
+      '.pv2-root--narrow .pv2-specbox{padding:16px 14px;}',
+      '.pv2-root--narrow .pv2-specgrid{gap:14px 10px;}',
+      '.pv2-root--narrow .pv2-specval{font-size:13.5px;}',
+      /* 모바일 */
+      '@media(max-width:900px){',
+      '.pv2-body{grid-template-columns:1fr;gap:24px;}',
+      '.pv2-name{font-size:21px;}',
+      '.pv2-model{font-size:14px;}',
+      '.pv2-gallery{flex-direction:column-reverse;}',
+      '.pv2-thumbs{flex-direction:row;flex-wrap:wrap;}',
+      '.pv2-feeval{font-size:20px;}',
+      '.pv2-plans-btns{grid-template-columns:repeat(auto-fit,minmax(84px,1fr));}',
+      '.pv2-note-key{flex:0 0 80px;}',
+      '.pv2-specbox{padding:18px 16px;}',
+      '.pv2-specgrid{gap:16px 12px;}',
+      '}'
+    ].join('');
+    var el = document.createElement('style');
+    el.setAttribute('data-pv2', '1');
+    el.textContent = css;
+    document.head.appendChild(el);
+  }
+
+  global.DapickProductView = {
+    render: render,
+    injectStyles: injectStyles,
+    bind: bind,               // 썸네일 + 약정 버튼을 한 번에 연결 (권장)
+    bindGallery: bindGallery, // 썸네일만
+    bindPlans: bindPlans,     // 약정 버튼만
+    selection: selection,     // 지금 선택된 요금·약정
+    BADGES: BADGES
+  };
+})(window);

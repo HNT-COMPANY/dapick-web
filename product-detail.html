@@ -39,26 +39,13 @@
   <!-- 위치 표시: 홈 > 카테고리 > 품목 -->
   <nav class="pd-crumb" id="pd-crumb" aria-label="현재 위치"></nav>
 
-  <div class="pd-top">
-    <!-- 왼쪽: 이미지 -->
-    <div class="pd-gallery">
-      <div class="pd-main-img" id="pd-main-img"></div>
-      <div class="pd-thumbs" id="pd-thumbs"></div>
-    </div>
-
-    <!-- 오른쪽: 요약 + 신청 -->
-    <div class="pd-summary">
-      <div class="pd-brand" id="pd-brand"></div>
-      <div class="pd-model" id="pd-model"></div>
-      <h1 class="pd-name" id="pd-name">&nbsp;</h1>
-      <div class="pd-fee" id="pd-fee"></div>
-
-      <dl class="pd-specs" id="pd-specs"></dl>
-
-      <div class="pd-actions" id="pd-actions"></div>
-      <p class="pd-note" id="pd-note"></p>
-    </div>
-  </div>
+  <!--
+    이 안은 js/products/product-view.js 가 통째로 그린다.
+    여기에 칸을 미리 만들어 두지 않는다 - 관리자 미리보기와 화면 모양이 갈리는 원인이 된다.
+    화면 모양을 고치려면 product-view.js 를 고친다. 그러면 미리보기도 같이 바뀐다.
+  -->
+  <div id="pd-view"></div>
+  <p class="pd-note" id="pd-note"></p>
 
   <!-- 상세 설명 -->
   <section class="pd-desc" id="pd-desc" hidden>
@@ -197,6 +184,8 @@
 <script src="js/common/gnb-user.js"></script>
 <script src="js/common/application.js"></script>
 <script src="js/common/simple-apply.js"></script>
+<!-- ⚠ 어드민 미리보기와 같은 파일이다. 한쪽만 고치면 미리보기와 실제 화면이 어긋난다. -->
+<script src="js/products/product-view.js"></script>
 <script src="js/products/product-detail.js"></script>
 <script src="/js/common/track.js"></script>
 </body>
