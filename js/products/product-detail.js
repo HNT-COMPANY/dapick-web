@@ -180,13 +180,26 @@ function pdHasFee() {
 }
 
 // 버튼 모양만 여기서 만든다. 자리는 공용 모듈이 잡는다(요금 상자 바로 아래).
+//
+// 세 개를 세로로 쌓는 이유:
+//   어드민 미리보기가 원래 세로 3개였고 화면마다 개수가 달랐다.
+//   가로로 놓으면 폭이 좁은 화면에서 "카카오톡 문의" 가 두 줄로 접힌다.
+//   상품 신청이 맨 위인 것은 이 화면의 목적이 정식 접수이기 때문이다.
 function pdActionsHtml() {
   var btns = [];
   if (pdHasFee()) {
-    btns.push('<button type="button" class="pd-btn pd-btn--main" onclick="pdApplyProduct()" data-track="product_apply">상품 신청하기</button>');
+    btns.push('<button type="button" class="pd-btn pd-btn--main" onclick="pdApplyProduct()" data-track="product_apply">상품 신청</button>');
   }
   btns.push('<button type="button" class="pd-btn pd-btn--sub" onclick="pdApplySimple()" data-track="product_simple_apply">간편 신청</button>');
+  btns.push('<button type="button" class="pd-btn pd-btn--kakao" onclick="pdApplyKakao()" data-track="product_kakao">카카오톡 문의</button>');
   return btns.join('');
+}
+
+// 카카오 상담 — 화면 오른쪽 아래 플로팅 버튼과 같은 주소다.
+// 주소를 여기 한 번 더 적는 대신 상수로 두면 좋겠지만, 이 프로젝트는
+// 화면마다 이 주소를 직접 적고 있어 그 방식에 맞춘다(index.html·banner-detail.html 동일).
+function pdApplyKakao() {
+  window.open('https://pf.kakao.com/_exaRjX/chat', '_blank');
 }
 
 // 왜 버튼이 하나뿐인지 고객이 알 수 있게 적는다. 그냥 없으면 고장으로 보인다.

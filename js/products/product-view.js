@@ -107,7 +107,34 @@
 
   // ══ 조각들 ═══════════════════════════════════════════════
 
-  // 제목 줄 — 상품명 / 모델명 / 해시태그
+  // 렌탈사 — 로고가 있으면 로고, 없으면 이름.
+  //
+  // 값이 올 수 있는 곳이 둘이다:
+  //   1) brandName / brandLogoUrl — 카테고리에 등록해 둔 렌탈사를 고른 경우(FK).
+  //      로고를 한 번 바꾸면 그 렌탈사의 모든 상품에 즉시 반영된다.
+  //   2) options.brandDirect{name,logoUrl} — 상품 등록 화면에서 직접 적은 경우.
+  //      바로 쓸 수 있지만 상품마다 사본이 생겨서, 로고가 바뀌면 상품을 전부 고쳐야 한다.
+  // 등록된 렌탈사가 이긴다 — 마스터가 있는데 사본을 보여주면 둘이 어긋난 채로 남는다.
+  function brandOf(p) {
+    var d = (p.options && p.options.brandDirect) || {};
+    return {
+      name: p.brandName || d.name || '',
+      logoUrl: p.brandLogoUrl || d.logoUrl || ''
+    };
+  }
+
+  function brandHtml(p, opts) {
+    var b = brandOf(p);
+    if (b.logoUrl) {
+      return '<div class="pv2-brand"><img src="' + esc(b.logoUrl) + '" alt="' + esc(b.name) + '"/></div>';
+    }
+    if (b.name) {
+      return '<div class="pv2-brand"><span class="pv2-brand-name">' + esc(b.name) + '</span></div>';
+    }
+    return opts.showMissing ? '<div class="pv2-brand">' + miss(opts, '렌탈사 미입력') + '</div>' : '';
+  }
+
+  // 제목 줄 — 렌탈사 / 상품명 / 모델명 / 해시태그
   function headHtml(p, opts) {
     var tags = (p.options && p.options.hashtags) || [];
     var badges = (p.options && p.options.badges) || [];
@@ -129,6 +156,7 @@
 
     return '<div class="pv2-head">' +
       badgeHtml +
+      brandHtml(p, opts) +
       '<h1 class="pv2-name">' + (p.name ? esc(p.name) : miss(opts, '제목 없음')) + '</h1>' +
       '<div class="pv2-model">' + (p.modelName ? esc(p.modelName) : miss(opts, '모델명 없음')) + '</div>' +
       tagHtml +
@@ -228,8 +256,8 @@
           ' data-pv2-plan="' + i + '"' +
           ' data-months="' + esc(pl.months == null ? '' : pl.months) + '"' +
           ' data-fee="' + esc(pl.monthlyFee == null ? '' : pl.monthlyFee) + '">' +
-          '<span class="pv2-plan-m">' + esc(pl.months == null ? '?' : pl.months) + '개월</span>' +
-          '<span class="pv2-plan-f">' + (pl.monthlyFee != null ? esc(won(pl.monthlyFee)) : '') + '</span>' +
+          '<span class="pv2-plan-m">' + esc(pl.months == null ? '기간 미입력' : pl.months + '개월') + '</span>' +
+          '<span class="pv2-plan-f">' + (pl.monthlyFee != null ? '월 ' + esc(won(pl.monthlyFee)) : '요금 미입력') + '</span>' +
           '</button>';
       }).join('') +
       '</div></div>';
@@ -331,7 +359,7 @@
 
   // base 칸은 specs 가 아니라 상품의 진짜 항목에서 값을 찾는다.
   function baseValue(p, key) {
-    if (key === 'brandId') return p.brandName;
+    if (key === 'brandId') return brandOf(p).name;   // 직접 입력한 이름도 요약표에 나와야 한다
     if (key === 'monthlyFee') return p.monthlyFee;
     return p[key];
   }
@@ -453,6 +481,9 @@
       '.pv2-head{padding:0 0 22px;}',
       '.pv2-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}',
       '.pv2-badge{font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:3px 7px;line-height:1.3;}',
+      '.pv2-brand{margin-bottom:9px;}',
+      '.pv2-brand img{height:22px;width:auto;max-width:150px;object-fit:contain;display:block;}',
+      '.pv2-brand-name{font-size:14px;font-weight:700;color:#6b6880;}',
       '.pv2-name{font-size:27px;font-weight:800;line-height:1.35;margin:0;letter-spacing:-.5px;}',
       '.pv2-model{font-size:16px;color:#b0aec2;margin-top:4px;font-weight:500;}',
       '.pv2-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}',
@@ -478,17 +509,18 @@
       /* 약정 기간 고르기 */
       '.pv2-plans{margin-top:14px;}',
       '.pv2-plans-label{font-size:13px;color:#8a8fa3;font-weight:600;margin-bottom:8px;}',
-      '.pv2-plans-btns{display:grid;grid-template-columns:repeat(auto-fit,minmax(96px,1fr));gap:8px;}',
-      '.pv2-plan{border:1px solid #e4e2ee;border-radius:9px;background:#fff;padding:10px 6px;cursor:pointer;text-align:center;line-height:1.3;transition:border-color .12s,background .12s;}',
+      /* 세로 쌓기 — 기간이 3~5줄이면 가로로는 글자가 눌리고, 줄마다 요금을 나란히 읽기도 어렵다 */
+      '.pv2-plans-btns{display:flex;flex-direction:column;gap:8px;}',
+      '.pv2-plan{display:flex;align-items:center;justify-content:space-between;gap:10px;border:1px solid #e4e2ee;border-radius:9px;background:#fff;padding:13px 15px;cursor:pointer;text-align:left;line-height:1.3;transition:border-color .12s,background .12s;}',
       '.pv2-plan:hover{border-color:#c8c4dc;}',
-      '.pv2-plan-m{display:block;font-size:13px;font-weight:700;color:#4a4860;}',
-      '.pv2-plan-f{display:block;font-size:12px;color:#9a97ad;margin-top:3px;}',
+      '.pv2-plan-m{font-size:14px;font-weight:700;color:#4a4860;}',
+      '.pv2-plan-f{font-size:14px;font-weight:700;color:#9a97ad;}',
       '.pv2-plan.is-on{border-color:#18172b;background:#18172b;}',
       '.pv2-plan.is-on .pv2-plan-m{color:#fff;}',
-      '.pv2-plan.is-on .pv2-plan-f{color:#c9c6dc;}',
-      /* 신청 버튼 자리 */
-      '.pv2-actions{display:flex;gap:8px;margin-top:14px;}',
-      '.pv2-actions > *{flex:1;}',
+      '.pv2-plan.is-on .pv2-plan-f{color:#fff;}',
+      /* 신청 버튼 자리 — 세로 3개(상품 신청 / 간편 신청 / 카카오톡 문의)로 통일 */
+      '.pv2-actions{display:flex;flex-direction:column;gap:8px;margin-top:14px;}',
+      '.pv2-actions > *{width:100%;}',
       /* 신청 안내 줄 */
       '.pv2-notes{margin-top:14px;border:1px solid #eceaf5;border-radius:12px;overflow:hidden;}',
       '.pv2-note{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;font-size:13.5px;}',
@@ -512,7 +544,9 @@
       '.pv2-root--narrow .pv2-thumb{width:52px;height:52px;}',
       '.pv2-root--narrow .pv2-feecell{padding:16px 10px;}',
       '.pv2-root--narrow .pv2-feeval{font-size:19px;}',
-      '.pv2-root--narrow .pv2-plans-btns{grid-template-columns:repeat(auto-fit,minmax(76px,1fr));}',
+      '.pv2-root--narrow .pv2-plan{padding:11px 13px;}',
+      '.pv2-root--narrow .pv2-plan-m,.pv2-root--narrow .pv2-plan-f{font-size:13px;}',
+      '.pv2-root--narrow .pv2-brand img{height:18px;}',
       '.pv2-root--narrow .pv2-note{padding:10px 12px;font-size:12.5px;}',
       '.pv2-root--narrow .pv2-note-key{flex:0 0 88px;}',  /* 72px 이면 "가입가능연령" 이 두 줄로 접힌다 */
       '.pv2-root--narrow .pv2-specbox{padding:16px 14px;}',
@@ -526,7 +560,8 @@
       '.pv2-gallery{flex-direction:column-reverse;}',
       '.pv2-thumbs{flex-direction:row;flex-wrap:wrap;}',
       '.pv2-feeval{font-size:20px;}',
-      '.pv2-plans-btns{grid-template-columns:repeat(auto-fit,minmax(84px,1fr));}',
+      '.pv2-plan{padding:11px 13px;}',
+      '.pv2-plan-m,.pv2-plan-f{font-size:13px;}',
       '.pv2-note-key{flex:0 0 80px;}',
       '.pv2-specbox{padding:18px 16px;}',
       '.pv2-specgrid{gap:16px 12px;}',

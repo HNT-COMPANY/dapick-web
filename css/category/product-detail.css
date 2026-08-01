@@ -62,6 +62,14 @@
 .pd-btn--main:hover { background: #4a32a0; }
 .pd-btn--sub { border: 1.5px solid #5b3fbe; background: #fff; color: #5b3fbe; }
 .pd-btn--sub:hover { background: #f6f3ff; }
+/* 카카오 상담 — 브랜드 색을 그대로 쓴다. 다른 화면의 카카오 버튼과 같은 색이어야
+   고객이 "이게 카카오구나" 를 색만 보고 안다. */
+.pd-btn--kakao { border: none; background: #fee500; color: #191600; }
+.pd-btn--kakao:hover { background: #f2da00; }
+
+/* 버튼 3개를 세로로 쌓으므로 하나하나는 조금 낮게 잡는다.
+   17px 그대로 두면 세 개가 화면을 다 먹는다. */
+.pv2-actions .pd-btn { padding: 14px; font-size: 15px; }
 
 .pd-note { margin: 12px 0 0; font-size: 12.5px; color: #8a8fa3; line-height: 1.6; }
 
@@ -84,10 +92,10 @@
   .pd-name { font-size: 21px; }
   .pd-fee b { font-size: 26px; }
   .pd-spec-row dt { flex: 0 0 104px; }
-  /* 신청 버튼을 화면 아래에 붙여 둔다. 스펙 표가 긴 상품에서 한참 내려야 버튼이 나오는 것을 막는다.
-     .pv2-actions 는 공용 모듈(product-view.js)이 만드는 버튼 자리다.
-     이 규칙을 웹 CSS 에만 두는 이유 - 어드민 미리보기 창은 좁아서 붙이면 오히려 방해가 된다. */
-  .pd-actions,
-  .pv2-actions { position: sticky; bottom: 0; z-index: 5; background: #fff; padding: 12px 0; margin: 20px -16px 0; padding-left: 16px; padding-right: 16px; box-shadow: 0 -4px 16px rgba(0,0,0,.06); }
+  .pd-actions { position: sticky; bottom: 0; z-index: 5; background: #fff; padding: 12px 0; margin: 20px -16px 0; padding-left: 16px; padding-right: 16px; box-shadow: 0 -4px 16px rgba(0,0,0,.06); }
+  /* .pv2-actions 는 일부러 화면 아래에 붙이지 않는다.
+     버튼이 세로 3개라 붙이면 160px 넘게 화면을 가린다.
+     대신 요금 상자 바로 아래에 있어서 이미 위쪽에서 만난다. */
+  .pv2-actions .pd-btn { padding: 13px; font-size: 14.5px; }
   .pd-desc, .pd-detail-imgs { margin-top: 44px; }
 }
