@@ -117,6 +117,10 @@
       '.dp-tray__spacer{flex:1;}' +
       '.dp-tray__mini{padding:4px 10px;border:1px solid #eee;background:#fff;color:#8a879c;border-radius:999px;font-size:11.5px;cursor:pointer;font-family:inherit;}' +
       '.dp-tray__mini:hover{color:#4b2ecb;border-color:#c9bdf5;}' +
+      '.dp-tray__close{width:26px;height:26px;flex-shrink:0;display:flex;align-items:center;justify-content:center;' +
+      'border:1px solid #eee;background:#fff;color:#8a879c;border-radius:50%;font-size:12px;line-height:1;' +
+      'cursor:pointer;font-family:inherit;}' +
+      '.dp-tray__close:hover{color:#e8547a;border-color:#f3c9d5;}' +
       '.dp-tray__slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;}' +
       '.dp-tray.is-fold .dp-tray__slots{display:none;}' +
       '.dp-slot{position:relative;border:1px solid #eeecf5;border-radius:12px;background:#fff;' +
@@ -310,6 +314,11 @@
   var _trayCat = null;
   var _trayEl = null;
   var _fold = false;
+  // 트레이를 아예 치운 상태. '접기'(_fold)와 다르다 -
+  // 접기는 칸만 접고 바는 남지만, 닫기는 화면에서 통째로 내린다.
+  // 담아둔 항목이 지워지는 건 아니다. 새로고침하면 다시 뜬다.
+  var _trayClosed = false;
+  var _trayLastCount = 0;
   // 카테고리 → 그 카테고리 상품 목록을 가져오는 함수. 상세 페이지가 등록한다.
   // ★ 왜 여기서 직접 안 부르나: 가격 모양이 카테고리마다 다르다.
   //   정수기·렌탈은 pricing[약정][주기][조건] 3단 맵, 인터넷은 옵션 배열 + 계산기.
@@ -365,8 +374,14 @@
     var items = s.list(_trayCat);
     var max = maxCount();
 
+    // 새로 담으면 닫아둔 트레이를 다시 연다.
+    // 방금 담은 것이 어디로 갔는지 안 보이면 담긴 건지 알 수 없다.
+    if (items.length > _trayLastCount) _trayClosed = false;
+    _trayLastCount = items.length;
+
     // 0개면 트레이 자체를 숨긴다. '비교하기'를 누르기 전에는 안 보인다.
-    if (!items.length) {
+    // 닫아둔 경우도 같다 - 항목은 그대로 남아 있고 바만 안 보인다.
+    if (!items.length || _trayClosed) {
       el.hidden = true;
       el.innerHTML = '';
       document.body.style.paddingBottom = '';
@@ -389,6 +404,9 @@
       '<span class="dp-tray__spacer"></span>' +
       '<button type="button" class="dp-tray__mini" data-fold>' + (_fold ? '펼치기' : '접기') + '</button>' +
       '<button type="button" class="dp-tray__mini" data-clear="' + esc(_trayCat) + '">비우기</button>' +
+      '<button type="button" class="dp-tray__close" data-close ' +
+      'title="비교함을 화면에서 내립니다. 담아둔 상품은 그대로 있습니다." ' +
+      'aria-label="비교함 닫기">\u2715</button>' +
       '</div>' +
       '<div class="dp-tray__slots">' + slots + '</div>' +
       '<button type="button" class="dp-tray__go"' + (can ? '' : ' disabled') + '>' +
@@ -396,6 +414,7 @@
       '</div>';
 
     el.querySelector('[data-fold]').onclick = function () { _fold = !_fold; renderTray(); };
+    el.querySelector('[data-close]').onclick = function () { _trayClosed = true; renderTray(); };
     bind(el, renderTray); // 비우기(data-clear) 재사용
     el.querySelectorAll('[data-drop]').forEach(function (b) {
       b.onclick = function () { s.remove(b.dataset.cat, b.dataset.drop); renderTray(); };
