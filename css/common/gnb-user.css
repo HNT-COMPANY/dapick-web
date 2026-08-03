@@ -256,6 +256,21 @@
 }
 
 /* 메뉴 아이콘 (이모지 정렬용) */
+/* 비교함에 담긴 개수. 0 일 때는 js 가 아예 안 그린다 - 0 을 띄우면 고장처럼 읽힌다. */
+.gnb-user-badge {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #4b2ecb;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  font-style: normal;
+  line-height: 1.6;
+  vertical-align: 1px;
+}
+
 .gnb-user-ico {
   display: inline-block;
   width: 20px;

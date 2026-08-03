@@ -38,6 +38,19 @@
     return raw.replace(/_[0-9]{4}$/, '').replace(/\s+/g, '');
   }
 
+  // 비교함에 담긴 개수. 저장소가 아직 안 실렸으면 아무것도 안 붙인다 -
+  // 0 을 보여주면 '비어 있다' 가 아니라 '고장' 처럼 읽힌다.
+  // compare-button.js 가 안 실린 화면에서도 조용히 넘어간다.
+  function gnbCompareCount() {
+    try {
+      var st = window.dpCompareStore;
+      if (!st || typeof st.count !== 'function') return '';
+      var n = 0;
+      (st.CATS || []).forEach(function (c) { n += st.count(c) || 0; });
+      return n ? ' <em class="gnb-user-badge">' + n + '</em>' : '';
+    } catch (e) { return ''; }
+  }
+
   function goMypage() {
     window.location.href = 'mypage.html';
   }
@@ -160,6 +173,13 @@
       '<div class="gnb-user-section-title">서비스 이용</div>' +
       '<a class="gnb-user-link" href="mypage.html?tab=recent"><span><span class="gnb-user-ico">🕐</span>최근 본 게시글</span><span class="gnb-user-arrow-r">›</span></a>' +
       '<a class="gnb-user-link" href="mypage.html?tab=favorites"><span><span class="gnb-user-ico">♡</span>관심 목록</span><span class="gnb-user-arrow-r">›</span></a>' +
+      // 비교함 (2026-08-03 추가). 마이페이지에 탭은 원래 있었는데 여기서 갈 길이 없었다.
+      // 아이콘을 이모지가 아니라 그림(SVG)으로 둔 이유 - 이모지는 기기·브라우저마다
+      // 모양이 다르고, 안 그려지면 네모(□)로 뜬다. 담긴 개수는 저장소를 읽어 붙인다.
+      '<a class="gnb-user-link" href="mypage.html?tab=compare"><span><span class="gnb-user-ico">' +
+      '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="vertical-align:-2px">' +
+      '<rect x="3.5" y="11" width="7" height="9" rx="1.5"/><rect x="13.5" y="5" width="7" height="15" rx="1.5"/>' +
+      '</svg></span>비교함' + gnbCompareCount() + '</span><span class="gnb-user-arrow-r">›</span></a>' +
       '<a class="gnb-user-link" href="mypage.html"><span><span class="gnb-user-ico">📄</span>신청 내역</span><span class="gnb-user-arrow-r">›</span></a>' +
       '</div>' +
       // 마이페이지 · 고객센터

@@ -134,9 +134,16 @@
       '.dp-chip__count{position:absolute;top:-3px;right:-3px;min-width:21px;height:21px;padding:0 5px;' +
       'border-radius:999px;background:#e8547a;color:#fff;font-size:12px;font-weight:800;' +
       'display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box;}' +
-      '.dp-chip__x{width:22px;height:22px;border-radius:50%;border:1px solid #e6e2f2;background:#fff;' +
-      'color:#a09dba;font-size:11px;line-height:1;cursor:pointer;font-family:inherit;' +
-      'display:flex;align-items:center;justify-content:center;}' +
+      // 이름표. 카카오 버튼의 것과 같은 모양이라 셋이 한 세트로 읽힌다.
+      '.dp-chip__label{font-size:10px;font-weight:700;color:#6a6880;background:#fff;' +
+      'border:1px solid #eee;padding:3px 10px;border-radius:999px;white-space:nowrap;' +
+      'box-shadow:0 2px 8px rgba(0,0,0,.10);}' +
+      // 닫기는 버튼 왼쪽 위 모서리에 겹쳐 둔다. 아래에 두면 이름표와 뒤엉킨다.
+      // 개수 뱃지가 오른쪽 위에 있으므로 반대쪽으로 보낸다.
+      '.dp-chip__x{position:absolute;top:-4px;left:-4px;z-index:1;' +
+      'width:20px;height:20px;border-radius:50%;border:1px solid #e6e2f2;background:#fff;' +
+      'color:#a09dba;font-size:10px;line-height:1;cursor:pointer;font-family:inherit;' +
+      'display:flex;align-items:center;justify-content:center;box-shadow:0 2px 6px rgba(0,0,0,.10);}' +
       '.dp-chip__x:hover{color:#e8547a;border-color:#f3c9d5;}' +
       '@media(max-width:900px){.dp-chip{right:16px;}' +
       '.dp-chip__btn{width:50px;height:50px;}}' +
@@ -422,18 +429,23 @@
 
     el.className = 'dp-chip';
     el.hidden = false;
+    // 아이콘은 '높이가 다른 막대 둘' 이다. 테두리선만 있는 도형은 56px 원 안에서
+    // 그냥 네모 두 개로 읽힌다(2026-08-03 확인). 채운 도형이 훨씬 잘 읽힌다.
+    // 이름표를 붙인 이유 - 카카오 버튼 둘에는 이름표가 있는데 이것만 없어서
+    // 무슨 버튼인지 알 수 없었다. 같은 열에 서는 것끼리는 모양을 맞춘다.
     el.innerHTML =
+      '<button type="button" class="dp-chip__x" data-close ' +
+      'title="비교함 버튼을 숨깁니다. 담아둔 상품은 그대로 있습니다." ' +
+      'aria-label="비교함 숨기기">\u2715</button>' +
       '<button type="button" class="dp-chip__btn" title="' +
       esc(CAT_LABEL[_trayCat] || '') + ' 비교함 열기" aria-label="비교함 열기">' +
-      '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" ' +
-      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
-      '<rect x="3" y="5" width="7" height="14" rx="1"/><rect x="14" y="5" width="7" height="14" rx="1"/>' +
+      '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor">' +
+      '<rect x="3.5" y="11" width="7" height="9" rx="1.5"/>' +
+      '<rect x="13.5" y="5" width="7" height="15" rx="1.5"/>' +
       '</svg>' +
       '<span class="dp-chip__count">' + items.length + '</span>' +
       '</button>' +
-      '<button type="button" class="dp-chip__x" data-close ' +
-      'title="비교함 버튼을 숨깁니다. 담아둔 상품은 그대로 있습니다." ' +
-      'aria-label="비교함 숨기기">\u2715</button>';
+      '<span class="dp-chip__label">비교함</span>';
 
     el.querySelector('.dp-chip__btn').onclick = function () { openSheet(_trayCat); };
     el.querySelector('[data-close]').onclick = function () { _trayClosed = true; renderTray(); };
