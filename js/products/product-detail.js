@@ -471,8 +471,14 @@ function pdApplyProduct() {
 function pdApplySimple() {
   var topCat = pdParent || pdCategory;
   if (typeof openSimpleApply === 'function') {
+    // 네 번째 인자가 핵심이다 (2026-08-03).
+    // 앞의 셋은 모달에 보여 줄 값이고, 서버가 실제로 이어 붙이는 것은 여기 담긴 id 다.
+    // 이게 없으면 에어컨 → 벽걸이 → 상품 → 간편신청 을 해도 서버에는 'airconditioner'
+    // 라는 글자 하나만 남는다. 그러면 그 고객이 나중에 후기를 써도 이 상품 상세에는 안 붙는다 —
+    // 상품 상세는 상품 id 로 후기를 찾기 때문이다.
     openSimpleApply((topCat && topCat.slug) ? topCat.slug : 'generic',
-                    pdProduct.name, topCat ? topCat.name : null);
+                    pdProduct.name, topCat ? topCat.name : null,
+                    { categoryId: topCat ? topCat.id : null, productId: pdProduct.id });
     return;
   }
   location.href = '/support';

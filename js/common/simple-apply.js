@@ -122,27 +122,46 @@
     agreeEls().forEach(function(el){ el.addEventListener('change', function(){ agreeAllEl.checked = agreeEls().every(function(c){return c.checked;}); }); });
   }
 
+  // 경로로 정해진 기본값. 인자 없이 open() 을 부르면 여기로 되돌린다.
+  var DEFAULT_CAT = { api: CAT.api, label: CAT.label };
+
+  // 이번에 연 접수가 무엇을 보고 있었는지 (2026-08-03).
+  //
+  // 예전에는 카테고리 '글자' 만 보냈다. 그래서 에어컨 → 벽걸이 → 상품 → 간편신청 을 해도
+  // 서버에는 'airconditioner' 라는 글자 하나만 남고 어느 상품인지가 안 남았다.
+  // 그러면 나중에 그 고객이 후기를 써도 그 상품 상세에는 못 띄운다 —
+  // 상품 상세는 상품 id 로 후기를 찾기 때문이다.
+  var pick = { categoryId: null, productId: null, productName: null };
+
   /**
    * 모달 열기.
    *
-   * 인자 없이 부르면 예전과 똑같이 동작한다 — 정수기·렌탈·인터넷 상세의 인라인 버튼이 그렇게 부른다.
+   * 인자 없이 부르면 경로로 정해진 기본값으로 돌아간다 — 정수기·렌탈·인터넷 상세의 인라인 버튼이 그렇게 부른다.
    * 카테고리/상품 상세는 값을 넘겨 카테고리와 상품명을 갈아끼운다.
    *
-   * @param catApi      접수에 실을 카테고리 값. 서버가 20자까지만 받아 잘라 보낸다.
-   * @param productName 어떤 상품을 보고 눌렀는지. 문의 내용에 미리 채운다.
+   * @param catApi      접수에 실을 카테고리 글자. 서버가 20자까지만 받아 잘라 보낸다.
+   * @param productName 어떤 상품을 보고 눌렀는지. 문의 내용에 미리 채우고 접수에도 함께 싣는다.
    * @param catLabel    모달 우상단에 표시할 이름(예: '에어컨').
+   * @param opts        { categoryId, productId } — 서버가 실제로 이어 붙일 값.
    */
-  function open(catApi, productName, catLabel){
-    if (catApi) CAT.api = String(catApi).slice(0, 20);
-    if (catLabel) {
-      CAT.label = catLabel;
-      var headEl = document.querySelector('.sapply-head .cat');
-      if (headEl) headEl.textContent = catLabel;
-    }
+  function open(catApi, productName, catLabel, opts){
+    var o = opts || {};
+
+    // 기본값으로 되돌린 뒤 이번 인자를 얹는다.
+    // 안 그러면 상품 A 에서 열었다가 인라인 버튼으로 다시 열 때 앞 상품의 카테고리가 남는다.
+    CAT.api = catApi ? String(catApi).slice(0, 20) : DEFAULT_CAT.api;
+    CAT.label = catLabel || DEFAULT_CAT.label;
+    var headEl = document.querySelector('.sapply-head .cat');
+    if (headEl) headEl.textContent = CAT.label;
+
+    pick.categoryId = o.categoryId || null;
+    pick.productId = o.productId || null;
+    pick.productName = productName ? String(productName).slice(0, 100) : null;
+
     resetToForm();
     // 상품명은 '덮어쓰기'다 — 다른 상품에서 다시 열었을 때 앞 상품명이 남으면 안 된다.
     // 고객이 지우고 다시 쓸 수 있게 placeholder 가 아니라 실제 값으로 넣는다.
-    if (productName) memoEl.value = productName + ' 문의합니다.';
+    memoEl.value = productName ? (productName + ' 문의합니다.') : '';
     ov.classList.add('on');
   }
   function close(){ ov.classList.remove('on'); }
@@ -174,6 +193,11 @@
     var yesBtn = document.getElementById('saYes');
     var payload = {
       category: CAT.api,
+      // 아래 셋이 있어야 이 접수가 어느 카테고리·어느 상품 건인지 서버에 남는다.
+      // 없으면 서버가 category 글자로 되짚어 보지만, 상품까지는 못 되찾는다.
+      categoryId: pick.categoryId,
+      productId: pick.productId,
+      productName: pick.productName,
       name: (nameEl.value || '').trim(),
       phone: fmtPhone(onlyDigits(phoneEl.value)),
       content: (memoEl.value || '').trim(),
