@@ -18,8 +18,6 @@ const DETAILS = {
   '/water-detail':  { api: '/api/water-products',  titleField: 'name',  suffix: '다픽 정수기', descFrom: 'text', descField: 'description' },
   '/rental-detail': { api: '/api/rental-products', titleField: 'name',  suffix: '다픽 렌탈',   descFrom: 'text', descField: 'description' },
   '/popup-detail':  { api: '/api/popups',          titleField: 'title', suffix: '다픽',        descFrom: 'delta' },
-  // 관리자가 만든 카테고리의 상품 상세 (2026-08-01). id 는 UUID — ID_RE 가 이미 허용한다.
-  '/product-detail':{ api: '/api/products',        titleField: 'name',  suffix: '다픽',        descFrom: 'text', descField: 'description' },
 };
 const ID_RE = /^[A-Za-z0-9-]{1,64}$/; // 숫자(Long) + UUID 모두 허용, 슬래시 등 차단
 
@@ -528,6 +526,17 @@ export default {
     // 후기 상세: /reviews/{제목슬러그}-{id}
     const m = url.pathname.match(/^\/reviews\/.+-(\d+)\/?$/);
     if (m) return injectReview(request, env, m[1]);
+
+    // 후기 작성 링크: /r/{토큰} → review-write.html
+    // 문자·알림톡에 담기는 주소라 짧아야 한다. 토큰은 URL 안전 base64(43자) 이므로
+    // A-Z a-z 0-9 - _ 만 나온다. 여기서 걸러 두면 이상한 주소가 화면까지 가지 않는다.
+    //
+    // ⚠ review-write.html 은 반드시 <base href="/"> 를 달고 있어야 한다.
+    //    이 응답은 주소창이 /r/xxx 인 채로 내려가므로, 상대 경로(css/...)는
+    //    /r/css/... 로 풀려 전부 404 가 된다 — 스타일 없는 알몸 페이지가 뜬다.
+    if (/^\/r\/[A-Za-z0-9_-]{16,64}$/.test(key)) {
+      return env.ASSETS.fetch(new URL('/review-write.html', url).toString());
+    }
 
     // 그 외 정적 자산
     return env.ASSETS.fetch(request);

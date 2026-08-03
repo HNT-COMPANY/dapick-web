@@ -1,0 +1,189 @@
+/* ════════════════════════════════════════════════════
+   review-write.css — 간편신청 고객 후기 작성 (/r/{토큰})
+   문자로 받은 링크를 폰에서 여는 자리다. 모바일 기준으로 짜고 넓은 화면은 가운데로 모은다.
+   회원 화면이 아니라 GNB·푸터가 없으므로 공용 css 에 기대지 않고 여기서 다 끝낸다.
+   ════════════════════════════════════════════════════ */
+
+:root {
+  --rw-ink: #18172b;
+  --rw-sub: #6b6880;
+  --rw-mute: #9a97ad;
+  --rw-line: #e6e4f0;
+  --rw-blue: #2563eb;
+  --rw-bg: #f6f5fb;
+}
+
+body {
+  margin: 0;
+  background: var(--rw-bg);
+  color: var(--rw-ink);
+  font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  -webkit-text-size-adjust: 100%;
+}
+
+.rw-shell {
+  max-width: 560px;
+  margin: 0 auto;
+  padding: 0 16px 48px;
+}
+
+/* ── 안내 화면 (불러오는 중 / 못 여는 링크 / 완료) ───────────── */
+.rw-state {
+  min-height: 78vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  gap: 10px;
+}
+.rw-state[hidden] { display: none; }
+.rw-state b { font-size: 19px; font-weight: 900; }
+.rw-state p { margin: 0; color: var(--rw-sub); font-size: 14.5px; line-height: 1.7; }
+.rw-emo { font-size: 46px; line-height: 1; }
+
+.rw-spinner {
+  width: 30px; height: 30px;
+  border: 3px solid #dcd9ec;
+  border-top-color: var(--rw-blue);
+  border-radius: 50%;
+  animation: rwSpin .8s linear infinite;
+}
+@keyframes rwSpin { to { transform: rotate(360deg); } }
+
+/* ── 머리 ────────────────────────────────────────────────── */
+.rw-form[hidden] { display: none; }
+
+.rw-head { padding: 28px 4px 20px; }
+.rw-brand {
+  font-size: 13px; font-weight: 900; letter-spacing: 1px;
+  color: var(--rw-blue); margin-bottom: 12px;
+}
+.rw-head h1 { margin: 0; font-size: 22px; font-weight: 800; line-height: 1.45; }
+.rw-head h1 b { font-weight: 900; }
+.rw-sub { margin: 8px 0 0; font-size: 12.5px; color: var(--rw-mute); line-height: 1.6; }
+
+/* ── 칸 ──────────────────────────────────────────────────── */
+.rw-sec {
+  background: #fff;
+  border: 1px solid var(--rw-line);
+  border-radius: 16px;
+  padding: 18px;
+  margin-bottom: 12px;
+}
+.rw-sec-t { font-size: 14.5px; font-weight: 800; margin-bottom: 12px; }
+.rw-sec-t em {
+  font-style: normal; font-size: 11px; font-weight: 800;
+  color: #e11d48; background: #ffe9ee;
+  border-radius: 999px; padding: 2px 7px; margin-left: 6px; vertical-align: 2px;
+}
+.rw-opt {
+  font-size: 11px; font-weight: 700; color: var(--rw-mute);
+  background: #f1f0f7; border-radius: 999px; padding: 2px 7px; margin-left: 6px; vertical-align: 2px;
+}
+.rw-hint { margin: 0 0 10px; font-size: 12.5px; color: var(--rw-mute); line-height: 1.6; }
+.rw-hint b { color: var(--rw-sub); font-weight: 800; }
+
+/* ── 후기 대상 ───────────────────────────────────────────── */
+.rw-target { display: flex; align-items: center; gap: 12px; }
+.rw-target[hidden] { display: none; }
+.rw-target img {
+  width: 64px; height: 64px; object-fit: contain;
+  background: #f6f5fb; border-radius: 12px; flex: 0 0 auto;
+}
+.rw-target-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.rw-target-txt b { font-size: 15.5px; font-weight: 800; }
+.rw-target-txt span { font-size: 12.5px; color: var(--rw-mute); }
+.rw-pick[hidden] { display: none; }
+
+/* ── 칩 (카테고리 · 해시태그 공용) ───────────────────────── */
+.rw-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+.rw-chip {
+  border: 1.5px solid var(--rw-line); background: #fff; color: var(--rw-sub);
+  border-radius: 999px; padding: 9px 15px;
+  font-family: inherit; font-size: 13.5px; font-weight: 700;
+  cursor: pointer; transition: all .12s ease;
+}
+.rw-chip:hover { border-color: #c9c5e4; }
+.rw-chip.on { border-color: var(--rw-blue); background: #eef4ff; color: var(--rw-blue); }
+
+/* ── 별점 ────────────────────────────────────────────────── */
+.rw-stars { display: flex; gap: 4px; }
+.rw-star {
+  border: none; background: none; padding: 0 2px;
+  font-size: 34px; line-height: 1; cursor: pointer;
+  color: #dcd9ec; transition: color .1s ease, transform .1s ease;
+}
+.rw-star.on { color: #f5a623; }
+.rw-star:active { transform: scale(.9); }
+
+/* ── 사진 ────────────────────────────────────────────────── */
+.rw-photos { display: flex; flex-wrap: wrap; gap: 8px; }
+.rw-photos:not(:empty) { margin-bottom: 10px; }
+.rw-photo { position: relative; width: 84px; height: 84px; }
+.rw-photo img {
+  width: 100%; height: 100%; object-fit: cover;
+  border-radius: 12px; background: #f1f0f7;
+}
+.rw-photo button {
+  position: absolute; top: -6px; right: -6px;
+  width: 22px; height: 22px; border-radius: 50%;
+  border: none; background: #18172b; color: #fff;
+  font-size: 13px; line-height: 1; cursor: pointer;
+  box-shadow: 0 2px 6px rgba(0,0,0,.25);
+}
+.rw-file { display: block; }
+.rw-file span {
+  display: block; text-align: center;
+  border: 1.5px dashed #cfcbe6; border-radius: 12px;
+  padding: 14px; font-size: 14px; font-weight: 700; color: var(--rw-sub);
+  cursor: pointer;
+}
+.rw-file span:hover { border-color: var(--rw-blue); color: var(--rw-blue); }
+.rw-file.busy span { opacity: .55; cursor: default; }
+
+/* ── 입력 ────────────────────────────────────────────────── */
+.rw-input {
+  width: 100%; box-sizing: border-box;
+  padding: 13px 14px;
+  border: 1.5px solid var(--rw-line); border-radius: 12px;
+  background: #fff; color: var(--rw-ink);
+  font-family: inherit; font-size: 15px;
+}
+.rw-input:focus { outline: none; border-color: var(--rw-blue); }
+.rw-textarea { resize: vertical; line-height: 1.65; min-height: 130px; }
+.rw-count { margin-top: 6px; text-align: right; font-size: 12px; color: var(--rw-mute); }
+
+/* ── 안내 · 버튼 ─────────────────────────────────────────── */
+.rw-notice {
+  margin: 4px 2px 16px;
+  font-size: 12.5px; color: var(--rw-sub); line-height: 1.65;
+}
+.rw-btn {
+  display: block; width: 100%; box-sizing: border-box;
+  padding: 16px; border: none; border-radius: 14px;
+  background: var(--rw-blue); color: #fff;
+  font-family: inherit; font-size: 16px; font-weight: 800;
+  text-align: center; text-decoration: none; cursor: pointer;
+}
+.rw-btn:disabled { background: #b9c6e8; cursor: default; }
+.rw-btn.ghost {
+  width: auto; margin-top: 10px; padding: 13px 26px;
+  background: #fff; color: var(--rw-sub);
+  border: 1.5px solid var(--rw-line); font-size: 14.5px;
+}
+
+/* ── 토스트 ──────────────────────────────────────────────── */
+.rw-toast {
+  position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%);
+  z-index: 100; max-width: 90vw;
+  background: #18172b; color: #fff;
+  padding: 12px 18px; border-radius: 12px;
+  font-size: 14px; font-weight: 600; line-height: 1.5;
+  box-shadow: 0 8px 24px rgba(0,0,0,.28);
+}
+.rw-toast[hidden] { display: none; }
+
+@media (min-width: 600px) {
+  .rw-head h1 { font-size: 25px; }
+}
