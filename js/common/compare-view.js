@@ -463,13 +463,27 @@
   function placeChip() {
     var el = _trayEl;
     if (!el || el.hidden) return;
+
     var base = window.innerWidth <= 900 ? 80 : 28;
     var kakao = document.querySelector('.kakao-float');
-    if (kakao) {
-      var r = kakao.getBoundingClientRect();
-      if (r.height) base = Math.max(base, window.innerHeight - r.top + 12);
-    }
-    el.style.bottom = base + 'px';
+
+    if (!kakao) { el.style.bottom = base + 'px'; return; }
+
+    var r = kakao.getBoundingClientRect();
+    if (!r.height) { el.style.bottom = base + 'px'; return; }
+
+    // 세로 - 카카오 바로 위에 얹는다.
+    el.style.bottom = Math.max(base, window.innerHeight - r.top + 12) + 'px';
+
+    // 가로 - 카카오 '버튼의 중심' 에 이 버튼의 중심을 맞춘다.
+    //
+    // 둘 다 오른쪽에서 28px 로 두면 안 맞는다. 이름표 길이가 달라서
+    // ('카카오 플러스' vs '비교함') 컨테이너 폭이 다르고, 컨테이너는 폭의 절반만큼
+    // 안쪽으로 버튼을 놓기 때문에 그 차이만큼 버튼이 어긋난다.
+    // 그래서 오른쪽 여백을 고정하지 않고, 카카오 중심을 재서 거기에 맞춘다.
+    var centerX = r.left + r.width / 2;
+    var w = el.offsetWidth;
+    if (w) el.style.right = Math.round(window.innerWidth - centerX - w / 2) + 'px';
   }
 
   function mountTray(cat) {
