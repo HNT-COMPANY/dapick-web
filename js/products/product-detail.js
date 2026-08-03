@@ -316,8 +316,8 @@ function pdHasFee() {
 //   어드민 미리보기가 원래 세로 3개였고 화면마다 개수가 달랐다.
 //   가로로 놓으면 폭이 좁은 화면에서 "카카오톡 문의" 가 두 줄로 접힌다.
 //   상품 신청이 맨 위인 것은 이 화면의 목적이 정식 접수이기 때문이다.
-// withTip - 하단 고정 바에서는 말풍선을 뺀다.
-// 말풍선은 버튼 위로 삐져나오는데, 화면 맨 아래 바에서는 그 위가 본문이라 글자를 덮는다.
+// withTip - 말풍선을 뺄 수 있게 열어 둔다. 지금은 위쪽 버튼과 하단 바 둘 다 붙인다.
+// 하단 바는 말풍선이 버튼 위로 삐져나오므로 CSS 에서 바 위쪽 여백을 그만큼 준다.
 function pdActionsHtml(withTip) {
   var tip = withTip === false ? '' : '<span class="sapply-tip">3초만에 간편신청하기</span>';
   var btns = [];
@@ -351,23 +351,15 @@ function pdMountBottomBar() {
   bar.hidden = true;
   bar.innerHTML =
     '<div class="pd-bb-inner">' +
+      // 맨 위로 - 화면 오른쪽은 카카오와 비교함이 쓰고 있어 여기 안에 둔다.
+      '<button type="button" class="pd-bb-top" onclick="pdScrollTop()" aria-label="맨 위로">' +
+        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"' +
+        ' stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>' +
+      '</button>' +
       '<div class="pd-bb-name">' + pdEsc(pdProduct.name || '') + '</div>' +
-      '<div class="pd-bb-btns">' + pdActionsHtml(false) + '</div>' +
+      '<div class="pd-bb-btns">' + pdActionsHtml() + '</div>' +
     '</div>';
   document.body.appendChild(bar);
-
-  // 맨 위로. 바와 함께 나타났다 사라진다 - 늘 떠 있으면 화면만 가린다.
-  var top = document.createElement('button');
-  top.type = 'button';
-  top.className = 'pd-totop';
-  top.id = 'pd-totop';
-  top.hidden = true;
-  top.setAttribute('aria-label', '맨 위로');
-  top.innerHTML =
-    '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"' +
-    ' stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>';
-  top.onclick = function () { window.scrollTo({ top: 0, behavior: 'smooth' }); };
-  document.body.appendChild(top);
 
   // 상세 영역이 화면에 걸치면 켠다.
   // 조금 걸쳐도 켜야 한다 - 다 들어와야 켜지면 긴 상세에서는 영영 안 나온다.
@@ -375,14 +367,12 @@ function pdMountBottomBar() {
     new IntersectionObserver(function (entries) {
       entries.forEach(function (e) {
         bar.hidden = !e.isIntersecting;
-        top.hidden = !e.isIntersecting;
         pdSyncFloats();
       });
     }).observe(sec);
   } else {
     // 아주 오래된 브라우저 - 그냥 계속 보여준다. 안 보이는 것보다 낫다.
     bar.hidden = false;
-    top.hidden = false;
   }
 
   pdSyncFloats();
@@ -393,25 +383,27 @@ function pdMountBottomBar() {
   });
 }
 
+function pdScrollTop() {
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// 화면 오른쪽 아래를 나눠 쓰는 것들의 자리를 맞춘다.
+// 아래에서부터 [하단 바] → [카카오] → [비교함 칩] 순으로 쌓인다.
+// 비교함 칩은 compare-view.js 가 카카오를 기준으로 스스로 올라간다.
 function pdSyncFloats() {
   var bar = document.getElementById('pd-bottombar');
-  var top = document.getElementById('pd-totop');
   var kakao = document.querySelector('.kakao-float');
 
-  // 비교 트레이는 자기 높이만큼 body 아래 여백을 잡아 둔다. 그 값이 곧 트레이 높이다.
-  var trayH = parseFloat(document.body.style.paddingBottom) || 0;
-
-  if (bar) bar.style.bottom = trayH + 'px';
   var barH = bar && !bar.hidden ? bar.offsetHeight : 0;
+  if (bar) bar.style.bottom = '0px';
 
-  if (top) top.style.bottom = (trayH + barH + 16) + 'px';
-  var topH = top && !top.hidden ? top.offsetHeight + 10 : 0;
-
-  // 카카오는 맨 위에 얹는다. 원래 자리를 밑값으로 두고 그 위로 민다.
-  // 밑값이 화면 크기마다 다르다 - common.css 에서 PC 28px / 모바일 80px 로 잡아 뒀다.
+  // 카카오의 원래 자리는 화면 크기마다 다르다 - common.css 에서 PC 28px / 모바일 80px.
   // 여기서 28 로 고정하면 모바일에서 카카오가 원래보다 아래로 내려간다.
   var base = window.innerWidth <= 900 ? 80 : 28;
-  if (kakao) kakao.style.bottom = (trayH + barH + topH + base) + 'px';
+  if (kakao) kakao.style.bottom = (barH + base) + 'px';
+
+  // 칩이 카카오를 따라 올라가야 한다. compare-view 가 다시 재도록 알린다.
+  if (window.dpCompareView && window.dpCompareView.placeChip) window.dpCompareView.placeChip();
 }
 
 // 카카오 상담 — 화면 오른쪽 아래 플로팅 버튼과 같은 주소다.
