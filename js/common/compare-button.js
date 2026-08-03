@@ -219,6 +219,24 @@
       });
     }
 
+    // 3개가 다 찬 상태에서 또 담으려 했을 때.
+    //
+    // ★ 2026-08-03 — 예전에는 alert 만 띄웠다. 확인을 눌러도 아무 일이 안 일어나서,
+    //   "하나를 빼라" 는 말만 듣고 어디서 빼는지는 스스로 찾아야 했다.
+    //   이제는 비교함을 바로 열고 그 안에 안내를 얹는다 — 빼는 자리와 안내가 한 화면에 있다.
+    //
+    // ★ alert 를 남겨둔 이유 - compare-button.js 는 compare-view.js 없이도 도는 파일이다.
+    //   (의존 방향이 view → button 이다) 보여주는 쪽이 안 실린 화면에서 조용히 아무 반응도
+    //   없으면 '버튼이 고장났다' 가 된다. 그런 화면에서만 예전 방식으로 떨어진다.
+    function fullBlocked(cat) {
+      var v = window.dpCompareView;
+      if (v && typeof v.openSheet === 'function') {
+        v.openSheet(cat, '비교는 ' + MAX + '개까지 담을 수 있습니다. 아래에서 하나를 빼면 새 상품을 담을 수 있습니다.');
+        return;
+      }
+      alert('비교는 ' + MAX + '개까지 담을 수 있습니다.\n비교함에서 하나를 빼고 다시 담아주세요.');
+    }
+
     function toggle() {
       var item = current();
       if (!item) return;
@@ -231,9 +249,7 @@
       }
       var r = addItem(item);
       if (!r.ok) {
-        if (r.reason === 'full') {
-          alert('비교는 ' + MAX + '개까지 담을 수 있습니다.\n비교함에서 하나를 빼고 다시 담아주세요.');
-        }
+        if (r.reason === 'full') fullBlocked(item.category);
         return;
       }
       on = true;

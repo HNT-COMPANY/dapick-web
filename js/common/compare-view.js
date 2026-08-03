@@ -6,7 +6,7 @@
 //   dpCompareView.table(cat, items)     비교표 HTML 문자열
 //   dpCompareView.bind(rootEl, onChange) 표 안의 빼기/비우기 버튼 연결
 //   dpCompareView.mountTray(cat)        상세 페이지 하단 3칸 트레이 띄우기
-//   dpCompareView.openSheet(cat)        하단 비교 시트 열기
+//   dpCompareView.openSheet(cat, notice) 하단 비교 시트 열기(notice - 맨 위 한 줄 안내, 선택)
 //
 // ★ 구조
 //   담기(compare-button.js) / URL(product-url.js) / 보여주기(이 파일) 를 나눴다.
@@ -192,6 +192,11 @@
       '.dp-sheet__close{padding:6px 12px;border:1px solid #e6e2f2;background:#fff;color:#6a6880;' +
       'border-radius:999px;font-size:12.5px;cursor:pointer;font-family:inherit;}' +
       '.dp-sheet__body{padding:0 16px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;}' +
+      // 담기가 막혀서 시트가 열렸을 때만 뜨는 안내. 회색 힌트(.dp-sheet__hint)와 달리
+      // 색을 넣은 이유 - 사용자가 방금 누른 동작이 '실패' 했다는 신호라 눈에 띄어야 한다.
+      '.dp-sheet__notice{margin:0 16px 10px;padding:10px 12px;border-radius:10px;' +
+      'background:#fdf3f3;border:1px solid #f4d9d9;color:#b4453f;' +
+      'font-size:12.5px;font-weight:700;line-height:1.55;}' +
 
       // ── 상품 고르기 시트 ──────────────────────────
       // 비교 시트(9500)보다 위, 인터넷 옵션 다이얼로그(9998)보다 아래.
@@ -685,15 +690,28 @@
 
   // ── 비교 시트 ─────────────────────────────────────
   var _sheetEl = null;
+  // 시트 맨 위 한 줄 안내. 지금은 '3개가 다 찼다' 한 가지에만 쓴다.
+  // 상태로 들고 있는 이유 - 표에서 하나를 빼면 renderSheet 가 다시 돌면서
+  // 스스로 지워야 하기 때문이다. 안내가 남아 있으면 이미 자리가 났는데도
+  // 여전히 막힌 것처럼 읽힌다.
+  var _sheetNotice = '';
 
   function closeSheet() {
     if (_sheetEl) _sheetEl.hidden = true;
+    // 닫을 때 비운다. 안 비우면 나중에 칩으로 그냥 열었을 때 지난 경고가 되살아난다.
+    _sheetNotice = '';
   }
 
   function renderSheet(cat) {
     var s = store(); if (!s || !_sheetEl) return;
     var items = s.list(cat);
     if (!items.length) { closeSheet(); return; }
+
+    // 자리가 나면 안내는 제 할 일을 다 한 것이다. 표에서 하나를 빼면 여기로 다시 온다.
+    if (_sheetNotice && items.length < maxCount()) _sheetNotice = '';
+    var notice = _sheetNotice
+      ? '<div class="dp-sheet__notice">' + esc(_sheetNotice) + '</div>'
+      : '';
     // 담긴 게 하나뿐이면 표가 한 열이라 비교가 되지 않는다. 그렇다고 시트를 안 열면
     // '담았는데 아무 반응이 없다' 가 되므로, 열어주되 왜 비교가 안 되는지 적는다.
     var hint = items.length < 2
@@ -710,6 +728,7 @@
       addBtn +
       '<button type="button" class="dp-sheet__close">닫기</button>' +
       '</div>' +
+      notice +
       '<div class="dp-sheet__body">' + table(cat, items) + hint + '</div>' +
       '</div>';
     _sheetEl.querySelector('.dp-sheet__close').onclick = closeSheet;
@@ -718,8 +737,26 @@
     bind(_sheetEl, function () { renderSheet(cat); renderTray(); });
   }
 
-  function openSheet(cat) {
+  // notice - 시트 맨 위에 띄울 한 줄(선택). 담기가 막혀서 열린 경우에만 넘어온다.
+  //
+  // ★ 왜 notice 가 있을 때만 비교함 버튼을 되살리나 (2026-08-03)
+  //   버튼을 X 로 닫아둔 사람이 담기를 시도해 막히면, 시트만 띄웠다가는
+  //   시트를 닫는 순간 비교함으로 돌아갈 길이 사라진다. 그래서 그때는 닫아둔 것을 푼다.
+  //   반대로 칩을 눌러 연 평범한 경우까지 손대면, 마이페이지처럼 트레이를 일부러
+  //   안 띄우는 화면에 버튼이 생겨버린다. 그래서 조건을 notice 로 좁혔다.
+  function openSheet(cat, notice) {
     injectStyles();
+    _sheetNotice = notice || '';
+
+    if (_sheetNotice) {
+      // 상세 페이지라면 mountTray 로 이미 잡혀 있다. 혹시 비어 있으면 여기서 채운다.
+      if (!_trayCat && CAT_LABEL[cat]) _trayCat = cat;
+      if (_trayCat === cat) {
+        _trayClosed = false;
+        renderTray();
+      }
+    }
+
     if (!_sheetEl || !_sheetEl.parentNode) {
       _sheetEl = document.createElement('div');
       _sheetEl.className = 'dp-sheet-ov';
