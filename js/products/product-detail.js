@@ -132,6 +132,10 @@ function pdFieldList() {
     pdParent = null;
   }
 
+  // FAQ 는 상세보다 먼저 받아둔다. 탭을 만들지 말지가 FAQ 개수로 정해지기 때문이다.
+  // 실패해도 상세는 그대로 보여준다 - FAQ 때문에 상품 화면이 안 뜨면 안 된다.
+  await pdLoadFaq();
+
   pdRenderCrumb();
   pdRenderView();
   pdRenderNote();
@@ -484,6 +488,102 @@ function pdApplySimple() {
 // 눌러도 아무 일 없는 버튼은 고장으로 읽힌다.
 var PD_COLLAPSED_PX = 1000;
 
+// ── 자주 묻는 질문 ─────────────────────────────────────
+//
+// FAQ 는 최상위 카테고리에만 달린다(어드민 FaqRequest 의 "소속 카테고리(최상위) id").
+// 그래서 이 상품이 품목(하위)에 속해 있으면 그 부모의 FAQ 를 가져와야 한다.
+// 품목 id 로 물어보면 언제나 0건이 나오는데, 그러면 탭이 영영 안 생긴다.
+//
+// 질문이 하나도 없으면 탭을 만들지 않는다. 눌러도 빈 화면만 나오는 탭은
+// 고객에게 '준비 안 된 서비스' 로 읽힌다(웹 FAQ 화면과 같은 규칙).
+var PD_PANELS = { detail: 'pd-detail-body', faq: 'pd-faq-body' };
+var pdFaqRows = [];
+
+async function pdLoadFaq() {
+  var top = pdParent || pdCategory;
+  if (!top || !top.id) return;
+  try {
+    var list = await api.get('/api/faqs?categoryId=' + encodeURIComponent(top.id));
+    pdFaqRows = (Array.isArray(list) ? list : (list && list.content) || [])
+      .filter(function (f) { return f && f.question; });
+  } catch (e) {
+    pdFaqRows = [];
+  }
+}
+
+// 탭 줄. 질문이 없으면 아예 안 그린다 - 탭이 하나뿐이면 탭일 이유가 없다.
+function pdRenderTabs() {
+  var bar = document.getElementById('pd-tabbar');
+  if (!bar) return;
+
+  if (!pdFaqRows.length) {
+    bar.innerHTML = '<h2 class="pd-sec-title">상세 정보</h2>';
+    return;
+  }
+
+  bar.innerHTML =
+    '<button type="button" class="pd-tab is-on" data-tab="detail">상세 정보</button>' +
+    '<button type="button" class="pd-tab" data-tab="faq">자주 묻는 질문' +
+    '<span class="pd-tab-count">' + pdFaqRows.length + '</span></button>';
+
+  if (!bar.__bound) {
+    bar.__bound = true;
+    bar.addEventListener('click', function (e) {
+      var t = e.target.closest && e.target.closest('.pd-tab');
+      if (t) pdSetTab(t.getAttribute('data-tab'));
+    });
+  }
+  pdRenderFaq();
+}
+
+// 패널은 미리 그려두고 보이기/숨기기만 한다.
+// 누를 때마다 다시 그리면 펼쳐둔 상세가 접히고 스크롤이 튄다.
+function pdSetTab(key) {
+  var bar = document.getElementById('pd-tabbar');
+  if (bar) {
+    bar.querySelectorAll('.pd-tab').forEach(function (t) {
+      t.classList.toggle('is-on', t.getAttribute('data-tab') === key);
+    });
+  }
+  Object.keys(PD_PANELS).forEach(function (k) {
+    var el = document.getElementById(PD_PANELS[k]);
+    if (el) el.hidden = k !== key;
+  });
+  // 탭을 바꾸면 상세 접기 버튼의 높이 판정이 어긋난다(숨은 동안 높이가 0이었다).
+  if (key === 'detail') setTimeout(pdMeasureCollapse, 0);
+}
+
+function pdRenderFaq() {
+  var el = document.getElementById('pd-faq-body');
+  if (!el || !pdFaqRows.length) return;
+
+  el.innerHTML = '<div class="pd-faq-list">' + pdFaqRows.map(function (f) {
+    // 클래스는 이 화면 전용으로 둔다. 홈의 faq-* 를 빌려 쓰면 그쪽 디자인이
+    // 바뀔 때 여기가 같이 깨지고, 원인을 이 파일에서 찾을 수 없다.
+    // toggleFaq(utils.js)는 클래스명을 안 보고 바로 다음 형제에 open 을 붙이므로 그대로 쓸 수 있다.
+    return '<div class="pd-faq-item">' +
+      '<div class="pd-faq-q" onclick="toggleFaq(this)">' +
+        '<span>Q. ' + pdEsc(f.question) + '</span>' +
+        '<svg class="pd-faq-ico" viewBox="0 0 24 24" width="16" height="16" fill="none"' +
+        ' stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+        '<path d="M6 9l6 6 6-6"/></svg>' +
+      '</div>' +
+      '<div class="pd-faq-a"><div class="pd-faq-a-inner">' + pdFaqAnswer(f) + '</div></div>' +
+      '</div>';
+  }).join('') + '</div>';
+}
+
+// 답변은 어드민 편집기가 만든 서식(Quill Delta)이다.
+// dpRichHtml 은 공용 변환기이고 Quill 이 페이지에 있어야 동작한다(html 에 함께 넣었다).
+// 변환기가 없거나 본문이 비면 대체 문구를 보여준다 - 빈 칸이면 고장으로 읽힌다.
+function pdFaqAnswer(f) {
+  if (typeof dpRichHtml === 'function' && f.detailContent) {
+    var html = dpRichHtml(f.detailContent);
+    if (html) return '<div class="ql-snow"><div class="ql-editor pd-faq-ql">' + html + '</div></div>';
+  }
+  return '<span class="pd-faq-none">답변이 준비 중입니다.</span>';
+}
+
 function pdRenderDetail() {
   var sec = document.getElementById('pd-detail');
   var body = document.getElementById('pd-detail-body');
@@ -504,7 +604,15 @@ function pdRenderDetail() {
     }).join('') + '</div>';
   }
 
-  if (!inner) return;   // 보여줄 게 없으면 섹션 자체를 안 띄운다
+  // 상세 내용이 없어도 FAQ 가 있으면 섹션은 띄운다.
+  // 둘 다 없을 때만 접는다.
+  if (!inner) {
+    if (!pdFaqRows.length) return;
+    body.innerHTML = '<p class="pd-empty">상세 정보가 아직 등록되지 않았습니다.</p>';
+    sec.hidden = false;
+    pdRenderTabs();
+    return;
+  }
 
   body.innerHTML =
     '<div class="pd-collapse" id="pd-collapse">' + inner +
@@ -516,6 +624,7 @@ function pdRenderDetail() {
       ' stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
     '</button>';
   sec.hidden = false;
+  pdRenderTabs();
 
   // 이미지가 아직 안 실렸으면 높이가 0에 가깝다. 그 상태로 재면 항상 "짧다" 가 나온다.
   // 그래서 지금 한 번, 이미지가 다 실린 뒤에 한 번 더 잰다.

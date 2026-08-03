@@ -114,6 +114,46 @@
 .pd-expand-btn svg { transition: transform .2s; color: #8a8fa3; }
 .pd-expand-btn.is-open svg { transform: rotate(180deg); }
 
+/* ── 하단 탭 (상세 정보 / 자주 묻는 질문) ── */
+.pd-tabbar { display: flex; gap: 4px; border-bottom: 2px solid #18172b; margin-bottom: 22px; }
+/* 탭이 하나뿐일 때는 제목만 나온다. 그때도 아래 선은 그대로 유지된다. */
+.pd-tabbar .pd-sec-title { margin: 0; padding-bottom: 12px; border: none; }
+.pd-tab {
+  display: flex; align-items: center; gap: 6px;
+  border: none; background: none; padding: 10px 18px 12px;
+  font-family: inherit; font-size: 16px; font-weight: 700; color: #a5a2b8; cursor: pointer;
+  border-radius: 8px 8px 0 0; transition: color .15s, background .15s;
+}
+.pd-tab:hover { color: #6b6880; }
+.pd-tab.is-on { color: #18172b; font-weight: 800; background: #f6f5fb; }
+.pd-tab-count {
+  font-size: 12px; font-weight: 800; color: #fff; background: #b5b2c4;
+  border-radius: 999px; padding: 1px 7px; line-height: 1.5;
+}
+.pd-tab.is-on .pd-tab-count { background: #5b3fbe; }
+
+.pd-empty { padding: 60px 20px; text-align: center; color: #a5a2b8; font-size: 14.5px; }
+
+/* ── 자주 묻는 질문 ──
+   클래스를 이 화면 전용으로 둔 이유는 js 주석 참고.
+   여닫기는 utils.js 의 toggleFaq 가 바로 다음 형제에 open 을 붙이는 방식이다. */
+.pd-faq-item { border-bottom: 1px solid #f0eff5; }
+.pd-faq-q {
+  display: flex; align-items: center; justify-content: space-between; gap: 14px;
+  padding: 20px 4px; cursor: pointer;
+  font-size: 15.5px; font-weight: 700; color: #18172b; line-height: 1.5;
+}
+.pd-faq-q:hover { color: #5b3fbe; }
+.pd-faq-ico { flex-shrink: 0; color: #a5a2b8; transition: transform .2s; }
+.pd-faq-q.open .pd-faq-ico { transform: rotate(180deg); color: #5b3fbe; }
+/* 접힘/펼침 — max-height 로 애니메이션한다. 답변 길이를 알 수 없으니 넉넉히 잡는다. */
+.pd-faq-a { max-height: 0; overflow: hidden; transition: max-height .25s ease; }
+.pd-faq-a.open { max-height: 4000px; }
+.pd-faq-a-inner { padding: 0 4px 22px; font-size: 14.5px; line-height: 1.75; color: #3a3a48; }
+.pd-faq-none { color: #a5a2b8; }
+/* 편집기 본문은 자체 여백을 갖고 있어 한 번 더 감싸면 안쪽이 밀린다 */
+.pd-faq-ql { padding: 0; }
+
 /* ── 하단 고정 바 (상세 정보 영역에서만) ──
    z-index 1100: 비교 트레이(1200)보다 아래. 트레이가 열리면 그 위로 겹치지 않고
    js(pdSyncFloats)가 바를 트레이 높이만큼 밀어 올린다. */
