@@ -121,6 +121,31 @@
       'border:1px solid #eee;background:#fff;color:#8a879c;border-radius:50%;font-size:12px;line-height:1;' +
       'cursor:pointer;font-family:inherit;}' +
       '.dp-tray__close:hover{color:#e8547a;border-color:#f3c9d5;}' +
+
+      // ── 비교함 버튼 (2026-08-03, 트레이를 대체) ─────
+      // 카카오 상담과 같은 크기·같은 열에 선다. 위치(bottom)는 placeChip 이 잡는다.
+      '.dp-chip{position:fixed;right:28px;z-index:1200;display:flex;flex-direction:column;align-items:center;gap:6px;}' +
+      '.dp-chip[hidden]{display:none;}' +
+      '.dp-chip__btn{position:relative;width:56px;height:56px;border-radius:50%;border:none;' +
+      'background:#4b2ecb;color:#fff;display:flex;align-items:center;justify-content:center;' +
+      'cursor:pointer;box-shadow:0 4px 20px rgba(40,30,90,.28);transition:transform .15s;font-family:inherit;}' +
+      '.dp-chip__btn:hover{transform:scale(1.06);}' +
+      // 담긴 개수. 이게 없으면 눌러보기 전에는 뭐가 들었는지 알 수 없다.
+      '.dp-chip__count{position:absolute;top:-3px;right:-3px;min-width:21px;height:21px;padding:0 5px;' +
+      'border-radius:999px;background:#e8547a;color:#fff;font-size:12px;font-weight:800;' +
+      'display:flex;align-items:center;justify-content:center;border:2px solid #fff;box-sizing:border-box;}' +
+      '.dp-chip__x{width:22px;height:22px;border-radius:50%;border:1px solid #e6e2f2;background:#fff;' +
+      'color:#a09dba;font-size:11px;line-height:1;cursor:pointer;font-family:inherit;' +
+      'display:flex;align-items:center;justify-content:center;}' +
+      '.dp-chip__x:hover{color:#e8547a;border-color:#f3c9d5;}' +
+      '@media(max-width:900px){.dp-chip{right:16px;}' +
+      '.dp-chip__btn{width:50px;height:50px;}}' +
+
+      // 시트 머리의 '상품 추가' — 트레이의 빈 칸이 하던 일을 여기로 옮겼다.
+      '.dp-sheet__add{padding:6px 13px;border:1px solid #c9bdf5;background:#f6f3ff;color:#4b2ecb;' +
+      'border-radius:999px;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;margin-left:auto;}' +
+      '.dp-sheet__add:hover{background:#ede7ff;}' +
+      '.dp-sheet__hint{font-size:12.5px;color:#a7a5b8;padding:10px 2px 0;line-height:1.5;}' +
       '.dp-tray__slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:8px;}' +
       '.dp-tray.is-fold .dp-tray__slots{display:none;}' +
       '.dp-slot{position:relative;border:1px solid #eeecf5;border-radius:12px;background:#fff;' +
@@ -367,20 +392,27 @@
     return '<div class="dp-slot dp-slot--add">' + inner + '</div>';
   }
 
+  // ── 화면 아래 비교함 버튼 ───────────────────────────
+  //
+  // ★ 2026-08-03 — 3칸 트레이(약 235px)를 작은 버튼(56px)으로 바꿨다.
+  //   트레이가 화면 아래를 가로로 다 덮어서, 상품 상세의 신청 바·카카오 상담과
+  //   자리를 다투고 모바일에서는 화면의 3분의 1이 깔려 있었다.
+  //   담긴 개수만 뱃지로 보여주고, 누르면 원래 있던 비교 시트가 올라온다.
+  //   시트에서 빼기·비우기·상품 추가가 다 되므로 기능은 줄지 않았다.
+  //
+  //   slotFilled/slotEmpty 는 지금 안 쓴다. 지우지 않은 이유는 트레이로 되돌릴
+  //   가능성과, 시트 쪽에서 같은 모양이 필요해질 때 재사용하기 위해서다.
   function renderTray() {
     if (!_trayCat) return;
     var s = store(); if (!s) return;
     var el = ensureTray();
     var items = s.list(_trayCat);
-    var max = maxCount();
 
-    // 새로 담으면 닫아둔 트레이를 다시 연다.
+    // 새로 담으면 닫아둔 것을 다시 연다.
     // 방금 담은 것이 어디로 갔는지 안 보이면 담긴 건지 알 수 없다.
     if (items.length > _trayLastCount) _trayClosed = false;
     _trayLastCount = items.length;
 
-    // 0개면 트레이 자체를 숨긴다. '비교하기'를 누르기 전에는 안 보인다.
-    // 닫아둔 경우도 같다 - 항목은 그대로 남아 있고 바만 안 보인다.
     if (!items.length || _trayClosed) {
       el.hidden = true;
       el.innerHTML = '';
@@ -388,46 +420,44 @@
       return;
     }
 
-    var slots = '';
-    for (var i = 0; i < max; i++) {
-      slots += items[i] ? slotFilled(items[i]) : slotEmpty();
-    }
-    var can = items.length >= 2;
-
-    el.className = 'dp-tray' + (_fold ? ' is-fold' : '');
+    el.className = 'dp-chip';
     el.hidden = false;
     el.innerHTML =
-      '<div class="dp-tray__inner">' +
-      '<div class="dp-tray__head">' +
-      '<span class="dp-tray__title">' + esc(CAT_LABEL[_trayCat] || '') + ' 비교함 ' +
-      '<em>' + items.length + '</em>/' + max + '</span>' +
-      '<span class="dp-tray__spacer"></span>' +
-      '<button type="button" class="dp-tray__mini" data-fold>' + (_fold ? '펼치기' : '접기') + '</button>' +
-      '<button type="button" class="dp-tray__mini" data-clear="' + esc(_trayCat) + '">비우기</button>' +
-      '<button type="button" class="dp-tray__close" data-close ' +
-      'title="비교함을 화면에서 내립니다. 담아둔 상품은 그대로 있습니다." ' +
-      'aria-label="비교함 닫기">\u2715</button>' +
-      '</div>' +
-      '<div class="dp-tray__slots">' + slots + '</div>' +
-      '<button type="button" class="dp-tray__go"' + (can ? '' : ' disabled') + '>' +
-      (can ? items.length + '개 비교하기' : '2개부터 비교할 수 있습니다') + '</button>' +
-      '</div>';
+      '<button type="button" class="dp-chip__btn" title="' +
+      esc(CAT_LABEL[_trayCat] || '') + ' 비교함 열기" aria-label="비교함 열기">' +
+      '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" ' +
+      'stroke-width="2" stroke-linecap="round" stroke-linejoin="round">' +
+      '<rect x="3" y="5" width="7" height="14" rx="1"/><rect x="14" y="5" width="7" height="14" rx="1"/>' +
+      '</svg>' +
+      '<span class="dp-chip__count">' + items.length + '</span>' +
+      '</button>' +
+      '<button type="button" class="dp-chip__x" data-close ' +
+      'title="비교함 버튼을 숨깁니다. 담아둔 상품은 그대로 있습니다." ' +
+      'aria-label="비교함 숨기기">\u2715</button>';
 
-    el.querySelector('[data-fold]').onclick = function () { _fold = !_fold; renderTray(); };
+    el.querySelector('.dp-chip__btn').onclick = function () { openSheet(_trayCat); };
     el.querySelector('[data-close]').onclick = function () { _trayClosed = true; renderTray(); };
-    bind(el, renderTray); // 비우기(data-clear) 재사용
-    el.querySelectorAll('[data-drop]').forEach(function (b) {
-      b.onclick = function () { s.remove(b.dataset.cat, b.dataset.drop); renderTray(); };
-    });
-    el.querySelectorAll('[data-pick]').forEach(function (b) {
-      b.onclick = function () { openPicker(_trayCat); };
-    });
-    var go = el.querySelector('.dp-tray__go');
-    if (can) go.onclick = function () { openSheet(_trayCat); };
 
-    // 트레이가 '신청하기' 버튼을 가리지 않게 본문 아래를 그만큼 띄운다.
-    var h = el.offsetHeight || 0;
-    document.body.style.paddingBottom = h ? h + 'px' : '';
+    // 더 이상 본문을 밀어낼 필요가 없다. 트레이 시절에 잡아 둔 여백을 푼다.
+    document.body.style.paddingBottom = '';
+    placeChip();
+  }
+
+  // 카카오 상담 버튼 위에 얹는다.
+  //
+  // 공용 파일이 카카오를 아는 게 마뜩잖지만, 여기서 안 하면 화면마다
+  // 각자 계산하게 되고 결국 어딘가는 겹친 채로 남는다. 한 곳에서 처리한다.
+  // 카카오가 없는 화면(마이페이지 등)에서는 기본 위치를 쓴다.
+  function placeChip() {
+    var el = _trayEl;
+    if (!el || el.hidden) return;
+    var base = window.innerWidth <= 900 ? 80 : 28;
+    var kakao = document.querySelector('.kakao-float');
+    if (kakao) {
+      var r = kakao.getBoundingClientRect();
+      if (r.height) base = Math.max(base, window.innerHeight - r.top + 12);
+    }
+    el.style.bottom = base + 'px';
   }
 
   function mountTray(cat) {
@@ -638,15 +668,27 @@
     var s = store(); if (!s || !_sheetEl) return;
     var items = s.list(cat);
     if (!items.length) { closeSheet(); return; }
+    // 담긴 게 하나뿐이면 표가 한 열이라 비교가 되지 않는다. 그렇다고 시트를 안 열면
+    // '담았는데 아무 반응이 없다' 가 되므로, 열어주되 왜 비교가 안 되는지 적는다.
+    var hint = items.length < 2
+      ? '<div class="dp-sheet__hint">2개부터 나란히 비교할 수 있습니다. 위의 상품 추가로 더 담아보세요.</div>'
+      : '';
+    var addBtn = _pickers[cat]
+      ? '<button type="button" class="dp-sheet__add">+ 상품 추가</button>'
+      : '';
+
     _sheetEl.innerHTML =
       '<div class="dp-sheet">' +
       '<div class="dp-sheet__head">' +
       '<span class="dp-sheet__title">' + esc(CAT_LABEL[cat] || '') + ' 비교</span>' +
+      addBtn +
       '<button type="button" class="dp-sheet__close">닫기</button>' +
       '</div>' +
-      '<div class="dp-sheet__body">' + table(cat, items) + '</div>' +
+      '<div class="dp-sheet__body">' + table(cat, items) + hint + '</div>' +
       '</div>';
     _sheetEl.querySelector('.dp-sheet__close').onclick = closeSheet;
+    var add = _sheetEl.querySelector('.dp-sheet__add');
+    if (add) add.onclick = function () { openPicker(cat); };
     bind(_sheetEl, function () { renderSheet(cat); renderTray(); });
   }
 
@@ -674,8 +716,12 @@
     if (_trayCat) renderTray();
   });
 
+  // 화면 크기가 바뀌면 카카오 위치도 바뀐다. 다시 잰다.
+  window.addEventListener('resize', placeChip);
+
   window.dpCompareView = {
     CAT_LABEL: CAT_LABEL,
+    placeChip: placeChip,
     injectStyles: injectStyles,
     table: table,
     bind: bind,
