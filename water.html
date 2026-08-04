@@ -59,7 +59,7 @@
   <link rel="stylesheet" href="css/common/site-banner.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
 </head>
-<body>
+<body class="water-page">
 
 
 <!-- 공지바 -->
@@ -73,9 +73,17 @@
 <nav class="gnb"></nav>
 
 <!-- ══════════════════════════════════════
-     화면 1: 메인보드 (브랜드 선택)
+     두 화면 공통 영역 (2026-08-04 이동)
+
+     전에는 배너와 '나만의 정수기 찾기' 가 #boardView 안에만 있어
+     브랜드를 고르는 순간 둘 다 사라졌다.
+     화면 전환은 #boardView / #productView 의 display 토글
+     (water-board.js:148,158)이므로 두 div 밖으로 올리면
+     어느 브랜드를 골라도 그대로 남는다.
+
+     ⚠ 두 벌로 복사하지 않은 이유 — #waterFinder 는 getElementById 로 찾는다.
+       슬롯을 두 개 만들면 앞의 하나만 채워진다.
 ══════════════════════════════════════ -->
-<div id="boardView">
 <!-- 사이트 배너(관리자 등록) — site-banner.js 주입, 활성 0장이면 자동 숨김 -->
 <section class="sb" data-banner-category="WATER" aria-label="정수기 배너" hidden>
   <div class="sb__viewport">
@@ -86,12 +94,15 @@
   </div>
 </section>
 
-  <!-- 나만의 정수기 찾기 진입 버튼 (water-finder.js 가 채운다) -->
-  <div id="waterFinder"></div>
+<!-- 나만의 정수기 찾기 진입 버튼 (water-finder.js 가 채운다) -->
+<div id="waterFinder"></div>
 
-  <!-- 브랜드와 상관없이 먼저 보는 섹션 (water-home.js 가 채운다).
-       상품이 없는 섹션은 스스로 숨는다. -->
-  <div id="waterHome"></div>
+<!-- ══════════════════════════════════════
+     화면 1: 메인보드 (브랜드 선택)
+══════════════════════════════════════ -->
+<div id="boardView">
+
+
 
   <div class="board-section">
     <div class="board-section-title">브랜드를 선택해주세요</div>
@@ -102,7 +113,10 @@
     <div class="brand-select-grid" id="brandSelectGrid"></div>
     <div class="brand-board-pager" id="brandBoardPager" style="display:none;"></div>
   </div>
-  </div>
+
+  <!-- 브랜드와 상관없이 먼저 보는 섹션 (water-home.js 가 채운다).
+       상품이 없는 섹션은 스스로 숨는다. -->
+  <div id="waterHome"></div>
 </div>
 
 <!-- ══════════════════════════════════════
@@ -300,7 +314,7 @@
 
       <!-- 약정 기간 -->
       <div class="w-option-group">
-        <div class="w-option-label">약정 기간</div>
+        <div class="w-option-label">약정기간 선택</div>
         <div class="wd-box-group" id="wDContractBox"></div>
         <input type="hidden" id="wDContract" />
       </div>
