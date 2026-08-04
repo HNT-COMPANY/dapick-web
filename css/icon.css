@@ -117,19 +117,22 @@
    ════════════════════════════════════════════════════ */
 .svc-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 18px;
+  /* 2026-08-04 — 3열 → 4열. 카테고리 4개가 한 줄에 들어가게.
+     카드가 361px → 268px 로 좁아지므로 아래 .svc-top 을 세로 배치로 바꾸고
+     이미지·글자 크기를 함께 줄였다. 셋은 한 몸이라 하나만 되돌리면 깨진다. */
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
 }
 .svc-card {
   background: var(--white);
   border: 1px solid var(--border-card, #e8e6f3);
   border-radius: 18px;
-  padding: 26px 26px 0;
+  padding: 22px 22px 0;
   cursor: pointer;
   transition: all 0.25s;
   display: flex;
   flex-direction: column;
-  min-height: 210px;
+  min-height: 236px; /* 세로 배치라 가로형(210px)보다 높아진다 */
   overflow: hidden;
 }
 .svc-card:hover {
@@ -140,10 +143,11 @@
 
 .svc-top {
   display: flex;
-  flex-direction: row;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
+  /* 세로 배치. 268px 폭에서 글자 옆에 120px 이미지를 두면 글자 자리가 78px 밖에
+     안 남아 한 글자씩 세로로 쌓인다. 글자가 카드 전체 폭을 쓰게 한다. */
+  flex-direction: column;
+  align-items: stretch;
+  gap: 14px;
   flex: 1;
 }
 .svc-info {
@@ -151,27 +155,30 @@
   min-width: 0;
 }
 .svc-name {
-  font-size: 20px;
+  font-size: 18px;
   font-weight: 800;
-  margin-bottom: 12px;
-  white-space: nowrap;
+  margin-bottom: 8px;
+  white-space: normal; /* nowrap 이면 '인터넷 / TV' 가 좁은 카드에서 밖으로 삐져나간다 */
   word-break: keep-all;
 }
 .svc-desc {
-  font-size: 13.5px;
+  font-size: 12.5px;
   color: var(--text-muted, #8a8a99);
-  line-height: 1.7;
+  line-height: 1.65;
   word-break: keep-all;
   overflow-wrap: break-word;
 }
 
-/* 이미지 슬롯 — 폭 고정 (맨몸 img / .svc-thumb 둘 다 대응) */
+/* 이미지 슬롯 — 폭 고정 (맨몸 img / .svc-thumb 둘 다 대응)
+   order:-1 = DOM 상 글자가 먼저지만 화면에서는 이미지를 맨 위로 올린다.
+   flex-direction:column-reverse 를 쓰면 나중에 항목이 하나 더 붙을 때 순서가 꼬인다. */
 .svc-top > img,
 .svc-thumb {
-  flex: 0 0 120px;
-  width: 120px;
-  height: 120px;
-  align-self: center;
+  order: -1;
+  flex: 0 0 84px;
+  width: 84px;
+  height: 84px;
+  align-self: flex-start;
 }
 .svc-thumb {
   display: flex;
@@ -186,17 +193,20 @@
 }
 
 .svc-cta {
-  margin: 18px -26px 0;
-  padding: 16px 26px;
+  margin: 16px -22px 0;
+  padding: 14px 12px;
   border-top: 1px solid #f0eefb;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  font-size: 15px;
+  font-size: 13px;
   font-weight: 700;
   color: var(--purple, #5b5bd6);
-  white-space: nowrap;
+  /* nowrap 이면 긴 문구가 카드 밖으로 잘려 나간다. 두 줄까지 허용한다. */
+  white-space: normal;
+  text-align: center;
+  line-height: 1.4;
 }
 .svc-card:hover .svc-cta {
   color: var(--purple-deep, #4a45b5);
@@ -213,6 +223,13 @@
   .cat-grid {
     grid-template-columns: repeat(5, 1fr);
     gap: 10px;
+  }
+}
+/* 4열은 1200px 이상에서만. 그 아래는 3열 → 2열 → 1열로 내려간다.
+   901px 에서 바로 4열이면 카드가 200px 이 돼 다시 깨진다. */
+@media (max-width: 1200px) {
+  .svc-grid {
+    grid-template-columns: repeat(3, 1fr);
   }
 }
 @media (max-width: 900px) {
@@ -245,9 +262,9 @@
   }
   .svc-top > img,
   .svc-thumb {
-    flex: 0 0 96px;
-    width: 96px;
-    height: 96px;
+    flex: 0 0 84px;
+    width: 84px;
+    height: 84px;
   }
 }
 @media (max-width: 480px) {
