@@ -113,6 +113,13 @@ function groupByBrand(list) {
       promoType: p.promoType || null,
       slimType: p.slimType || null,
       tradeIn: !!p.tradeIn,
+      // ── 2026-08-04 추가 ──
+      // ⚠ renderProductCard 가 받는 것은 API 원본이 아니라 이 함수가 만든 객체다.
+      //   여기 안 옮기면 화면에서 영영 안 보인다. 새 필드를 쓸 때 반드시 확인할 것.
+      // 자유 뱃지 — metaBadgesHtml 이 이 배열만 본다.
+      badges: Array.isArray(p.badges) ? p.badges : [],
+      // 인기 정수기(통합 TOP5) — 백엔드 isPopular. 응답 키는 best 와 같은 규칙으로 popular.
+      popular: !!p.popular,
     });
   });
 
@@ -165,12 +172,31 @@ function waterFuncBadgesHtml(wf) {
 
 // ── 카드 메타 배지 (표 ○ 세트 중 특가/프로모션/슬림/타사보상) ──
 // BEST·정수기능은 별도(코너 배지). 값 존재 시에만 노출. 라벨은 고정 enum 라벨(이스케이프 불요).
+// ★ 2026-08-04 — 관리자가 직접 만든 뱃지로 교체했다.
+//
+//   예전: special / promoType / slimType / tradeIn 네 값의 켜기·끄기.
+//         문구도 색도 여기와 water.css 에 박혀 있어 상품마다 다른 말을 못 붙였다.
+//   지금: 어드민 2단계에서 넣은 badges = [{text, bg, fg}] 를 그대로 그린다.
+//
+//   색이 상품마다 다르므로 style 로 준다. 관리자 입력값이 그대로 style 에 들어가니
+//   반드시 escapeAttr 를 거친다. (#RRGGBB 만 통과시키는 검사는 어드민이 하지만,
+//    옛 데이터나 손댄 값이 올 수 있어 여기서도 한 번 더 막는다)
+//
+//   옛 네 값은 백엔드 컬럼에 그대로 남아 있다. 되돌리려면 이 함수만 예전 모양으로
+//   되돌리면 된다 — water.css 의 .wpg-badge-* 규칙도 지우지 않고 뒀다.
+const BADGE_HEX = /^#[0-9a-fA-F]{6}$/;
+function badgeColor(v, fallback) {
+  return BADGE_HEX.test(String(v || '').trim()) ? v.trim() : fallback;
+}
 function metaBadgesHtml(p) {
-  let h = '';
-  if (p.special) h += '<span class="wpg-badge wpg-badge-special">특가</span>';
-  if (p.promoType) h += `<span class="wpg-badge wpg-badge-promo">${p.promoType.label || '프로모션'}</span>`;
-  if (p.slimType) h += '<span class="wpg-badge wpg-badge-slim">초슬림</span>';
-  if (p.tradeIn) h += '<span class="wpg-badge wpg-badge-trade">타사보상</span>';
+  const list = Array.isArray(p.badges) ? p.badges : [];
+  const h = list
+    .filter((b) => b && String(b.text || '').trim())
+    .map(
+      (b) =>
+        `<span class="wpg-badge wpg-badge--custom" style="background:${escapeAttr(badgeColor(b.bg, '#6b7280'))};color:${escapeAttr(badgeColor(b.fg, '#ffffff'))}">${escapeHtml(b.text)}</span>`,
+    )
+    .join('');
   return h ? `<div class="wpg-meta-badges">${h}</div>` : '';
 }
 
@@ -454,7 +480,9 @@ function waterListMore() {
 //    브랜드별: {...p, brand, emoji: data.emoji} / 평면 풀: getAllProductsFlat가 이미 주입.
 //
 // ★ 2026-08-04 — /c/{slug}(에어컨) 카드와 모양을 맞췄다.
-//   본문 순서: 모델명(위, 작은 회색) → 상품명 → 가격.  색상칩·본문뱃지·평점은 안 그린다.
+//   본문 순서: 뱃지 → 모델명(작은 회색) → 상품명 → 가격.  색상칩·평점은 안 그린다.
+//   ※ 뱃지는 오전에 뺐다가 오후에 되살렸다. 관리자가 문구·색을 직접 정하는 것으로
+//     바뀌면서 '고정 네 종류' 가 아니게 됐기 때문이다(metaBadgesHtml 주석 참고).
 //   waterColorChipsHtml / metaBadgesHtml / ratingHtml 은 지우지 않고 남겨 뒀다 —
 //   되돌릴 때 이 함수 안에서 다시 부르기만 하면 되고, BEST 카드가 쓰는 것도 있기 때문이다.
 //   모델명은 값이 없어도 빈 div 를 낸다. CSS min-height 로 자리를 잡아 카드 높이를 맞춘다.
@@ -488,6 +516,7 @@ function renderProductCard(p) {
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<span class="wpg-emoji">${emoji}</span>`}
       </div>
       <div class="wpg-body">
+        ${metaBadgesHtml(p)}
         <div class="wpg-model">${p.modelName || ''}</div>
         <div class="wpg-name">${p.name}</div>
         ${priceHtml}

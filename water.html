@@ -86,6 +86,13 @@
   </div>
 </section>
 
+  <!-- 나만의 정수기 찾기 진입 버튼 (water-finder.js 가 채운다) -->
+  <div id="waterFinder"></div>
+
+  <!-- 브랜드와 상관없이 먼저 보는 섹션 (water-home.js 가 채운다).
+       상품이 없는 섹션은 스스로 숨는다. -->
+  <div id="waterHome"></div>
+
   <div class="board-section">
     <div class="board-section-title">브랜드를 선택해주세요</div>
     <div class="board-section-sub">브랜드별 베스트 상품과 전체 라인업을 확인할 수 있어요</div>
@@ -416,6 +423,12 @@
 <script src="js/common/site-banner.js"></script>
 <script src="js/water/water.js"></script>
 <script src="js/water/water-board.js"></script>
+<!-- 진입 화면 섹션. water.js 의 renderProductCard / getAllProductsFlat 를 쓰므로
+     반드시 water.js 뒤에 온다. 이 한 줄만 지우면 예전처럼 브랜드 선택만 남는다. -->
+<script src="js/water/water-home.js"></script>
+<!-- 나만의 정수기 찾기. water.js 의 getAllProductsFlat / renderProductCard 를 쓴다.
+     이 한 줄만 지우면 버튼도 화면도 사라진다. -->
+<script src="js/water/water-finder.js"></script>
 <script src="js/water/water-banner.js"></script>
 
 <script src="/js/common/track.js"></script>
