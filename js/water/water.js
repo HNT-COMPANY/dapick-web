@@ -452,6 +452,14 @@ function waterListMore() {
 
 // ── 카드 렌더 (renderBrand .map에서 추출 — 결과 동일). p에 brand/emoji 주입 필수.
 //    브랜드별: {...p, brand, emoji: data.emoji} / 평면 풀: getAllProductsFlat가 이미 주입.
+//
+// ★ 2026-08-04 — /c/{slug}(에어컨) 카드와 모양을 맞췄다.
+//   본문 순서: 모델명(위, 작은 회색) → 상품명 → 가격.  색상칩·본문뱃지·평점은 안 그린다.
+//   waterColorChipsHtml / metaBadgesHtml / ratingHtml 은 지우지 않고 남겨 뒀다 —
+//   되돌릴 때 이 함수 안에서 다시 부르기만 하면 되고, BEST 카드가 쓰는 것도 있기 때문이다.
+//   모델명은 값이 없어도 빈 div 를 낸다. CSS min-height 로 자리를 잡아 카드 높이를 맞춘다.
+//   ※ 이미지 위 코너 뱃지(인기·NEW·기능)는 .wpg-img 안이라 그대로 남는다.
+//   ※ 제휴카드 가격(취소선 원가 + '제휴카드' 꼬리표)도 남긴다 — 색상칩과 달리 이건 가격 정보다.
 function renderProductCard(p) {
   const brand = p.brand;
   const emoji = p.emoji || '';
@@ -467,7 +475,7 @@ function renderProductCard(p) {
     ${showOrig ? `<span class="wpg-orig">월 ${monthly.toLocaleString()}원</span>` : ''}
     <div class="wpg-price-line">
       ${cardPrice > 0 ? '<span class="wpg-tag">제휴카드</span>' : ''}
-      <span class="wpg-price">월 ${mainPrice.toLocaleString()}원~</span>
+      <span class="wpg-price"><small>월</small>${mainPrice.toLocaleString()}원~</span>
     </div>`
     : `<div class="wpg-price-line"><span class="wpg-price wpg-ask">가격 문의</span></div>`;
 
@@ -480,11 +488,8 @@ function renderProductCard(p) {
         ${p.image ? `<img src="${p.image}" alt="${p.name}">` : `<span class="wpg-emoji">${emoji}</span>`}
       </div>
       <div class="wpg-body">
+        <div class="wpg-model">${p.modelName || ''}</div>
         <div class="wpg-name">${p.name}</div>
-        ${p.modelName ? `<div class="wpg-model">${p.modelName}</div>` : ''}
-        ${metaBadgesHtml(p)}
-        ${waterColorChipsHtml(p.colors)}
-        ${ratingHtml(p.averageRating, p.reviewCount)}
         ${priceHtml}
       </div>
     </div>`;

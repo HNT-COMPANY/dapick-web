@@ -2270,3 +2270,90 @@
 .water-best-grid {
   gap: 20px;
 }
+/* ══════════════════════════════════════════════════════════════════════
+   2026-08-04 — 정수기 상품 카드를 /c/{slug}(에어컨) 카드와 같은 모양으로.
+   값은 css/category/category.css 의 .cg-card 계열에서 그대로 가져왔다.
+
+   ★ 왜 위쪽 기존 규칙을 고치지 않고 여기서 덮어쓰는가
+     .water-prod-card / .wpg-* 는 렌탈(rental.js)이 함께 쓰는 클래스다.
+     위쪽 전역 규칙을 건드리면 렌탈 카드까지 같이 바뀐다.
+     그래서 정수기 전용 스코프(#productView .water-layout)로만 덮어쓴다.
+     되돌릴 때는 이 블록만 통째로 지우면 원래대로 돌아간다.
+
+   ※ 색상칩·본문뱃지·평점 규칙은 위에 그대로 남겨 뒀다.
+     JS 가 안 그리므로 화면에는 안 나오고, 되돌릴 때 CSS 를 다시 쓸 필요가 없다.
+   ══════════════════════════════════════════════════════════════════════ */
+#productView .water-layout .water-prod-card {
+  background: #fff;
+  border: 1px solid var(--border-card);
+  border-radius: 14px;
+  padding: 18px 18px 20px;
+  box-shadow: none;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+#productView .water-layout .water-prod-card:hover {
+  background: #fff;
+  border-color: var(--purple);
+  box-shadow: 0 6px 18px rgba(108, 63, 197, 0.1);
+  transform: translateY(-2px);
+}
+#productView .water-layout .wpg-img {
+  background: #fff;
+  margin-bottom: 14px;
+}
+#productView .water-layout .wpg-img img {
+  padding: 0;
+  object-fit: contain;
+}
+#productView .water-layout .wpg-body {
+  padding: 0;
+  gap: 0;
+}
+
+/* 모델명 — 상품명 위, 작은 회색. 값이 없어도 min-height 로 자리를 잡아 카드 높이를 맞춘다. */
+#productView .water-layout .wpg-model {
+  font-size: 12px;
+  font-weight: 400;
+  color: var(--text-muted);
+  margin: 0 0 4px;
+  min-height: 16px;
+}
+#productView .water-layout .wpg-name {
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.45;
+  color: #111827;
+  margin: 0 0 12px;
+  min-height: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 가격 — margin-top:auto 로 카드 맨 아래에 붙는다(카드 높이가 달라도 가격 줄이 나란함) */
+#productView .water-layout .wpg-orig {
+  font-size: 12px;
+  margin-bottom: 2px;
+}
+#productView .water-layout .wpg-price-line {
+  margin-top: auto;
+  gap: 6px;
+}
+#productView .water-layout .wpg-price {
+  font-size: 20px;
+  font-weight: 800;
+  color: #111827;
+  letter-spacing: -0.3px;
+}
+#productView .water-layout .wpg-price small {
+  font-size: 13px;
+  font-weight: 600;
+  color: #6b7280;
+  margin-right: 4px;
+}
+#productView .water-layout .wpg-ask {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-muted);
+}
