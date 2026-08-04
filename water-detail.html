@@ -110,7 +110,11 @@
         <div class="wd-colors" id="wdColors"></div>
       </div>
 
-      <div class="wd-specs">
+      <!-- 2026-08-04 가림 — 쓰지 않기로 함(가입 조건/결제 안내/최대 지원금).
+           지우지 않고 display:none 으로 둔다. water-detail.js 가 wdSpecType·
+           wdSpecSupport 를 채우는데 DOM 을 없애면 null 참조로 터진다.
+           되살리려면 아래 style 만 지우면 된다. -->
+      <div class="wd-specs" style="display:none">
         <div class="wd-spec"><div class="wd-spec-label">가입 조건</div><div class="wd-spec-val" id="wdSpecType">-</div></div>
         <div class="wd-spec"><div class="wd-spec-label">결제 안내</div><div class="wd-spec-val" style="font-size:12px;">렌탈 약정 기준</div></div>
         <div class="wd-spec wd-spec-full wd-spec-support">
