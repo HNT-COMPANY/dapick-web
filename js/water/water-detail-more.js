@@ -195,10 +195,124 @@
     }
   }
 
+  // ── ④ 하단 고정 바 ─────────────────────────────────────────
+  //
+  // 상세 정보 영역까지 내려오면 오른쪽 패널의 신청 버튼은 화면 밖으로 나간다.
+  // 거기서부터 화면 아래에 같은 버튼을 붙인다. 상품명을 왼쪽에 함께 적는 이유는
+  // 한참 내려온 뒤에는 지금 보고 있는 게 어느 상품인지 흐려지기 때문이다.
+  // (에어컨 js/products/product-detail.js 의 pdMountBottomBar 와 같은 구조)
+  //
+  // ★ 화면 아래를 나눠 쓰는 것이 셋이다 — 비교 트레이 / 이 바 / 카카오 플로팅.
+  //   각자 bottom:0 을 잡으면 겹친다. 앞엣것의 높이를 재서 뒤엣것을 밀어 올린다.
+  //   트레이는 열고 닫히므로 그때마다 다시 잰다(dp-compare-change).
+
+  // 버튼 알맹이는 화면 위쪽 .wd-actions 와 같은 함수를 부른다.
+  // 여기서 새 함수를 만들면 접수되는 값(약정·주기·색)이 둘로 갈라진다.
+  function barButtonsHtml() {
+    return (
+      '<button type="button" class="wd-bb-btn wd-bb-btn--apply" onclick="wdApply()">신청하기</button>' +
+      '<button type="button" class="wd-bb-btn wd-bb-btn--simple sapply-inline"' +
+      ' data-track="simple_apply_open" onclick="openSimpleApply()">' +
+      '<span class="sapply-tip">3초만에 간편신청하기</span>간편 신청</button>' +
+      '<button type="button" class="wd-bb-btn wd-bb-btn--kakao" onclick="wdKakao()">카카오 상담</button>'
+    );
+  }
+
+  function syncFloats() {
+    var bar = el('wdBottombar');
+    var kakao = document.querySelector('.kakao-float');
+
+    var barH = bar && !bar.hidden ? bar.offsetHeight : 0;
+    if (bar) bar.style.bottom = '0px';
+
+    // 카카오의 원래 자리는 화면 크기마다 다르다 — common.css 에서 PC 28px / 모바일 80px.
+    // 여기서 28 로 고정하면 모바일에서 카카오가 원래보다 아래로 내려간다.
+    var base = window.innerWidth <= 900 ? 80 : 28;
+    if (kakao) kakao.style.bottom = barH + base + 'px';
+
+    // 비교함 칩이 카카오를 따라 올라가야 한다. compare-view 가 다시 재도록 알린다.
+    if (window.dpCompareView && window.dpCompareView.placeChip) window.dpCompareView.placeChip();
+  }
+
+  function mountBottomBar() {
+    if (el('wdBottombar')) return;
+    var sec = document.querySelector('.wd-detail-section');
+    if (!sec) return;
+
+    var nameEl = el('wdName');
+    var name = nameEl ? nameEl.textContent.trim() : '';
+
+    var bar = document.createElement('div');
+    bar.className = 'wd-bottombar';
+    bar.id = 'wdBottombar';
+    bar.hidden = true;
+    bar.innerHTML =
+      '<div class="wd-bb-inner">' +
+      // 맨 위로 — 화면 오른쪽은 카카오와 비교함이 쓰고 있어 이 바 안에 둔다.
+      '<button type="button" class="wd-bb-top" data-top aria-label="맨 위로">' +
+      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"' +
+      ' stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>' +
+      '<span class="wd-bb-top-txt">맨 위로</span>' +
+      '</button>' +
+      '<div class="wd-bb-name" id="wdBbName">' + esc(name) + '</div>' +
+      '<div class="wd-bb-btns">' + barButtonsHtml() + '</div>' +
+      '</div>';
+    document.body.appendChild(bar);
+
+    var topBtn = bar.querySelector('[data-top]');
+    if (topBtn) {
+      topBtn.onclick = function () {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      };
+    }
+
+    // 상세 영역이 화면에 걸치면 켠다. 조금만 걸쳐도 켜야 한다 —
+    // 다 들어와야 켜지면 긴 상세에서는 영영 안 나온다.
+    if (typeof IntersectionObserver === 'function') {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (e) {
+          bar.hidden = !e.isIntersecting;
+          syncFloats();
+        });
+      }).observe(sec);
+    } else {
+      bar.hidden = false;
+    }
+
+    syncFloats();
+    window.addEventListener('resize', syncFloats);
+    window.addEventListener('dp-compare-change', function () {
+      setTimeout(syncFloats, 60); // 트레이가 다시 그려진 뒤에 잰다
+    });
+  }
+
+  // 상품명은 water-detail.js 가 API 를 받은 뒤에 채운다.
+  // 이 파일이 먼저 돌기 때문에 지금 읽으면 빈 문자열이다.
+  // #wdName 이 채워지는 것을 지켜보다가 그때 바를 만든다.
+  function waitForProduct() {
+    var nameEl = el('wdName');
+    if (!nameEl) return;
+    if (nameEl.textContent.trim()) {
+      mountBottomBar();
+      return;
+    }
+    var mo = new MutationObserver(function () {
+      if (!nameEl.textContent.trim()) return;
+      mo.disconnect();
+      mountBottomBar();
+    });
+    mo.observe(nameEl, { childList: true, characterData: true, subtree: true });
+    // 상품을 못 받는 경우(에러 화면)에도 관찰자가 영영 남지 않게 한 번은 끊는다.
+    setTimeout(function () {
+      mo.disconnect();
+    }, 15000);
+  }
+
   function init() {
     bindTabScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     loadFaq();
+    waitForProduct();
     // 첫 진입에서 어느 탭에 불이 들어와야 하는지 한 번 계산한다.
     setTimeout(spy, 0);
   }

@@ -2602,11 +2602,6 @@
 .wf-item .wpg-price small { font-size: 12px; font-weight: 600; color: #6b7280; margin-right: 3px; }
 
 /* 왜 골랐는지 */
-.wf-why { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-.wf-why span {
-  font-size: 10.5px; font-weight: 700; color: #4a3ba8;
-  background: #efecff; border-radius: 999px; padding: 3px 9px; line-height: 1.35;
-}
 
 @media (max-width: 900px) {
   .wf-cta { width: calc(100% - 32px); margin: 20px auto 28px; padding: 18px; gap: 14px; }
@@ -2751,4 +2746,69 @@
   .wf-opts.is-brand { gap: 8px; }
   .wf-opts.is-brand .wf-opt { padding: 14px 8px; }
   .wf-opt-logo { height: 30px; }
+}
+
+/* ── 결과 화면 하단 상담 줄 (2026-08-04) ──
+   결과를 보고도 못 고르는 사람에게 마지막으로 사람에게 물을 길을 준다.
+   버튼 줄 아래 가운데 정렬. */
+.wf-consult {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: 18px;
+  padding-top: 16px;
+  border-top: 1px solid #eceafa;
+}
+.wf-consult-tel {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 7px;
+  text-decoration: none;
+  color: var(--text-main, #18172b);
+  white-space: nowrap;
+}
+.wf-consult-cap {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted, #8a8a99);
+}
+.wf-consult-tel strong {
+  font-size: 17px;
+  font-weight: 800;
+  letter-spacing: -0.3px;
+}
+.wf-consult-tel:hover strong { color: var(--purple, #5b3fbe); }
+.wf-consult-bar {
+  width: 1px;
+  height: 16px;
+  background: #ddd9ee;
+  flex: 0 0 1px;
+}
+.wf-consult-kakao {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: #fee500;
+  color: #3a1d1d;
+  font-size: 14px;
+  font-weight: 800;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+.wf-consult-kakao:hover { filter: brightness(0.96); }
+
+@media (max-width: 768px) {
+  .wf-consult {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+  .wf-consult-tel { justify-content: center; }
+  .wf-consult-bar { display: none; }
+  .wf-consult-kakao { justify-content: center; padding: 13px 12px; }
 }

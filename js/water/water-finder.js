@@ -86,6 +86,19 @@
     },
   ];
 
+  // 첫 질문(브랜드)은 등록 브랜드에서 만든다 → build 시점에 채운다.
+  // kind:'brand' 는 화면을 다르게 그리라는 표시다(로고 카드 2열 + 인사말 머리글).
+  // ⚠ 상품이 한 개도 없는 브랜드는 넣지 않는다. 골라도 결과가 안 바뀌어
+  //   "눌렀는데 아무 일도 안 난다" 로 읽힌다.
+  var BRAND_STEP = {
+    key: 'brand',
+    kind: 'brand',
+    title: '특정 브랜드가 있나요?',
+    sub: '없으면 건너뛰셔도 됩니다. 고르시면 그 브랜드를 먼저 보여드려요',
+    multi: true,
+    options: [],
+  };
+
   // 마지막 질문(색)은 실제 상품 색을 모아 만든다 → build 시점에 채운다
   var COLOR_STEP = {
     key: 'color',
@@ -98,7 +111,9 @@
   // ── 점수 규칙 ─────────────────────────────────────────────────────
   // 값이 클수록 그 조건을 더 중요하게 본다. 고객이 실제로 못 바꾸는 것(인원·장소·요금)에
   // 큰 점수를, 취향(색)에 작은 점수를 준다.
-  var W = { household: 3, place: 3, life: 2, price: 3, priceNear: 1, func: 2, color: 1 };
+  // brand 를 가장 크게 둔 이유 — 브랜드를 고른 사람은 그 브랜드를 보러 온 것이다.
+  // 다만 '거르기' 가 아니라 '가산' 이라 다른 브랜드도 뒤에 남는다(0건 방지).
+  var W = { brand: 4, household: 3, place: 3, life: 2, price: 3, priceNear: 1, func: 2, color: 1 };
 
   var PRICE_ORDER = ['RANGE_10K', 'RANGE_20K', 'RANGE_30K', 'OVER_40K'];
   var FUNC_OF = {
@@ -113,7 +128,7 @@
 
   var answers = {};
   var cur = 0;
-  var steps = STEPS.concat([COLOR_STEP]);
+  var steps = [BRAND_STEP].concat(STEPS, [COLOR_STEP]);
   var ovEl = null;
 
   function esc(s) {
@@ -129,6 +144,13 @@
   function score(p) {
     var s = 0;
     var why = [];
+
+    // 브랜드 — 고른 브랜드면 가산. 안 고른 브랜드도 후보에서 빠지지 않는다.
+    var wantBrands = answers.brand || [];
+    if (wantBrands.length && wantBrands.indexOf(p.brand) >= 0) {
+      s += W.brand;
+      why.push(brandName(p.brand) + ' 제품');
+    }
 
     // 가구 규모
     var hh = answers.household;
@@ -199,6 +221,7 @@
   function open() {
     answers = {};
     cur = 0;
+    buildBrandStep();
     buildColorStep();
     ovEl.hidden = false;
     document.body.style.overflow = 'hidden';
@@ -208,6 +231,44 @@
   function close() {
     ovEl.hidden = true;
     document.body.style.overflow = '';
+  }
+
+  // 브랜드 코드 → 사람이 읽는 이름. water-board.js 가 채워 둔 전역을 먼저 본다.
+  function brandName(code) {
+    if (typeof BRAND_INFO !== 'undefined' && BRAND_INFO[code] && BRAND_INFO[code].name) {
+      return BRAND_INFO[code].name;
+    }
+    var g = typeof WATER_PRODUCTS !== 'undefined' ? WATER_PRODUCTS[code] : null;
+    return (g && g.name) || code;
+  }
+
+  // 브랜드 선택지 — 등록 브랜드(WATER_BRANDS) 중 실제 상품이 있는 것만.
+  // ⚠ WATER_BRANDS / BRAND_INFO 는 water-board.js 의 전역이다.
+  //   아직 안 받았으면(네트워크 지연) 상품 데이터에서 브랜드를 추려 대신 쓴다.
+  function buildBrandStep() {
+    var have = {};
+    if (typeof getAllProductsFlat === 'function') {
+      getAllProductsFlat().forEach(function (p) {
+        if (p.brand) have[p.brand] = (have[p.brand] || 0) + 1;
+      });
+    }
+
+    var codes;
+    if (typeof WATER_BRANDS !== 'undefined' && WATER_BRANDS.length) {
+      codes = WATER_BRANDS.map(function (b) { return b.code; }).filter(function (c) { return have[c]; });
+    } else {
+      codes = Object.keys(have);
+    }
+
+    BRAND_STEP.options = codes.map(function (c) {
+      var info = (typeof BRAND_INFO !== 'undefined' && BRAND_INFO[c]) || {};
+      return {
+        v: c,
+        label: brandName(c),
+        desc: have[c] + '개 상품',
+        logo: info.logo || '',
+      };
+    });
   }
 
   function buildColorStep() {
@@ -256,31 +317,60 @@
     paint();
   }
 
+  // 선택지 한 칸. 브랜드 질문만 로고를 함께 보여준다.
+  function optionHtml(step, o) {
+    var logo =
+      step.kind === 'brand' && o.logo
+        ? '<span class="wf-opt-logo"><img src="' + esc(o.logo) + '" alt="' + esc(o.label) + '"' +
+          ' onerror="this.parentElement.style.display=\'none\'"></span>'
+        : '';
+    return (
+      '<button type="button" class="wf-opt' + (isPicked(step.key, o.v) ? ' is-on' : '') +
+      '" data-v="' + esc(o.v) + '">' +
+      logo +
+      '<span class="wf-opt-label">' + esc(o.label) + '</span>' +
+      (o.desc ? '<span class="wf-opt-desc">' + esc(o.desc) + '</span>' : '') +
+      '</button>'
+    );
+  }
+
+  // 첫 질문(브랜드)에만 붙는 인사말 머리글 — 로고를 가운데 위에 둔다.
+  // 상담을 시작하는 느낌을 주려는 자리라 다른 질문에는 넣지 않는다.
+  function introHtml(step) {
+    if (step.kind !== 'brand') return '';
+    return (
+      '<div class="wf-intro">' +
+      '<img class="wf-intro-logo" src="assets/logos/dapicklogo.png" alt="다픽"' +
+      ' onerror="this.style.display=\'none\'">' +
+      '<p class="wf-intro-hi">안녕하세요, 다픽입니다.</p>' +
+      '</div>'
+    );
+  }
+
   function paint() {
     var step = steps[cur];
-    // 색 선택지가 하나도 없으면 그 질문은 건너뛴다
-    if (step.key === 'color' && !step.options.length) return paintResult();
+    // 선택지가 하나도 없는 질문은 건너뛴다.
+    // 색은 등록된 색이 없을 때, 브랜드는 상품이 하나도 없을 때 이렇게 된다.
+    if ((step.key === 'color' || step.kind === 'brand') && !step.options.length) {
+      return cur >= steps.length - 1 ? paintResult() : next();
+    }
 
     var pct = Math.round(((cur + 1) / steps.length) * 100);
     ovEl.innerHTML =
-      '<div class="wf-box">' +
+      '<div class="wf-box' + (step.kind === 'brand' ? ' is-brandstep' : '') + '">' +
       '<div class="wf-bar"><i style="width:' + pct + '%"></i></div>' +
       '<div class="wf-head">' +
       '<span class="wf-step">' + (cur + 1) + ' / ' + steps.length + '</span>' +
       '<button type="button" class="wf-x" data-close aria-label="닫기">✕</button>' +
       '</div>' +
+      introHtml(step) +
       '<h2 class="wf-q">' + esc(step.title) + '</h2>' +
       '<p class="wf-qsub">' + esc(step.sub) + '</p>' +
-      '<div class="wf-opts' + (step.multi ? ' is-multi' : '') + '">' +
+      '<div class="wf-opts' + (step.multi ? ' is-multi' : '') +
+      (step.kind === 'brand' ? ' is-brand' : '') + '">' +
       step.options
         .map(function (o) {
-          return (
-            '<button type="button" class="wf-opt' + (isPicked(step.key, o.v) ? ' is-on' : '') +
-            '" data-v="' + esc(o.v) + '">' +
-            '<span class="wf-opt-label">' + esc(o.label) + '</span>' +
-            (o.desc ? '<span class="wf-opt-desc">' + esc(o.desc) + '</span>' : '') +
-            '</button>'
-          );
+          return optionHtml(step, o);
         })
         .join('') +
       '</div>' +
@@ -344,15 +434,13 @@
       '<div class="wf-result">' +
       ranked
         .map(function (r) {
-          var why = r.why.slice(0, 3);
+          // 2026-08-04 — 카드 아래 '이래서 골랐어요' 뱃지를 뺐다.
+          //   목록 카드가 이미 뱃지를 달고 있어 두 줄이 겹쳐 지저분했다.
+          //   score() 의 why 계산은 남겨 둔다. 정렬 근거를 콘솔에서 볼 수 있고,
+          //   나중에 다시 보여주고 싶어지면 여기 한 줄만 되살리면 된다.
           return (
             '<div class="wf-item">' +
             (typeof renderProductCard === 'function' ? renderProductCard(r.p) : '') +
-            (why.length
-              ? '<div class="wf-why">' +
-                why.map(function (w) { return '<span>' + esc(w) + '</span>'; }).join('') +
-                '</div>'
-              : '') +
             '</div>'
           );
         })
@@ -362,11 +450,32 @@
       '<button type="button" class="wf-btn wf-btn--ghost" data-again>다시 고르기</button>' +
       '<button type="button" class="wf-btn wf-btn--go" data-close>닫기</button>' +
       '</div>' +
+      // 결과를 보고도 못 고르는 사람이 있다. 마지막에 사람에게 물을 길을 둔다.
+      // 특정 상품이 정해지지 않은 자리라 상품 정보 없이 상담을 연다.
+      '<div class="wf-consult">' +
+      '<a class="wf-consult-tel" href="tel:18998478">' +
+      '<span class="wf-consult-cap">대표번호</span><strong>1899-8478</strong></a>' +
+      '<span class="wf-consult-bar" aria-hidden="true"></span>' +
+      '<button type="button" class="wf-consult-kakao" data-kakao>' +
+      '<svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' +
+      '<path d="M12 3C6.9 3 2.8 6.2 2.8 10.2c0 2.5 1.7 4.7 4.2 6L6 19.9c-.1.4.3.7.7.5l4.2-2.6c.4 0 .7.1 1.1.1 5.1 0 9.2-3.2 9.2-7.7S17.1 3 12 3z"/>' +
+      '</svg>카카오톡 상담하기</button>' +
+      '</div>' +
       '</div>';
 
     ovEl.querySelectorAll('[data-close]').forEach(function (b) { b.onclick = close; });
     var again = ovEl.querySelector('[data-again]');
     if (again) again.onclick = open;
+    var kko = ovEl.querySelector('[data-kakao]');
+    if (kko) {
+      kko.onclick = function () {
+        if (typeof openKakaoConsult === 'function') {
+          openKakaoConsult({ category: '정수기 렌탈' });
+        } else {
+          window.open('https://pf.kakao.com/_exaRjX/chat', '_blank');
+        }
+      };
+    }
   }
 
   // ── 시작 ──────────────────────────────────────────────────────────
