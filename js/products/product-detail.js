@@ -356,9 +356,12 @@ function pdMountBottomBar() {
   bar.innerHTML =
     '<div class="pd-bb-inner">' +
       // 맨 위로 - 화면 오른쪽은 카카오와 비교함이 쓰고 있어 여기 안에 둔다.
+      // 화살표만 두면 무슨 버튼인지 알 수 없어 글자를 함께 넣는다(2026-08-04).
+      // 카카오·비교함 플로팅도 전부 아이콘 아래 이름표를 달고 있어 모양이 맞는다.
       '<button type="button" class="pd-bb-top" onclick="pdScrollTop()" aria-label="맨 위로">' +
-        '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.2"' +
+        '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.2"' +
         ' stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>' +
+        '<span class="pd-bb-top-txt">맨 위로</span>' +
       '</button>' +
       '<div class="pd-bb-name">' + pdEsc(pdProduct.name || '') + '</div>' +
       '<div class="pd-bb-btns">' + pdActionsHtml() + '</div>' +
