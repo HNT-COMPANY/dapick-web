@@ -396,6 +396,8 @@
     return hit ? hit.id : null;
   }
 
+  // 이 상품의 브랜드 자식 카테고리 id. 후기 조회와 간편신청 두 곳이 함께 쓴다.
+  var brandCategoryId = null;
   var reviewsStarted = false;
 
   function startReviews() {
@@ -407,6 +409,7 @@
     var brandName = brandCategoryName();
 
     function go(subId) {
+      brandCategoryId = subId || null;
       if (!subId && brandName) {
         console.warn('[water-detail-more] 브랜드 "' + brandName +
           '" 에 맞는 하위 카테고리를 못 찾았다. 정수기 전체 후기로 간다.');
@@ -424,7 +427,37 @@
       });
   }
 
+  // ── ⑥ 간편신청에 브랜드 자동으로 싣기 (2026-08-05) ──────────
+  //
+  // 정수기 화면의 간편신청 버튼들은 openSimpleApply() 를 인자 없이 부른다.
+  // 그러면 접수에 categoryId 도 상품명도 안 실린다. 그 뒤가 문제다 —
+  // 후기 작성 링크(ReviewInviteService)는 접수의 categoryId 로 분류를 정하는데,
+  // 비어 있으면 최상위 '정수기' 로만 묶여서 코웨이 상세에 후기가 안 뜬다.
+  // 고객에게 브랜드를 다시 묻는 대신, 신청하는 순간 자동으로 실어 보낸다.
+  //
+  // ⚠ 버튼이 두 곳이다 — 위 .wd-actions 와 이 파일이 만든 하단 바.
+  //   호출부마다 인자를 넣으면 한쪽만 고쳐지는 사고가 난다. 그래서 함수를 한 번만 감싼다.
+  //   이미 인자를 넣어 부르는 쪽이 생기면 그 값을 그대로 존중한다(덮어쓰지 않는다).
+  function wrapSimpleApply() {
+    if (typeof window.openSimpleApply !== 'function') return;
+    if (window.__wdSimpleApplyWrapped) return;
+    window.__wdSimpleApplyWrapped = true;
+
+    var orig = window.openSimpleApply;
+    window.openSimpleApply = function (catApi, productName, catLabel, opts) {
+      var o = opts || {};
+      // brandCategoryId 는 카테고리 조회가 끝난 뒤 채워진다. 호출 시점에 읽는다.
+      if (!o.categoryId && brandCategoryId) {
+        o = { categoryId: brandCategoryId, productId: o.productId || null };
+      }
+      var nameEl = el('wdName');
+      var name = productName || (nameEl ? nameEl.textContent.trim() : '');
+      return orig(catApi || 'water', name, catLabel || '정수기', o);
+    };
+  }
+
   function init() {
+    wrapSimpleApply();
     bindTabScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     loadFaq();
