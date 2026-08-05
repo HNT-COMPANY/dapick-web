@@ -491,17 +491,26 @@
   // 공용 파일이 카카오를 아는 게 마뜩잖지만, 여기서 안 하면 화면마다
   // 각자 계산하게 되고 결국 어딘가는 겹친 채로 남는다. 한 곳에서 처리한다.
   // 카카오가 없는 화면(마이페이지 등)에서는 기본 위치를 쓴다.
+  var _placeTries = 0;   // 카카오를 아직 못 잰 경우의 재시도 횟수
+
   function placeChip() {
     var el = _trayEl;
     if (!el || el.hidden) return;
 
     var base = window.innerWidth <= 900 ? 80 : 28;
     var kakao = document.querySelector('.kakao-float');
+    var r = kakao ? kakao.getBoundingClientRect() : null;
 
-    if (!kakao) { el.style.bottom = base + 'px'; return; }
-
-    var r = kakao.getBoundingClientRect();
-    if (!r.height) { el.style.bottom = base + 'px'; return; }
+    // ⚠ 여기서 그냥 포기하면 가로 정렬이 영영 안 걸린다 (2026-08-05).
+    //   아래 '가로' 계산이 안 돌면 CSS 기본값 right:28px 에 그대로 남는다.
+    //   카카오는 이름표가 '카카오 플러스' 라 컨테이너가 넓어 버튼 중심이 오른쪽에서 71px,
+    //   비교함은 이름표가 짧아 56px → 비교함만 15px 왼쪽으로 밀린 채 굳는다.
+    //   카카오 버튼을 나중에 붙이는 화면이 있어 첫 호출 때 없을 수 있으므로 몇 번 더 본다.
+    if (!r || !r.height) {
+      el.style.bottom = base + 'px';
+      if (_placeTries < 20) { _placeTries++; setTimeout(placeChip, 150); }
+      return;
+    }
 
     // 세로 - 카카오 바로 위에 얹는다.
     // +8 = 카카오 버튼끼리의 세로 간격(.kakao-float gap:8px)과 같은 값.
@@ -516,7 +525,14 @@
     // 그래서 오른쪽 여백을 고정하지 않고, 카카오 중심을 재서 거기에 맞춘다.
     var centerX = r.left + r.width / 2;
     var w = el.offsetWidth;
-    if (w) el.style.right = Math.round(window.innerWidth - centerX - w / 2) + 'px';
+    if (w) {
+      el.style.right = Math.round(window.innerWidth - centerX - w / 2) + 'px';
+      _placeTries = 0;
+    } else if (_placeTries < 20) {
+      // 이름표가 아직 안 그려져 폭이 0 이면 중심을 못 잡는다. 다음 차례에 다시 잰다.
+      _placeTries++;
+      setTimeout(placeChip, 150);
+    }
   }
 
   function mountTray(cat) {
@@ -823,6 +839,8 @@
 
   // 화면 크기가 바뀌면 카카오 위치도 바뀐다. 다시 잰다.
   window.addEventListener('resize', placeChip);
+  // 이미지·글꼴이 다 올라온 뒤 이름표 폭이 확정된다. 그때 한 번 더 맞춘다.
+  window.addEventListener('load', function () { _placeTries = 0; placeChip(); });
 
   window.dpCompareView = {
     CAT_LABEL: CAT_LABEL,

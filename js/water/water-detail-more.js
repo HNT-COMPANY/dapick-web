@@ -246,13 +246,24 @@
 
   // 버튼 알맹이는 화면 위쪽 .wd-actions 와 같은 함수를 부른다.
   // 여기서 새 함수를 만들면 접수되는 값(약정·주기·색)이 둘로 갈라진다.
+  //
+  // 문구는 에어컨 하단바(product-detail.js:329,335)와 같은 말을 쓴다 (2026-08-05).
+  //   '신청하기' → '상품 신청', '카카오 상담' → '카카오톡 문의'
+  //   두 화면이 나란히 놓이는 자리라 말이 다르면 다른 기능처럼 읽힌다.
+  //
+  // ⚠ 간편 신청에 sapply-inline 을 붙이지 않는다 (2026-08-05).
+  //   그 클래스는 simple-apply.js 가 런타임에 <head> 로 밀어 넣는데, 우리 CSS 보다
+  //   뒤에 실려서 같은 특이도면 그쪽이 이긴다. 그래서 이 버튼만
+  //   padding 18px 34px / font 16px / margin-top 28px / flex 0 0 auto 로 덮여
+  //   혼자 커지고 14px 내려앉고 모바일 균등분할까지 깨졌다.
+  //   에어컨은 이 클래스를 안 붙인다(product-detail.js:333). 색은 .wd-bb-btn--simple 에 직접 적는다.
   function barButtonsHtml() {
     return (
-      '<button type="button" class="wd-bb-btn wd-bb-btn--apply" onclick="wdApply()">신청하기</button>' +
-      '<button type="button" class="wd-bb-btn wd-bb-btn--simple sapply-inline"' +
+      '<button type="button" class="wd-bb-btn wd-bb-btn--apply" onclick="wdApply()">상품 신청</button>' +
+      '<button type="button" class="wd-bb-btn wd-bb-btn--simple"' +
       ' data-track="simple_apply_open" onclick="openSimpleApply()">' +
       '<span class="sapply-tip">3초만에 간편신청하기</span>간편 신청</button>' +
-      '<button type="button" class="wd-bb-btn wd-bb-btn--kakao" onclick="wdKakao()">카카오 상담</button>'
+      '<button type="button" class="wd-bb-btn wd-bb-btn--kakao" onclick="wdKakao()">카카오톡 문의</button>'
     );
   }
 
@@ -288,7 +299,7 @@
       '<div class="wd-bb-inner">' +
       // 맨 위로 — 화면 오른쪽은 카카오와 비교함이 쓰고 있어 이 바 안에 둔다.
       '<button type="button" class="wd-bb-top" data-top aria-label="맨 위로">' +
-      '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor"' +
+      '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor"' +
       ' stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 15l-6-6-6 6"/></svg>' +
       '<span class="wd-bb-top-txt">맨 위로</span>' +
       '</button>' +
@@ -329,21 +340,88 @@
   // #wdName 이 채워지는 것을 지켜보다가 그때 바를 만든다.
   function waitForProduct() {
     var nameEl = el('wdName');
-    if (!nameEl) return;
+    // 상품명 칸이 아예 없어도 후기는 떠야 한다 — 바만 못 만들 뿐이다.
+    if (!nameEl) { startReviews(); return; }
     if (nameEl.textContent.trim()) {
       mountBottomBar();
+      startReviews();
       return;
     }
     var mo = new MutationObserver(function () {
       if (!nameEl.textContent.trim()) return;
       mo.disconnect();
       mountBottomBar();
+      startReviews();
     });
     mo.observe(nameEl, { childList: true, characterData: true, subtree: true });
     // 상품을 못 받는 경우(에러 화면)에도 관찰자가 영영 남지 않게 한 번은 끊는다.
     setTimeout(function () {
       mo.disconnect();
+      // 상품을 못 받아 바가 안 뜨는 경우에도 후기는 띄운다(브랜드 없이 전체 기준).
+      startReviews();
     }, 15000);
+  }
+
+  // ── ⑤ 후기 (2026-08-05) ─────────────────────────────────────
+  //
+  // 왜 여기서 부르나
+  //   water-detail.js 는 예전에 initReviews(상품id) 를 바로 불렀다. 그 경로는
+  //   /api/products/{id}/reviews 인데 정수기 상품은 products 표에 없고,
+  //   관리자가 넣은 정수기 후기는 product_id 가 비어 있다. 그래서 늘 0건이었다.
+  //   정수기 후기는 reviews.sub_category_id(= 브랜드 자식 카테고리)로만 찾을 수 있다.
+  //
+  // 브랜드 이름 → 카테고리 UUID
+  //   화면이 아는 것은 'coway' 같은 문자열 키뿐이고(water.js BRAND_META),
+  //   API 가 원하는 것은 UUID 다. 그래서 /api/categories 에서 WATER 의 자식 중
+  //   이름이 같은 것을 찾아 UUID 를 얻는다. 후기 목록 페이지(reviews.js)와 같은 방법이다.
+  //   ⚠ UUID 를 코드에 박지 않는 이유는 FAQ 와 같다 — 로컬과 운영의 값이 다르다.
+  //   못 찾으면 브랜드 없이 category=WATER 로 간다. 빈 화면보다 낫다.
+  function brandCategoryName() {
+    var key = typeof WD_BRAND_KEY !== 'undefined' ? WD_BRAND_KEY : null;
+    if (!key) return null;
+    var meta = (typeof BRAND_META !== 'undefined' && BRAND_META[key]) || null;
+    return (meta && meta.name) || null;
+  }
+
+  function findBrandSubCategoryId(cats, brandName) {
+    if (!brandName) return null;
+    var rows = Array.isArray(cats) ? cats : (cats && cats.data) || [];
+    var water = rows.filter(function (c) {
+      return c && String(c.type || '').toUpperCase() === 'WATER';
+    })[0];
+    var kids = (water && water.children) || [];
+    var hit = kids.filter(function (c) {
+      return c && String(c.name || '').trim() === brandName;
+    })[0];
+    return hit ? hit.id : null;
+  }
+
+  var reviewsStarted = false;
+
+  function startReviews() {
+    if (reviewsStarted) return;   // 관찰자와 즉시경로가 겹쳐 두 번 부르지 않게
+    reviewsStarted = true;
+    if (typeof initReviews !== 'function') return;
+
+    var productId = (typeof WD_PRODUCT !== 'undefined' && WD_PRODUCT && WD_PRODUCT.id) || null;
+    var brandName = brandCategoryName();
+
+    function go(subId) {
+      if (!subId && brandName) {
+        console.warn('[water-detail-more] 브랜드 "' + brandName +
+          '" 에 맞는 하위 카테고리를 못 찾았다. 정수기 전체 후기로 간다.');
+      }
+      initReviews(productId, { category: 'WATER', subCategoryId: subId });
+    }
+
+    if (typeof api === 'undefined' || !api.get || !brandName) { go(null); return; }
+    api
+      .get('/api/categories')
+      .then(function (cats) { go(findBrandSubCategoryId(cats, brandName)); })
+      .catch(function (e) {
+        console.warn('[water-detail-more] 카테고리 로드 실패', e && e.message);
+        go(null);
+      });
   }
 
   function init() {

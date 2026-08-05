@@ -893,9 +893,11 @@
   align-items: center;
   justify-content: center;
   gap: 1px;
-  min-width: 52px;
-  padding: 7px 10px;
-  border-radius: 14px;
+  /* 2026-08-05 에어컨 .pd-bb-top(product-detail.css:189)과 같은 규격으로 통일 */
+  min-width: 44px;
+  height: 44px;
+  padding: 0 10px;
+  border-radius: 22px;
   border: 1px solid #e6e4ef;
   background: #fff;
   color: #6b6880;
@@ -907,9 +909,9 @@
   border-color: #c9c4dc;
 }
 .wd-bb-top-txt {
-  font-size: 10.5px;
+  font-size: 9.5px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1;
   white-space: nowrap;
 }
 
@@ -932,34 +934,50 @@
 /* 버튼 — 위쪽 .wd-actions 와 같은 색, 크기만 바에 맞게 줄인다.
    .wd-btn-apply 등을 그대로 쓰면 padding 18px 이라 바가 너무 두꺼워진다. */
 .wd-bb-btn {
-  min-width: 132px;
-  padding: 13px 20px;
+  min-width: 150px;
+  padding: 13px 24px;
   border: none;
   border-radius: 12px;
   font-size: 15px;
   font-weight: 800;
+  /* 지정 안 하면 버튼 기본 글꼴로 떨어져 에어컨 버튼과 글자 모양이 달라진다 */
+  font-family: inherit;
   white-space: nowrap;
   cursor: pointer;
-  transition: filter 0.15s, background 0.15s;
+  transition: background 0.15s, transform 0.15s;
+}
+.wd-bb-btn:active {
+  transform: translateY(1px);
 }
 .wd-bb-btn--apply {
-  background: var(--purple, #5b5bd6);
+  /* var(--purple) 는 common.css 에서 #6c3fc5 로 풀려 에어컨(#5b3fbe)과 달랐다.
+     --purple-deep 는 아예 정의가 없어 폴백 #4a45b5 가 쓰이고 있었다. 둘 다 고정색으로. */
+  background: #5b3fbe;
   color: #fff;
 }
 .wd-bb-btn--apply:hover {
-  background: var(--purple-deep, #4a45b5);
+  background: #4a32a0;
 }
 .wd-bb-btn--kakao {
   background: #fee500;
-  color: #3a1d1d;
+  color: #191600;
 }
 .wd-bb-btn--kakao:hover {
-  filter: brightness(0.96);
+  background: #f2da00;
 }
-/* 간편 신청은 .sapply-inline 의 색·말풍선을 그대로 쓴다(simple-apply.js 가 주입).
-   여기서는 크기만 맞춘다 — 색을 다시 적으면 다른 화면과 갈라진다. */
+/* 간편 신청 (2026-08-05)
+   전에는 sapply-inline 이 색과 크기를 함께 줬는데, 그 클래스가 크기까지 덮어써서
+   이 버튼만 혼자 커지고 아래로 내려앉았다. 클래스를 떼고 색은 여기서 직접 준다.
+   값은 에어컨 .pd-btn--simple(product-detail.css:68)과 같다.
+   ⚠ overflow: visible 은 필수 — 말풍선(.sapply-tip)이 버튼 위로 튀어나온다. */
 .wd-bb-btn--simple {
   position: relative;
+  overflow: visible;
+  background: #2563eb;
+  color: #fff;
+}
+.wd-bb-btn--simple:hover {
+  background: #1d4ed8;
 }
 
 @media (max-width: 900px) {
@@ -977,11 +995,19 @@
     padding: 12px 4px;
     font-size: 13.5px;
   }
+  .wd-bottombar {
+    /* 에어컨(product-detail.css:218)과 같이 좁은 화면에서는 여백을 줄인다 */
+    padding: 32px 12px calc(8px + env(safe-area-inset-bottom));
+  }
   .wd-bb-top {
-    min-width: 46px;
-    padding: 6px 8px;
+    /* ⚠ min-width 를 같이 안 줄이면 가로 44 세로 36 이 되어 원이 찌그러진다.
+       에어컨 쪽은 width 만 줄여 이 상태로 남아 있다(pd:222). 여기서는 바로잡는다. */
+    min-width: 36px;
+    width: 36px;
+    height: 36px;
+    padding: 0;
   }
   .wd-bb-top-txt {
-    font-size: 10px;
+    font-size: 9px;
   }
 }

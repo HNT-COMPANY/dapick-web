@@ -46,6 +46,10 @@
     uploading: false, // 이미지 업로드 진행 중
     submitting: false,
     submitted: false, // 이번 세션에서 작성 완료(또는 이미 작성) → 폼 잠금
+    // 목록을 '상품 id' 가 아니라 '분류' 로 가져올 때 쓴다 (2026-08-05, 정수기).
+    // null 이면 예전 그대로 /api/products/{id}/reviews 를 쓴다.
+    filter: null,       // { category:'WATER', subCategoryId:'<uuid>'|null }
+    filterFellBack: false, // 브랜드 후기가 0건이라 전체로 내려갔는지
   };
   var stylesInjected = false;
 
@@ -61,7 +65,19 @@
   }
 
   // ── 진입점 ────────────────────────────────────────────────────
-  function initReviews(productId) {
+  //
+  // opts (선택) — 목록을 분류로 가져오고 싶을 때 (2026-08-05 정수기)
+  //   { category: 'WATER', subCategoryId: '<브랜드 자식 카테고리 uuid>' }
+  //
+  // ⚠ 왜 필요한가
+  //   기본 경로는 /api/products/{id}/reviews 인데, 여기 쓰이는 id 는 상품 테이블(products)의 것이다.
+  //   정수기 상품은 water_products 라는 다른 표에 있고, 관리자가 등록한 후기는
+  //   product_id 가 아예 비어 있다(어드민이 안 보낸다). 그래서 이 경로로는 한 건도 안 잡힌다.
+  //   정수기 후기는 reviews.sub_category_id(=브랜드) 로만 찾을 수 있다.
+  //   (마이그레이션 V20260716003 주석에 같은 내용이 적혀 있다)
+  //
+  //   productId 는 그대로 받는다 — 후기 '작성' 쪽은 손대지 않았기 때문이다.
+  function initReviews(productId, opts) {
     var root = document.getElementById('reviewSection');
     if (!root) {
       console.warn('[reviews] #reviewSection 엘리먼트가 없습니다.');
@@ -74,6 +90,8 @@
     }
 
     state.productId = productId;
+    state.filter = opts && (opts.subCategoryId || opts.category) ? opts : null;
+    state.filterFellBack = false;
     state.consultationId = null;
     state.myRating = 0;
     state.imageUrls = [];
@@ -112,8 +130,27 @@
       '</div>';
   }
 
+  // 요약 숫자를 화면에 쓴다. 두 경로가 같은 자리를 쓰므로 한 함수로 모은다.
+  function paintStats(avg, count) {
+    var numEl = document.getElementById('dprAvgNum');
+    var starsEl = document.getElementById('dprAvgStars');
+    var countEl = document.getElementById('dprCount');
+    if (numEl) numEl.textContent = (typeof avg === 'number' ? avg : 0).toFixed(1);
+    if (starsEl) starsEl.innerHTML = avgStarsHtml(avg || 0);
+    if (countEl) {
+      countEl.textContent =
+        count > 0 ? '후기 ' + count.toLocaleString() + '개' : '아직 등록된 후기가 없어요';
+    }
+    var tabCountEl = document.getElementById('reviewTabCount');
+    if (tabCountEl) {
+      tabCountEl.textContent = count > 0 ? ' (' + count.toLocaleString() + ')' : '';
+    }
+  }
+
   // ── 평점 요약 로드 ────────────────────────────────────────────
   function loadStats() {
+    // 분류 모드에는 요약 전용 API 가 없다. 목록을 받은 뒤 loadList 가 계산해서 그린다.
+    if (state.filter) return;
     api
       .get('/api/products/' + state.productId + '/reviews/stats')
       .then(function (stats) {
@@ -122,23 +159,7 @@
           typeof stats.averageRating === 'number' ? stats.averageRating : 0;
         var count =
           typeof stats.reviewCount === 'number' ? stats.reviewCount : 0;
-
-        var numEl = document.getElementById('dprAvgNum');
-        var starsEl = document.getElementById('dprAvgStars');
-        var countEl = document.getElementById('dprCount');
-        if (numEl) numEl.textContent = avg.toFixed(1);
-        if (starsEl) starsEl.innerHTML = avgStarsHtml(avg);
-        if (countEl) {
-          countEl.textContent =
-            count > 0
-              ? '후기 ' + count.toLocaleString() + '개'
-              : '아직 등록된 후기가 없어요';
-        }
-        // 정수기 상세: 리뷰 탭 라벨 카운트 (id=reviewTabCount 있을 때만 — 렌탈 HTML엔 없어 무영향)
-        var tabCountEl = document.getElementById('reviewTabCount');
-        if (tabCountEl) {
-          tabCountEl.textContent = count > 0 ? ' (' + count.toLocaleString() + ')' : '';
-        }
+        paintStats(avg, count);
       })
       .catch(function (e) {
         console.warn('[reviews] stats 로드 실패:', e && e.message);
@@ -146,22 +167,98 @@
   }
 
   // ── 목록 로드 ─────────────────────────────────────────────────
+
+  // 분류 모드에서 한 번에 받아올 개수.
+  // ⚠ 평균 별점을 이 목록으로 계산하기 때문에 개수가 곧 정확도다.
+  //   분류 모드에는 요약 전용 API 가 없어서 받은 것으로 낼 수밖에 없다.
+  //   이 수를 넘어가면 평균은 최근 100건 기준이 된다(개수는 전체가 맞다).
+  var FILTER_PAGE_SIZE = 100;
+
+  function filterQuery(f) {
+    // 좁은 것(브랜드)부터. 백엔드 규약은 js/reviews/reviews.js 의 rvBuildQuery 와 같다.
+    if (f.subCategoryId) return 'subCategoryId=' + encodeURIComponent(f.subCategoryId);
+    return 'category=' + encodeURIComponent(f.category || 'WATER');
+  }
+
+  // 페이지 응답에서 목록을 꺼낸다. api.js 가 ApiResponse 껍질은 이미 벗겨 준다.
+  function pageRows(res) {
+    if (Array.isArray(res)) return res;
+    if (res && Array.isArray(res.content)) return res.content;
+    return [];
+  }
+
+  function paintList(listEl, arr, emptyHtml) {
+    if (!listEl) return;
+    if (!arr.length) {
+      listEl.innerHTML = emptyHtml;
+      return;
+    }
+    listEl.innerHTML = arr.map(reviewItemHtml).join('');
+  }
+
+  // 받은 목록으로 평균과 개수를 낸다(분류 모드 전용).
+  function paintStatsFromRows(res, arr) {
+    var total =
+      res && typeof res.totalElements === 'number' ? res.totalElements : arr.length;
+    var sum = 0;
+    var n = 0;
+    arr.forEach(function (r) {
+      var v = clampRating(r && r.rating);
+      if (v > 0) { sum += v; n++; }
+    });
+    paintStats(n ? sum / n : 0, total);
+  }
+
   function loadList() {
     var listEl = document.getElementById('dprList');
+
+    // ── 예전 경로: 상품 id 로 찾는다 (렌탈 등) ──
+    if (!state.filter) {
+      api
+        .get('/api/products/' + state.productId + '/reviews')
+        .then(function (reviews) {
+          paintList(listEl, Array.isArray(reviews) ? reviews : [],
+            '<div class="dpr-empty">첫 번째 후기를 남겨주세요!</div>');
+        })
+        .catch(function (e) {
+          console.warn('[reviews] 목록 로드 실패:', e && e.message);
+          if (listEl) {
+            listEl.innerHTML =
+              '<div class="dpr-empty">후기를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</div>';
+          }
+        });
+      return;
+    }
+
+    // ── 분류 경로: 브랜드 → (0건이면) 전체 ──
+    var f = state.filter;
+    var base = '/api/reviews?page=0&size=' + FILTER_PAGE_SIZE + '&';
+
     api
-      .get('/api/products/' + state.productId + '/reviews')
-      .then(function (reviews) {
-        if (!listEl) return;
-        var arr = Array.isArray(reviews) ? reviews : [];
-        if (!arr.length) {
-          listEl.innerHTML =
-            '<div class="dpr-empty">첫 번째 후기를 남겨주세요!</div>';
-          return;
+      .get(base + filterQuery(f))
+      .then(function (res) {
+        var arr = pageRows(res);
+
+        // 브랜드 후기가 아직 없으면 그 카테고리 전체로 한 번 더 본다.
+        // 빈 칸을 두면 신규 브랜드 상세가 한동안 텅 비어 보인다.
+        if (!arr.length && f.subCategoryId && f.category) {
+          state.filterFellBack = true;
+          return api
+            .get(base + 'category=' + encodeURIComponent(f.category))
+            .then(function (res2) {
+              var arr2 = pageRows(res2);
+              paintStatsFromRows(res2, arr2);
+              paintList(listEl, arr2,
+                '<div class="dpr-empty">첫 번째 후기를 남겨주세요!</div>');
+            });
         }
-        listEl.innerHTML = arr.map(reviewItemHtml).join('');
+
+        paintStatsFromRows(res, arr);
+        paintList(listEl, arr, '<div class="dpr-empty">첫 번째 후기를 남겨주세요!</div>');
       })
       .catch(function (e) {
-        console.warn('[reviews] 목록 로드 실패:', e && e.message);
+        console.warn('[reviews] 분류 목록 로드 실패:', e && e.message);
+        paintStats(0, 0);
         if (listEl) {
           listEl.innerHTML =
             '<div class="dpr-empty">후기를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.</div>';

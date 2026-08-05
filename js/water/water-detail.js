@@ -45,8 +45,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   loadDetail(id);
 
-  // 후기 모듈 초기화 (id = 상품 UUID = WD_PRODUCT.id). 신규 API 호출은 reviews.js 내부.
-  if (typeof initReviews === 'function') initReviews(id);
+  // 후기 초기화는 여기서 하지 않는다 (2026-08-05).
+  //   예전에는 initReviews(id) 를 여기서 불렀다. 그런데 그 경로는
+  //   /api/products/{id}/reviews 이고, 정수기 상품은 water_products 라는 다른 표에 있다.
+  //   게다가 관리자가 등록한 정수기 후기는 product_id 가 비어 있어서 한 건도 안 잡혔다.
+  //   지금은 water-detail-more.js 가 브랜드를 알아낸 뒤 브랜드 기준으로 부른다.
+  //   ⚠ 그래서 water-detail-more.js 가 안 실리면 후기 영역이 비어 있게 된다.
   // 상세/제품사양/리뷰 탭 전환 (data-tab ↔ 패널 id 맵 기반 범용 토글, N탭 대응)
   initDetailTabs();
   // 스펙 상세 뷰 뒤로/앞으로 대응 (1회 등록)
