@@ -124,7 +124,9 @@
 
       // ── 비교함 버튼 (2026-08-03, 트레이를 대체) ─────
       // 카카오 상담과 같은 크기·같은 열에 선다. 위치(bottom)는 placeChip 이 잡는다.
-      '.dp-chip{position:fixed;right:28px;z-index:1200;display:flex;flex-direction:column;align-items:center;gap:6px;}' +
+      // gap 은 카카오(.kakao-float)의 8px 과 같아야 한다. 다르면 나란히 섰을 때
+      // 버튼과 이름표 사이가 한 칸만 좁아 보인다(2026-08-04 지적).
+      '.dp-chip{position:fixed;right:28px;z-index:1200;display:flex;flex-direction:column;align-items:center;gap:8px;}' +
       '.dp-chip[hidden]{display:none;}' +
       '.dp-chip__btn{position:relative;width:56px;height:56px;border-radius:50%;border:none;' +
       'background:#4b2ecb;color:#fff;display:flex;align-items:center;justify-content:center;' +
@@ -478,7 +480,9 @@
     if (!r.height) { el.style.bottom = base + 'px'; return; }
 
     // 세로 - 카카오 바로 위에 얹는다.
-    el.style.bottom = Math.max(base, window.innerHeight - r.top + 12) + 'px';
+    // +8 = 카카오 버튼끼리의 세로 간격(.kakao-float gap:8px)과 같은 값.
+    // 12 로 두면 비교함만 한 칸 더 떠서 줄이 안 맞는다(2026-08-04 지적).
+    el.style.bottom = Math.max(base, window.innerHeight - r.top + 8) + 'px';
 
     // 가로 - 카카오 '버튼의 중심' 에 이 버튼의 중심을 맞춘다.
     //
@@ -767,7 +771,12 @@
         if (e.target === _sheetEl) closeSheet();
       });
       document.addEventListener('keydown', function (e) {
-        if (e.key === 'Escape') closeSheet();
+        if (e.key !== 'Escape') return;
+        // 피커가 시트 위에 열려 있으면 피커만 닫는다.
+        // 이 리스너와 openPicker 의 리스너가 둘 다 document 에 걸려 있어
+        // 가드가 없으면 Esc 한 번에 피커와 시트가 같이 닫힌다.
+        if (_pickEl && !_pickEl.hidden) return;
+        closeSheet();
       });
     }
     _sheetEl.hidden = false;

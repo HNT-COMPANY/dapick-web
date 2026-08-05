@@ -5,18 +5,21 @@
 // 브랜드를 모르는 사람은 고를 수가 없다. 브랜드와 상관없이 먼저 볼 것을 얹는다.
 //
 //   ① 이달의 특가   가로 4개   (isSpecial)
-//   ② BEST 상품     가로 4개   (isBest, 순위 표기)
+//   ② BEST 상품     가로 4개   (isPopular 우선 · 없으면 isBest, 순위 표기)
 //   ③ 타사보상 | 슬림타입  각 가로 2개  (tradeIn / slimType)
 //   ④ (기존) 브랜드 선택
 //
 // ★ 데이터
 //   water.js 의 loadWaterProducts() 가 /api/water-products 로 전 상품을 한 번에
 //   받아 두므로 여기서 따로 부르지 않는다. getAllProductsFlat() 로 평면 배열을 얻어
-//   플래그로 거른다. 브랜드 화면의 BEST 섹션과 같은 값(best)을 보므로 자동으로 연동된다.
+//   플래그로 거른다.
+//   ⚠ 여기서 보는 플래그는 special·popular·best·tradeIn·slimType 이다 — 뱃지(badges)가 아니다.
+//     카드에 붙는 딱지는 badges 로 그리고(water.js:201), 이 섹션에 뽑히느냐는 옛 플래그가 정한다.
+//     둘은 별개다. 관리자가 딱지만 넣고 노출 설정을 안 켜면 여기 안 나온다(의도된 분리).
 //
 // ★ BEST 순위
-//   isBest 는 켜기/끄기라 순위가 없다. sortOrder 로 줄 세워 1·2·3·4 를 붙인다.
-//   따로 정하고 싶어지면 백엔드에 순위 칸을 만들면 되고, 그때 이 함수만 고치면 된다.
+//   isPopular·isBest 둘 다 켜기/끄기라 순위가 없다. sortOrder 로 줄 세워 1·2·3·4 를 붙인다.
+//   따로 정하고 싶어지면 백엔드에 순위 칸을 만들면 되고, 그때 render() 만 고치면 된다.
 //
 // ★ 카드
 //   renderProductCard() 를 그대로 쓴다. 목록과 진입 화면의 카드 모양이 갈라지면
@@ -79,10 +82,26 @@
     // ① 이달의 특가
     paint('whSpecial', all.filter(function (p) { return p.special; }).sort(bySort).slice(0, 4));
 
-    // ② BEST — 순위 리본을 카드 위에 얹는다
+    // ② BEST — 통합 인기(popular) 우선, 없으면 브랜드 BEST(best)
+    //
+    // popular 는 백엔드 isPopular(전 브랜드 통합 TOP5)다. 이 자리는 브랜드를 가리지 않는
+    // 통합 칸이라 개념상 popular 가 맞다. best 는 브랜드별 플래그여서, 한 브랜드가 best 를
+    // 여러 개 켜 두면 sortOrder 로 잘랐을 때 네 칸이 그 브랜드로만 찰 수 있다.
+    //
+    // ⚠ 그래도 popular 로 갈아끼우기만 하면 안 된다 (2026-08-05).
+    //   아직 아무 상품에도 isPopular 가 안 켜져 있으면 섹션이 통째로 빈다.
+    //   그래서 0건이면 예전 동작(best)으로 조용히 내려간다.
+    //   관리자가 isPopular 를 채우는 순간 손댈 것 없이 popular 기준으로 넘어간다.
+    //   되돌리려면 popRows 를 [] 로 두면 예전과 똑같아진다.
+    var popRows = all.filter(function (p) { return p.popular; });
+    var bestBasis = popRows.length ? 'popular' : 'best';
+    var bestRows = (popRows.length ? popRows : all.filter(function (p) { return p.best; }))
+      .sort(bySort)
+      .slice(0, 4);
+
     paint(
       'whBest',
-      all.filter(function (p) { return p.best; }).sort(bySort).slice(0, 4),
+      bestRows,
       function (card, p, i) {
         return (
           '<div class="wh-rankwrap"><span class="wh-rank">BEST ' + (i + 1) + '</span>' +
@@ -90,6 +109,11 @@
         );
       },
     );
+
+    // 화면만 봐서는 popular 로 뽑혔는지 best 로 뽑혔는지 알 수 없다.
+    // 콘솔을 더럽히지 않으면서 DevTools 에서 확인할 수 있게 표시만 남긴다.
+    var bestSec = el('whBest');
+    if (bestSec) bestSec.dataset.basis = bestBasis;
 
     // ③ 타사보상 · 슬림타입 — 각 2개씩 좌우로
     paint('whTrade', all.filter(function (p) { return p.tradeIn; }).sort(bySort).slice(0, 2));

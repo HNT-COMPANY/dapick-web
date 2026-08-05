@@ -111,12 +111,50 @@
   // 카테고리 목록에서 이름으로 찾는다.
   // ⚠ id 를 코드에 박지 않는 이유 — 로컬 DB 와 운영 DB 의 UUID 가 다르다.
   //   박아 두면 로컬에서만, 또는 운영에서만 FAQ 가 안 나온다.
+  //
+  // ⚠ 부분일치 하나만 쓰면 안 된다 (2026-08-05).
+  //   예전에는 이름에 '정수기' 가 들어가는 첫 번째 카테고리를 그냥 골랐다.
+  //   관리자가 '정수기렌탈' 같은 카테고리를 하나 더 만드는 순간, 목록 정렬 순서에 따라
+  //   엉뚱한 FAQ 가 붙고 아무 오류도 안 난다 — 조용히 틀린다.
+  //   (2026-08-01 에 주소에 'water' 글자가 든 카테고리를 만들었더니 문의가 전부
+  //    정수기로 접수된 것과 같은 계열의 함정이다.)
+  //   그래서 좁은 것부터 본다: slug 정확 → 이름 정확 → 이름 부분일치(가장 짧은 이름).
+  var WATER_SLUG = 'water';
+  var WATER_NAME = '정수기';
+
   function findWaterCategoryId(list) {
     var rows = Array.isArray(list) ? list : (list && list.data) || [];
+    rows = rows.filter(Boolean);
+
+    // ① slug 정확 일치 — 가장 믿을 만하다 (V20260730002 로 생긴 칸)
     var hit = rows.filter(function (c) {
-      return c && String(c.name || '').indexOf('정수기') >= 0;
+      return String(c.slug || '').toLowerCase() === WATER_SLUG;
     })[0];
-    return hit ? hit.id : null;
+    if (hit) return hit.id;
+
+    // ② 이름 정확 일치
+    hit = rows.filter(function (c) {
+      return String(c.name || '').trim() === WATER_NAME;
+    })[0];
+    if (hit) return hit.id;
+
+    // ③ 부분일치 폴백 — 여러 개면 이름이 가장 짧은 것(= 상위/기본 카테고리)
+    var loose = rows
+      .filter(function (c) {
+        return String(c.name || '').indexOf(WATER_NAME) >= 0;
+      })
+      .sort(function (a, b) {
+        return String(a.name).length - String(b.name).length;
+      });
+    if (loose.length > 1) {
+      // 조용히 틀리지 않도록 남긴다. 이게 찍히면 카테고리 이름을 정리해야 한다.
+      console.warn(
+        '[water-detail-more] 이름에 "' + WATER_NAME + '" 이 든 카테고리가 ' +
+          loose.length + '개다. 가장 짧은 "' + loose[0].name + '" 을 골랐다.',
+        loose.map(function (c) { return c.name; }),
+      );
+    }
+    return loose[0] ? loose[0].id : null;
   }
 
   function loadFaq() {
