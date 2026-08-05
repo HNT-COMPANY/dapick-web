@@ -266,6 +266,35 @@
       });
   }
 
+  // 사진이 없는 후기의 왼쪽 자리를 채울 로고.
+  // 빈 칸으로 두면 후기마다 글 시작 위치가 들쭉날쭉해서 목록이 흐트러진다.
+  // 후기 목록 페이지(js/reviews/reviews.js:18)와 같은 파일을 쓴다.
+  var DPR_LOGO = '/assets/logos/dapicklogo.png';
+
+  // 서식 본문(HTML)에서 사진 주소만 뽑는다.
+  function collectImgSrc(html) {
+    var out = [];
+    if (!html) return out;
+    var re = /<img[^>]+src=["']([^"']+)["']/gi;
+    var m;
+    while ((m = re.exec(html))) out.push(m[1]);
+    return out;
+  }
+
+  // 본문에서 사진 태그만 걷어낸다. 남는 빈 문단은 화면에 영향이 없다.
+  function stripImgTags(html) {
+    return String(html || '').replace(/<img[^>]*>/gi, '');
+  }
+
+  function uniq(arr) {
+    var seen = {};
+    return arr.filter(function (u) {
+      if (!u || seen[u]) return false;
+      seen[u] = 1;
+      return true;
+    });
+  }
+
   // 이 후기에 딸린 사진. 옛 데이터는 imageUrl 한 장짜리다.
   // 후기 목록 페이지(js/reviews/reviews.js:334-339)와 같은 규칙을 쓴다.
   function reviewImages(r) {
@@ -297,33 +326,39 @@
     var blocks = r && Array.isArray(r.contentBlocks) ? r.contentBlocks : [];
     var rich = blocks.length && typeof dpRichHtml === 'function' ? dpRichHtml(blocks) : '';
 
+    // 서식 본문 안의 사진은 글 사이에 원본 크기로 박혀 나온다. 후기 하나가 화면을 다 먹는다.
+    // 그래서 주소만 빼내고 본문에서는 지운 뒤, 왼쪽 카드로 모아 보여준다.
+    var imgs = uniq(collectImgSrc(rich).concat(reviewImages(r)));
     var body;
     if (rich) {
-      body = '<div class="ql-snow"><div class="ql-editor dpr-item-ql">' + rich + '</div></div>';
+      body =
+        '<div class="ql-snow"><div class="ql-editor dpr-item-ql">' +
+        stripImgTags(rich) +
+        '</div></div>';
     } else {
       var content = escapeHtml((r && r.content) || '');
       body = content ? '<div class="dpr-item-content">' + content + '</div>' : '';
     }
 
-    var imgs = reviewImages(r).filter(function (u) {
-      return u && rich.indexOf(u) < 0;   // 서식 본문에 이미 있는 사진은 건너뛴다
-    });
-    var gallery = imgs.length
-      ? '<div class="dpr-item-imgs">' +
-        imgs
-          .map(function (u) {
-            return (
-              '<a class="dpr-item-img" href="' + escapeHtml(u) + '"' +
-              ' target="_blank" rel="noopener noreferrer">' +
-              '<img src="' + escapeHtml(u) + '" alt="후기 사진" loading="lazy"></a>'
-            );
-          })
-          .join('') +
-        '</div>'
-      : '';
+    // 왼쪽 카드 — 대표 한 장. 여러 장이면 오른쪽 아래에 남은 개수를 적는다.
+    // 후기 목록 페이지의 rv-card(js/reviews/reviews.js:340-346)와 같은 모양이다.
+    var thumb = imgs.length
+      ? '<a class="dpr-item-thumb" href="' + escapeHtml(imgs[0]) + '"' +
+        ' target="_blank" rel="noopener noreferrer" aria-label="후기 사진 크게 보기">' +
+        '<img src="' + escapeHtml(imgs[0]) + '" alt="후기 사진" loading="lazy">' +
+        (imgs.length > 1
+          ? '<span class="dpr-item-imgcount">+' + (imgs.length - 1) + '</span>'
+          : '') +
+        '</a>'
+      // 사진이 없으면 로고를 넣는다. 칸을 비우면 글 시작 위치가 후기마다 달라진다.
+      : '<div class="dpr-item-thumb dpr-item-thumb--logo">' +
+        '<img src="' + DPR_LOGO + '" alt="다픽" loading="lazy"></div>';
 
     return (
       '<div class="dpr-item">' +
+      '<div class="dpr-item-row">' +
+      thumb +
+      '<div class="dpr-item-main">' +
       '  <div class="dpr-item-head">' +
       '    <span class="dpr-stars dpr-stars--sm">' +
       solidStarsHtml(rating) +
@@ -335,7 +370,8 @@
       '  </div>' +
       title +
       body +
-      gallery +
+      '</div>' +
+      '</div>' +
       '</div>'
     );
   }
@@ -747,16 +783,28 @@
       'white-space:pre-wrap;word-break:break-word;}' +
       // 제목 — 관리자가 쓴 후기에만 있다. 없으면 줄 자체가 안 생긴다.
       '.dpr-item-title{font-size:14.5px;font-weight:700;color:#18172b;margin-bottom:4px;}' +
-      // 사진 (2026-08-05)
-      // 가로로 흘리고 넘치면 옆으로 민다. 세로로 쌓으면 사진 많은 후기가 화면을 다 먹는다.
-      '.dpr-item-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}' +
-      '.dpr-item-img{display:block;width:110px;height:110px;border-radius:10px;' +
-      'overflow:hidden;border:1px solid #eee;background:#f7f7fa;flex:0 0 auto;}' +
-      '.dpr-item-img img{width:100%;height:100%;object-fit:cover;display:block;}' +
-      // 서식 본문 안의 사진은 글 폭에 맞춰 눕힌다.
-      '.dpr-item-ql{padding:0;}' +
+      // 사진 카드 (2026-08-05)
+      // 왼쪽에 사진, 오른쪽에 글. 사진을 본문에 원본 크기로 두면 후기 하나가 화면을 다 먹는다.
+      '.dpr-item-row{display:flex;align-items:flex-start;gap:14px;}' +
+      '.dpr-item-thumb{position:relative;display:block;flex:0 0 auto;' +
+      'width:120px;height:120px;border-radius:10px;overflow:hidden;' +
+      'border:1px solid #eee;background:#f7f7fa;}' +
+      '.dpr-item-thumb img{width:100%;height:100%;object-fit:cover;display:block;}' +
+      // 로고는 잘리면 안 되므로 cover 가 아니라 contain 으로 안에 넣는다.
+      '.dpr-item-thumb--logo{display:flex;align-items:center;justify-content:center;' +
+      'background:#fbfaff;border-color:#f0edfa;}' +
+      '.dpr-item-thumb--logo img{width:70%;height:auto;object-fit:contain;opacity:.55;}' +
+      // 남은 장수. 눌러야 알 수 있으면 안 누른다.
+      '.dpr-item-imgcount{position:absolute;right:6px;bottom:6px;padding:2px 7px;' +
+      'border-radius:999px;background:rgba(24,18,50,.72);color:#fff;' +
+      'font-size:11px;font-weight:700;line-height:1.4;}' +
+      // min-width:0 이 없으면 긴 글이 카드를 밀어낸다.
+      '.dpr-item-main{flex:1;min-width:0;}' +
+      // 서식 본문 — 사진은 위에서 걷어냈고 글자 크기만 본문과 맞춘다.
+      '.dpr-item-ql{padding:0;font-size:14px;line-height:1.6;color:#333;}' +
       '.dpr-item-ql img{max-width:100%;height:auto;border-radius:10px;}' +
-      '@media(max-width:600px){.dpr-item-img{width:88px;height:88px;}}' +
+      '@media(max-width:600px){.dpr-item-row{gap:10px;}' +
+      '.dpr-item-thumb{width:84px;height:84px;}}' +
       // 별(정수) 표시
       '.dpr-stars--sm .dpr-star{font-size:14px;}' +
       '.dpr-star{color:#dcd7e8;letter-spacing:1px;}' +
