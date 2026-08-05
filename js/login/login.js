@@ -39,10 +39,14 @@ function handleOAuthCallback() {
   const error = params.get('error');
 
   if (error) {
-    showToast(
-      '\uCE74\uCE74\uC624 \uB85C\uADF8\uC778\uC5D0 \uC2E4\uD328\uD588\uC2B5\uB2C8\uB2E4. \uB2E4\uC2DC \uC2DC\uB3C4\uD574\uC8FC\uC138\uC694.',
-      'error',
-    );
+    // 가입 상한에 걸린 것은 '로그인 실패' 가 아니다 (2026-08-05).
+    // 같은 문구로 묶으면 정상 이용자가 자기가 뭘 잘못한 줄 알고 계속 다시 누른다.
+    // 같은 회선에서 하루에 여러 계정을 만들려는 경우에만 나온다.
+    var msg =
+      error === 'signup_rate_limited'
+        ? '같은 인터넷 회선에서 하루에 만들 수 있는 계정 수를 넘었습니다. 내일 다시 시도하시거나 고객센터로 문의해주세요.'
+        : '카카오 로그인에 실패했습니다. 다시 시도해주세요.';
+    showToast(msg, 'error');
     window.history.replaceState({}, document.title, '/login.html');
     return;
   }
