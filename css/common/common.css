@@ -1100,3 +1100,36 @@ body {
     display: block;
   }
 }
+
+/* ════════════════════════════════════════════════════════════
+   2026-08-05 리치 본문 안의 동영상 (유튜브 임베드)
+
+   어드민 에디터 툴바에 'video' 를 열면서 함께 넣는다.
+   Quill 이 넣는 것은 <iframe class="ql-video"> 인데 width/height 가 없어
+   이 규칙이 없으면 브라우저 기본값(300x150)으로 아주 작게 나온다.
+
+   ⚠ 여기(common.css)에 두는 이유 — Delta→HTML 을 그리는 코드가 지금 다섯 군데다
+     (rich-render.js + card-detail / faq / event-detail / internet-detail-content).
+     각자 CSS 를 넣게 하면 어느 화면에서만 작게 나오는 일이 반드시 생긴다.
+   ════════════════════════════════════════════════════════════ */
+.ql-editor .ql-video,
+.ql-video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  aspect-ratio: 16 / 9;   /* 유튜브 기본 비율. height 를 고정하면 화면 폭마다 여백이 생긴다 */
+  height: auto;
+  border: 0;
+  border-radius: 10px;
+  margin: 12px 0;
+  background: #000;
+}
+
+/* aspect-ratio 미지원 브라우저 폴백 — 없으면 높이가 0 이 되어 아예 안 보인다 */
+@supports not (aspect-ratio: 16 / 9) {
+  .ql-editor .ql-video,
+  .ql-video {
+    height: 56.25vw;
+    max-height: 620px;
+  }
+}
