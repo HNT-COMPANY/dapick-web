@@ -8,7 +8,8 @@
 (function () {
   'use strict';
 
-  var TEASER_COUNT = 2;
+  // 3 으로 올림 (2026-08-05). 가로 3칸 그리드와 같은 수여야 마지막 줄이 안 빈다.
+  var TEASER_COUNT = 3;
   var _rendered = false;
 
   function esc(s) {
@@ -73,13 +74,17 @@
     if (_stylesInjected) return;
     _stylesInjected = true;
     var css =
-      '.ivr-box{max-width:760px;margin:8px auto 150px;padding:0 16px;font-family:"Noto Sans KR",sans-serif;}' +
+      // 3칸이 되면서 폭을 넓혔다 (2026-08-05).
+      // 760px 그대로 두면 카드 하나가 240px 밑으로 내려가 제목·본문이 다 눌린다.
+      '.ivr-box{max-width:1100px;margin:8px auto 150px;padding:0 16px;font-family:"Noto Sans KR",sans-serif;}' +
       '.ivr-head{display:flex;align-items:baseline;justify-content:space-between;gap:12px;margin:0 0 14px;}' +
       '.ivr-htitle{font-size:17px;font-weight:800;color:#1e1b2e;}' +
       '.ivr-htitle small{display:block;font-size:12px;font-weight:500;color:#8a8fa3;margin-top:3px;}' +
       '.ivr-more-link{flex-shrink:0;font-size:13px;font-weight:700;color:#5b3fbe;text-decoration:none;}' +
       '.ivr-more-link:hover{text-decoration:underline;}' +
-      '.ivr-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}' +
+      // 가로 3칸 (2026-08-05). 카드가 좁아지면 제목이 두 줄로 넘어가므로 단계적으로 줄인다.
+      '.ivr-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}' +
+      '@media(max-width:900px){.ivr-grid{grid-template-columns:1fr 1fr;}}' +
       '@media(max-width:520px){.ivr-grid{grid-template-columns:1fr;}}' +
       '.ivr-card{display:flex;flex-direction:column;background:#fff;border:1px solid #eee;border-radius:16px;overflow:hidden;' +
         'box-shadow:0 1px 8px rgba(24,23,43,.05);text-decoration:none;color:inherit;transition:box-shadow .15s,transform .15s;}' +

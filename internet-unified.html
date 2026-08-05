@@ -167,8 +167,17 @@
 <!-- 상세정보 (관리자 리치 에디터 본문 — 더보기 접힘) -->
 <div id="ipDetailBox" class="ipd-box" style="display:none;"></div>
 
-<!-- 실제 후기 (인터넷TV 후기 2열 카드 · 더보기→/reviews) -->
+<!-- 실제 후기 (인터넷TV 후기 3열 카드 · 더보기→/reviews) -->
 <div id="ipReviews" class="ivr-box" style="display:none;"></div>
+
+<!-- 자주 묻는 질문 (2026-08-05)
+     칸 하나 + product-faq.js 한 줄이면 끝이다. 질문이 0건이면 스스로 숨는다.
+     slug 는 categories.slug (V20260730002 백필로 'internet'). id 는 로컬/운영이 달라 박지 않는다. -->
+<div class="dpfaq"
+     data-faq-slug="internet"
+     data-faq-name="인터넷"
+     data-faq-title="자주 묻는 질문"
+     hidden></div>
 
 <!-- 하단 고정 가격 박스 -->
 <div class="ip-pricebar">
@@ -289,6 +298,10 @@
 <script src="js/internet/internet-calc.js"></script>
 <script src="js/internet/internet-detail-content.js"></script>
 <script src="js/internet/internet-reviews.js"></script>
+<!-- FAQ 답변의 서식(굵기·이미지·표)을 그리려면 rich-render 가 필요하다.
+     Quill 은 위쪽 <head> 에서 이미 불러온다. 없으면 product-faq 가 평문으로 내려간다. -->
+<script src="js/common/rich-render.js"></script>
+<script src="js/common/product-faq.js"></script>
 <script src="js/internet/internet-product-base.js"></script>
 <script src="js/internet/internet-unified.js"></script>
 <script src="js/common/simple-apply.js"></script>
