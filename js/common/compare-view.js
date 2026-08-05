@@ -517,22 +517,33 @@
     // 12 로 두면 비교함만 한 칸 더 떠서 줄이 안 맞는다(2026-08-04 지적).
     el.style.bottom = Math.max(base, window.innerHeight - r.top + 8) + 'px';
 
-    // 가로 - 카카오 '버튼의 중심' 에 이 버튼의 중심을 맞춘다.
+    // 가로 - 카카오 '동그라미' 중심에 이 '동그라미' 중심을 맞춘다.
     //
-    // 둘 다 오른쪽에서 28px 로 두면 안 맞는다. 이름표 길이가 달라서
-    // ('카카오 플러스' vs '비교함') 컨테이너 폭이 다르고, 컨테이너는 폭의 절반만큼
-    // 안쪽으로 버튼을 놓기 때문에 그 차이만큼 버튼이 어긋난다.
-    // 그래서 오른쪽 여백을 고정하지 않고, 카카오 중심을 재서 거기에 맞춘다.
-    var centerX = r.left + r.width / 2;
-    var w = el.offsetWidth;
-    if (w) {
-      el.style.right = Math.round(window.innerWidth - centerX - w / 2) + 'px';
-      _placeTries = 0;
-    } else if (_placeTries < 20) {
-      // 이름표가 아직 안 그려져 폭이 0 이면 중심을 못 잡는다. 다음 차례에 다시 잰다.
-      _placeTries++;
-      setTimeout(placeChip, 150);
+    // ⚠ 컨테이너 폭으로 계산하면 안 된다 (2026-08-05, 두 번째 시도).
+    //   전에는 두 컨테이너의 중심을 맞췄다. 그런데 컨테이너 폭은 이름표가 정한다
+    //   ('카카오 플러스' vs '비교함'). 이름표가 동그라미보다 넓으면 컨테이너 중심과
+    //   동그라미 중심이 어긋나고, 그 어긋난 양이 양쪽에서 다르다. 그래서 계속 밀렸다.
+    //
+    //   지금은 두 동그라미를 직접 재서 '차이만큼' 밀어준다.
+    //   이름표가 몇 글자든, 나중에 바뀌든 상관없다. 이미 맞으면 차이가 0 이라 안 움직인다.
+    var kBtn = kakao.querySelector('.kakao-plus, .kakao-btn') || kakao;
+    var myBtn = el.querySelector('.dp-chip__btn');
+    if (!myBtn) return;
+
+    var kr = kBtn.getBoundingClientRect();
+    var mr = myBtn.getBoundingClientRect();
+    if (!kr.width || !mr.width) {
+      if (_placeTries < 20) { _placeTries++; setTimeout(placeChip, 150); }
+      return;
     }
+
+    var cur = parseFloat(el.style.right);
+    if (isNaN(cur)) cur = parseFloat(window.getComputedStyle(el).right) || 0;
+
+    // 내 동그라미가 카카오보다 오른쪽에 있으면 delta 가 양수 → right 를 키워 왼쪽으로 당긴다.
+    var delta = (mr.left + mr.width / 2) - (kr.left + kr.width / 2);
+    if (Math.abs(delta) >= 0.5) el.style.right = Math.round(cur + delta) + 'px';
+    _placeTries = 0;
   }
 
   function mountTray(cat) {
