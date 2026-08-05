@@ -223,6 +223,8 @@ async function loadDetail(id) {
       colors: Array.isArray(p.colors) && p.colors.length ? p.colors : ['기본'],
       pricing: p.pricing || {},
       detailImages: Array.isArray(p.detailImages) ? p.detailImages : [],
+      // 상세 본문 (2026-08-05). 관리자 서식 편집기(Quill Delta)를 JSON 문자열로 받는다.
+      detailContent: p.detailContent || null,
       best: !!p.best,
       new: !!p.new,
       // ── 제품사양 탭용 스펙 승계 (표는 값 있는 행만 노출) ──
@@ -878,7 +880,21 @@ function renderDetailBody() {
   const p = WD_PRODUCT;
 
   let inner = '';
-  if (p.detailImages && p.detailImages.length) {
+
+  // 상세 본문 (2026-08-05) — 관리자 서식 편집기 내용이 있으면 그것을 그린다.
+  //
+  // ⚠ 이미지 나열(detailImages)과 '둘 다' 그리지 않는다.
+  //   옛 상품은 사진을 본문 삼아 올려 두었기 때문에, 관리자가 그 사진을 편집기로 옮겨 넣으면
+  //   같은 사진이 두 번 나온다. 그래서 본문이 있으면 본문만, 없으면 예전처럼 사진 나열이다.
+  //   (어드민은 빈 편집기를 null 로 보내므로 '실수로 저장한 빈 본문' 때문에 사진이 사라지지 않는다)
+  //
+  // dpRichHtml 은 Quill 이 없으면 '' 를 돌려준다 → 그때도 사진 나열로 자연히 내려간다.
+  const rich =
+    p.detailContent && typeof dpRichHtml === 'function' ? dpRichHtml(p.detailContent) : '';
+
+  if (rich) {
+    inner += `<div class="ql-snow"><div class="ql-editor wd-detail-ql">${rich}</div></div>`;
+  } else if (p.detailImages && p.detailImages.length) {
     inner += '<div class="wd-detail-images">';
     for (let i = 0; i < p.detailImages.length; i++) {
       inner += `<img src="${p.detailImages[i]}" alt="상세 이미지 ${i + 1}" loading="lazy" />`;
