@@ -266,12 +266,61 @@
       });
   }
 
+  // 이 후기에 딸린 사진. 옛 데이터는 imageUrl 한 장짜리다.
+  // 후기 목록 페이지(js/reviews/reviews.js:334-339)와 같은 규칙을 쓴다.
+  function reviewImages(r) {
+    if (r && Array.isArray(r.imageUrls) && r.imageUrls.length) return r.imageUrls;
+    if (r && r.imageUrl) return [r.imageUrl];
+    return [];
+  }
+
   // ── 리뷰 1건 HTML (escape 필수) ───────────────────────────────
+  //
+  // 2026-08-05 — 사진이 안 나오던 것을 고쳤다.
+  //   전에는 별점·이름·날짜·본문만 그렸다. 후기에 imageUrls 가 실려 오는데
+  //   그리는 코드가 아예 없어서 글자만 보였다.
+  //
+  // 본문이 두 갈래인 이유
+  //   관리자가 서식 편집기로 쓴 글은 contentBlocks(Quill Delta)에 들어오고
+  //   사진이 글 사이에 순서대로 섞여 있다. 그때 갤러리를 또 붙이면 같은 사진이 두 번 나온다.
+  //   반대로 편집기를 안 쓰고 사진만 따로 올린 글도 있다.
+  //   그래서 서식 본문에 이미 들어 있는 주소는 빼고, 남은 것만 아래에 붙인다.
+  //   (Quill 이 없는 화면이면 dpRichHtml 이 '' 를 주므로 자동으로 평문 갈래로 간다)
   function reviewItemHtml(r) {
     var rating = clampRating(r && r.rating);
     var name = escapeHtml((r && r.authorName) || '익명');
-    var content = escapeHtml((r && r.content) || '');
     var date = formatDate(r && r.createdAt);
+    var title = r && r.title
+      ? '<div class="dpr-item-title">' + escapeHtml(r.title) + '</div>'
+      : '';
+
+    var blocks = r && Array.isArray(r.contentBlocks) ? r.contentBlocks : [];
+    var rich = blocks.length && typeof dpRichHtml === 'function' ? dpRichHtml(blocks) : '';
+
+    var body;
+    if (rich) {
+      body = '<div class="ql-snow"><div class="ql-editor dpr-item-ql">' + rich + '</div></div>';
+    } else {
+      var content = escapeHtml((r && r.content) || '');
+      body = content ? '<div class="dpr-item-content">' + content + '</div>' : '';
+    }
+
+    var imgs = reviewImages(r).filter(function (u) {
+      return u && rich.indexOf(u) < 0;   // 서식 본문에 이미 있는 사진은 건너뛴다
+    });
+    var gallery = imgs.length
+      ? '<div class="dpr-item-imgs">' +
+        imgs
+          .map(function (u) {
+            return (
+              '<a class="dpr-item-img" href="' + escapeHtml(u) + '"' +
+              ' target="_blank" rel="noopener noreferrer">' +
+              '<img src="' + escapeHtml(u) + '" alt="후기 사진" loading="lazy"></a>'
+            );
+          })
+          .join('') +
+        '</div>'
+      : '';
 
     return (
       '<div class="dpr-item">' +
@@ -284,9 +333,9 @@
       '</span>' +
       (date ? '    <span class="dpr-item-date">' + date + '</span>' : '') +
       '  </div>' +
-      (content
-        ? '  <div class="dpr-item-content">' + content + '</div>'
-        : '') +
+      title +
+      body +
+      gallery +
       '</div>'
     );
   }
@@ -696,6 +745,18 @@
       '.dpr-item-date{font-size:12px;color:#aaa;margin-left:auto;}' +
       '.dpr-item-content{font-size:14px;line-height:1.6;color:#333;' +
       'white-space:pre-wrap;word-break:break-word;}' +
+      // 제목 — 관리자가 쓴 후기에만 있다. 없으면 줄 자체가 안 생긴다.
+      '.dpr-item-title{font-size:14.5px;font-weight:700;color:#18172b;margin-bottom:4px;}' +
+      // 사진 (2026-08-05)
+      // 가로로 흘리고 넘치면 옆으로 민다. 세로로 쌓으면 사진 많은 후기가 화면을 다 먹는다.
+      '.dpr-item-imgs{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px;}' +
+      '.dpr-item-img{display:block;width:110px;height:110px;border-radius:10px;' +
+      'overflow:hidden;border:1px solid #eee;background:#f7f7fa;flex:0 0 auto;}' +
+      '.dpr-item-img img{width:100%;height:100%;object-fit:cover;display:block;}' +
+      // 서식 본문 안의 사진은 글 폭에 맞춰 눕힌다.
+      '.dpr-item-ql{padding:0;}' +
+      '.dpr-item-ql img{max-width:100%;height:auto;border-radius:10px;}' +
+      '@media(max-width:600px){.dpr-item-img{width:88px;height:88px;}}' +
       // 별(정수) 표시
       '.dpr-stars--sm .dpr-star{font-size:14px;}' +
       '.dpr-star{color:#dcd7e8;letter-spacing:1px;}' +
