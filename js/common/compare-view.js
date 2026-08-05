@@ -240,9 +240,33 @@
   }
 
   // ── 비교표 ────────────────────────────────────────
+  // 약정 키 → 사람 말 (2026-08-05).
+  //
+  // 표에 '의무84/계약84' 가 그대로 나오고 있었다. 그건 pricing jsonb 의 최상위 키다.
+  //
+  // ⚠ 저장값은 절대 바꾸지 않는다.
+  //   dpProductUrl 이 options.contract 를 그대로 주소에 실어 보내고(compare-view.js 아래 linkRow),
+  //   받는 쪽 water-detail 이 그 키로 pricing 을 되찾는다(WD_WANT.contract).
+  //   라벨로 저장하면 '자세히 보기' 가 조합을 못 찾는다. 그리는 순간에만 글자를 바꾼다.
+  //
+  // 규칙의 주인은 water.js 의 CONTRACT_LABELS 다. 다만 이 파일은 공용이라
+  // water.js 가 없는 화면(마이페이지 비교함 탭 등)에서도 같은 글자가 나와야 한다.
+  // 그래서 있으면 그걸 쓰고, 없으면 키에서 직접 계산한다 — 결과는 같다(의무 개월 ÷ 12).
+  function contractLabel(v) {
+    var key = String(v);
+    var map = (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS) || null;
+    if (map && map[key]) return map[key];
+    var m = key.match(/의무(\d+)/);
+    if (!m) return key;                       // 모르는 모양이면 건드리지 않는다
+    var y = Number(m[1]) / 12;
+    if (!y || y !== Math.floor(y)) return key; // 12로 안 떨어지면 개월 표기가 맞다
+    return y + '년 의무';
+  }
+
   // 옵션 값 → 화면 글자. 저장된 값이 사람 말이 아닌 것만 손본다.
   function val(key, v) {
     if (v === null || v === undefined || v === '') return '';
+    if (key === 'contract') return contractLabel(v);
     if (key === 'wifi7d') return v === '1' || v === true ? '적용' : '';
     if (key === 'wifimode') return v === 'package' ? '패키지' : String(v);
     return String(v);
@@ -639,6 +663,10 @@
           _pickMsg = '';
         }
         renderPickerBody();
+        // 담은 결과가 뒤에 있는 비교표에 바로 보여야 한다 (2026-08-05).
+        // 이게 없으면 localStorage 에는 들어갔는데 표는 옛 모습 그대로여서
+        // "상품 추가를 눌러도 추가가 안 된다" 로 읽힌다. (시트를 닫았다 열면 그제야 나왔다.)
+        if (res.ok && _sheetEl && !_sheetEl.hidden && _sheetCat) renderSheet(_sheetCat);
         // 3칸이 다 차면 더 고를 게 없다 — 바로 닫아준다.
         if (res.ok && s.count(_pickCat) >= maxCount()) closePicker();
       };
@@ -694,6 +722,9 @@
 
   // ── 비교 시트 ─────────────────────────────────────
   var _sheetEl = null;
+  // 지금 열려 있는 시트의 카테고리. renderSheet(cat) 은 인자로 받지만,
+  // 피커에서 담았을 때처럼 바깥에서 표를 다시 그려야 하는 경우에 부를 값이 없었다.
+  var _sheetCat = null;
   // 시트 맨 위 한 줄 안내. 지금은 '3개가 다 찼다' 한 가지에만 쓴다.
   // 상태로 들고 있는 이유 - 표에서 하나를 빼면 renderSheet 가 다시 돌면서
   // 스스로 지워야 하기 때문이다. 안내가 남아 있으면 이미 자리가 났는데도
@@ -702,12 +733,14 @@
 
   function closeSheet() {
     if (_sheetEl) _sheetEl.hidden = true;
+    _sheetCat = null;
     // 닫을 때 비운다. 안 비우면 나중에 칩으로 그냥 열었을 때 지난 경고가 되살아난다.
     _sheetNotice = '';
   }
 
   function renderSheet(cat) {
     var s = store(); if (!s || !_sheetEl) return;
+    _sheetCat = cat;
     var items = s.list(cat);
     if (!items.length) { closeSheet(); return; }
 

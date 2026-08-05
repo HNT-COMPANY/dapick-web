@@ -2812,3 +2812,40 @@
   .wf-consult-bar { display: none; }
   .wf-consult-kakao { justify-content: center; padding: 13px 12px; }
 }
+
+/* ════════════════════════════════════════════════════════════
+   2026-08-05 브랜드 선택 영역 폭을 배너 · 찾기 박스에 맞춤
+   요청: "정수기 탭 브랜드 사이즈도 좌우측 더 크기 키워서 늘려주세요,
+          나만의 정수기 찾기 영역 가로폭 맞게"
+
+   기존
+     .board-section            max-width: 1200px  padding: 48px 5% 120px
+       → 1400px 화면에서 좌우 5%(=70px)가 먹혀 실폭 약 1060px
+     .wf-cta / .water-page .sb  width: calc(100% - 80px)  max-width: 1400px
+       → 실폭 최대 1400px
+   셋이 세로로 나란히 서는데 브랜드 카드만 340px 가량 좁아 안쪽으로 몰려 보였다.
+
+   08-04 에 배너를 찾기 박스에 맞출 때 쓴 값을 그대로 쓴다 (폭 1400 / 좌우 40px).
+   숫자를 새로 정하지 않는 이유 — 한 곳만 달라도 좌우 끝이 바로 어긋나 보인다.
+   폭을 바꿀 일이 생기면 이 세 곳을 같이 바꿔야 한다.
+
+   ⚠ padding 을 좌우 0 으로 만드는 것이지 위아래는 건드리지 않는다.
+     longhand(padding-left/right)를 쓰는 이유 — 94행과 965행의 shorthand 가
+     위아래 여백까지 들고 있어서, shorthand 로 덮으면 모바일 위아래 여백이 같이 깨진다.
+
+   .brand-select-grid 는 repeat(4, 1fr) 이라 칸이 넓어지면 카드가 알아서 커진다.
+   카드 자체(.brand-select-card)는 손대지 않는다.
+   ════════════════════════════════════════════════════════════ */
+.water-page .board-section {
+  width: calc(100% - 80px);
+  max-width: 1400px;
+  padding-left: 0;
+  padding-right: 0;
+  box-sizing: border-box;
+}
+
+@media (max-width: 768px) {
+  .water-page .board-section {
+    width: calc(100% - 32px); /* .wf-cta · .sb 모바일 폭과 동일 */
+  }
+}
