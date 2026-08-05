@@ -456,66 +456,8 @@
     };
   }
 
-  // ── ⑦ 상세 사진 크게 보기 (2026-08-05) ─────────────────────
-  //
-  // 상세 영역의 사진은 폭에 맞춰 줄어들어 있어 작은 글씨가 안 읽힌다. 누르면 원본을 띄운다.
-  //
-  // ⚠ 위임으로 붙인다 — 상세 본문은 API 를 받은 뒤에 그려지고,
-  //   서식 본문(.wd-detail-ql)이냐 사진 나열(.wd-detail-images)이냐에 따라 마크업도 다르다.
-  //   그릴 때마다 다시 붙이면 반드시 한쪽을 빠뜨린다.
-  var lightboxEl = null;
-
-  function closeLightbox() {
-    if (lightboxEl) lightboxEl.hidden = true;
-    document.body.style.overflow = '';
-  }
-
-  function openLightbox(src, alt) {
-    if (!lightboxEl) {
-      lightboxEl = document.createElement('div');
-      lightboxEl.className = 'wd-lightbox';
-      lightboxEl.hidden = true;
-      lightboxEl.innerHTML =
-        '<button type="button" class="wd-lightbox__x" aria-label="닫기">\u2715</button>' +
-        '<img class="wd-lightbox__img" alt="" />';
-      document.body.appendChild(lightboxEl);
-      // 바깥이든 닫기 버튼이든 누르면 닫는다. 사진 자체를 눌러도 닫는 게 익숙하다.
-      lightboxEl.addEventListener('click', closeLightbox);
-    }
-    var img = lightboxEl.querySelector('.wd-lightbox__img');
-    img.src = src;
-    img.alt = alt || '상세 사진';
-    lightboxEl.hidden = false;
-    // 열려 있는 동안 뒤 본문이 스크롤되면 닫고 나서 엉뚱한 자리에 있게 된다.
-    document.body.style.overflow = 'hidden';
-  }
-
-  function bindLightbox() {
-    document.addEventListener('click', function (e) {
-      var img = e.target;
-      if (!img || img.tagName !== 'IMG') return;
-      // 상세 영역 안의 사진만. 카드 썸네일·아이콘까지 열리면 성가시다.
-      if (!img.closest('#wdDetailBody')) return;
-      openLightbox(img.currentSrc || img.src, img.alt);
-    });
-
-    // ⚠ capture 로 잡는다 — 비교 시트·피커도 Esc 를 document 에서 듣는다.
-    //   버블 단계에서 잡으면 사진만 닫으려 했는데 뒤의 시트까지 같이 닫힌다.
-    document.addEventListener(
-      'keydown',
-      function (e) {
-        if (e.key !== 'Escape') return;
-        if (!lightboxEl || lightboxEl.hidden) return;
-        e.stopPropagation();
-        closeLightbox();
-      },
-      true,
-    );
-  }
-
   function init() {
     wrapSimpleApply();
-    bindLightbox();
     bindTabScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
     loadFaq();

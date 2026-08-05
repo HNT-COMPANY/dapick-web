@@ -1013,10 +1013,10 @@
 }
 
 /* ════════════════════════════════════════════════════════════
-   2026-08-05 상세 본문(서식 편집기) + 사진 크게 보기
+   2026-08-05 상세 본문 (관리자 서식 편집기)
    ════════════════════════════════════════════════════════════ */
 
-/* 관리자 편집기로 쓴 본문. ql-editor 기본 padding 을 지우고 본문 글자 크기에 맞춘다. */
+/* ql-editor 기본 padding 을 지우고 본문 글자 크기에 맞춘다. */
 .wd-detail-ql {
   padding: 0;
   font-size: 15px;
@@ -1027,7 +1027,6 @@
   max-width: 100%;
   height: auto;
   border-radius: 8px;
-  cursor: zoom-in;   /* 눌러서 크게 볼 수 있다는 신호 */
 }
 .wd-detail-ql .ql-video {
   width: 100%;
@@ -1035,56 +1034,4 @@
   height: auto;
   border: 0;
   border-radius: 10px;
-}
-
-/* 예전 방식(사진 나열)에도 같은 신호를 준다 */
-.wd-detail-images img {
-  cursor: zoom-in;
-}
-
-/* 사진 크게 보기
-   ⚠ z-index 는 비교 트레이(1200)·하단 바(1100)보다 위여야 한다.
-     사진을 띄웠는데 그 위로 바가 겹치면 닫는 버튼을 못 누른다. */
-.wd-lightbox {
-  position: fixed;
-  inset: 0;
-  z-index: 9700;
-  background: rgba(12, 10, 24, 0.92);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 24px;
-  cursor: zoom-out;
-}
-.wd-lightbox[hidden] {
-  display: none;
-}
-.wd-lightbox__img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
-  border-radius: 6px;
-}
-.wd-lightbox__x {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  border: 1px solid rgba(255, 255, 255, 0.35);
-  background: rgba(0, 0, 0, 0.35);
-  color: #fff;
-  font-size: 15px;
-  line-height: 1;
-  cursor: pointer;
-  font-family: inherit;
-}
-.wd-lightbox__x:hover {
-  background: rgba(0, 0, 0, 0.6);
-}
-
-@media (max-width: 600px) {
-  .wd-lightbox { padding: 12px; }
-  .wd-lightbox__x { top: 10px; right: 10px; width: 34px; height: 34px; }
 }
