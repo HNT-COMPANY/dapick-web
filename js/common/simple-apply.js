@@ -131,7 +131,7 @@
   // 서버에는 'airconditioner' 라는 글자 하나만 남고 어느 상품인지가 안 남았다.
   // 그러면 나중에 그 고객이 후기를 써도 그 상품 상세에는 못 띄운다 —
   // 상품 상세는 상품 id 로 후기를 찾기 때문이다.
-  var pick = { categoryId: null, productId: null, productName: null };
+  var pick = { categoryId: null, productId: null, productName: null, productImageUrl: null };
 
   /**
    * 모달 열기.
@@ -142,7 +142,9 @@
    * @param catApi      접수에 실을 카테고리 글자. 서버가 20자까지만 받아 잘라 보낸다.
    * @param productName 어떤 상품을 보고 눌렀는지. 문의 내용에 미리 채우고 접수에도 함께 싣는다.
    * @param catLabel    모달 우상단에 표시할 이름(예: '에어컨').
-   * @param opts        { categoryId, productId } — 서버가 실제로 이어 붙일 값.
+   * @param opts        { categoryId, productId, productImageUrl } — 서버가 실제로 이어 붙일 값.
+   *                    productImageUrl 은 상품 사진 스냅샷이다(2026-08-06). 후기 작성 링크 화면이 이걸 그린다 —
+   *                    정수기처럼 상품이 products 표에 없는 카테고리는 서버가 사진을 찾을 방법이 없다.
    */
   function open(catApi, productName, catLabel, opts){
     var o = opts || {};
@@ -157,6 +159,7 @@
     pick.categoryId = o.categoryId || null;
     pick.productId = o.productId || null;
     pick.productName = productName ? String(productName).slice(0, 100) : null;
+    pick.productImageUrl = o.productImageUrl ? String(o.productImageUrl).slice(0, 500) : null;
 
     resetToForm();
     // 상품명은 '덮어쓰기'다 — 다른 상품에서 다시 열었을 때 앞 상품명이 남으면 안 된다.
@@ -198,6 +201,7 @@
       categoryId: pick.categoryId,
       productId: pick.productId,
       productName: pick.productName,
+      productImageUrl: pick.productImageUrl,
       name: (nameEl.value || '').trim(),
       phone: fmtPhone(onlyDigits(phoneEl.value)),
       content: (memoEl.value || '').trim(),

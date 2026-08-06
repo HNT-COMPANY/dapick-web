@@ -452,6 +452,20 @@
       }
       var nameEl = el('wdName');
       var name = productName || (nameEl ? nameEl.textContent.trim() : '');
+
+      // 상품 사진도 함께 싣는다 (2026-08-06).
+      // 후기 작성 링크 화면은 상품 사진을 products 표에서 가져오는데, 정수기 상품은
+      // water_products 라는 다른 표에 있어 서버가 찾을 방법이 없다. 접수 때 적어 둔다.
+      if (!o.productImageUrl) {
+        var img =
+          (typeof WD_PRODUCT !== 'undefined' && WD_PRODUCT && WD_PRODUCT.image) ||
+          (function () {
+            var m = document.querySelector('#wdMainImg, .wd-main-img img, .wd-gallery img');
+            return m ? m.currentSrc || m.src : '';
+          })();
+        if (img) o.productImageUrl = img;
+      }
+
       return orig(catApi || 'water', name, catLabel || '정수기', o);
     };
   }

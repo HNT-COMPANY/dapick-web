@@ -272,7 +272,8 @@
       return toast('신청하신 분야를 골라주세요.');
     }
     if (!rating) return toast('만족도를 골라주세요.');
-    if (!photos.length) return toast('사진을 한 장 이상 올려주세요.');
+    // 사진은 선택이다 (2026-08-06 변경). 서버 쪽 @NotEmpty 도 함께 풀었다 —
+    // 한쪽만 풀면 서버는 받아주는데 화면에서 막혀 원인을 찾기 어렵다.
     if (!title) { el('rw-title').focus(); return toast('제목을 입력해주세요.'); }
     if (!content) { el('rw-content').focus(); return toast('내용을 입력해주세요.'); }
 
@@ -280,7 +281,7 @@
       title: title,
       content: content,
       rating: rating,
-      imageUrls: photos,
+      imageUrls: photos.length ? photos : null,
       hashtags: tags,
       nickname: nickname,
       categoryId: pickedCategoryId
