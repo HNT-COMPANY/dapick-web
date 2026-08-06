@@ -252,15 +252,18 @@
   // 규칙의 주인은 water.js 의 CONTRACT_LABELS 다. 다만 이 파일은 공용이라
   // water.js 가 없는 화면(마이페이지 비교함 탭 등)에서도 같은 글자가 나와야 한다.
   // 그래서 있으면 그걸 쓰고, 없으면 키에서 직접 계산한다 — 결과는 같다(의무 개월 ÷ 12).
+  // 2026-08-06 — 의무가 아니라 '계약' 기간으로 읽는다.
+  // 08-05 에는 의무 개월을 봤다. 이제 의무 개념을 안 쓰기로 해서 기준을 바꿨다.
+  // 정수기(water.js CONTRACT_LABELS)·렌탈(rental-detail.js)과 같은 규칙이다.
   function contractLabel(v) {
     var key = String(v);
     var map = (typeof CONTRACT_LABELS !== 'undefined' && CONTRACT_LABELS) || null;
     if (map && map[key]) return map[key];
-    var m = key.match(/의무(\d+)/);
+    var m = key.match(/계약(\d+)/);
     if (!m) return key;                       // 모르는 모양이면 건드리지 않는다
     var y = Number(m[1]) / 12;
-    if (!y || y !== Math.floor(y)) return key; // 12로 안 떨어지면 개월 표기가 맞다
-    return y + '년 의무';
+    if (!y || y !== Math.floor(y)) return key; // 12로 안 떨어지면 년으로 못 바꾼다
+    return y + '년 계약';
   }
 
   // 옵션 값 → 화면 글자. 저장된 값이 사람 말이 아닌 것만 손본다.
