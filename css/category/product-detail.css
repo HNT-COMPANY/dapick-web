@@ -221,3 +221,28 @@
   .pd-bb-btns .pd-btn { flex: 1; min-width: 0; padding: 12px 4px; font-size: 13.5px; }
   .pd-bb-top { width: 36px; height: 36px; }
 }
+
+/* ── 하단 세로 섹션 (2026-08-06) ─────────────────────────────────
+   정수기 상세(wd-sec)와 같은 구성. 탭으로 하나만 보이던 것을 세로로 나열한다.
+   탭줄은 지우지 않고 '그 자리로 내려가는 목차'로 쓰므로 화면 위에 붙여 둔다.
+   ⚠ .pd-sec-title 은 위(89줄)에 이미 있다. 여기서 다시 정의하지 않는다 —
+     두 벌이 되면 나중에 한쪽만 고치고 왜 안 바뀌는지 찾게 된다. */
+.pd-sec { margin-top: 52px; scroll-margin-top: 80px; }
+.pd-sec:first-of-type { margin-top: 0; }
+.pd-sec[hidden] { display: none; }
+
+/* 목차가 스크롤을 따라와야 어디서든 다른 섹션으로 갈 수 있다.
+   z-index 는 GNB(100대)보다 낮게 둔다 — 위로 올라오면 메뉴를 가린다. */
+.pd-tabbar {
+  position: sticky; top: 0; z-index: 20;
+  background: #fff; padding-top: 8px;
+}
+.pd-tabbar:empty { display: none; }
+
+@media (max-width: 720px) {
+  .pd-sec { margin-top: 38px; }
+  /* 목차가 넘치면 가로로 밀어서 본다. 줄바꿈되면 화면 위를 두 줄이나 먹는다. */
+  .pd-tabbar { overflow-x: auto; scrollbar-width: none; }
+  .pd-tabbar::-webkit-scrollbar { display: none; }
+  .pd-tab { flex: 0 0 auto; }
+}

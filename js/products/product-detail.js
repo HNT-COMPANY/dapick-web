@@ -158,6 +158,8 @@ function pdFieldList() {
 
   pdRenderCrumb();
   pdRenderView();
+  pdMountReviews();   // 리뷰는 상품 id 만 있으면 된다 — 상세보다 먼저 붙여도 된다
+  pdMountReco();      // 추천은 카테고리를 다 받은 뒤라야 한다
   pdRenderNote();
   pdRenderDetail();
   pdMountBottomBar();
@@ -565,20 +567,50 @@ async function pdLoadFaq() {
   console.info('[product-detail] FAQ 0건 — 시도한 카테고리:', ids);
 }
 
-// 탭 줄. 질문이 없으면 아예 안 그린다 - 탭이 하나뿐이면 탭일 이유가 없다.
+// ── 목차 (2026-08-06 개편) ──────────────────────────────────────────
+//
+// 전에는 패널 하나만 보이는 진짜 탭이었다. 이제 넷을 세로로 다 보여주고,
+// 탭은 '그 자리로 내려가는 목차'로 쓴다 — 정수기 상세(water-detail-more.js)와 같은 방식이다.
+//
+// 왜 바꿨나
+//   탭이면 고객이 눌러야만 리뷰·FAQ 를 본다. 안 누르면 없는 것과 같다.
+//   세로로 두면 스크롤만 해도 지나간다.
+//
+// 비어 있는 섹션은 목차에도 안 올린다. 눌러도 아무것도 없는 줄은 고장으로 읽힌다.
+var PD_SECTIONS = [
+  { key: 'detail', label: '상품 상세', sec: 'pd-sec-detail' },
+  { key: 'reco', label: '추천 상품', sec: 'pd-sec-reco' },
+  { key: 'review', label: '리뷰', sec: 'pd-sec-review' },
+  { key: 'faq', label: '자주 묻는 질문', sec: 'pd-sec-faq' },
+];
+
 function pdRenderTabs() {
   var bar = document.getElementById('pd-tabbar');
   if (!bar) return;
 
-  if (!pdFaqRows.length) {
-    bar.innerHTML = '<h2 class="pd-sec-title">상세 정보</h2>';
+  var shown = PD_SECTIONS.filter(function (s) {
+    var el = document.getElementById(s.sec);
+    return el && !el.hidden;
+  });
+
+  // 보일 섹션이 하나뿐이면 목차가 아니라 그냥 제목이다.
+  if (shown.length <= 1) {
+    bar.innerHTML = '';
     return;
   }
 
-  bar.innerHTML =
-    '<button type="button" class="pd-tab is-on" data-tab="detail">상세 정보</button>' +
-    '<button type="button" class="pd-tab" data-tab="faq">자주 묻는 질문' +
-    '<span class="pd-tab-count">' + pdFaqRows.length + '</span></button>';
+  bar.innerHTML = shown
+    .map(function (s, i) {
+      var count =
+        s.key === 'faq' && pdFaqRows.length
+          ? '<span class="pd-tab-count">' + pdFaqRows.length + '</span>'
+          : '';
+      return (
+        '<button type="button" class="pd-tab' + (i === 0 ? ' is-on' : '') +
+        '" data-tab="' + s.key + '">' + s.label + count + '</button>'
+      );
+    })
+    .join('');
 
   if (!bar.__bound) {
     bar.__bound = true;
@@ -587,11 +619,9 @@ function pdRenderTabs() {
       if (t) pdSetTab(t.getAttribute('data-tab'));
     });
   }
-  pdRenderFaq();
 }
 
-// 패널은 미리 그려두고 보이기/숨기기만 한다.
-// 누를 때마다 다시 그리면 펼쳐둔 상세가 접히고 스크롤이 튄다.
+// 목차를 누르면 그 섹션으로 내려간다. 숨기지 않는다.
 function pdSetTab(key) {
   var bar = document.getElementById('pd-tabbar');
   if (bar) {
@@ -599,12 +629,56 @@ function pdSetTab(key) {
       t.classList.toggle('is-on', t.getAttribute('data-tab') === key);
     });
   }
-  Object.keys(PD_PANELS).forEach(function (k) {
-    var el = document.getElementById(PD_PANELS[k]);
-    if (el) el.hidden = k !== key;
+  var hit = PD_SECTIONS.filter(function (s) { return s.key === key; })[0];
+  var el = hit && document.getElementById(hit.sec);
+  if (!el) return;
+  // 목차 줄이 화면 위에 붙어 있으므로 그만큼 띄운다. 안 그러면 제목이 목차에 가린다.
+  var top = el.getBoundingClientRect().top + window.pageYOffset - 76;
+  window.scrollTo({ top: top, behavior: 'smooth' });
+}
+
+// ── 추천 상품 · 리뷰 붙이기 ─────────────────────────────────────────
+//
+// 둘 다 공용 모듈이 그린다. 이 파일은 '무엇을 보여줄지'만 넘긴다.
+// 실패해도 상품 화면은 그대로 뜬다 — 부가 섹션 때문에 본문이 죽으면 안 된다.
+function pdMountReco() {
+  var box = document.getElementById('pd-reco');
+  var sec = document.getElementById('pd-sec-reco');
+  if (!box || !sec || typeof window.dpProductReco === 'undefined') return;
+
+  // 최상위를 기준으로 모은다. 품목(자식)까지 훑어야 '같은 카테고리의 다른 상품'이 다 나온다.
+  var top = pdParent || pdCategory;
+  var subIds = (top && Array.isArray(top.children) ? top.children : [])
+    .filter(function (c) { return c && c.id && c.isActive !== false; })
+    .map(function (c) { return c.id; });
+
+  window.dpProductReco.mount(box, {
+    categoryId: top && top.id,
+    subIds: subIds,
+    excludeId: pdProduct && pdProduct.id,
+    limit: 10,
+    onDone: function (n) {
+      sec.hidden = !n;
+      pdRenderTabs();   // 섹션이 뜬 뒤라야 목차에 줄이 생긴다
+    },
   });
-  // 탭을 바꾸면 상세 접기 버튼의 높이 판정이 어긋난다(숨은 동안 높이가 0이었다).
-  if (key === 'detail') setTimeout(pdMeasureCollapse, 0);
+}
+
+function pdMountReviews() {
+  if (typeof window.initReviews !== 'function') return;
+  if (!pdProduct || !pdProduct.id) return;
+  try {
+    // 후기 더보기는 이 상품의 카테고리 탭으로 보낸다.
+    // reviews.js 가 이 두 번째 인자를 모르는 옛 판이어도 그냥 무시되고 동작한다.
+    var top = pdParent || pdCategory;
+    window.initReviews(pdProduct.id, {
+      moreHref: top && top.id
+        ? '/reviews?categoryId=' + encodeURIComponent(top.id)
+        : '/reviews',
+    });
+  } catch (e) {
+    console.warn('[product-detail] 리뷰 초기화 실패', e && e.message);
+  }
 }
 
 function pdRenderFaq() {
@@ -639,9 +713,14 @@ function pdFaqAnswer(f) {
 }
 
 function pdRenderDetail() {
-  var sec = document.getElementById('pd-detail');
+  // 바깥 껍데기(pd-detail)와 '상품 상세' 섹션(pd-sec-detail)은 다르다.
+  // 껍데기는 리뷰·FAQ·추천이 그 안에 있으므로 상세 내용이 없어도 열어 둔다.
+  // 접는 것은 '상품 상세' 섹션 하나뿐이다.
+  var wrap = document.getElementById('pd-detail');
+  var sec = document.getElementById('pd-sec-detail');
   var body = document.getElementById('pd-detail-body');
-  if (!sec || !body) return;
+  if (!wrap || !sec || !body) return;
+  wrap.hidden = false;   // 리뷰 섹션은 항상 있으므로 껍데기는 늘 보인다
 
   var inner = '';
 
@@ -658,12 +737,12 @@ function pdRenderDetail() {
     }).join('') + '</div>';
   }
 
-  // 상세 내용이 없어도 FAQ 가 있으면 섹션은 띄운다.
-  // 둘 다 없을 때만 접는다.
+  // 상세 내용이 없으면 '상품 상세' 섹션만 접는다.
+  // 아래 리뷰·FAQ·추천은 그대로 보인다 - 예전에는 여기서 return 해서
+  // 상세가 비면 하단 전체가 사라졌다(2026-08-06 수정).
   if (!inner) {
-    if (!pdFaqRows.length) return;
-    body.innerHTML = '<p class="pd-empty">상세 정보가 아직 등록되지 않았습니다.</p>';
-    sec.hidden = false;
+    sec.hidden = true;
+    pdRenderFaq();
     pdRenderTabs();
     return;
   }
@@ -678,6 +757,7 @@ function pdRenderDetail() {
       ' stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>' +
     '</button>';
   sec.hidden = false;
+  pdRenderFaq();
   pdRenderTabs();
 
   // 이미지가 아직 안 실렸으면 높이가 0에 가깝다. 그 상태로 재면 항상 "짧다" 가 나온다.
