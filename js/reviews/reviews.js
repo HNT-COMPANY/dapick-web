@@ -5,13 +5,37 @@
 // 전역 충돌 방지 위해 헬퍼는 rv* 접두어.
 // ════════════════════════════════════════════════════
 
-// 카테고리 상수 — 확장 대비 1곳 관리 (하드코딩 최소화)
-const RV_CATEGORIES = [
-  { cat: 'ALL', label: '전체' },
-  { cat: 'WATER', label: '정수기' },
-  { cat: 'RENTAL', label: '렌탈' },
-  { cat: 'INTERNET_TV', label: '인터넷TV' },
+// ── 카테고리 탭 (2026-08-06 전면 교체) ────────────────────────────
+//
+// 예전에는 여기에 네 줄이 박혀 있었다. 관리자가 카테고리를 만들어도 탭이 안 생겼다.
+// 이제 /api/categories 에서 받아 그린다 — 이 파일은 카테고리가 늘어도 안 고친다.
+//
+// ★ 왜 type(enum)이 아니라 id 로 다루나
+//   관리자가 만드는 최상위 카테고리는 서버에서 전부 GENERIC 한 값을 공유한다.
+//   type 을 열쇠로 쓰면 새 카테고리 둘이 서로를 덮어써서, 탭은 두 개인데
+//   내용이 같은 상태가 된다. 오류가 안 나서 원인 찾기가 오래 걸리는 종류다.
+//   그래서 탭 · 조회 · 라벨을 전부 카테고리 id 로 맞춘다.
+//   (백엔드도 같은 날 reviews.category_id 를 신설했다 — V20260806002)
+
+// 받아오기 전이나 실패했을 때만 쓰는 최소 탭.
+// ⚠ 이건 '기본값'이지 정의가 아니다. 여기에 새 카테고리를 추가하지 말 것 —
+//   추가해야 할 것 같으면 그건 /api/categories 가 안 내려주고 있다는 뜻이다.
+const RV_FALLBACK_TABS = [
+  { id: 'ALL', label: '전체' },
 ];
+
+const RV_ALL_TAB = { id: 'ALL', label: '전체' };
+
+// 새 카테고리의 '신청하러 가기' 는 /c/{slug} 로 보낸다(_worker.js 가 category.html 로 넘긴다).
+// 전용 화면이 있는 것만 여기 적는다. 없는 타입은 자동으로 /c/{slug} 를 탄다.
+const RV_CTA_BY_TYPE = {
+  WATER: '/water',
+  RENTAL: '/rental',
+  INTERNET_TV: '/internet',
+  CARD: '/card',
+  PHONE: '/mobile',
+};
+
 const RV_PAGE_SIZE = 24; // 3열 × 8줄
 
 // 이미지 미첨부 시 카드 썸네일 기본값 (다픽 로고)
@@ -28,7 +52,10 @@ const RV_CARRIER_SUBTABS = [
   { label: 'LG U+', carrier: 'LG U+' },
 ];
 
-let rvCurrentCat = RV_CATEGORIES[0].cat;
+// 화면에 그릴 탭 목록. 서버에서 받은 뒤 채워진다.
+let rvCategories = RV_FALLBACK_TABS.slice();
+// 'ALL' 또는 카테고리 id
+let rvCurrentCat = 'ALL';
 let rvCurrentCarrier = null; // 인터넷 하위탭 선택 통신사
 let rvCurrentSubCat = null; // 정수기/렌탈 하위탭 선택 자식 카테고리 id
 let rvPage = 0;
@@ -36,23 +63,50 @@ let rvLoading = false;
 let rvModalConfirm = null;
 const rvById = {}; // id → 리뷰 원본 (상세 모달용)
 
-// 카테고리 type → 카테고리 객체(children 포함). /api/categories 1회 조회 캐시.
+// 카테고리 id → 카테고리 객체(children 포함). /api/categories 1회 조회 캐시.
 // 정수기/렌탈의 "브랜드"(코웨이 등)는 brands 테이블이 아니라 자식 카테고리이므로 children 을 하위탭으로 쓴다.
-let rvCatByType = null;
+let rvCatById = {};
+// (구) type → 카테고리. 옛 주소 ?category=WATER 와 categoryId 가 없는 옛 후기를 읽을 때만 쓴다.
+// ⚠ GENERIC 은 여러 카테고리가 공유하므로 여기서 마지막 하나만 남는다. 새 코드는 쓰지 말 것.
+let rvCatByType = {};
+let rvCatsLoaded = false;
 
 document.addEventListener('DOMContentLoaded', async () => {
-  // 딥링크: ?category=INTERNET_TV 등으로 초기 탭 선택 (internet-unified '더보기' 연동)
-  var _rvUrlCat = new URLSearchParams(location.search).get('category');
-  if (_rvUrlCat && RV_CATEGORIES.some((c) => c.cat === _rvUrlCat))
-    rvCurrentCat = _rvUrlCat;
-  rvRenderTabs();
   rvBindWrite();
   rvBindModal();
   rvSetupDetail(); // 상세 모달 + 카드 클릭 위임
-  await rvLoadCategories(); // 하위탭(자식 카테고리) 프리페치(실패해도 전체탭은 동작)
+  // ★ 탭을 서버에서 받아 그리므로 이게 먼저다. 실패해도 '전체' 탭 하나로는 동작한다.
+  await rvLoadCategories();
+  rvCurrentCat = rvInitialCat();
+  rvRenderTabs();
   rvSelectCat(rvCurrentCat);
   rvLoadTop(); // 최고 후기(좋아요순) 상단 노출
 });
+
+// 딥링크로 들어온 초기 탭.
+// 주소는 셋 다 받는다 — 배포된 화면과 사람들이 저장해 둔 링크를 깨지 않기 위해서다.
+//   ?categoryId={uuid}   새 주소
+//   ?cat={slug}          사람이 읽을 수 있는 주소
+//   ?category=WATER      구 주소. internet-unified 의 '더보기' 가 아직 이걸 쓴다
+function rvInitialCat() {
+  const q = new URLSearchParams(location.search);
+
+  const byId = q.get('categoryId');
+  if (byId && rvCatById[byId]) return byId;
+
+  const slug = q.get('cat');
+  if (slug) {
+    const hit = rvCategories.filter(
+      (c) => c.slug && String(c.slug).toLowerCase() === String(slug).toLowerCase(),
+    )[0];
+    if (hit) return hit.id;
+  }
+
+  const type = q.get('category');
+  if (type && rvCatByType[type]) return rvCatByType[type].id;
+
+  return 'ALL';
+}
 
 // ── 최고 후기는? (좋아요 있는 후기만, 가로 드래그 캐러셀 — 목록에도 그대로 남음) ──
 async function rvLoadTop() {
@@ -152,24 +206,36 @@ function rvSetupTopControls() {
   setTimeout(updateArrows, 60);
 }
 
-// 카테고리 목록 1회 로드 → type → 카테고리 객체(children 포함) 맵
+// 카테고리 목록 1회 로드 → 탭 목록 + id/type 맵
+// 실패해도 던지지 않는다. 카테고리를 못 받아도 '전체' 후기는 보여야 한다.
 async function rvLoadCategories() {
-  if (rvCatByType) return rvCatByType;
-  rvCatByType = {};
+  if (rvCatsLoaded) return;
+  rvCatsLoaded = true;
   try {
-    const cats = await api.get('/api/categories');
-    (Array.isArray(cats) ? cats : []).forEach((c) => {
-      if (c && c.type) rvCatByType[c.type] = c;
+    const res = await api.get('/api/categories');
+    const rows = (Array.isArray(res) ? res : (res && (res.data || res.content)) || [])
+      .filter((c) => c && c.id && c.isActive !== false);
+
+    rows.forEach((c) => {
+      rvCatById[c.id] = c;
+      // 같은 type 이 여럿이면(=GENERIC) 첫 번째만 남긴다. 어차피 구 주소 해석용이다.
+      if (c.type && !rvCatByType[c.type]) rvCatByType[c.type] = c;
     });
+
+    if (rows.length) {
+      rvCategories = [RV_ALL_TAB].concat(
+        rows.map((c) => ({ id: c.id, label: c.name, type: c.type, slug: c.slug })),
+      );
+    }
   } catch (e) {
-    /* 실패 시 하위탭만 비고 전체 목록은 정상 */
+    // 탭은 '전체' 하나만 남고 목록은 정상 동작한다. 화면이 통째로 비지 않게 하는 게 목적이다.
+    console.warn('[reviews] 카테고리 로드 실패 — 전체 탭만 표시한다', e && e.message);
   }
-  return rvCatByType;
 }
 
-// 특정 카테고리(정수기/렌탈)의 자식 카테고리 목록 (활성만, sortOrder 순 — 서버가 정렬해 내려줌)
-function rvSubCategories(cat) {
-  const c = rvCatByType && rvCatByType[cat];
+// 특정 카테고리의 자식 카테고리 목록 (활성만, sortOrder 순 — 서버가 정렬해 내려줌)
+function rvSubCategories(catId) {
+  const c = rvCatById[catId];
   const children = c && Array.isArray(c.children) ? c.children : [];
   return children.filter((ch) => ch && ch.id && ch.isActive !== false);
 }
@@ -177,10 +243,12 @@ function rvSubCategories(cat) {
 // ── 카테고리 탭 (가로 버튼) ───────────────────────────
 function rvRenderTabs() {
   const el = document.getElementById('rvTabs');
-  el.innerHTML = RV_CATEGORIES.map(
-    (c) =>
-      `<button type="button" class="rv-tab${c.cat === rvCurrentCat ? ' is-active' : ''}" data-cat="${c.cat}">${rvEscape(c.label)}</button>`,
-  ).join('');
+  el.innerHTML = rvCategories
+    .map(
+      (c) =>
+        `<button type="button" class="rv-tab${c.id === rvCurrentCat ? ' is-active' : ''}" data-cat="${rvEscape(c.id)}">${rvEscape(c.label)}</button>`,
+    )
+    .join('');
   el.querySelectorAll('.rv-tab').forEach((btn) => {
     btn.addEventListener('click', () => rvSelectCat(btn.dataset.cat));
   });
@@ -200,16 +268,18 @@ function rvSelectCat(cat) {
 
 // ── 카테고리 하위탭 (통신사/자식 카테고리) ───────────────────────
 // 인터넷TV → 전체/SKT/KT/LG U+ (carrier). 정수기/렌탈 → 전체 + 자식 카테고리(코웨이 등).
-function rvRenderSubtabs(cat) {
+function rvRenderSubtabs(catId) {
   const el = document.getElementById('rvSubtabs');
   if (!el) return;
 
-  if (cat === 'ALL') {
+  if (catId === 'ALL') {
     el.innerHTML = ''; // 전체는 하위탭 없음
     return;
   }
 
-  if (cat === 'INTERNET_TV') {
+  // 통신사 하위탭은 인터넷TV 에만 있다. carrier 는 상품 칸이라 다른 카테고리에는 없다.
+  const cat = rvCatById[catId];
+  if (cat && cat.type === 'INTERNET_TV') {
     el.innerHTML = RV_CARRIER_SUBTABS.map(
       (s, i) =>
         `<button type="button" class="rv-subtab${i === 0 ? ' is-active' : ''}" data-kind="carrier" data-val="${
@@ -217,8 +287,8 @@ function rvRenderSubtabs(cat) {
         }">${rvEscape(s.label)}</button>`,
     ).join('');
   } else {
-    // 정수기/렌탈: 전체 + 자식 카테고리(있을 때만). 렌탈은 자식 추가되면 자동 노출.
-    const subs = rvSubCategories(cat);
+    // 그 외: 전체 + 자식 카테고리(있을 때만). 자식이 생기면 자동으로 하위탭이 붙는다.
+    const subs = rvSubCategories(catId);
     el.innerHTML =
       '<button type="button" class="rv-subtab is-active" data-kind="subcat" data-val="">전체</button>' +
       subs
@@ -302,7 +372,8 @@ function rvBuildQuery() {
     return `/api/reviews?subCategoryId=${encodeURIComponent(rvCurrentSubCat)}&${base}`;
   }
   if (rvCurrentCat && rvCurrentCat !== 'ALL') {
-    return `/api/reviews?category=${encodeURIComponent(rvCurrentCat)}&${base}`;
+    // categoryId 로 부른다. ?category=(enum)은 GENERIC 을 구분 못 해 새 카테고리에서 섞인다.
+    return `/api/reviews?categoryId=${encodeURIComponent(rvCurrentCat)}&${base}`;
   }
   return `/api/reviews?${base}`; // 전체 (카테고리 필터 없음)
 }
@@ -648,15 +719,30 @@ function rvCloseDetail() {
   document.body.style.overflow = '';
 }
 
-function rvCatLabel(cat) {
-  const found = RV_CATEGORIES.find((c) => c.cat === cat);
-  return found ? found.label : cat || '후기';
+// 후기 1건이 어느 카테고리인지 찾는다.
+// categoryId 가 정본이고, 없으면(백필이 못 채운 옛 후기) type 으로 되짚는다.
+function rvCatOf(r) {
+  if (!r) return null;
+  if (r.categoryId && rvCatById[r.categoryId]) return rvCatById[r.categoryId];
+  if (r.category && rvCatByType[r.category]) return rvCatByType[r.category];
+  return null;
 }
 
-function rvCtaHref(cat) {
-  if (cat === 'WATER') return '/water';
-  if (cat === 'RENTAL') return '/rental';
-  return '/internet';
+function rvCatLabel(r) {
+  const c = rvCatOf(r);
+  return c ? c.name : '후기';
+}
+
+// '나도 신청하기' 가 갈 곳.
+// 전용 화면이 있으면 그리로, 없으면 /c/{slug} (_worker.js 가 category.html 로 넘긴다).
+// 전용 화면이 없는 새 카테고리를 /internet 으로 보내면 엉뚱한 상품을 보게 된다.
+function rvCtaHref(r) {
+  const c = rvCatOf(r);
+  if (c) {
+    if (c.type && RV_CTA_BY_TYPE[c.type]) return RV_CTA_BY_TYPE[c.type];
+    if (c.slug) return '/c/' + encodeURIComponent(c.slug);
+  }
+  return '/';
 }
 
 function rvDetailHtml(r) {
@@ -704,7 +790,7 @@ function rvDetailHtml(r) {
 
   return (
     '<div class="rvd-crumb">후기 › ' +
-    rvEscape(rvCatLabel(r && r.category)) +
+    rvEscape(rvCatLabel(r)) +
     '</div>' +
     title +
     '<div class="rvd-head">' +
@@ -721,7 +807,7 @@ function rvDetailHtml(r) {
     bodyHtml +
     '</div>' +
     '<a class="rvd-cta" href="' +
-    rvCtaHref(r && r.category) +
+    rvCtaHref(r) +
     '">최대 지원금 받고 나도 신청하기 →</a>' +
     '<button type="button" class="rvd-list-btn" data-rvd-close>목록으로</button>'
   );
