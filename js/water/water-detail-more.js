@@ -30,6 +30,7 @@
   var SECTIONS = {
     spec: 'wdSecSpec',
     detail: 'wdSecDetail',
+    reco: 'wdSecReco',      // 다픽이 추천하는 다른 상품 (2026-08-06 추가)
     review: 'wdSecReview',
     faq: 'wdSecFaq',
   };
@@ -410,6 +411,8 @@
 
     function go(subId) {
       brandCategoryId = subId || null;
+      // 추천 상품도 브랜드가 정해진 뒤라야 고를 수 있다. 같은 시점에 붙인다.
+      setTimeout(mountReco, 0);
       if (!subId && brandName) {
         console.warn('[water-detail-more] 브랜드 "' + brandName +
           '" 에 맞는 하위 카테고리를 못 찾았다. 정수기 전체 후기로 간다.');
@@ -468,6 +471,101 @@
 
       return orig(catApi || 'water', name, catLabel || '정수기', o);
     };
+  }
+
+  // ── ⑦ 다픽이 추천하는 다른 상품 (2026-08-06 추가) ────────────
+  //
+  // ★ water-detail.html 을 한 줄도 안 고친다.
+  //   섹션 마크업과 탭도 여기서 만든다. 되돌리려면 이 파일의 <script> 한 줄만 지우면
+  //   원래대로 돌아온다 — 이 파일의 원래 약속(파일 맨 위 주석)을 그대로 지킨다.
+  //
+  // ★ 카드는 공용 product-reco.js 가 그린다.
+  //   에어컨 상세(product-detail)와 카드 모양이 갈리면 같은 사이트로 안 읽힌다.
+  //   그 파일이 아직 안 실려 있으면 여기서 불러온다.
+  //
+  // ★ 요금은 안 적는다.
+  //   정수기는 약정·관리주기에 따라 월 요금이 달라진다. 목록에서 아무 값이나 골라
+  //   적으면 상세로 들어갔을 때 숫자가 달라져 '왜 다르지' 가 된다.
+  var RECO_LIMIT = 10;
+
+  function ensureRecoScript() {
+    if (typeof window.dpProductReco !== 'undefined') return Promise.resolve(true);
+    return new Promise(function (resolve) {
+      var sc = document.createElement('script');
+      sc.src = 'js/common/product-reco.js?v=20260806e';
+      sc.onload = function () { resolve(typeof window.dpProductReco !== 'undefined'); };
+      sc.onerror = function () {
+        console.warn('[water-detail-more] product-reco.js 로드 실패 — 추천 섹션을 건너뛴다');
+        resolve(false);
+      };
+      document.head.appendChild(sc);
+    });
+  }
+
+  // 리뷰 섹션 '앞'에 끼운다. 순서는 에어컨 상세와 같게 맞춘다:
+  //   제품사양 → 상품 상세 → 추천 상품 → 리뷰 → 자주 묻는 질문
+  function ensureRecoSection() {
+    var exist = el('wdSecReco');
+    if (exist) return exist;
+
+    var review = el('wdSecReview');
+    if (!review || !review.parentNode) return null;
+
+    var sec = document.createElement('section');
+    sec.className = 'wd-sec';
+    sec.id = 'wdSecReco';
+    sec.hidden = true;   // 상품이 0건이면 끝까지 숨긴 채로 둔다
+    sec.innerHTML =
+      '<h2 class="wd-sec-title">다픽이 추천하는 다른 상품</h2>' +
+      '<div id="wdRecoBody"></div>';
+    review.parentNode.insertBefore(sec, review);
+
+    // 목차에도 한 줄 넣는다. 리뷰 탭 앞이라야 섹션 순서와 목차 순서가 같아진다.
+    var bar = el('wdTabbar');
+    var reviewTab = bar && bar.querySelector('.wd-tab[data-tab="review"]');
+    if (bar && reviewTab && !bar.querySelector('.wd-tab[data-tab="reco"]')) {
+      var tab = document.createElement('div');
+      tab.className = 'wd-tab';
+      tab.id = 'wdTabReco';
+      tab.setAttribute('data-tab', 'reco');
+      tab.textContent = '추천 상품';
+      tab.hidden = true;
+      bar.insertBefore(tab, reviewTab);
+    }
+    return sec;
+  }
+
+  function mountReco() {
+    // 브랜드를 알아야 '같은 브랜드의 다른 상품'을 고를 수 있다.
+    // brandCategoryId 는 startReviews 가 카테고리를 받은 뒤 채운다.
+    var sec = ensureRecoSection();
+    if (!sec) return;
+
+    var box = el('wdRecoBody');
+    var myId = (typeof WD_PRODUCT !== 'undefined' && WD_PRODUCT && WD_PRODUCT.id) || null;
+
+    ensureRecoScript().then(function (ok) {
+      if (!ok) return;
+      window.dpProductReco.mount(box, {
+        source: '/api/water-products',
+        // 같은 브랜드만. 브랜드를 못 찾았으면 정수기 전체에서 고른다 — 빈 칸보다 낫다.
+        match: function (p) {
+          if (!brandCategoryId) return true;
+          return String(p.categoryId || '') === String(brandCategoryId);
+        },
+        excludeId: myId,
+        limit: RECO_LIMIT,
+        showFee: false,
+        hrefOf: function (p) {
+          return '/water-detail?id=' + encodeURIComponent(p.id);
+        },
+        onDone: function (n) {
+          sec.hidden = !n;
+          var tab = el('wdTabReco');
+          if (tab) tab.hidden = !n;
+        },
+      });
+    });
   }
 
   function init() {
