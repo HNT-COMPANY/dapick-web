@@ -467,22 +467,98 @@
   }
 
   // ── 진입 ─────────────────────────────────────────────────────────
+
+  // 정의와 상품을 받아 상태를 세운다. 서버에서 받든 어드민이 손에 들고 있든 여기로 모인다.
+  function setup(def, name, products, opt) {
+    if (!Array.isArray(def && def.questions) || !def.questions.length) {
+      console.warn('[finder] 정의에 질문이 없다');
+      return false;
+    }
+    // 문항마다 실제로 그릴 선택지를 미리 만들어 둔다.
+    // 그릴 때마다 계산하면 상품 수가 많을 때 화면이 끊긴다.
+    def.questions.forEach(function (q) {
+      q._opts = buildDynamicOptions(q, products);
+    });
+    S = { def: def, name: name, products: products, opt: opt || {}, answers: {}, cur: -1 };
+    return true;
+  }
+
+  /**
+   * 미리보기 (2026-08-06) — 어드민 편집기가 쓴다.
+   *
+   * ★ 왜 어드민이 자기 미리보기를 따로 그리지 않나
+   *   product-view.js 와 같은 이유다. 전에는 웹과 어드민이 각자 그려서
+   *   관리자가 미리보기에서 본 것과 실제 화면이 달랐다. 같은 파일이 그리면 어긋날 수 없다.
+   *
+   * ⚠ 넘긴 정의를 이 함수가 고친다(_opts 를 붙인다).
+   *   편집기가 들고 있는 원본을 그대로 넘기면 저장할 때 _opts 가 함께 서버로 간다.
+   *   부르는 쪽에서 복사본을 넘기거나, 저장 전에 _opts 를 지워야 한다.
+   */
+  function preview(def, products, opt) {
+    injectStyles();
+    if (!setup(def, (opt && opt.name) || '미리보기', arr(products), opt || {})) return;
+    open();
+  }
+
+  /**
+   * 카테고리 번호를 알아낸다.
+   *
+   * ★ 화면이 UUID 를 코드에 박지 않게 하려고 둔다.
+   *   로컬 DB 와 운영 DB 의 UUID 가 다르다. 박아 두면 한쪽에서만 파인더가 안 뜨고
+   *   오류도 안 나서 원인을 찾는 데 한참 걸린다(product-faq.js 와 같은 이유).
+   *   그래서 화면은 slug 나 type 만 적고 번호는 여기서 찾는다.
+   */
+  function resolveCategoryId(opt) {
+    if (opt.categoryId) return Promise.resolve(opt.categoryId);
+    if (!opt.categorySlug && !opt.categoryType) return Promise.resolve(null);
+
+    return api.get('/api/categories').then(function (res) {
+      var rows = arr(res).filter(Boolean);
+      if (opt.categorySlug) {
+        var bySlug = rows.filter(function (c) {
+          return String(c.slug || '').toLowerCase() === String(opt.categorySlug).toLowerCase();
+        })[0];
+        if (bySlug) return bySlug.id;
+      }
+      if (opt.categoryType) {
+        // 같은 타입이 여럿일 수 있다(관리자가 만든 카테고리는 전부 GENERIC 이다).
+        // 그런 경우는 slug 로 지정해야 한다 — 여기서 아무거나 고르면 조용히 틀린다.
+        var byType = rows.filter(function (c) {
+          return String(c.type || '') === String(opt.categoryType);
+        });
+        if (byType.length > 1) {
+          console.warn('[finder] 타입 "' + opt.categoryType + '" 인 카테고리가 ' +
+            byType.length + '개다. categorySlug 로 지정해야 한다.');
+        }
+        if (byType.length) return byType[0].id;
+      }
+      return null;
+    });
+  }
+
   function init(opt) {
     opt = opt || {};
     if (typeof api === 'undefined' || !api.get) return;
-    if (!opt.categoryId || typeof opt.loadProducts !== 'function') {
-      console.warn('[finder] categoryId 와 loadProducts 는 필수다');
+    if (typeof opt.loadProducts !== 'function') {
+      console.warn('[finder] loadProducts 는 필수다');
       return;
     }
     if (opt.buttonEl) opt.buttonEl.hidden = true;   // 정의를 받기 전에는 버튼을 숨긴다
 
-    api
-      .get('/api/finders?categoryId=' + encodeURIComponent(opt.categoryId))
+    resolveCategoryId(opt)
+      .then(function (categoryId) {
+        if (!categoryId) {
+          console.warn('[finder] 카테고리를 못 찾았다', opt.categoryId, opt.categorySlug, opt.categoryType);
+          return null;
+        }
+        return api.get('/api/finders?categoryId=' + encodeURIComponent(categoryId));
+      })
       .then(function (res) {
+        if (!res) return null;
         var rows = arr(res);
         if (!rows.length) {
           // 이 카테고리에 파인더가 없다. 버튼을 숨긴 채로 조용히 끝낸다.
-          console.info('[finder] 이 카테고리에 파인더가 없다 - categoryId=' + opt.categoryId);
+          console.info('[finder] 이 카테고리에 파인더가 없다');
           return null;
         }
         return Promise.resolve(opt.loadProducts()).then(function (products) {
@@ -491,26 +567,7 @@
       })
       .then(function (ready) {
         if (!ready) return;
-        var def = ready.row.definition || {};
-        if (!Array.isArray(def.questions) || !def.questions.length) {
-          console.warn('[finder] 정의에 질문이 없다 - id=' + ready.row.id);
-          return;
-        }
-
-        // 문항마다 실제로 그릴 선택지를 미리 만들어 둔다.
-        // 그릴 때마다 계산하면 상품 수가 많을 때 화면이 끊긴다.
-        def.questions.forEach(function (q) {
-          q._opts = buildDynamicOptions(q, ready.products);
-        });
-
-        S = {
-          def: def,
-          name: ready.row.name,
-          products: ready.products,
-          opt: opt,
-          answers: {},
-          cur: -1,
-        };
+        if (!setup(ready.row.definition || {}, ready.row.name, ready.products, opt)) return;
 
         if (opt.buttonEl) {
           opt.buttonEl.hidden = false;
@@ -533,5 +590,5 @@
     close();
   }, true);
 
-  window.dpFinder = { init: init, open: open, close: close };
+  window.dpFinder = { init: init, preview: preview, open: open, close: close };
 })();
