@@ -695,7 +695,15 @@ function pdMountReviews() {
 
 function pdRenderFaq() {
   var el = document.getElementById('pd-faq-body');
-  if (!el || !pdFaqRows.length) return;
+  var sec = document.getElementById('pd-sec-faq');
+  if (!el) return;
+
+  // ⚠ 내용만 채우고 끝내면 안 된다.
+  //   감싼 <section id="pd-sec-faq" hidden> 을 여기서 열어야 화면에 나온다.
+  //   2026-08-06 에 탭을 세로 섹션으로 바꾸면서 이 한 줄을 빠뜨려,
+  //   FAQ 를 5건 받아놓고도 화면에는 아무것도 안 나왔다.
+  if (sec) sec.hidden = !pdFaqRows.length;
+  if (!pdFaqRows.length) return;
 
   el.innerHTML = '<div class="pd-faq-list">' + pdFaqRows.map(function (f) {
     // 클래스는 이 화면 전용으로 둔다. 홈의 faq-* 를 빌려 쓰면 그쪽 디자인이
