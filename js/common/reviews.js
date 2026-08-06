@@ -50,6 +50,7 @@
     // null 이면 예전 그대로 /api/products/{id}/reviews 를 쓴다.
     filter: null,       // { category:'WATER', subCategoryId:'<uuid>'|null }
     filterFellBack: false, // 브랜드 후기가 0건이라 전체로 내려갔는지
+    moreHref: null,        // '후기 더 보기' 가 갈 곳 (부르는 쪽이 정한다)
   };
   var stylesInjected = false;
 
@@ -90,7 +91,11 @@
     }
 
     state.productId = productId;
-    state.filter = opts && (opts.subCategoryId || opts.category) ? opts : null;
+    // categoryId 를 더한다 (2026-08-06). 관리자가 만든 카테고리는 category(enum)로
+    // 표현이 안 된다 - 전부 GENERIC 이라 서로 섞인다. 그래서 id 가 정본이다.
+    state.filter =
+      opts && (opts.subCategoryId || opts.categoryId || opts.category) ? opts : null;
+    state.moreHref = (opts && opts.moreHref) || null;
     state.filterFellBack = false;
     state.consultationId = null;
     state.myRating = 0;
@@ -177,7 +182,24 @@
   function filterQuery(f) {
     // 좁은 것(브랜드)부터. 백엔드 규약은 js/reviews/reviews.js 의 rvBuildQuery 와 같다.
     if (f.subCategoryId) return 'subCategoryId=' + encodeURIComponent(f.subCategoryId);
+    if (f.categoryId) return 'categoryId=' + encodeURIComponent(f.categoryId);
     return 'category=' + encodeURIComponent(f.category || 'WATER');
+  }
+
+  // 목록에는 5건만 둔다. 상세 화면의 주인공은 상품이지 후기가 아니다.
+  // 나머지는 '후기 더 보기' 로 후기 화면에 넘긴다.
+  var LIST_LIMIT = 5;
+
+  // 더 보기가 갈 곳. 부르는 쪽이 정해 주면 그걸 쓰고, 아니면 지금 필터를 그대로 옮긴다.
+  function moreHref() {
+    if (state.moreHref) return state.moreHref;
+    var f = state.filter;
+    if (f) {
+      if (f.subCategoryId) return '/reviews?subCategoryId=' + encodeURIComponent(f.subCategoryId);
+      if (f.categoryId) return '/reviews?categoryId=' + encodeURIComponent(f.categoryId);
+      if (f.category) return '/reviews?category=' + encodeURIComponent(f.category);
+    }
+    return '/reviews';
   }
 
   // 페이지 응답에서 목록을 꺼낸다. api.js 가 ApiResponse 껍질은 이미 벗겨 준다.
@@ -193,7 +215,14 @@
       listEl.innerHTML = emptyHtml;
       return;
     }
-    listEl.innerHTML = arr.map(reviewItemHtml).join('');
+    var html = arr.slice(0, LIST_LIMIT).map(reviewItemHtml).join('');
+    // 5건을 넘을 때만 버튼을 낸다. 3건짜리 밑에 '더 보기' 가 있으면 눌러 보고 실망한다.
+    if (arr.length > LIST_LIMIT) {
+      html +=
+        '<a class="dpr-more" href="' + escapeHtml(moreHref()) + '">' +
+        '후기 더 보기<span class="dpr-more-ico">›</span></a>';
+    }
+    listEl.innerHTML = html;
   }
 
   // 받은 목록으로 평균과 개수를 낸다(분류 모드 전용).
@@ -241,10 +270,12 @@
 
         // 브랜드 후기가 아직 없으면 그 카테고리 전체로 한 번 더 본다.
         // 빈 칸을 두면 신규 브랜드 상세가 한동안 텅 비어 보인다.
-        if (!arr.length && f.subCategoryId && f.category) {
+        if (!arr.length && f.subCategoryId && (f.categoryId || f.category)) {
           state.filterFellBack = true;
           return api
-            .get(base + 'category=' + encodeURIComponent(f.category))
+            .get(base + (f.categoryId
+              ? 'categoryId=' + encodeURIComponent(f.categoryId)
+              : 'category=' + encodeURIComponent(f.category)))
             .then(function (res2) {
               var arr2 = pageRows(res2);
               paintStatsFromRows(res2, arr2);
@@ -774,6 +805,13 @@
       // 목록
       '.dpr-list{display:flex;flex-direction:column;gap:0;}' +
       '.dpr-empty{padding:28px 0;text-align:center;color:#9a9aa5;font-size:14px;}' +
+      // 후기 더 보기 — 목록 아래 가로 꽉 찬 버튼. 5건을 넘을 때만 나온다.
+      '.dpr-more{display:flex;align-items:center;justify-content:center;gap:4px;' +
+        'margin-top:14px;padding:14px 12px;border:1px solid #e5e3f5;border-radius:10px;' +
+        'text-decoration:none;color:#4a4762;font-size:14px;font-weight:700;' +
+        'background:#fff;transition:background .15s,border-color .15s;}' +
+      '.dpr-more:hover{background:#faf9fd;border-color:#cfc7ee;color:#5b3fbe;}' +
+      '.dpr-more-ico{font-size:17px;line-height:1;}' +
       '.dpr-item{padding:16px 2px;border-top:1px solid #eee;}' +
       '.dpr-item:first-child{border-top:none;}' +
       '.dpr-item-head{display:flex;align-items:center;gap:8px;margin-bottom:6px;}' +

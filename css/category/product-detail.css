@@ -115,22 +115,34 @@
 .pd-expand-btn.is-open svg { transform: rotate(180deg); }
 
 /* ── 하단 탭 (상세 정보 / 자주 묻는 질문) ── */
-.pd-tabbar { display: flex; gap: 4px; border-bottom: 2px solid #18172b; margin-bottom: 22px; }
-/* 탭이 하나뿐일 때는 제목만 나온다. 그때도 아래 선은 그대로 유지된다. */
-.pd-tabbar .pd-sec-title { margin: 0; padding-bottom: 12px; border: none; }
+/* ── 하단 목차 탭 (2026-08-06 — 정수기 상세 .wd-detail-tabbar 와 같은 모양) ──
+   칸을 균등 분할하고 활성 칸을 보라로 채운다. 화면마다 탭 모양이 다르면
+   같은 사이트로 안 읽힌다. */
+.pd-tabbar {
+  display: flex;
+  border: 1px solid #e5e3f5;
+  border-radius: 12px;
+  overflow: hidden;          /* 활성 칸 채움색이 모서리 안에서 잘리게 */
+  margin-bottom: 28px;
+}
+.pd-tabbar:empty { display: none; }
 .pd-tab {
-  display: flex; align-items: center; gap: 6px;
-  border: none; background: none; padding: 10px 18px 12px;
-  font-family: inherit; font-size: 16px; font-weight: 700; color: #a5a2b8; cursor: pointer;
-  border-radius: 8px 8px 0 0; transition: color .15s, background .15s;
+  flex: 1 1 0;               /* 균등 분할 */
+  text-align: center;
+  padding: 16px 12px;
+  border: none;
+  background: #fff;
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 700;
+  color: #a09dbb;
+  cursor: pointer;
+  transition: background .15s, color .15s;
 }
+.pd-tab + .pd-tab { border-left: 1px solid #e5e3f5; }
 .pd-tab:hover { color: #6b6880; }
-.pd-tab.is-on { color: #18172b; font-weight: 800; background: #f6f5fb; }
-.pd-tab-count {
-  font-size: 12px; font-weight: 800; color: #fff; background: #b5b2c4;
-  border-radius: 999px; padding: 1px 7px; line-height: 1.5;
-}
-.pd-tab.is-on .pd-tab-count { background: #5b3fbe; }
+.pd-tab.is-on { background: #6c3fc5; color: #fff; }
+.pd-tab-count { margin-left: 4px; font-size: 14px; font-weight: 600; opacity: .85; }
 
 .pd-empty { padding: 60px 20px; text-align: center; color: #a5a2b8; font-size: 14.5px; }
 
@@ -227,22 +239,22 @@
    탭줄은 지우지 않고 '그 자리로 내려가는 목차'로 쓰므로 화면 위에 붙여 둔다.
    ⚠ .pd-sec-title 은 위(89줄)에 이미 있다. 여기서 다시 정의하지 않는다 —
      두 벌이 되면 나중에 한쪽만 고치고 왜 안 바뀌는지 찾게 된다. */
-.pd-sec { margin-top: 52px; scroll-margin-top: 80px; }
+.pd-sec { margin-top: 88px; scroll-margin-top: 80px; }
 .pd-sec:first-of-type { margin-top: 0; }
 .pd-sec[hidden] { display: none; }
 
-/* 목차가 스크롤을 따라와야 어디서든 다른 섹션으로 갈 수 있다.
-   z-index 는 GNB(100대)보다 낮게 둔다 — 위로 올라오면 메뉴를 가린다. */
-.pd-tabbar {
-  position: sticky; top: 0; z-index: 20;
-  background: #fff; padding-top: 8px;
-}
-.pd-tabbar:empty { display: none; }
+/* '상세정보 펼쳐보기' 버튼과 다음 섹션 제목이 붙어 보이던 문제 (2026-08-06).
+   버튼은 테두리가 있어 그 자체로 하나의 블록처럼 읽힌다. 바로 아래에 제목이 오면
+   버튼에 딸린 설명처럼 보인다. 아래쪽 여백을 버튼이 직접 갖게 한다. */
+.pd-expand-btn { margin-bottom: 12px; }
+
+/* ⚠ sticky 를 쓰지 않는다.
+   정수기 상세도 안 쓴다. 탭바가 화면 위에 붙어 다니면 상세 이미지를 계속 가리고,
+   모바일에서는 GNB 와 겹쳐 두 줄을 먹는다. 목차는 그 자리에 두고 누를 때만 쓴다. */
 
 @media (max-width: 720px) {
-  .pd-sec { margin-top: 38px; }
-  /* 목차가 넘치면 가로로 밀어서 본다. 줄바꿈되면 화면 위를 두 줄이나 먹는다. */
-  .pd-tabbar { overflow-x: auto; scrollbar-width: none; }
-  .pd-tabbar::-webkit-scrollbar { display: none; }
-  .pd-tab { flex: 0 0 auto; }
+  .pd-sec { margin-top: 56px; }
+  /* 칸이 좁아지면 글자를 줄인다. 가로로 미는 것보다 네 칸이 다 보이는 편이 낫다. */
+  .pd-tab { padding: 13px 6px; font-size: 13.5px; }
+  .pd-tab-count { font-size: 12px; }
 }

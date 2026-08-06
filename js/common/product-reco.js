@@ -46,32 +46,36 @@
     return Array.isArray(d) ? d : (d && (d.data || d.content)) || [];
   }
 
-  function fee(v) {
+  function feeHtml(v) {
     if (v == null || v === '') return '';
     var n = Number(v);
     if (!isFinite(n) || n <= 0) return '';
     return '<div class="dpreco-fee">월 <b>' + n.toLocaleString('ko-KR') + '</b>원</div>';
   }
 
-  // 상세로 가는 주소. 지금은 관리자 카테고리 상품만 쓰므로 product-detail 이 정본이다.
-  // 정수기·렌탈에서 부를 때를 위해 categoryType 을 주면 product-url.js 규칙을 따른다.
-  function hrefOf(p, categoryType) {
-    if (categoryType && typeof window.dpProductUrl === 'function') {
-      var u = window.dpProductUrl({ categoryType: categoryType, productId: p.id });
-      if (u) return '/' + String(u).replace(/^\//, '').replace(/\.html/, '');
-    }
+  // 상세로 가는 주소. 기본은 관리자 카테고리 상품(product-detail)이다.
+  // 정수기처럼 전용 화면이 있는 쪽은 opts.hrefOf 로 규칙을 넘긴다.
+  function defaultHref(p) {
     return '/product-detail?id=' + encodeURIComponent(p.id);
   }
 
-  function cardHtml(p, categoryType) {
-    var img = p.imageUrl
-      ? '<img src="' + esc(p.imageUrl) + '" alt="' + esc(p.name) + '" loading="lazy"/>'
+  function cardHtml(p, opts) {
+    var href = (opts.hrefOf ? opts.hrefOf(p) : defaultHref(p)) || defaultHref(p);
+    var src = opts.imageOf ? opts.imageOf(p) : p.imageUrl;
+    var img = src
+      ? '<img src="' + esc(src) + '" alt="' + esc(p.name) + '" loading="lazy"/>'
       : '<span class="dpreco-noimg">이미지 준비중</span>';
+
+    // ⚠ 요금은 '확실할 때만' 보여준다.
+    //   정수기처럼 약정에 따라 값이 달라지는 상품은 여기서 아무 숫자나 고르면
+    //   목록과 상세의 금액이 달라진다. 그런 화면은 showFee 를 켜지 않는다.
+    var fee = opts.showFee === false ? '' : feeHtml(opts.feeOf ? opts.feeOf(p) : p.monthlyFee);
+
     return (
-      '<a class="dpreco-card" href="' + esc(hrefOf(p, categoryType)) + '">' +
+      '<a class="dpreco-card" href="' + esc(href) + '">' +
       '<div class="dpreco-thumb">' + img + '</div>' +
       '<div class="dpreco-name">' + esc(p.name || '') + '</div>' +
-      fee(p.monthlyFee) +
+      fee +
       '</a>'
     );
   }
@@ -89,7 +93,7 @@
     box.innerHTML =
       '<button type="button" class="dpreco-nav dpreco-prev" aria-label="이전" hidden>‹</button>' +
       '<div class="dpreco-viewport"><div class="dpreco-track">' +
-      rows.map(function (p) { return cardHtml(p, opts.categoryType); }).join('') +
+      rows.map(function (p) { return cardHtml(p, opts); }).join('') +
       '</div></div>' +
       '<button type="button" class="dpreco-nav dpreco-next" aria-label="다음" hidden>›</button>';
 
@@ -174,31 +178,46 @@
     box.hidden = true;
     if (typeof api === 'undefined' || !api.get) return;
 
-    var ids = [];
-    if (opts.categoryId) ids.push(opts.categoryId);
-    (opts.subIds || []).forEach(function (id) {
-      if (id && ids.indexOf(id) < 0) ids.push(id);
-    });
-    if (!ids.length) {
-      if (typeof opts.onDone === 'function') opts.onDone(0);
-      return;
+    function done(n) {
+      if (typeof opts.onDone === 'function') opts.onDone(n);
     }
 
-    Promise.all(
-      ids.map(function (id) {
+    // 두 가지 방식을 받는다.
+    //   (가) opts.source  — 주소 하나로 전부 받아 opts.match 로 거른다.
+    //        정수기처럼 상품이 다른 표(water_products)에 있고 카테고리별 조회가
+    //        따로 없는 경우에 쓴다.
+    //   (나) categoryId + subIds — /api/products?categoryId= 를 id 마다 부른다.
+    var calls;
+    if (opts.source) {
+      calls = [api.get(opts.source).catch(function () { return []; })];
+    } else {
+      var ids = [];
+      if (opts.categoryId) ids.push(opts.categoryId);
+      (opts.subIds || []).forEach(function (id) {
+        if (id && ids.indexOf(id) < 0) ids.push(id);
+      });
+      if (!ids.length) {
+        done(0);
+        return;
+      }
+      calls = ids.map(function (id) {
         return api
           .get('/api/products?categoryId=' + encodeURIComponent(id))
           .catch(function () { return []; });
-      }),
-    )
+      });
+    }
+
+    Promise.all(calls)
       .then(function (lists) {
         var seen = {};
         var rows = [];
         lists.forEach(function (l) {
           arr(l).forEach(function (p) {
             if (!p || !p.id) return;
-            if (p.id === opts.excludeId) return;   // 지금 보고 있는 상품은 뺀다
+            if (String(p.id) === String(opts.excludeId)) return;  // 지금 보고 있는 상품은 뺀다
             if (seen[p.id]) return;                // 최상위와 품목 양쪽에서 나올 수 있다
+            if (p.isActive === false) return;      // 내린 상품은 안 보여준다
+            if (opts.match && !opts.match(p)) return;
             seen[p.id] = 1;
             rows.push(p);
           });
@@ -210,7 +229,7 @@
         // 추천 때문에 상품 화면이 죽으면 안 된다. 칸만 조용히 접는다.
         console.warn('[product-reco] 로드 실패', e && e.message);
         box.hidden = true;
-        if (typeof opts.onDone === 'function') opts.onDone(0);
+        done(0);
       });
   }
 

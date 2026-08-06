@@ -599,12 +599,19 @@ function pdRenderTabs() {
     return;
   }
 
+  // 리뷰 개수는 공용 reviews.js 가 #reviewTabCount 에 넣는다. 비동기라 언제 올지 모른다.
+  // 목차를 다시 그릴 때 그 값을 잃지 않도록 먼저 읽어 둔다.
+  var prevCount = document.getElementById('reviewTabCount');
+  var keepCount = prevCount ? prevCount.textContent : '';
+
   bar.innerHTML = shown
     .map(function (s, i) {
-      var count =
-        s.key === 'faq' && pdFaqRows.length
-          ? '<span class="pd-tab-count">' + pdFaqRows.length + '</span>'
-          : '';
+      var count = '';
+      if (s.key === 'faq' && pdFaqRows.length) {
+        count = '<span class="pd-tab-count">(' + pdFaqRows.length + ')</span>';
+      } else if (s.key === 'review') {
+        count = '<span class="pd-tab-count" id="reviewTabCount">' + keepCount + '</span>';
+      }
       return (
         '<button type="button" class="pd-tab' + (i === 0 ? ' is-on' : '') +
         '" data-tab="' + s.key + '">' + s.label + count + '</button>'
@@ -668,14 +675,19 @@ function pdMountReviews() {
   if (typeof window.initReviews !== 'function') return;
   if (!pdProduct || !pdProduct.id) return;
   try {
-    // 후기 더보기는 이 상품의 카테고리 탭으로 보낸다.
-    // reviews.js 가 이 두 번째 인자를 모르는 옛 판이어도 그냥 무시되고 동작한다.
+    // ★ 상품 하나가 아니라 '이 카테고리' 후기를 보여준다 (2026-08-06).
+    //   정수기 상세가 코웨이 전체 후기를 보여주는 것과 같은 규칙이다.
+    //   상품마다 후기가 쌓이려면 한참 걸린다. 그동안 '0.0 / 후기 없음' 만 뜨면
+    //   신뢰가 붙기는커녕 깎인다.
+    //   좁은 것부터 — 품목(있으면) → 최상위.
     var top = pdParent || pdCategory;
-    window.initReviews(pdProduct.id, {
-      moreHref: top && top.id
-        ? '/reviews?categoryId=' + encodeURIComponent(top.id)
-        : '/reviews',
-    });
+    var opts = {};
+    if (pdParent && pdCategory && pdCategory.id) opts.subCategoryId = pdCategory.id;
+    if (top && top.id) opts.categoryId = top.id;
+    opts.moreHref = top && top.id
+      ? '/reviews?categoryId=' + encodeURIComponent(top.id)
+      : '/reviews';
+    window.initReviews(pdProduct.id, opts);
   } catch (e) {
     console.warn('[product-detail] 리뷰 초기화 실패', e && e.message);
   }
