@@ -26,11 +26,17 @@ let RD_FAV = null;
 let RD_DLG_FAV = null;
 let RD_CMP = null; // 비교함 핸들 — 찜과 같은 '조합' 단위라 같이 refresh 한다
 
+// 약정 키 → 사람 말 (2026-08-06 년 단위로 변경).
+// 전에는 '36개월(의무) · 60개월(계약)' 처럼 개월로 적었다. 고객이 읽고 바로 못 센다.
+// 정수기(water.js CONTRACT_LABELS)·비교표(compare-view.js contractLabel)와 같은 규칙으로 맞춘다.
+//
+// ⚠ 저장값('의무36/계약60')은 절대 바꾸지 않는다.
+//   그 키로 pricing 을 되찾고 주소(?contract=)에도 실린다. 그리는 순간에만 글자를 바꾼다.
 const RD_CONTRACT_LABELS = {
-  '의무36/계약60': '36개월(의무) · 60개월(계약)',
-  '의무60/계약60': '60개월(의무) · 60개월(계약)',
-  '의무72/계약72': '72개월(의무) · 72개월(계약)',
-  '의무84/계약84': '84개월(의무) · 84개월(계약)',
+  '의무36/계약60': '3년 의무 · 5년 계약',
+  '의무60/계약60': '5년 의무 · 5년 계약',
+  '의무72/계약72': '6년 의무 · 6년 계약',
+  '의무84/계약84': '7년 의무 · 7년 계약',
 };
 
 let RD_PRODUCT = null;
@@ -89,8 +95,25 @@ function escapeHtml(s) {
     .replace(/'/g, '&#39;');
 }
 
+// 표에 없는 키가 와도 개월 표기가 그대로 나오지 않게 한다.
+// 관리자가 '의무48/계약48' 같은 조합을 새로 만들면 표에는 없다 — 그때도 4년으로 읽혀야 한다.
+// 12로 안 떨어지면(예: 의무30) 년으로 못 바꾸므로 원래 키를 둔다. 틀린 글자보다 낫다.
 function contractLabel(key) {
-  return RD_CONTRACT_LABELS[key] || key;
+  if (RD_CONTRACT_LABELS[key]) return RD_CONTRACT_LABELS[key];
+
+  const s = String(key || '');
+  const duty = s.match(/의무(\d+)/);
+  const deal = s.match(/계약(\d+)/);
+  if (!duty) return key;
+
+  const yr = (m) => {
+    const y = Number(m) / 12;
+    return y && y === Math.floor(y) ? y + '년' : null;
+  };
+  const d = yr(duty[1]);
+  const c = deal ? yr(deal[1]) : null;
+  if (!d) return key;
+  return c && c !== d ? d + ' 의무 · ' + c + ' 계약' : d + ' 의무';
 }
 
 function contractMonthsOf(key) {

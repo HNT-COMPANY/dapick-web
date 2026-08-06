@@ -516,7 +516,10 @@
     if (typeof window.dpProductReco !== 'undefined') return Promise.resolve(true);
     return new Promise(function (resolve) {
       var sc = document.createElement('script');
-      sc.src = 'js/common/product-reco.js?v=20260806e';
+      // ⚠ 이 버전 문자열은 product-reco.js 를 고칠 때마다 함께 올려야 한다.
+      //   안 올리면 브라우저가 옛 파일을 계속 쓰고, 새 기능만 조용히 빠진다.
+      //   2026-08-06 에 실제로 찜·비교 버튼이 이 이유로 안 나왔다.
+      sc.src = 'js/common/product-reco.js?v=20260806f';
       sc.onload = function () { resolve(typeof window.dpProductReco !== 'undefined'); };
       sc.onerror = function () {
         console.warn('[water-detail-more] product-reco.js 로드 실패 — 추천 섹션을 건너뛴다');
