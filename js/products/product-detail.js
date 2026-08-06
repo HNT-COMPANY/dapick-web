@@ -59,17 +59,37 @@ function pdFail(message) {
   document.title = message + ' | 다픽';
 }
 
-// 카테고리 트리(최상위 + children)에서 id 로 찾는다. [찾은것, 부모] 를 돌려준다.
+// 카테고리 트리에서 id 로 찾는다. [찾은것, 최상위부모] 를 돌려준다.
+// 상품이 최상위에 바로 붙어 있으면 부모는 null 이다.
+//
+// ★ 2026-08-06 — 재귀로 바꿨다.
+//   전에는 최상위와 그 자식(2단)까지만 훑었다. 카테고리 → 서브 → 서브의 서브 처럼
+//   한 단만 더 깊어지면 [null, null] 이 나오고, 그러면 pdLoadFaq 가 조용히 빠져나가
+//   FAQ 탭이 영영 안 생긴다. 오류도 안 나서 '왜 안 나오지' 로만 남는다.
+//   관리자가 카테고리를 마음대로 만드는 구조이므로 깊이를 코드가 정하면 안 된다.
 function pdFindCategory(tree, id) {
-  for (var i = 0; i < tree.length; i++) {
-    var top = tree[i];
-    if (top.id === id) return [top, null];
-    var kids = top.children || [];
-    for (var j = 0; j < kids.length; j++) {
-      if (kids[j].id === id) return [kids[j], top];
+  var found = null;
+  var top = null;
+  if (!id) return [null, null];
+
+  function walk(nodes, rootAncestor) {
+    for (var i = 0; i < nodes.length; i++) {
+      if (found) return;
+      var n = nodes[i];
+      if (!n) continue;
+      // 최상위는 '깊이 0 의 노드'다. 아래로 내려가도 이 값을 그대로 물려준다.
+      var root = rootAncestor || n;
+      if (n.id === id) {
+        found = n;
+        top = n === root ? null : root;
+        return;
+      }
+      if (Array.isArray(n.children) && n.children.length) walk(n.children, root);
     }
   }
-  return [null, null];
+
+  walk(Array.isArray(tree) ? tree : [], null);
+  return [found, top];
 }
 
 // 자유 항목 정의를 합쳐 목록으로 만든다. product-view 가 이 순서대로 요약표를 그린다.
@@ -508,16 +528,41 @@ var PD_COLLAPSED_PX = 1000;
 var PD_PANELS = { detail: 'pd-detail-body', faq: 'pd-faq-body' };
 var pdFaqRows = [];
 
+// ★ 2026-08-06 — 한 번만 묻고 포기하지 않는다.
+//
+//   어드민(faq.js)은 최상위 카테고리만 탭으로 보여주므로 FAQ 는 보통 최상위에 붙는다.
+//   그래서 최상위부터 묻는다. 다만 다음 두 경우에 예전 코드는 조용히 0건이 됐다.
+//     · 카테고리 트리에서 상품 카테고리를 못 찾았을 때 (아예 안 묻고 끝났다)
+//     · 관리자가 하위 카테고리에 붙였을 때
+//   그래서 후보를 순서대로 시도하고, 처음 나온 결과를 쓴다.
+//   마지막 후보는 상품이 직접 들고 있는 categoryId 다 — 트리 조회가 통째로 실패해도
+//   이건 항상 있다. 화면이 조용히 비는 것보다 한 번 더 묻는 편이 낫다.
 async function pdLoadFaq() {
-  var top = pdParent || pdCategory;
-  if (!top || !top.id) return;
-  try {
-    var list = await api.get('/api/faqs?categoryId=' + encodeURIComponent(top.id));
-    pdFaqRows = (Array.isArray(list) ? list : (list && list.content) || [])
-      .filter(function (f) { return f && f.question; });
-  } catch (e) {
-    pdFaqRows = [];
+  var ids = [];
+  function push(v) {
+    if (v && ids.indexOf(v) < 0) ids.push(v);
   }
+  push(pdParent && pdParent.id);            // 최상위 (정본)
+  push(pdCategory && pdCategory.id);        // 이 상품의 품목
+  push(pdProduct && pdProduct.categoryId);  // 안전망 — 트리 조회가 실패했을 때
+
+  for (var i = 0; i < ids.length; i++) {
+    try {
+      var list = await api.get('/api/faqs?categoryId=' + encodeURIComponent(ids[i]));
+      var rows = (Array.isArray(list) ? list : (list && list.content) || [])
+        .filter(function (f) { return f && f.question; });
+      if (rows.length) {
+        pdFaqRows = rows;
+        return;
+      }
+    } catch (e) {
+      // 이 후보만 건너뛴다. FAQ 때문에 상품 화면이 죽으면 안 된다.
+      console.warn('[product-detail] FAQ 조회 실패 categoryId=' + ids[i], e && e.message);
+    }
+  }
+  pdFaqRows = [];
+  // 왜 안 나오는지 화면에서 바로 알 수 있게 남긴다. 조용히 비면 원인을 못 찾는다.
+  console.info('[product-detail] FAQ 0건 — 시도한 카테고리:', ids);
 }
 
 // 탭 줄. 질문이 없으면 아예 안 그린다 - 탭이 하나뿐이면 탭일 이유가 없다.
