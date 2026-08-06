@@ -488,6 +488,30 @@
   //   적으면 상세로 들어갔을 때 숫자가 달라져 '왜 다르지' 가 된다.
   var RECO_LIMIT = 10;
 
+  // 이 상품이 가질 수 있는 가장 싼 월 요금.
+  // pricing 은 약정 → 관리주기 → 프로모션 3단 중첩이라 값이 여러 개다.
+  // 그중 아무거나 고르면 상세로 들어갔을 때 숫자가 달라진다. 그래서 최저가를 쓰고
+  // 표기에 '~' 를 붙인다 — 정수기 목록 화면(water.js:403)과 같은 규칙이다.
+  function waterMinMonthly(p) {
+    var pr = p && p.pricing;
+    if (!pr) return 0;
+    var min = 0;
+    Object.keys(pr).forEach(function (contract) {
+      var cycles = pr[contract];
+      if (!cycles) return;
+      Object.keys(cycles).forEach(function (cycle) {
+        var types = cycles[cycle];
+        if (!types) return;
+        Object.keys(types).forEach(function (t) {
+          var d = types[t];
+          var m = d && Number(d.monthly);
+          if (m > 0 && (!min || m < min)) min = m;
+        });
+      });
+    });
+    return min;
+  }
+
   function ensureRecoScript() {
     if (typeof window.dpProductReco !== 'undefined') return Promise.resolve(true);
     return new Promise(function (resolve) {
@@ -555,9 +579,25 @@
         },
         excludeId: myId,
         limit: RECO_LIMIT,
-        showFee: false,
+        feeOf: waterMinMonthly,
+        feeSuffix: '~',          // 최저가라는 뜻. 정수기 목록과 같은 표기다
         hrefOf: function (p) {
           return '/water-detail?id=' + encodeURIComponent(p.id);
+        },
+        // 찜·비교는 '조합' 단위로 담긴다(약정·주기·프로모션).
+        // 카드에는 조합을 고르는 자리가 없으므로 카드에 적힌 값과 같은 조합 —
+        // 즉 최저가 조합으로 담는다. 담긴 값과 보이는 값이 어긋나면 안 된다.
+        snapshotOf: function (p) {
+          var fee = waterMinMonthly(p);
+          return {
+            category: 'WATER',
+            name: p.name,
+            model: p.modelName || '',
+            image: p.imageUrl || '',
+            label: fee ? '월 ' + fee.toLocaleString('ko-KR') + '원~ (최저가 기준)' : '',
+            monthlyFee: fee,
+            options: {},
+          };
         },
         onDone: function (n) {
           sec.hidden = !n;

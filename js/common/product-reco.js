@@ -46,11 +46,18 @@
     return Array.isArray(d) ? d : (d && (d.data || d.content)) || [];
   }
 
-  function feeHtml(v) {
+  // 요금 표기.
+  // suffix '~' 는 정수기처럼 약정에 따라 값이 달라지는 상품에 쓴다.
+  // 정수기 목록 화면(water.js:403)이 이미 '월 N원~' 으로 쓰고 있어 그대로 맞춘다.
+  // 표기를 다르게 하면 같은 상품의 값이 화면마다 달라 보인다.
+  function feeHtml(v, suffix) {
     if (v == null || v === '') return '';
     var n = Number(v);
     if (!isFinite(n) || n <= 0) return '';
-    return '<div class="dpreco-fee">월 <b>' + n.toLocaleString('ko-KR') + '</b>원</div>';
+    return (
+      '<div class="dpreco-fee">월 <b>' + n.toLocaleString('ko-KR') + '</b>원' +
+      (suffix || '') + '</div>'
+    );
   }
 
   // 상세로 가는 주소. 기본은 관리자 카테고리 상품(product-detail)이다.
@@ -59,6 +66,10 @@
     return '/product-detail?id=' + encodeURIComponent(p.id);
   }
 
+  // ★ 카드 전체를 <a> 로 감싸지 않는다.
+  //   안에 찜·비교 버튼이 들어가는데, <a> 안의 button 을 누르면 링크도 함께 열린다.
+  //   (preventDefault 로 막을 수도 있지만 그러면 두 모듈이 서로의 사정을 알아야 한다.)
+  //   그래서 링크 영역과 버튼 영역을 형제로 둔다.
   function cardHtml(p, opts) {
     var href = (opts.hrefOf ? opts.hrefOf(p) : defaultHref(p)) || defaultHref(p);
     var src = opts.imageOf ? opts.imageOf(p) : p.imageUrl;
@@ -66,18 +77,59 @@
       ? '<img src="' + esc(src) + '" alt="' + esc(p.name) + '" loading="lazy"/>'
       : '<span class="dpreco-noimg">이미지 준비중</span>';
 
-    // ⚠ 요금은 '확실할 때만' 보여준다.
-    //   정수기처럼 약정에 따라 값이 달라지는 상품은 여기서 아무 숫자나 고르면
-    //   목록과 상세의 금액이 달라진다. 그런 화면은 showFee 를 켜지 않는다.
-    var fee = opts.showFee === false ? '' : feeHtml(opts.feeOf ? opts.feeOf(p) : p.monthlyFee);
+    var fee =
+      opts.showFee === false
+        ? ''
+        : feeHtml(opts.feeOf ? opts.feeOf(p) : p.monthlyFee, opts.feeSuffix);
+
+    // 찜·비교는 부르는 쪽이 snapshotOf 를 넘길 때만 붙인다.
+    // 무엇을 담을지(카테고리·조합)는 화면마다 다르고, 여기서 짐작하면 틀린 값이 담긴다.
+    var acts = opts.snapshotOf
+      ? '<div class="dpreco-acts" data-reco-id="' + esc(p.id) + '">' +
+        '<div class="dpreco-fav"></div><div class="dpreco-cmp"></div></div>'
+      : '';
 
     return (
-      '<a class="dpreco-card" href="' + esc(href) + '">' +
+      '<div class="dpreco-card">' +
+      '<a class="dpreco-link" href="' + esc(href) + '">' +
       '<div class="dpreco-thumb">' + img + '</div>' +
       '<div class="dpreco-name">' + esc(p.name || '') + '</div>' +
       fee +
-      '</a>'
+      '</a>' +
+      acts +
+      '</div>'
     );
+  }
+
+  // 카드마다 찜·비교 버튼을 붙인다.
+  // 두 모듈 다 (mount, productId, config) 를 받아 mount 안을 스스로 그린다.
+  function bindActions(box, rows, opts) {
+    if (!opts.snapshotOf) return;
+    var byId = {};
+    rows.forEach(function (p) { byId[p.id] = p; });
+
+    box.querySelectorAll('.dpreco-acts').forEach(function (wrap) {
+      var id = wrap.getAttribute('data-reco-id');
+      var p = byId[id];
+      if (!p) return;
+
+      var favEl = wrap.querySelector('.dpreco-fav');
+      var cmpEl = wrap.querySelector('.dpreco-cmp');
+
+      // 카드에 적힌 값과 담기는 값이 같아야 한다. 그래서 스냅샷은 한 번만 만들어 둘이 나눠 쓴다.
+      var snap = opts.snapshotOf(p) || {};
+
+      if (favEl && typeof window.dpFavInit === 'function') {
+        window.dpFavInit(favEl, p.id, {
+          state: function () { return snap; },
+        });
+      }
+      if (cmpEl && typeof window.dpCompareInit === 'function') {
+        window.dpCompareInit(cmpEl, p.id, {
+          snapshot: function () { return snap; },
+        });
+      }
+    });
   }
 
   // ── 그리기 ───────────────────────────────────────────────────────
@@ -98,6 +150,7 @@
       '<button type="button" class="dpreco-nav dpreco-next" aria-label="다음" hidden>›</button>';
 
     bindScroll(box);
+    bindActions(box, rows, opts);
     if (typeof opts.onDone === 'function') opts.onDone(rows.length);
   }
 
@@ -142,10 +195,11 @@
       '.dpreco-viewport::-webkit-scrollbar{display:none;}' +
       '.dpreco-track{display:flex;gap:12px;padding:4px 2px 8px;}' +
       // 5개가 한 화면에 들어가는 너비. 좁아지면 자연스럽게 옆으로 넘어간다.
-      '.dpreco-card{flex:0 0 calc((100% - 48px) / 5);min-width:150px;display:block;text-decoration:none;' +
-        'color:inherit;border:1px solid #eeecf5;border-radius:12px;padding:12px;background:#fff;' +
+      '.dpreco-card{flex:0 0 calc((100% - 48px) / 5);min-width:160px;display:flex;flex-direction:column;' +
+        'border:1px solid #eeecf5;border-radius:12px;padding:12px;background:#fff;' +
         'transition:box-shadow .16s,transform .16s;}' +
       '.dpreco-card:hover{box-shadow:0 6px 18px rgba(30,27,46,.10);transform:translateY(-2px);}' +
+      '.dpreco-link{display:block;text-decoration:none;color:inherit;flex:1 1 auto;}' +
       '.dpreco-thumb{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;' +
         'background:#faf9fd;border-radius:8px;overflow:hidden;margin-bottom:10px;}' +
       '.dpreco-thumb img{width:100%;height:100%;object-fit:contain;}' +
@@ -160,7 +214,17 @@
       '.dpreco-nav[hidden]{display:none;}' +
       '.dpreco-prev{left:-14px;}' +
       '.dpreco-next{right:-14px;}' +
-      '@media(max-width:900px){.dpreco-card{flex:0 0 42%;}.dpreco-nav{display:none;}}';
+      // 찜·비교는 공용 버튼(dp-fav-btn / dp-cmp-btn)을 그대로 쓴다.
+      // 다만 그 기본 크기는 상세 화면용이라 카드 안에서는 너무 크다. 여기서만 줄인다.
+      // ⚠ 두 파일의 스타일을 고치면 안 된다 — 상세 화면 버튼이 같이 작아진다.
+      '.dpreco-acts{display:flex;gap:6px;margin-top:10px;}' +
+      '.dpreco-acts > div{flex:1 1 0;min-width:0;}' +
+      '.dpreco-acts .dp-fav-btn,.dpreco-acts .dp-cmp-btn{width:100%;padding:8px 6px;font-size:12px;' +
+        'border-radius:9px;gap:4px;}' +
+      '.dpreco-acts .dp-fav-ico,.dpreco-acts .dp-cmp-ico{font-size:13px;}' +
+      // 좁은 카드에서 '비교함에 담김' 같은 긴 글자는 줄바꿈돼 버튼 높이가 들쭉날쭉해진다.
+      '.dpreco-acts .dp-cmp-txt{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}' +
+      '@media(max-width:900px){.dpreco-card{flex:0 0 46%;}.dpreco-nav{display:none;}}';
     var s = document.createElement('style');
     s.textContent = css;
     document.head.appendChild(s);

@@ -664,6 +664,19 @@ function pdMountReco() {
     subIds: subIds,
     excludeId: pdProduct && pdProduct.id,
     limit: 10,
+    // 관리자 카테고리 상품은 월 요금이 하나뿐이라 그대로 적는다(정수기처럼 '~' 가 필요 없다).
+    // 찜·비교도 조합이 없으므로 options 는 비운다 — 상세 화면의 약정 선택과는 별개다.
+    snapshotOf: function (p) {
+      return {
+        category: 'GENERIC',
+        name: p.name,
+        model: p.modelName || '',
+        image: p.imageUrl || '',
+        label: p.monthlyFee ? '월 ' + Number(p.monthlyFee).toLocaleString('ko-KR') + '원' : '',
+        monthlyFee: p.monthlyFee || 0,
+        options: {},
+      };
+    },
     onDone: function (n) {
       sec.hidden = !n;
       pdRenderTabs();   // 섹션이 뜬 뒤라야 목차에 줄이 생긴다
