@@ -94,7 +94,7 @@
   </div>
 </section>
 
-<!-- 나만의 정수기 찾기 진입 버튼 (water-finder-v2.js 가 채운다) -->
+<!-- 나만의 정수기 찾기 진입 버튼 (water-finder.js 가 채운다) -->
 <div id="waterFinder"></div>
 
 <!-- ══════════════════════════════════════
@@ -442,12 +442,14 @@
 <script src="js/water/water-home.js"></script>
 <!-- 나만의 정수기 찾기. water.js 의 getAllProductsFlat / renderProductCard 를 쓴다.
      이 한 줄만 지우면 버튼도 화면도 사라진다. -->
-<!-- 나만의 정수기 찾기 — 2026-08-06 부터 공용 엔진(finder.js)이 그린다.
-     질문 정의는 DB(finders 표)에 있고 관리자가 어드민에서 고친다.
-     되돌리려면 이 두 줄을 아래 한 줄로 바꾸면 된다:
-       <script src="js/water/water-finder.js"></script> -->
-<script src="js/common/finder.js?v=20260806a"></script>
-<script src="js/water/water-finder-v2.js?v=20260806a"></script>
+<!-- 나만의 정수기 찾기.
+     2026-08-06 에 공용 엔진(finder.js)으로 잠깐 바꿨다가 되돌렸다.
+     브랜드 선택지가 코드값(coway·sk)으로 나오고 이미지 카드가 사라져서다.
+     어드민 편집기에서 라벨과 이미지를 넣을 수 있게 된 뒤에 다시 바꾼다.
+     그때는 아래 한 줄을 이 두 줄로 바꾸면 된다:
+       <script src="js/common/finder.js"></script>
+       <script src="js/water/water-finder-v2.js"></script> -->
+<script src="js/water/water-finder.js?v=20260806b"></script>
 <script src="js/water/water-banner.js"></script>
 
 <script src="/js/common/track.js"></script>
