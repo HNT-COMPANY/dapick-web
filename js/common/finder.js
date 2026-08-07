@@ -391,12 +391,48 @@
     }
   }
 
+  // 정수기 pricing 은 약정 → 관리주기 → 조건 3단 중첩이라 값이 여러 개다.
+  // 아무거나 고르면 상세로 들어갔을 때 숫자가 달라지므로 가장 싼 값을 쓰고 뒤에 '~' 를 붙인다.
+  function minPricing(pr) {
+    var min = 0;
+    Object.keys(pr).forEach(function (a) {
+      var b = pr[a];
+      if (!b || typeof b !== 'object') return;
+      Object.keys(b).forEach(function (c) {
+        var d = b[c];
+        if (!d || typeof d !== 'object') return;
+        Object.keys(d).forEach(function (e) {
+          var v = d[e] && Number(d[e].monthly);
+          if (v > 0 && (!min || v < min)) min = v;
+        });
+      });
+    });
+    return min;
+  }
+
+  // 월 요금. 화면이 feeOf 를 넘기면 그것을 쓰고, 없으면 상품에서 스스로 찾는다.
+  // ⚠ 어드민 미리보기에는 연결층(water-finder-v2.js 같은 것)이 없다.
+  //   여기서 스스로 못 찾으면 미리보기에만 요금이 안 나와서, 관리자가
+  //   "요금이 왜 안 뜨지" 로 시간을 버린다. 실제 고객 화면은 멀쩡한데도 그렇다.
+  function feeOf(p) {
+    if (typeof S.opt.feeOf === 'function') return Number(S.opt.feeOf(p)) || 0;
+    if (p.monthlyFee != null) return Number(p.monthlyFee) || 0;
+    if (p.monthlyPrice != null) return Number(p.monthlyPrice) || 0;
+    if (p.pricing && typeof p.pricing === 'object') return minPricing(p.pricing);
+    return Number(p.price || 0) || 0;
+  }
+
+  function feeSuffix(p) {
+    if (S.opt.feeSuffix != null) return S.opt.feeSuffix;
+    // 스스로 찾은 값이 '가장 싼 조합' 이면 그 사실을 숨기지 않는다.
+    return (typeof S.opt.feeOf !== 'function' && p.pricing) ? '~' : '';
+  }
+
   function feeHtml(p) {
-    if (!S.opt.feeOf) return '';
-    var n = Number(S.opt.feeOf(p));
+    var n = Number(feeOf(p));
     if (!isFinite(n) || n <= 0) return '';
     return '<div class="dpf-fee">월 <b>' + n.toLocaleString('ko-KR') + '</b>원' +
-      esc(S.opt.feeSuffix || '') + '</div>';
+      esc(feeSuffix(p)) + '</div>';
   }
 
   // ── 로딩 → 결과 ─────────────────────────────────────────────────
