@@ -106,7 +106,11 @@
       var vals = Array.isArray(picked) ? picked : [picked];
 
       vals.forEach(function (v) {
-        var opt = (q.options || []).filter(function (o) {
+        // ⚠ q.options 가 아니라 q._opts 를 본다.
+        // options 는 관리자가 적어 둔 '원본'이고, 실제로 화면에 그려진(그리고 규칙이 붙은)
+        // 선택지는 setup() 이 만든 _opts 다. 자동 선택지(브랜드·색)는 규칙이 _opts 에만 있어서
+        // options 를 보면 점수가 통째로 0 이 된다. 오류가 안 나서 찾기 어렵다. (2026-08-07)
+        var opt = (q._opts || q.options || []).filter(function (o) {
           return String(o.value) === String(v);
         })[0];
         if (!opt) return;
@@ -168,10 +172,17 @@
       .sort(function (a, b) { return seen[b] - seen[a]; })
       .map(function (v) {
         var base = preset[v] || {};
+        // ⚠ 라벨을 안 적어두면 코드값(coway·sk)이 그대로 화면에 나온다.
+        //   2026-08-06 에 실제로 그렇게 나가서 되돌렸다. 어드민에서 값마다 라벨과
+        //   이미지를 미리 적어 두면 여기서 그대로 물려받는다.
+        if (!base.label) {
+          console.warn('[finder] 선택지 "' + v + '" 에 라벨이 없어 코드값이 그대로 나온다. 어드민에서 이름을 적어주세요.');
+        }
         return {
           value: v,
           label: base.label || v,
           desc: base.desc || '',
+          image: base.image || '',
           why: base.why || (base.label || v),
           pin: base.pin || [],
           rules: base.rules || [
@@ -248,6 +259,34 @@
     paint();
   }
 
+  // 이미지가 붙은 선택지가 하나라도 있으면 카드 배열로 그린다.
+  // 브랜드처럼 로고를 보고 고르는 문항은 세로 목록보다 카드가 훨씬 빠르다.
+  // layout 을 관리자가 직접 정할 수도 있다('card' | 'list').
+  function isCardLayout(q, opts) {
+    if (q.layout === 'card') return true;
+    if (q.layout === 'list') return false;
+    return opts.some(function (o) { return o.image; });
+  }
+
+  function optionHtml(q, o) {
+    var on = isPicked(q.key, o.value) ? ' is-on' : '';
+    if (o.image) {
+      return (
+        '<button type="button" class="dpf-opt dpf-opt--card' + on + '" data-v="' + esc(o.value) + '">' +
+        '<span class="dpf-opt-img"><img src="' + esc(o.image) + '" alt="" loading="lazy"/></span>' +
+        '<span class="dpf-opt-l">' + esc(o.label) + '</span>' +
+        (o.desc ? '<span class="dpf-opt-d">' + esc(o.desc) + '</span>' : '') +
+        '</button>'
+      );
+    }
+    return (
+      '<button type="button" class="dpf-opt' + on + '" data-v="' + esc(o.value) + '">' +
+      '<span class="dpf-opt-l">' + esc(o.label) + '</span>' +
+      (o.desc ? '<span class="dpf-opt-d">' + esc(o.desc) + '</span>' : '') +
+      '</button>'
+    );
+  }
+
   function progressHtml() {
     var n = steps().length;
     var i = Math.max(0, S.cur);
@@ -283,18 +322,8 @@
       '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
       '<h2 class="dpf-q">' + esc(q.title || '') + '</h2>' +
       (q.sub ? '<p class="dpf-qsub">' + esc(q.sub) + '</p>' : '') +
-      '<div class="dpf-opts">' +
-      opts
-        .map(function (o) {
-          return (
-            '<button type="button" class="dpf-opt' + (isPicked(q.key, o.value) ? ' is-on' : '') +
-            '" data-v="' + esc(o.value) + '">' +
-            '<span class="dpf-opt-l">' + esc(o.label) + '</span>' +
-            (o.desc ? '<span class="dpf-opt-d">' + esc(o.desc) + '</span>' : '') +
-            '</button>'
-          );
-        })
-        .join('') +
+      '<div class="dpf-opts' + (isCardLayout(q, opts) ? ' dpf-opts--card' : '') + '">' +
+      opts.map(function (o) { return optionHtml(q, o); }).join('') +
       '</div>' +
       '<div class="dpf-foot">' +
       '<button type="button" class="dpf-sub" data-dpf-prev>이전</button>' +
@@ -431,6 +460,12 @@
       '.dpf-opt.is-on{border-color:#6c3fc5;background:#f4f0fd;}' +
       '.dpf-opt-l{font-size:15px;font-weight:700;color:#221f38;}' +
       '.dpf-opt-d{font-size:12.5px;color:#8b88a3;}' +
+      // 이미지 카드 — 브랜드 로고처럼 보고 고르는 문항용. 한 줄에 두 개.
+      '.dpf-opts--card{display:grid;grid-template-columns:1fr 1fr;gap:9px;}' +
+      '.dpf-opt--card{align-items:center;text-align:center;gap:6px;padding:16px 12px;}' +
+      '.dpf-opt-img{display:flex;align-items:center;justify-content:center;width:100%;height:52px;}' +
+      '.dpf-opt-img img{max-width:100%;max-height:100%;object-fit:contain;}' +
+      '.dpf-opt--card .dpf-opt-l{font-size:14px;}' +
       '.dpf-foot{display:flex;gap:8px;justify-content:space-between;margin-top:18px;}' +
       '.dpf-sub{border:1px solid #e5e2f0;background:#fff;color:#6a6880;border-radius:10px;' +
         'padding:11px 16px;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;}' +
