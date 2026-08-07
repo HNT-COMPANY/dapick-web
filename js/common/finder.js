@@ -212,6 +212,7 @@
     injectStyles();
     S.answers = {};
     S.cur = -1;   // -1 = 시작 화면
+    S.chip = -1;  // 켜 둔 필터 칩. -1 = 없음
     el().hidden = false;
     document.body.style.overflow = 'hidden';
     paint();
@@ -248,7 +249,7 @@
   }
 
   function next() {
-    if (S.cur >= steps().length - 1) { paintResult(); return; }
+    if (S.cur >= steps().length - 1) { paintLoading(); return; }
     S.cur += 1;
     paint();
   }
@@ -268,29 +269,65 @@
     return opts.some(function (o) { return o.image; });
   }
 
+  // 관리자가 적어 둔 해시태그. #을 안 붙였으면 우리가 붙인다.
+  function tagsHtml(o) {
+    var list = o.hashtags || [];
+    if (!list.length) return '';
+    return '<span class="dpf-opt-tags">' + list.map(function (t) {
+      var s = String(t || '').trim();
+      if (!s) return '';
+      return '<span>' + esc(s.charAt(0) === '#' ? s : '#' + s) + '</span>';
+    }).join('') + '</span>';
+  }
+
   function optionHtml(q, o) {
     var on = isPicked(q.key, o.value) ? ' is-on' : '';
+    var badge = o.badge ? '<span class="dpf-opt-badge">' + esc(o.badge) + '</span>' : '';
+    var body =
+      '<span class="dpf-opt-l">' + esc(o.label) + '</span>' +
+      (o.desc ? '<span class="dpf-opt-d">' + esc(o.desc) + '</span>' : '') +
+      tagsHtml(o);
+
     if (o.image) {
       return (
         '<button type="button" class="dpf-opt dpf-opt--card' + on + '" data-v="' + esc(o.value) + '">' +
+        badge +
         '<span class="dpf-opt-img"><img src="' + esc(o.image) + '" alt="" loading="lazy"/></span>' +
-        '<span class="dpf-opt-l">' + esc(o.label) + '</span>' +
-        (o.desc ? '<span class="dpf-opt-d">' + esc(o.desc) + '</span>' : '') +
+        '<span class="dpf-opt-body">' + body + '</span>' +
         '</button>'
       );
     }
     return (
       '<button type="button" class="dpf-opt' + on + '" data-v="' + esc(o.value) + '">' +
-      '<span class="dpf-opt-l">' + esc(o.label) + '</span>' +
-      (o.desc ? '<span class="dpf-opt-d">' + esc(o.desc) + '</span>' : '') +
+      badge + body +
       '</button>'
     );
   }
 
+  // 진행바. 몇 개 남았는지 먼저 알려주면 중간에 덜 나간다.
   function progressHtml() {
     var n = steps().length;
     var i = Math.max(0, S.cur);
-    return '<span class="dpf-step">' + (S.cur < 0 ? '시작' : (i + 1) + ' / ' + n) + '</span>';
+    var pct = S.cur < 0 ? 0 : Math.round(((i + 1) / n) * 100);
+    var left = n - i;
+    return (
+      '<div class="dpf-prog">' +
+      '<div class="dpf-prog-top">' +
+      '<span>' + (S.cur < 0 ? n + '개의 질문에만 답하면 돼요!' : left + '개 남았어요') + '</span>' +
+      '<b>' + pct + '%</b></div>' +
+      '<div class="dpf-prog-bar"><i style="width:' + pct + '%"></i></div>' +
+      '</div>'
+    );
+  }
+
+  // 관리자가 적어 둔 도움말. <details> 를 쓰면 여닫기를 우리가 안 만들어도 된다.
+  function helpsHtml(q) {
+    var list = (q && q.helps) || [];
+    if (!list.length) return '';
+    return '<div class="dpf-helps">' + list.map(function (h) {
+      return '<details class="dpf-help"><summary>💡 ' + esc(h.q || '') + '</summary>' +
+        '<p>' + esc(h.a || '') + '</p></details>';
+    }).join('') + '</div>';
   }
 
   function paint() {
@@ -313,18 +350,25 @@
     }
 
     var q = steps()[S.cur];
-    if (!q) { paintResult(); return; }
+    if (!q) { paintLoading(); return; }
 
     var opts = q._opts || [];
     ov.innerHTML =
       '<div class="dpf-box">' +
       '<div class="dpf-head">' + progressHtml() +
       '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
-      '<h2 class="dpf-q">' + esc(q.title || '') + '</h2>' +
+      '<div class="dpf-qhead">' +
+      '<span class="dpf-qno">' + (S.cur + 1) + '</span>' +
+      '<div><h2 class="dpf-q">' + esc(q.title || '') + '</h2>' +
       (q.sub ? '<p class="dpf-qsub">' + esc(q.sub) + '</p>' : '') +
-      '<div class="dpf-opts' + (isCardLayout(q, opts) ? ' dpf-opts--card' : '') + '">' +
+      // multi 는 관리자가 따로 안 적어도 우리가 알려준다. 안 적으면 하나만 고르고 멈춘다.
+      (q.multi ? '<p class="dpf-qmulti">(여러 개 선택 가능)</p>' : '') +
+      '</div></div>' +
+      '<div class="dpf-opts' + (isCardLayout(q, opts) ? ' dpf-opts--card' : '') +
+        (q.layout === 'row' ? ' dpf-opts--row' : '') + '">' +
       opts.map(function (o) { return optionHtml(q, o); }).join('') +
       '</div>' +
+      helpsHtml(q) +
       '<div class="dpf-foot">' +
       '<button type="button" class="dpf-sub" data-dpf-prev>이전</button>' +
       (q.multi || q.skippable
@@ -355,11 +399,25 @@
       esc(S.opt.feeSuffix || '') + '</div>';
   }
 
-  function paintResult() {
-    var r = S.def.result || {};
-    var limit = Number(r.count) || 6;
+  // ── 로딩 → 결과 ─────────────────────────────────────────────────
+  //
+  // 마지막 질문을 고른 순간 결과가 툭 나오면 "이게 다야?" 로 읽힌다.
+  // 잠깐 찾는 시늉을 하는 편이 낫다. 시간은 관리자가 못 정한다 — 1.2초로 고정한다.
+  function paintLoading() {
+    var l = S.def.loading || {};
+    var lines = l.lines || ['고객님의 마음을 읽는 듯한 정확한 추천!', '완벽한 맞춤 상품을 찾고 있어요'];
+    el().innerHTML =
+      '<div class="dpf-box dpf-box--load">' +
+      (l.imageUrl ? '<div class="dpf-load-img"><img src="' + esc(l.imageUrl) + '" alt=""/></div>' : '') +
+      '<div class="dpf-dots"><i></i><i></i><i></i><i></i></div>' +
+      lines.map(function (t) { return '<p class="dpf-load-t">' + esc(t) + '</p>'; }).join('') +
+      '</div>';
+    setTimeout(paintResult, 1200);
+  }
 
-    var ranked = S.products
+  // 점수 순으로 줄 세운다. 칩은 여기서 거르지 않는다 — 칩을 껐을 때 되돌아와야 한다.
+  function rank() {
+    return S.products
       .map(function (p) {
         var sc = scoreOf(p);
         return { p: p, s: sc.score, why: sc.why };
@@ -367,22 +425,56 @@
       .sort(function (a, b) {
         if (b.s !== a.s) return b.s - a.s;
         return (a.p.sortOrder || 999) - (b.p.sortOrder || 999);
-      })
-      .slice(0, limit);
+      });
+  }
+
+  // 조건 하나라도 맞으면 걸린다. 어드민 finder-edit-rules.js 의 frMatch 와 같은 규칙이다.
+  function rulesHit(p, rules) {
+    return (rules || []).some(function (r) { return ruleMatch(p, r); });
+  }
+
+  // 이 상품에 붙는 배지. 관리자가 조건으로 정한다(예: 월 요금 2만원 이하면 '알뜰').
+  function badgesOf(p) {
+    return ((S.def.result || {}).badges || []).filter(function (b) {
+      return rulesHit(p, b.rules);
+    });
+  }
+
+  function chipsHtml() {
+    var list = ((S.def.result || {}).filters || []).filter(function (f) { return (f.rules || []).length; });
+    if (!list.length) return '';
+    return '<div class="dpf-chips">' + list.map(function (f, i) {
+      return '<button type="button" class="dpf-chip' + (S.chip === i ? ' is-on' : '') +
+        '" data-chip="' + i + '">' + esc(f.label || '') + '</button>';
+    }).join('') + '</div>';
+  }
+
+  function paintResult() {
+    var r = S.def.result || {};
+    var limit = Number(r.count) || 6;
+    var all = rank();
+
+    // 칩이 켜져 있으면 그 조건에 맞는 것만 남긴다.
+    var chip = (r.filters || [])[S.chip];
+    var rows = chip ? all.filter(function (x) { return rulesHit(x.p, chip.rules); }) : all;
+    var ranked = rows.slice(0, limit);
 
     var best = ranked.length ? ranked[0].s : 0;
     // 아무 조건도 못 맞췄으면 솔직하게 말한다. 그럴듯하게 포장하지 않는다.
-    var lead = best === 0
-      ? (r.leadEmpty || '고르신 조건에 딱 맞는 상품을 아직 찾지 못했습니다. 대신 많이 찾는 상품을 보여드립니다.')
-      : (r.leadMatched || '고르신 조건에 가까운 순서로 보여드립니다.');
+    var lead = chip && !ranked.length
+      ? '고르신 조건에 맞는 상품이 없습니다. 다른 항목을 눌러보세요.'
+      : best === 0
+        ? (r.leadEmpty || '고르신 조건에 딱 맞는 상품을 아직 찾지 못했습니다. 대신 많이 찾는 상품을 보여드립니다.')
+        : (r.leadMatched || '고르신 조건에 가까운 순서로 보여드립니다.');
 
     var ov = el();
     ov.innerHTML =
-      '<div class="dpf-box dpf-box--wide">' +
+      '<div class="dpf-box dpf-box--page">' +
       '<div class="dpf-head"><span class="dpf-step">추천 결과</span>' +
       '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
-      '<h2 class="dpf-q">' + esc(r.title || '이런 상품은 어떠세요?') + '</h2>' +
+      '<h2 class="dpf-q dpf-q--big">' + esc(r.title || '이런 상품은 어떠세요?') + '</h2>' +
       '<p class="dpf-qsub">' + esc(lead) + '</p>' +
+      chipsHtml() +
       (ranked.length
         ? '<div class="dpf-res">' + ranked.map(cardHtml).join('') + '</div>'
         : '<p class="dpf-qsub">보여드릴 상품이 없습니다.</p>') +
@@ -393,6 +485,15 @@
 
     ov.querySelector('[data-dpf-again]').onclick = open;
 
+    // 같은 칩을 다시 누르면 꺼진다. 끄는 방법이 없으면 고객이 갇힌다.
+    ov.querySelectorAll('[data-chip]').forEach(function (b) {
+      b.onclick = function () {
+        var i = Number(b.dataset.chip);
+        S.chip = (S.chip === i) ? -1 : i;
+        paintResult();
+      };
+    });
+
     ov.querySelectorAll('[data-dpf-apply]').forEach(function (b) {
       b.onclick = function () {
         var hit = ranked.filter(function (x) { return String(x.p.id) === b.dataset.id; })[0];
@@ -401,25 +502,40 @@
     });
   }
 
-  function cardHtml(x) {
+  function cardHtml(x, i) {
     var p = x.p;
     var img = S.opt.imageOf ? S.opt.imageOf(p) : p.imageUrl;
     var href = S.opt.hrefOf ? S.opt.hrefOf(p) : '/product-detail?id=' + encodeURIComponent(p.id);
+
+    // 순위는 3등까지만 적는다. 전부 적으면 6등이 나쁜 상품처럼 보인다.
+    var rankTag = i < 3 ? '<span class="dpf-rank">' + (i + 1) + '</span>' : '';
+
+    var badges = badgesOf(p).map(function (b) {
+      return '<span class="dpf-badge dpf-badge--' + esc(b.color || 'green') + '">' + esc(b.label || '') + '</span>';
+    }).join('');
 
     // '이래서 골랐어요' 는 중복을 지우고 최대 3개만. 다 적으면 카드가 설명서가 된다.
     var why = [];
     x.why.forEach(function (w) { if (w && why.indexOf(w) < 0) why.push(w); });
     why = why.slice(0, 3);
 
+    // ★ 카드 속 내용은 카테고리마다 다르다(인터넷TV=사은품·옵션 / 정수기=약정·주기·색).
+    //   전부 정의로 표현하려 들면 카드 하나에 매핑 규칙이 스무 개 붙는다.
+    //   화면이 cardOf 를 넘기면 그쪽이 그리고, 없으면 아래 기본 카드를 쓴다.
+    var inner = typeof S.opt.cardOf === 'function'
+      ? S.opt.cardOf(p, x)
+      : '<div class="dpf-name">' + esc(p.name || '') + '</div>' + feeHtml(p);
+
     return (
       '<div class="dpf-card">' +
+      rankTag +
       '<a class="dpf-card-l" href="' + esc(href) + '">' +
       '<div class="dpf-thumb">' +
       (img ? '<img src="' + esc(img) + '" alt="' + esc(p.name) + '" loading="lazy"/>'
            : '<span class="dpf-noimg">이미지 준비중</span>') +
       '</div>' +
-      '<div class="dpf-name">' + esc(p.name || '') + '</div>' +
-      feeHtml(p) +
+      (badges ? '<div class="dpf-badges">' + badges + '</div>' : '') +
+      inner +
       (why.length
         ? '<div class="dpf-why">' + why.map(function (w) {
             return '<span class="dpf-why-b">✓ ' + esc(w) + '</span>';
@@ -493,6 +609,67 @@
       '.dpf-apply{margin-top:9px;width:100%;border:none;background:#f4f0fd;color:#5b3fbe;' +
         'border-radius:9px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;}' +
       '.dpf-apply:hover{background:#e9e0fb;}' +
+      // ── 진행바 (2026-08-07) ──
+      '.dpf-prog{flex:1 1 auto;margin-right:12px;}' +
+      '.dpf-prog-top{display:flex;justify-content:space-between;align-items:baseline;' +
+        'font-size:12.5px;color:#8b88a3;margin-bottom:6px;}' +
+      '.dpf-prog-top b{color:#6c3fc5;font-size:13px;font-weight:800;}' +
+      '.dpf-prog-bar{height:6px;border-radius:99px;background:#efedf7;overflow:hidden;}' +
+      '.dpf-prog-bar i{display:block;height:100%;background:#6c3fc5;border-radius:99px;' +
+        'transition:width .3s ease;}' +
+      // 질문 머리 — 번호 배지 + 제목
+      '.dpf-qhead{display:flex;gap:10px;align-items:flex-start;margin-bottom:16px;}' +
+      '.dpf-qno{flex-shrink:0;width:24px;height:24px;border-radius:7px;background:#221f38;color:#fff;' +
+        'font-size:13px;font-weight:800;display:flex;align-items:center;justify-content:center;margin-top:2px;}' +
+      '.dpf-qhead .dpf-q,.dpf-qhead .dpf-qsub{margin:0;}' +
+      '.dpf-qmulti{margin:5px 0 0;font-size:12.5px;color:#e5484d;font-weight:700;}' +
+      // 가로 카드 — 로고 왼쪽, 글자 오른쪽
+      '.dpf-opts--row{display:flex;flex-direction:column;gap:9px;}' +
+      '.dpf-opts--row .dpf-opt--card{flex-direction:row;align-items:center;text-align:left;gap:14px;padding:14px 16px;}' +
+      '.dpf-opts--row .dpf-opt-img{width:74px;height:38px;flex-shrink:0;}' +
+      '.dpf-opts--row .dpf-opt-body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px;}' +
+      '.dpf-opt-body{display:flex;flex-direction:column;gap:2px;}' +
+      '.dpf-opt-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:2px;}' +
+      '.dpf-opt-tags span{font-size:11.5px;color:#8b88a3;}' +
+      '.dpf-opt-badge{position:absolute;top:8px;right:8px;font-size:10.5px;font-weight:800;color:#fff;' +
+        'background:#22a06b;border-radius:5px;padding:2px 6px;}' +
+      '.dpf-opt{position:relative;}' +
+      // 도움말 — <details> 를 쓰면 여닫기를 우리가 안 만들어도 된다
+      '.dpf-helps{display:flex;flex-direction:column;gap:8px;margin-top:16px;}' +
+      '.dpf-help{background:#f7f6fb;border-radius:10px;padding:11px 13px;}' +
+      '.dpf-help summary{font-size:13px;font-weight:700;color:#3f3c56;cursor:pointer;list-style:none;}' +
+      '.dpf-help summary::-webkit-details-marker{display:none;}' +
+      '.dpf-help p{margin:8px 0 0;font-size:12.5px;color:#6b6880;line-height:1.7;}' +
+      // 로딩 화면
+      '.dpf-box--load{max-width:420px;text-align:center;padding:40px 24px;}' +
+      '.dpf-load-img img{width:100%;max-width:260px;border-radius:50%/40%;}' +
+      '.dpf-dots{display:flex;gap:8px;justify-content:center;margin:22px 0 20px;}' +
+      '.dpf-dots i{width:9px;height:9px;border-radius:50%;background:#cfc4f0;' +
+        'animation:dpfDot 1.1s infinite ease-in-out;}' +
+      '.dpf-dots i:nth-child(2){animation-delay:.15s;}' +
+      '.dpf-dots i:nth-child(3){animation-delay:.3s;}' +
+      '.dpf-dots i:nth-child(4){animation-delay:.45s;}' +
+      '@keyframes dpfDot{0%,100%{background:#cfc4f0;transform:scale(1);}' +
+        '50%{background:#6c3fc5;transform:scale(1.25);}}' +
+      '.dpf-load-t{margin:0 0 6px;font-size:15px;font-weight:700;color:#221f38;line-height:1.6;}' +
+      // 결과 — 전면
+      '.dpf-box--page{max-width:1100px;}' +
+      '.dpf-q--big{font-size:26px;line-height:1.35;}' +
+      '.dpf-chips{display:flex;flex-wrap:wrap;gap:8px;margin:0 0 18px;}' +
+      '.dpf-chip{border:1px solid #e5e2f0;background:#fff;color:#6b6880;border-radius:99px;' +
+        'padding:9px 16px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;}' +
+      '.dpf-chip:hover{border-color:#c9bdf5;}' +
+      '.dpf-chip.is-on{border-color:#6c3fc5;color:#6c3fc5;background:#f6f2fe;font-weight:800;}' +
+      '.dpf-card{position:relative;}' +
+      '.dpf-rank{position:absolute;top:-7px;right:-7px;width:24px;height:24px;border-radius:7px;' +
+        'background:#e5484d;color:#fff;font-size:12px;font-weight:800;' +
+        'display:flex;align-items:center;justify-content:center;z-index:1;}' +
+      '.dpf-badges{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:6px;}' +
+      '.dpf-badge{font-size:10.5px;font-weight:800;color:#fff;border-radius:5px;padding:2px 6px;}' +
+      '.dpf-badge--green{background:#22a06b;}' +
+      '.dpf-badge--blue{background:#6c3fc5;}' +
+      '.dpf-badge--orange{background:#e08600;}' +
+      '.dpf-badge--red{background:#e5484d;}' +
       '@media(max-width:820px){.dpf-res{grid-template-columns:repeat(2,1fr);}}' +
       '@media(max-width:520px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
         '.dpf-res{grid-template-columns:1fr 1fr;gap:9px;}}';
@@ -514,7 +691,7 @@
     def.questions.forEach(function (q) {
       q._opts = buildDynamicOptions(q, products);
     });
-    S = { def: def, name: name, products: products, opt: opt || {}, answers: {}, cur: -1 };
+    S = { def: def, name: name, products: products, opt: opt || {}, answers: {}, cur: -1, chip: -1 };
     return true;
   }
 
