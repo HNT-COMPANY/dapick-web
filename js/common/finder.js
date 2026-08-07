@@ -428,6 +428,39 @@
       });
   }
 
+  // 결과를 어느 묶음으로 나눠 볼지. 정수기는 브랜드, 인터넷·TV 는 통신사다.
+  // 화면이 groupOf 를 넘기면 그것을 쓴다(카테고리마다 칸 이름이 다를 수 있다).
+  function groupOf(p) {
+    if (typeof S.opt.groupOf === 'function') return S.opt.groupOf(p);
+    return p.brand || p.carrier || '';
+  }
+
+  // 한 브랜드가 결과를 다 먹지 않게 묶음당 개수를 제한한다. 4자리면 한 브랜드에 2개까지다.
+  // ⚠ 묶음을 모르는 상품(관리자가 만든 카테고리 등)은 제한하지 않는다 —
+  //   전부 빈 문자열로 묶여 한 덩어리가 되면 자리가 남는다.
+  function balanced(rows, limit) {
+    var perGroup = Math.max(1, Math.ceil(limit / 2));
+    var out = [];
+    var used = {};
+    rows.forEach(function (x) {
+      if (out.length >= limit) return;
+      var g = groupOf(x.p);
+      if (!g) { out.push(x); return; }
+      used[g] = used[g] || 0;
+      if (used[g] >= perGroup) return;
+      used[g] += 1;
+      out.push(x);
+    });
+    // 제한 때문에 자리가 비면 남은 것으로 채운다. 고객에게 빈자리를 보이지 않는다.
+    if (out.length < limit) {
+      rows.forEach(function (x) {
+        if (out.length >= limit || out.indexOf(x) >= 0) return;
+        out.push(x);
+      });
+    }
+    return out;
+  }
+
   // 조건 하나라도 맞으면 걸린다. 어드민 finder-edit-rules.js 의 frMatch 와 같은 규칙이다.
   function rulesHit(p, rules) {
     return (rules || []).some(function (r) { return ruleMatch(p, r); });
@@ -451,13 +484,18 @@
 
   function paintResult() {
     var r = S.def.result || {};
-    var limit = Number(r.count) || 6;
+    var limit = Number(r.count) || 4;
     var all = rank();
 
     // 칩이 켜져 있으면 그 조건에 맞는 것만 남긴다.
     var chip = (r.filters || [])[S.chip];
     var rows = chip ? all.filter(function (x) { return rulesHit(x.p, chip.rules); }) : all;
-    var ranked = rows.slice(0, limit);
+
+    // 아무 답에도 안 걸린 상품(0점)은 뺀다. 관리자가 지정한 것만 나오게 하기 위해서다.
+    // ⚠ 전부 0점이면 빼지 않는다 — 답을 아직 안 했거나 조건이 다 어긋난 경우인데,
+    //   빈 화면을 보여주면 "이 사이트엔 없다" 로 읽힌다. 아래 lead 문구가 사정을 밝힌다.
+    var hit = rows.filter(function (x) { return x.s > 0; });
+    var ranked = balanced(hit.length ? hit : rows, limit);
 
     var best = ranked.length ? ranked[0].s : 0;
     // 아무 조건도 못 맞췄으면 솔직하게 말한다. 그럴듯하게 포장하지 않는다.
