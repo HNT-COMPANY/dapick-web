@@ -67,6 +67,10 @@
 <!-- 공통 NAV (gnb.js가 주입) -->
 <nav class="gnb"></nav>
 
+<!-- 나만의 인터넷·TV 찾기 진입 버튼 (internet-finder.js 가 채운다)
+     질문·선별 기준은 어드민 '상품 찾기' 에 있다. 파인더가 없으면 이 자리는 비어 있다. -->
+<div id="internetFinder" class="iu-finder-slot"></div>
+
 <!-- 통신사 선택 바 (카드 클릭 = 같은 페이지에서 carrier 전환, internet-unified.js) -->
 <section class="iu-carrier-bar">
   <h2 class="iu-carrier-head">통신사를 선택하세요</h2>
@@ -304,6 +308,10 @@
 <script src="js/common/product-faq.js"></script>
 <script src="js/internet/internet-product-base.js"></script>
 <script src="js/internet/internet-unified.js"></script>
+<!-- 나만의 인터넷·TV 찾기 — finder.js(엔진) → internet-expand.js(펼치기) → 연결층 순서 -->
+<script src="js/common/finder.js"></script>
+<script src="js/internet/internet-expand.js"></script>
+<script src="js/internet/internet-finder.js"></script>
 <script src="js/common/simple-apply.js"></script>
 
 <script src="/js/common/track.js"></script>
