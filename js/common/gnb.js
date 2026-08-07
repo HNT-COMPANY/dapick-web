@@ -292,7 +292,17 @@ function buildDynamicCatHtml(c) {
   // 줄 높이와 정렬이 어긋났다. 아이콘은 어드민 사이드바 전용이다.
   // 값은 그대로 저장·전달되므로 나중에 웹에도 쓰려면 이 한 줄만 되돌리면 된다.
   const icon = '';
-  const kids = (c.children || []).filter((s) => s.isActive !== false);
+  // ⚠ 2026-08-07 까지 하위는 '숨김만 거르고' 순서를 안 세웠다.
+  //   그래서 어드민에서 순서를 바꿔 저장해도 이 드롭다운만 옛 순서로 남았다.
+  //   같은 숫자가 둘이면 이름순으로 갈라 준다 — 어드민(cmSorted)과 같은 규칙이어야
+  //   관리자가 보는 화면과 고객이 보는 화면이 어긋나지 않는다.
+  const kids = (c.children || [])
+    .filter((s) => s.isActive !== false)
+    .sort(
+      (a, b) =>
+        (a.sortOrder || 0) - (b.sortOrder || 0) ||
+        String(a.name || '').localeCompare(String(b.name || ''), 'ko'),
+    );
   const path = location.pathname;
   const activeCls = path === href || path.startsWith(href + '/') ? ' is-active' : '';
 
@@ -337,7 +347,11 @@ function injectDynamicGnbCats() {
           c.isActive !== false &&
           DP_LEGACY_GNB_TYPES.indexOf(c.type) === -1,
       )
-      .sort((a, b) => (a.sortOrder || 0) - (b.sortOrder || 0));
+      .sort(
+        (a, b) =>
+          (a.sortOrder || 0) - (b.sortOrder || 0) ||
+          String(a.name || '').localeCompare(String(b.name || ''), 'ko'),
+      );
 
     // 안 뜰 때 어디서 걸렸는지 바로 보이게 남긴다
     console.info(
