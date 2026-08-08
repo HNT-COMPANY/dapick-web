@@ -456,7 +456,10 @@
       // multi 는 관리자가 따로 안 적어도 우리가 알려준다. 안 적으면 하나만 고르고 멈춘다.
       (q.multi ? '<p class="dpf-qmulti">(여러 개 선택 가능)</p>' : '') +
       '</div></div>' +
-      '<div class="dpf-opts' + (isCardLayout(q, opts) ? ' dpf-opts--card' : '') +
+      // 카드 배치는 개수에 따라 열을 정한다.
+      // 2열 고정이면 3개일 때 2+1 로 아래가 비어 한쪽으로 쏠려 보인다.
+      // 3개까지는 한 줄에, 4개부터는 3개씩 아래로 쌓는다. (2026-08-08 관리자 요청)
+      '<div class="dpf-opts' + (isCardLayout(q, opts) ? ' dpf-opts--card dpf-opts--n' + Math.min(3, opts.length || 1) : '') +
         (q.layout === 'row' ? ' dpf-opts--row' : '') + '">' +
       opts.map(function (o) { return optionHtml(q, o); }).join('') +
       '</div>' +
@@ -808,7 +811,10 @@
       '.dpf-opt-l{font-size:15px;font-weight:700;color:#221f38;}' +
       '.dpf-opt-d{font-size:12.5px;color:#8b88a3;}' +
       // 이미지 카드 — 브랜드 로고처럼 보고 고르는 문항용. 한 줄에 두 개.
-      '.dpf-opts--card{display:grid;grid-template-columns:1fr 1fr;gap:9px;}' +
+      '.dpf-opts--card{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;}' +
+      '.dpf-opts--n1{grid-template-columns:1fr;}' +
+      '.dpf-opts--n2{grid-template-columns:repeat(2,1fr);}' +
+      '.dpf-opts--n3{grid-template-columns:repeat(3,1fr);}' +
       '.dpf-opt--card{align-items:center;text-align:center;gap:6px;padding:16px 12px;}' +
       '.dpf-opt-img{display:flex;align-items:center;justify-content:center;width:100%;height:52px;}' +
       '.dpf-opt-img img{max-width:100%;max-height:100%;object-fit:contain;}' +
@@ -906,7 +912,9 @@
       '.dpf-badge--blue{background:#6c3fc5;}' +
       '.dpf-badge--orange{background:#e08600;}' +
       '.dpf-badge--red{background:#e5484d;}' +
-      '@media(max-width:820px){.dpf-res{grid-template-columns:repeat(2,1fr);}}' +
+      '@media(max-width:820px){.dpf-res{grid-template-columns:repeat(2,1fr);}' +
+        '.dpf-opts--card{grid-template-columns:repeat(2,1fr);}' +
+        '.dpf-opts--n1{grid-template-columns:1fr;}}' +
       '@media(max-width:520px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
         '.dpf-res{grid-template-columns:1fr 1fr;gap:9px;}}';
     var s = document.createElement('style');
