@@ -718,7 +718,8 @@
     return top > 0 ? moneyKo(top) : '';
   }
 
-  function rewardHtml(ranked) {
+  // 지원금 알림의 알맹이. 상자는 heroHtml 이 씌운다.
+  function rewardInner(ranked) {
     var w = (S.def.result || {}).reward || {};
     if (!w.on) return '';
 
@@ -727,12 +728,27 @@
     var head = w.headline || w.top || '';
     if (!head && !w.sub && !w.note) return '';
 
-    return '<div class="dpf-rw">' +
-      (w.badge ? '<span class="dpf-rw-tag">' + esc(w.badge) + '</span>' : '') +
+    return (w.badge ? '<span class="dpf-rw-tag">' + esc(w.badge) + '</span>' : '') +
       (head ? '<p class="dpf-rw-h">' + fillTokens(head, amount) + '</p>' : '') +
       (w.sub ? '<p class="dpf-rw-s">' + fillTokens(w.sub, amount) + '</p>' : '') +
-      (w.note ? '<p class="dpf-rw-n">' + fillTokens(w.note, amount) + '</p>' : '') +
-      '</div>';
+      (w.note ? '<p class="dpf-rw-n">' + fillTokens(w.note, amount) + '</p>' : '');
+  }
+
+  /**
+   * 결과 화면 맨 위 한 덩어리 (2026-08-08 합침).
+   *
+   * ★ 지원금 알림과 신청 줄을 상자 두 개로 나누지 않는다
+   *   흰 상자가 위아래로 붙어 있으면 "지원금 얘기" 와 "신청 얘기" 가 다른 일처럼 읽힌다.
+   *   실제로는 한 흐름이다 — 얼마를 찾았고, 그러니 지금 신청하라는 말이다.
+   *   한 상자에 넣고 가운데를 옅은 선으로만 나눈다.
+   *
+   *   둘 중 하나만 켜져 있어도 상자는 하나다. 둘 다 꺼져 있으면 아예 안 그린다.
+   */
+  function heroHtml(ranked) {
+    var rw = rewardInner(ranked);
+    var ac = ranked.length ? actionsHtml(ranked, 'top') : '';
+    if (!rw && !ac) return '';
+    return '<div class="dpf-rw">' + rw + ac + '</div>';
   }
 
   // 결과 화면 맨 위 로고. '추천 결과' 라는 딱지 대신 로고를 가운데 둔다 (2026-08-08).
@@ -780,10 +796,9 @@
       '<div class="dpf-box dpf-box--page">' +
       '<div class="dpf-head dpf-head--res">' + resultLogoHtml() +
       '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
-      rewardHtml(ranked) +
       // ⚠ 순서를 바꾸지 말 것. 지원금 다음에 곧장 상품 목록이 오면 흐름이 끊긴다.
-      //   지원금 → 지금 신청 → (그래도 고르고 싶으면) 상품 목록 → 다시 신청.
-      (ranked.length ? actionsHtml(ranked, 'top') : '') +
+      //   지원금과 신청은 한 상자다 → (그래도 고르고 싶으면) 상품 목록 → 다시 신청.
+      heroHtml(ranked) +
       '<h2 class="dpf-q dpf-q--big">' + esc(r.title || '이런 상품은 어떠세요?') + '</h2>' +
       '<p class="dpf-qsub">' + esc(lead) + '</p>' +
       chipsHtml() +
@@ -1171,8 +1186,9 @@
       '.dpf-rw-s{margin:10px 0 0;font-size:15px;font-weight:700;color:#6b6880;line-height:1.55;' +
         'word-break:keep-all;}' +
       '.dpf-rw-s b{color:#6c3fc5;font-weight:800;}' +
-      '.dpf-rw-n{margin:13px 0 0;padding-top:13px;border-top:1px dashed #e7e0f7;' +
-        'font-size:18px;font-weight:800;color:#221f38;line-height:1.5;word-break:keep-all;}' +
+      // ⚠ 점선을 넣지 않는다. 아래 신청 줄이 이미 선 하나를 갖고 있어 선이 둘이 된다.
+      '.dpf-rw-n{margin:11px 0 0;font-size:18px;font-weight:800;color:#221f38;' +
+        'line-height:1.5;word-break:keep-all;}' +
       '.dpf-rw-n b{color:#e5484d;font-weight:900;}' +
       // 결과 화면 머리 — 로고를 가운데, 닫기를 오른쪽 끝에
       '.dpf-head--res{position:relative;justify-content:center;margin-bottom:20px;}' +
@@ -1199,11 +1215,11 @@
       '.dpf-act-s{margin:6px 0 0;font-size:14px;font-weight:700;color:#6c3fc5;word-break:keep-all;}' +
       '.dpf-act-s b{color:#6c3fc5;}' +
       '.dpf-act-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;}' +
-      // 위쪽 신청 줄 — 지원금 바로 아래. 문구와 버튼을 가운데로 모은다.
-      // ⚠ 바탕은 흰색을 지킨다. 색을 깔면 그 부분이 배경으로 읽혀 글자가 죽는다.
-      //   위쪽 지원금 알림에서 이미 겪은 일이다. (2026-08-08)
-      '.dpf-act--top{margin:0 0 24px;background:#fff;border-color:#ece5fa;' +
-        'box-shadow:0 6px 22px rgba(108,63,197,.07);}' +
+      // 위쪽 신청 줄 — 지원금 알림과 한 상자 안에 들어간다.
+      // ⚠ 여기에 배경·테두리·그림자를 주지 않는다. 상자는 바깥(.dpf-rw)이 이미 갖고 있고,
+      //   안에 또 상자를 그리면 두 덩어리로 읽힌다. 옅은 선으로만 나눈다. (2026-08-08)
+      '.dpf-act--top{margin:20px 0 0;padding:20px 0 0;background:none;border:none;' +
+        'border-top:1px solid #f1ecfb;border-radius:0;box-shadow:none;}' +
       '.dpf-act--top .dpf-act-push{margin-bottom:14px;}' +
       '.dpf-act--top .dpf-act-btns{margin-left:0;justify-content:center;}' +
       '.dpf-act--top .dpf-act-b{padding:14px 24px;font-size:15px;}' +
