@@ -164,9 +164,38 @@
     return hasBrand ? 'brand' : 'carrier';
   }
 
-  // 상품 요금을 보고 만원 단위 구간을 만든다.
-  // 상품이 없는 구간은 만들지 않는다. 고객이 골랐는데 0건이 되는 걸 막는다.
+  // '20000-29999' 처럼 생긴 값을 [최소, 최대] 로 읽는다.
+  function feeRangeOf(v) {
+    var m = String(v == null ? '' : v).match(/^(\d+)\s*-\s*(\d+)$/);
+    if (!m) return null;
+    return [Number(m[1]), Number(m[2])];
+  }
+
+  // 요금대 선택지.
+  // ★ 관리자가 구간을 손봐 두었으면 그것을 그대로 쓴다.
+  //   같은 2만원대라도 '3~4인용' 과 '4~5인 다가구용' 이 따로 있을 수 있어서,
+  //   만원 단위로 기계가 나눈 것만으로는 부족하다. (2026-08-08 관리자 요청)
+  //   손본 게 없을 때만 아래 자동 제안이 돈다.
   function buildFeeOptions(q, products) {
+    var custom = (q.options || []).filter(function (o) { return feeRangeOf(o && o.value); });
+    if (custom.length) {
+      var w2 = Number(q.weight) || 3;
+      return custom.map(function (o) {
+        var r = feeRangeOf(o.value);
+        return {
+          value: o.value,
+          label: o.label || (Math.floor(r[0] / 10000) + '만원대'),
+          desc: o.desc || '',
+          image: o.image || '',
+          why: o.why || o.label || '',
+          // 관리자가 4단계에서 따로 조건을 만들었으면 그것이 이긴다.
+          rules: (o.rules && o.rules.length)
+            ? o.rules
+            : [{ field: '__fee', op: 'between', value: [r[0], r[1]], score: w2 }],
+          pin: o.pin || [],
+        };
+      });
+    }
     var STEP = 10000;
     var buckets = {};
     products.forEach(function (p) {
