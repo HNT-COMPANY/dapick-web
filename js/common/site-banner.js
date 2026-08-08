@@ -4,6 +4,8 @@
 // GET /api/banners?category= → 활성 배너 주입. 0장이면 영역 숨김.
 // 2장 이상이면 화살표/점/자동전환(5s)/hover정지/스와이프. 1장이면 컨트롤 숨김.
 // 클릭 우선순위: linkUrl > 상세페이지(banner-detail.html?id=) > 무동작
+// ★ linkUrl 을 '#finder' 로 적으면 주소로 가지 않고 그 화면의 '상품 찾기' 를 연다 (2026-08-08).
+//   백엔드에 칸을 새로 만들지 않았다 — 이미 있는 링크 칸의 약속값 하나면 되는 일이다.
 // 의존: api.js(api.get, ApiResponse.data 언랩) — 페이지에서 먼저 로드.
 // ════════════════════════════════════════════════════
 (function () {
@@ -13,6 +15,12 @@
     return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
       return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
     });
+  }
+
+  // 배너를 눌렀을 때 주소로 가는 대신 상품 찾기를 열 것인가.
+  // 관리자는 배너 관리의 링크 칸에 #finder 라고만 적으면 된다.
+  function isFinderLink(dest) {
+    return /^#finder$/i.test(String(dest || '').trim());
   }
 
   function resolveClick(b) {
@@ -61,11 +69,34 @@
       var dest = resolveClick(b);
       var img = '<img src="' + esc(b.imageUrl) + '" alt="' + esc(b.altText || '') + '" ' +
         (i === 0 ? 'loading="eager"' : 'loading="lazy"') + ' decoding="async" />';
-      var inner = dest
-        ? '<a class="sb__link" href="' + esc(dest) + '"' + (/^https?:/i.test(dest) ? ' target="_blank" rel="noopener"' : '') + '>' + img + '</a>'
-        : img;
+      var inner;
+      if (!dest) {
+        inner = img;
+      } else if (isFinderLink(dest)) {
+        // 주소 이동이 아니라 그 자리에서 상품 찾기를 연다.
+        inner = '<a class="sb__link" href="#" data-dpfinder="1">' + img + '</a>';
+      } else {
+        inner = '<a class="sb__link" href="' + esc(dest) + '"' +
+          (/^https?:/i.test(dest) ? ' target="_blank" rel="noopener"' : '') + '>' + img + '</a>';
+      }
       return '<div class="sb__slide">' + inner + '</div>';
     }).join('');
+
+    // #finder 배너 클릭. 슬라이드가 다시 그려져도 살아남게 묶음에 한 번만 건다.
+    if (!track.dataset.dpfBound) {
+      track.dataset.dpfBound = '1';
+      track.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest && e.target.closest('[data-dpfinder]');
+        if (!a) return;
+        e.preventDefault();
+        if (typeof dpFinder === 'undefined' || typeof dpFinder.open !== 'function') {
+          console.warn('[site-banner] 이 화면에 상품 찾기(finder.js)가 실려 있지 않다');
+          return;
+        }
+        // 그 카테고리에 파인더가 없으면 open 이 스스로 아무것도 안 한다(finder.js:212).
+        dpFinder.open();
+      });
+    }
 
     var total = rows.length;
     var multi = total > 1;
