@@ -18,9 +18,33 @@
   }
 
   // 배너를 눌렀을 때 주소로 가는 대신 상품 찾기를 열 것인가.
-  // 관리자는 배너 관리의 링크 칸에 #finder 라고만 적으면 된다.
-  function isFinderLink(dest) {
-    return /^#finder$/i.test(String(dest || '').trim());
+  //
+  // 관리자는 링크 칸에 이렇게만 적는다.
+  //   #finder           이 페이지에 있는 상품 찾기를 그 자리에서 연다
+  //   #finder:water     정수기 찾기로 보낸다 (어느 페이지 배너에서든)
+  //   #finder:internet  인터넷·TV 찾기로 보낸다
+  //
+  // 뒤에 붙는 이름은 카테고리 주소(slug)다. 어드민 카테고리 관리에 /c/xxx 로 적혀 있다.
+  function finderTarget(dest) {
+    var m = String(dest || '').trim().match(/^#finder(?::([a-z0-9_-]+))?$/i);
+    if (!m) return null;
+    return (m[1] || '').toLowerCase();   // '' = 이 페이지
+  }
+
+  // 카테고리별 전용 페이지. 없는 카테고리는 공용 주소(/c/{slug})로 간다.
+  // ⚠ 이 목록은 '전용 페이지가 따로 있는 카테고리' 라는 사이트 구조 사실이다.
+  //   전용 페이지를 새로 만들 때만 한 줄 는다.
+  var FINDER_PAGES = { water: '/water', internet: '/internet' };
+
+  function finderPageOf(slug) {
+    return FINDER_PAGES[slug] || '/c/' + encodeURIComponent(slug);
+  }
+
+  // 지금 보고 있는 페이지가 그 카테고리인가. 맞으면 이동하지 않고 그 자리에서 연다.
+  function isHere(slug) {
+    if (!slug) return true;
+    var path = String(location.pathname || '').replace(/\.html$/, '');
+    return path === finderPageOf(slug) || path === '/c/' + slug;
   }
 
   function resolveClick(b) {
@@ -72,9 +96,15 @@
       var inner;
       if (!dest) {
         inner = img;
-      } else if (isFinderLink(dest)) {
-        // 주소 이동이 아니라 그 자리에서 상품 찾기를 연다.
-        inner = '<a class="sb__link" href="#" data-dpfinder="1">' + img + '</a>';
+      } else if (finderTarget(dest) !== null) {
+        var slug = finderTarget(dest);
+        if (isHere(slug)) {
+          // 지금 이 페이지 것이다. 주소 이동 없이 그 자리에서 연다.
+          inner = '<a class="sb__link" href="#" data-dpfinder="1">' + img + '</a>';
+        } else {
+          // 다른 카테고리다. 그 페이지로 보내고 도착하면 스스로 열린다(finder.js).
+          inner = '<a class="sb__link" href="' + esc(finderPageOf(slug) + '?finder=1') + '">' + img + '</a>';
+        }
       } else {
         inner = '<a class="sb__link" href="' + esc(dest) + '"' +
           (/^https?:/i.test(dest) ? ' target="_blank" rel="noopener"' : '') + '>' + img + '</a>';

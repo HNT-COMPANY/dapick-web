@@ -143,14 +143,26 @@
   // 지금 파는 것만 보여준다. 관리자가 상품을 추가하면 선택지도 저절로 늘어난다.
   //
   // optionSource
-  //   'brand'          → p.brand
+  //   'brand'          → p.brand (없으면 p.carrier)
   //   'color'          → p.colors[] (배열)
   //   'field:<경로>'   → 그 칸. 배열이면 펼친다
+  //
+  // ⚠ 어드민 finder-edit-questions.js 의 fqAutoValues 와 같은 규칙이어야 한다.
+  //   한쪽만 고치면 관리자가 본 선택지와 고객이 보는 선택지가 달라진다.
+  function brandFieldOf(products) {
+    // 정수기는 brand, 인터넷·TV 는 carrier 에 브랜드가 들어 있다.
+    // 관리자에게 "브랜드인가 통신사인가" 를 묻지 않는다 — 상품을 보고 있는 쪽을 고른다.
+    var hasBrand = products.some(function (p) { return p && p.brand; });
+    return hasBrand ? 'brand' : 'carrier';
+  }
+
   function buildDynamicOptions(q, products) {
     var src = q.optionSource;
     if (!src) return q.options || [];
 
-    var field = src === 'brand' ? 'brand' : src === 'color' ? 'colors' : String(src).replace(/^field:/, '');
+    var field = src === 'brand' ? brandFieldOf(products)
+      : src === 'color' ? 'colors'
+      : String(src).replace(/^field:/, '');
     var isArrayField = false;
     var seen = {};
 
@@ -916,6 +928,13 @@
         if (!setup(ready.row.definition || {}, ready.row.name, ready.products, opt)) return;
 
         if (slot) mountEntry(slot);
+
+        // 주소에 ?finder=1 이 붙어 있으면 버튼을 안 눌러도 바로 연다.
+        // 다른 페이지 배너에서 '이 카테고리 찾기' 로 보낼 때 쓴다 —
+        // 고객은 배너를 누르자마자 질문이 시작되는 것으로 느낀다.
+        try {
+          if (new URLSearchParams(location.search).get('finder') === '1') open();
+        } catch (x) {}
         if (typeof opt.onReady === 'function') opt.onReady(ready.row);
       })
       .catch(function (e) {

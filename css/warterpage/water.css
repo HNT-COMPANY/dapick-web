@@ -2649,6 +2649,19 @@
      폭을 정확히 맞추면서 화살표 자리를 배너 밖에 두는 것은 불가능하다
      (밖에 두려면 그만큼 배너가 좁아진다). 캐러셀 화살표를 안쪽에 겹치는 쪽을 골랐다.
    ════════════════════════════════════════════════════════════ */
+/* 나만의 정수기 찾기 진입 버튼 자리 (finder.js 가 채운다).
+   ⚠ 폭은 바로 위 배너(.sb)와 같은 규격이어야 한다 —
+      둘이 세로로 나란히 서기 때문에 한 곳만 달라도 좌우가 어긋나 바로 티가 난다.
+   버튼 모양 자체는 엔진이 그린다(.dpf-cta). 여기서는 자리와 폭만 잡는다. */
+.water-page #waterFinder {
+  width: calc(100% - 80px);
+  max-width: 1400px;
+  margin: 20px auto 28px;
+}
+@media (max-width: 768px) {
+  .water-page #waterFinder { width: calc(100% - 32px); margin: 16px auto 22px; }
+}
+
 .water-page .sb {
   width: calc(100% - 80px);
   max-width: 1400px;
