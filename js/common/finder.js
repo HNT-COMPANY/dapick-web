@@ -25,6 +25,7 @@
 //     hrefOf : function (p) { return '/water-detail?id=' + p.id; },
 //     imageOf: function (p) { return p.imageUrl; },
 //     feeOf  : function (p) { return 0; },      // 없으면 요금을 안 적는다
+//     giftOf : function (p) { return p.gift; }, // 지원금 띠 금액. 없으면 gift/cashback 을 본다
 //     feeSuffix: '~',
 //     onApply: function (p) { ... },            // 결과 카드의 '신청' 버튼
 //   });
@@ -654,9 +655,56 @@
     }).join('') + '</div>';
   }
 
+  // 결과 카드는 한 줄 4개까지만 보여준다 (2026-08-08).
+  // 더 늘리면 줄바꿈이 생겨 "1등부터 4등" 이라는 그림이 깨지고,
+  // 고객이 고를 것이 많아질수록 아무것도 안 고르고 나간다.
+  var RES_MAX = 4;
+
+  // 금액을 사람이 읽는 말로. 470000 → 47만원
+  function moneyKo(n) {
+    n = Number(n) || 0;
+    if (n <= 0) return '';
+    if (n < 10000) return n.toLocaleString('ko-KR') + '원';
+    var man = Math.round((n / 10000) * 10) / 10;
+    return man + '만원';
+  }
+
+  // 상품 하나에 걸린 지원금(사은품). 화면이 giftOf 를 주면 그쪽 말을 따른다.
+  function giftOf(p) {
+    if (!p || typeof p !== 'object') return 0;
+    if (S && S.opt && typeof S.opt.giftOf === 'function') return Number(S.opt.giftOf(p)) || 0;
+    if (p.gift != null) return Number(p.gift) || 0;
+    if (p.giftAmount != null) return Number(p.giftAmount) || 0;
+    if (p.cashback != null) return Number(p.cashback) || 0;
+    return 0;
+  }
+
+  // 결과 맨 위 지원금 띠. 관리자가 5단계에서 켜야 나온다.
+  // ⚠ 금액 칸을 비워두면 '보여줄 상품 중 최고 사은품' 을 엔진이 적는다.
+  //   손으로 적어둔 숫자는 상품이 바뀌어도 안 바뀌어서 곧 거짓말이 된다.
+  function rewardHtml(ranked) {
+    var w = (S.def.result || {}).reward || {};
+    if (!w.on) return '';
+
+    var amount = String(w.amount || '').trim();
+    if (!amount) {
+      var top = 0;
+      ranked.forEach(function (x) { var g = giftOf(x.p); if (g > top) top = g; });
+      amount = top > 0 ? '최대 ' + moneyKo(top) : '';
+    }
+    // 켜 놨는데 적을 것이 하나도 없으면 빈 띠가 남는다. 그럴 땐 아예 안 그린다.
+    if (!amount && !w.top && !w.sub) return '';
+
+    return '<div class="dpf-rw">' +
+      (w.top ? '<span class="dpf-rw-t">' + esc(w.top) + '</span>' : '') +
+      (amount ? '<strong class="dpf-rw-a">' + esc(amount) + '</strong>' : '') +
+      (w.sub ? '<span class="dpf-rw-s">' + esc(w.sub) + '</span>' : '') +
+      '</div>';
+  }
+
   function paintResult() {
     var r = S.def.result || {};
-    var limit = Number(r.count) || 4;
+    var limit = Math.min(RES_MAX, Number(r.count) || RES_MAX);
     var all = rank();
 
     // 칩이 켜져 있으면 그 조건에 맞는 것만 남긴다.
@@ -682,11 +730,13 @@
       '<div class="dpf-box dpf-box--page">' +
       '<div class="dpf-head"><span class="dpf-step">추천 결과</span>' +
       '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
+      rewardHtml(ranked) +
       '<h2 class="dpf-q dpf-q--big">' + esc(r.title || '이런 상품은 어떠세요?') + '</h2>' +
       '<p class="dpf-qsub">' + esc(lead) + '</p>' +
       chipsHtml() +
       (ranked.length
-        ? '<div class="dpf-res">' + ranked.map(cardHtml).join('') + '</div>'
+        ? '<div class="dpf-res dpf-res--n' + Math.min(RES_MAX, ranked.length) + '">' +
+          ranked.map(cardHtml).join('') + '</div>'
         : '<p class="dpf-qsub">보여드릴 상품이 없습니다.</p>') +
       '<div class="dpf-foot">' +
       '<button type="button" class="dpf-sub" data-dpf-again>다시 고르기</button>' +
@@ -827,8 +877,12 @@
         'padding:15px;font-size:15px;font-weight:800;cursor:pointer;font-family:inherit;}' +
       '.dpf-go:hover{background:#5b34ad;}' +
       '.dpf-go--sm{width:auto;margin:0;padding:11px 18px;font-size:13.5px;border-radius:10px;}' +
-      // 결과 — 3열. 좁아지면 2열, 더 좁아지면 1열.
-      '.dpf-res{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}' +
+      // 결과 — 상품 개수만큼만 칸을 만든다. 3개인데 4칸이면 오른쪽이 휑하다.
+      '.dpf-res{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;}' +
+      '.dpf-res--n1{grid-template-columns:minmax(0,300px);justify-content:center;}' +
+      '.dpf-res--n2{grid-template-columns:repeat(2,1fr);}' +
+      '.dpf-res--n3{grid-template-columns:repeat(3,1fr);}' +
+      '.dpf-res--n4{grid-template-columns:repeat(4,1fr);}' +
       '.dpf-card{display:flex;flex-direction:column;border:1px solid #eeecf5;border-radius:12px;' +
         'padding:12px;background:#fff;}' +
       '.dpf-card-l{display:block;text-decoration:none;color:inherit;flex:1 1 auto;}' +
@@ -912,11 +966,19 @@
       '.dpf-badge--blue{background:#6c3fc5;}' +
       '.dpf-badge--orange{background:#e08600;}' +
       '.dpf-badge--red{background:#e5484d;}' +
-      '@media(max-width:820px){.dpf-res{grid-template-columns:repeat(2,1fr);}' +
+      // 결과 맨 위 지원금 띠 — 화면을 열자마자 눈에 들어와야 한다
+      '.dpf-rw{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;' +
+        'margin:0 0 20px;padding:22px 18px;border-radius:16px;color:#fff;' +
+        'background:linear-gradient(135deg,#6c3fc5 0%,#43268b 100%);}' +
+      '.dpf-rw-t{font-size:13.5px;font-weight:600;opacity:.85;}' +
+      '.dpf-rw-a{font-size:34px;font-weight:900;line-height:1.2;letter-spacing:-.6px;}' +
+      '.dpf-rw-s{font-size:14.5px;font-weight:700;line-height:1.5;}' +
+      '@media(max-width:820px){.dpf-res,.dpf-res--n3,.dpf-res--n4{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--card{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--n1{grid-template-columns:1fr;}}' +
       '@media(max-width:520px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
-        '.dpf-res{grid-template-columns:1fr 1fr;gap:9px;}}';
+        '.dpf-rw{padding:17px 14px;}.dpf-rw-a{font-size:26px;}.dpf-rw-s{font-size:13px;}' +
+        '.dpf-res,.dpf-res--n2,.dpf-res--n3,.dpf-res--n4{grid-template-columns:1fr 1fr;gap:9px;}}';
     var s = document.createElement('style');
     s.textContent = css;
     document.head.appendChild(s);
