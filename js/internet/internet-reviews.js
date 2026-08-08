@@ -9,7 +9,17 @@
   'use strict';
 
   // 3 으로 올림 (2026-08-05). 가로 3칸 그리드와 같은 수여야 마지막 줄이 안 빈다.
+  //
+  // ⚠ 화면이 data-count 로 덮어쓸 수 있다 (2026-08-08).
+  //   인터넷 목록 화면은 후기와 자주 묻는 질문을 좌우 반씩 나눠 쓰는데,
+  //   그 반칸에는 한 줄에 두 칸까지만 들어간다. 3장을 주면 2+1 로 쌓여
+  //   화면이 길어진다 — 칸 수와 후기 수가 어긋나면 늘 이렇게 된다.
   var TEASER_COUNT = 3;
+
+  function teaserCount(box) {
+    var n = Number(box && box.getAttribute('data-count'));
+    return (n >= 1 && n <= 12) ? n : TEASER_COUNT;
+  }
   var _rendered = false;
 
   function esc(s) {
@@ -114,10 +124,12 @@
     _rendered = true;
     try {
       var data = await api.get('/api/reviews?category=INTERNET_TV&page=0&size=8');
-      var list = ((data && data.content) || []).filter(function (r) { return r && !r.hidden; }).slice(0, TEASER_COUNT);
+      var list = ((data && data.content) || []).filter(function (r) { return r && !r.hidden; })
+        .slice(0, teaserCount(box));
       if (!list.length) { box.style.display = 'none'; return; }
       injectStyles();
-      box.className = 'ivr-box';
+      // ⚠ 통째로 갈아끼우지 않는다. 화면이 붙여 둔 다른 클래스가 날아간다.
+      box.classList.add('ivr-box');
       box.style.display = '';
       box.innerHTML =
         '<div class="ivr-head">' +

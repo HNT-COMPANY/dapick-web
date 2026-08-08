@@ -1016,9 +1016,14 @@
   margin: 0;
   padding: 0;
 }
+/* ⚠ 흰 바탕이다 (2026-08-08).
+   전에는 연보라(#f4f3fa)였는데, 그 위에 흰 카드가 얹히면 카드만 도드라지고
+   글자가 배경에 묻혔다. 파인더 결과 화면에서 이미 같은 문제를 겪었다.
+   되돌리려면 아래 흰색을 #f4f3fa 로 바꾸면 된다.
+   공통(common.css)의 사이트 전체 배경은 안 건드린다 — 다른 화면까지 바뀐다. */
 body {
   font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: #f4f3fa;
+  background: #fff;
 }
 
 /* ===== 캐러셀 ===== */

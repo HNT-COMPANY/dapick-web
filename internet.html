@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="css/common/footer.css"/>
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
-  <link rel="stylesheet" href="css/internet/internet.css?v=20260808b"/>
+  <link rel="stylesheet" href="css/internet/internet.css?v=20260808c"/>
     <link rel="stylesheet" href="css/internet/internet-banner.css"/>
   <link rel="stylesheet" href="css/common/site-banner.css"/>
 
@@ -181,7 +181,8 @@
          2단 안에서는 그걸 풀어야 해서 아래 i-itv-half 가 덮어쓴다. -->
   <div class="i-itv-sec i-itv-2col">
     <div class="i-itv-half">
-      <div id="ipReviews" class="ivr-box" style="display:none;"></div>
+      <!-- data-count="2" — 반칸에 한 줄로 딱 두 장. 3장이면 2+1 로 쌓여 화면이 길어진다. -->
+      <div id="ipReviews" class="ivr-box" data-count="2" style="display:none;"></div>
     </div>
     <div class="i-itv-half">
       <div class="dpfaq"
@@ -288,7 +289,7 @@
 <script src="js/internet/internet-finder.js?v=20260808b"></script>
 <!-- 후기와 자주 묻는 질문. 둘 다 실어 두기만 하면 스스로 붙는다.
      rich-render 는 질문 답변의 서식(굵기·표)을 그린다. 없으면 평문으로 내려간다. -->
-<script src="js/internet/internet-reviews.js?v=20260808a"></script>
+<script src="js/internet/internet-reviews.js?v=20260808b"></script>
 <script src="js/common/rich-render.js"></script>
 <script src="js/common/product-faq.js?v=20260808a"></script>
 
