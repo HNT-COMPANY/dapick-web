@@ -709,26 +709,39 @@
   //
   // ⚠ 금액 칸을 비워두면 '보여줄 상품 중 최고 사은품' 을 엔진이 적는다.
   //   손으로 적어둔 숫자는 상품이 바뀌어도 안 바뀌어서 곧 거짓말이 된다.
+  function amountOf(ranked) {
+    var w = (S.def.result || {}).reward || {};
+    var a = String(w.amount || '').trim();
+    if (a) return a;
+    var top = 0;
+    ranked.forEach(function (x) { var g = giftOf(x.p); if (g > top) top = g; });
+    return top > 0 ? moneyKo(top) : '';
+  }
+
   function rewardHtml(ranked) {
     var w = (S.def.result || {}).reward || {};
     if (!w.on) return '';
 
-    var amount = String(w.amount || '').trim();
-    if (!amount) {
-      var top = 0;
-      ranked.forEach(function (x) { var g = giftOf(x.p); if (g > top) top = g; });
-      amount = top > 0 ? moneyKo(top) : '';
-    }
-
+    var amount = amountOf(ranked);
     // 옛 이름(top) 도 읽는다. 5단계에서 headline 으로 옮기기 전에 저장한 것이 있다.
     var head = w.headline || w.top || '';
-    if (!head && !w.sub) return '';
+    if (!head && !w.sub && !w.note) return '';
 
     return '<div class="dpf-rw">' +
       (w.badge ? '<span class="dpf-rw-tag">' + esc(w.badge) + '</span>' : '') +
       (head ? '<p class="dpf-rw-h">' + fillTokens(head, amount) + '</p>' : '') +
       (w.sub ? '<p class="dpf-rw-s">' + fillTokens(w.sub, amount) + '</p>' : '') +
+      (w.note ? '<p class="dpf-rw-n">' + fillTokens(w.note, amount) + '</p>' : '') +
       '</div>';
+  }
+
+  // 결과 화면 맨 위 로고. '추천 결과' 라는 딱지 대신 로고를 가운데 둔다 (2026-08-08).
+  // 딱지는 관리자 말이지 고객 말이 아니다. 로고는 여기가 어디인지 알려주고 믿음을 준다.
+  // 파일이 없으면 스스로 사라진다 — 깨진 그림 아이콘이 뜨는 것보다 낫다.
+  function resultLogoHtml() {
+    var url = String((S.def.result || {}).logoUrl || '').trim() || '/assets/logos/dapicklogo.png';
+    return '<div class="dpf-rlogo"><img src="' + esc(url) + '" alt="다픽"' +
+      ' onerror="this.parentNode.style.display=\'none\'"/></div>';
   }
 
   function paintResult() {
@@ -765,7 +778,7 @@
     var ov = el();
     ov.innerHTML =
       '<div class="dpf-box dpf-box--page">' +
-      '<div class="dpf-head"><span class="dpf-step">추천 결과</span>' +
+      '<div class="dpf-head dpf-head--res">' + resultLogoHtml() +
       '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
       rewardHtml(ranked) +
       '<h2 class="dpf-q dpf-q--big">' + esc(r.title || '이런 상품은 어떠세요?') + '</h2>' +
@@ -856,6 +869,20 @@
     var kakaoOn = a.kakaoOn !== false && !!kakaoUrl;  // 주소가 없으면 못 켠다
     if (!applyOn && !simpleOn && !kakaoOn) return '';
 
+    var amount = amountOf(ranked);
+
+    // ★ 버튼 위에 지원금을 한 번 더 적는다 (2026-08-08)
+    //   맨 위에서 한 번 보여줬어도, 상품을 훑어 내려온 고객의 눈에는
+    //   버튼만 남는다. 누르기 직전에 다시 이유를 보여주는 자리다.
+    var head = a.headline == null ? '{이름}님 숨은 지원금 {금액} 발견!' : a.headline;
+    var sub = a.sub == null ? '비밀 지원금 더 찾으러 갈까요?' : a.sub;
+    var push = (head || sub)
+      ? '<div class="dpf-act-push">' +
+        (head ? '<p class="dpf-act-h">' + fillTokens(head, amount) + '</p>' : '') +
+        (sub ? '<p class="dpf-act-s">' + fillTokens(sub, amount) + '</p>' : '') +
+        '</div>'
+      : '';
+
     var p = pickedRow(ranked);
     var line = p
       ? '<span class="dpf-act-on">' + esc(a.pickedLabel || '고른 상품') + ' · <b>' +
@@ -863,7 +890,8 @@
       : '<span class="dpf-act-hint">' +
         esc(a.pickHint || '위에서 상품을 누르면 그 상품으로 접수됩니다') + '</span>';
 
-    return '<div class="dpf-act">' + line + '<div class="dpf-act-btns">' +
+    return '<div class="dpf-act">' + push +
+      '<div class="dpf-act-row">' + line + '<div class="dpf-act-btns">' +
       (applyOn
         ? '<button type="button" class="dpf-act-b dpf-act-b--a" data-dpf-apply>' +
           esc(a.applyLabel || '신청하기') + '</button>'
@@ -876,7 +904,7 @@
         ? '<button type="button" class="dpf-act-b dpf-act-b--k" data-dpf-kakao>' +
           esc(a.kakaoLabel || '카카오톡 상담') + '</button>'
         : '') +
-      '</div></div>';
+      '</div></div></div>';
   }
 
   // 간편 신청을 실제로 여는 것은 화면 쪽 일이다.
@@ -888,9 +916,18 @@
     console.warn('[finder] 간편 신청을 열 방법이 없다 (onSimple 또는 openSimpleApply 필요)');
   }
 
+  // 결과 카드 사진. 어드민 4단계에서 상품마다 올린 것이 먼저다 (2026-08-08).
+  // 상품 관리에 올린 사진은 상세 화면용이라 결과 카드에 맞지 않을 때가 있고,
+  // 인터넷TV 대표 사진 칸은 주소를 손으로 쳐야 해서 거의 비어 있다.
+  function imageOf(p) {
+    var picked = ((S.def.result || {}).images || {})[String(p && p.id)];
+    if (picked) return picked;
+    return S.opt.imageOf ? S.opt.imageOf(p) : (p && p.imageUrl);
+  }
+
   function cardHtml(x, i) {
     var p = x.p;
-    var img = S.opt.imageOf ? S.opt.imageOf(p) : p.imageUrl;
+    var img = imageOf(p);
     var href = S.opt.hrefOf ? S.opt.hrefOf(p) : '/product-detail?id=' + encodeURIComponent(p.id);
 
     // 순위는 3등까지만 적는다. 전부 적으면 6등이 나쁜 상품처럼 보인다.
@@ -1016,7 +1053,9 @@
       '.dpf-card{display:flex;flex-direction:column;border:1px solid #eeecf5;border-radius:12px;' +
         'padding:12px;background:#fff;}' +
       '.dpf-card-l{display:block;text-decoration:none;color:inherit;flex:1 1 auto;}' +
-      '.dpf-thumb{aspect-ratio:1/1;display:flex;align-items:center;justify-content:center;' +
+      // ⚠ 높이를 고정한다. 비율(aspect-ratio)로 두면 사진 있는 카드는 폭만큼 정사각이 되고
+      //   사진 없는 카드는 낮아져서 카드 높이가 제각각이 된다. (2026-08-08 실제로 그랬다)
+      '.dpf-thumb{height:132px;flex-shrink:0;display:flex;align-items:center;justify-content:center;' +
         'background:#faf9fd;border-radius:8px;overflow:hidden;margin-bottom:9px;}' +
       '.dpf-thumb img{width:100%;height:100%;object-fit:contain;}' +
       '.dpf-noimg{font-size:12px;color:#a09dba;}' +
@@ -1106,9 +1145,17 @@
       '.dpf-rw-s{margin:10px 0 0;font-size:15px;font-weight:700;color:#6b6880;line-height:1.55;' +
         'word-break:keep-all;}' +
       '.dpf-rw-s b{color:#6c3fc5;font-weight:800;}' +
-      // 사진이 없는 카드는 자리를 낮춘다. 정사각 회색칸이 카드를 키워
-      // 위쪽 지원금 글자보다 눈에 먼저 들어왔다. (2026-08-08)
-      '.dpf-thumb--no{aspect-ratio:auto;height:62px;}' +
+      '.dpf-rw-n{margin:13px 0 0;padding-top:13px;border-top:1px dashed #e7e0f7;' +
+        'font-size:18px;font-weight:800;color:#221f38;line-height:1.5;word-break:keep-all;}' +
+      '.dpf-rw-n b{color:#e5484d;font-weight:900;}' +
+      // 결과 화면 머리 — 로고를 가운데, 닫기를 오른쪽 끝에
+      '.dpf-head--res{position:relative;justify-content:center;margin-bottom:20px;}' +
+      '.dpf-head--res .dpf-x{position:absolute;right:0;top:50%;transform:translateY(-50%);}' +
+      '.dpf-rlogo{display:flex;justify-content:center;}' +
+      '.dpf-rlogo img{height:30px;width:auto;opacity:.95;}' +
+      '@media(max-width:520px){.dpf-rlogo img{height:24px;}}' +
+      // 사진이 없어도 같은 높이를 지킨다. 회색칸만 남고 글자 자리는 그대로다.
+      '.dpf-thumb--no{background:#f6f5fa;}' +
       // 카드 고르기 — 눌린 카드가 한눈에 보여야 바닥 버튼과 이어진다
       '.dpf-card{cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease;}' +
       '.dpf-card:hover{border-color:#d6c9f7;}' +
@@ -1116,9 +1163,16 @@
       '.dpf-pick{position:absolute;top:-7px;left:-7px;width:24px;height:24px;border-radius:50%;' +
         'background:#6c3fc5;color:#fff;font-size:13px;font-weight:900;z-index:1;' +
         'display:flex;align-items:center;justify-content:center;}' +
-      // 바닥 신청 줄 — 간편 신청과 카카오톡
-      '.dpf-act{margin-top:18px;padding:15px 16px;border-radius:14px;background:#faf9fd;' +
-        'border:1px solid #efecf8;display:flex;flex-wrap:wrap;align-items:center;gap:12px;}' +
+      // 바닥 신청 줄 — 지원금을 한 번 더 말하고 세 버튼을 놓는다
+      '.dpf-act{margin-top:20px;padding:18px;border-radius:16px;background:#faf9fd;' +
+        'border:1px solid #efecf8;}' +
+      '.dpf-act-push{text-align:center;margin-bottom:15px;}' +
+      '.dpf-act-h{margin:0;font-size:21px;font-weight:900;color:#1b1830;line-height:1.4;' +
+        'letter-spacing:-.4px;word-break:keep-all;}' +
+      '.dpf-act-h b{color:#e5484d;font-weight:900;}' +
+      '.dpf-act-s{margin:6px 0 0;font-size:14px;font-weight:700;color:#6c3fc5;word-break:keep-all;}' +
+      '.dpf-act-s b{color:#6c3fc5;}' +
+      '.dpf-act-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;}' +
       '.dpf-act-hint{font-size:13px;color:#8b88a3;font-weight:600;}' +
       '.dpf-act-on{font-size:13.5px;color:#6b6880;font-weight:600;}' +
       '.dpf-act-on b{color:#221f38;font-weight:800;}' +
@@ -1133,16 +1187,18 @@
       '.dpf-act-b--k{background:#fee500;color:#181600;}' +
       '.dpf-act-b--k:hover{background:#f2da00;}' +
       // 버튼 셋이 한 줄에 안 들어가면 줄 전체를 세로로 세운다.
-      '@media(max-width:900px){.dpf-act{flex-direction:column;align-items:stretch;gap:11px;}' +
+      '@media(max-width:900px){.dpf-act-row{flex-direction:column;align-items:stretch;gap:11px;}' +
         '.dpf-act-btns{margin-left:0;}.dpf-act-b{flex:1 1 0;padding:14px 8px;font-size:13.5px;}}' +
-      '@media(max-width:520px){.dpf-act-btns{flex-direction:column;}' +
-        '.dpf-act-b{width:100%;font-size:14.5px;}}' +
+      '@media(max-width:520px){.dpf-act{padding:16px 14px;}' +
+        '.dpf-act-h{font-size:17px;}.dpf-act-s{font-size:13px;}' +
+        '.dpf-act-btns{flex-direction:column;}.dpf-act-b{width:100%;font-size:14.5px;}}' +
       '@media(max-width:820px){.dpf-res,.dpf-res--n3,.dpf-res--n4{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--card{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--n1{grid-template-columns:1fr;}}' +
       '@media(max-width:520px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
         '.dpf-rw{padding:19px 14px 17px;border-radius:14px;}' +
-        '.dpf-rw-h{font-size:21px;}.dpf-rw-s{font-size:13px;}' +
+        '.dpf-rw-h{font-size:21px;}.dpf-rw-s{font-size:13px;}.dpf-rw-n{font-size:15.5px;}' +
+        '.dpf-thumb{height:104px;}' +
         '.dpf-res,.dpf-res--n2,.dpf-res--n3,.dpf-res--n4{grid-template-columns:1fr 1fr;gap:9px;}}';
     var s = document.createElement('style');
     s.textContent = css;
