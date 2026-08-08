@@ -306,6 +306,7 @@
     S.answers = {};
     S.cur = -1;   // -1 = 시작 화면
     S.chip = -1;  // 켜 둔 필터 칩. -1 = 없음
+    S.pick = null;  // 결과에서 고른 상품 id. 하단 신청 버튼이 이걸 싣고 간다
     el().hidden = false;
     document.body.style.overflow = 'hidden';
     paint();
@@ -679,7 +680,33 @@
     return 0;
   }
 
-  // 결과 맨 위 지원금 띠. 관리자가 5단계에서 켜야 나온다.
+  // 로그인한 고객의 이름. 없으면 '고객'.
+  // ⚠ localStorage 는 시크릿 모드나 쿠키 차단에서 통째로 던진다. 감싸 둔다.
+  function userName() {
+    try {
+      var n = window.localStorage && localStorage.getItem('dapick_nick');
+      n = n && String(n).trim();
+      return n || '고객';
+    } catch (e) { return '고객'; }
+  }
+
+  // 관리자가 적은 글에서 {금액} · {이름} 을 실제 값으로 바꾼다.
+  // ⚠ 먼저 esc 로 다 막고 나서 자리표를 바꾼다. 순서를 뒤집으면
+  //   고객 이름에 태그가 들어 있을 때 그대로 화면에 실린다.
+  function fillTokens(s, amount) {
+    return esc(s)
+      .replace(/\{금액\}/g, amount ? '<b>' + esc(amount) + '</b>' : '')
+      .replace(/\{이름\}/g, '<b>' + esc(userName()) + '</b>');
+  }
+
+  // 결과 맨 위 지원금 알림. 관리자가 5단계에서 켜야 나온다.
+  //
+  // ★ 색을 칠한 띠가 아니라 글자로 세운다 (2026-08-08 다시 만듦)
+  //   보라색 띠를 통째로 깔았더니 띠가 배경처럼 읽히고 그 아래 상품 카드가
+  //   더 눈에 들어왔다. 지원금이 주인공이어야 하는데 반대가 된 것이다.
+  //   흰 바탕에 큰 글자를 놓고 금액에만 색을 준다. 카드 글자(13.5px)보다
+  //   두 배 이상 크면 눈이 여기부터 간다.
+  //
   // ⚠ 금액 칸을 비워두면 '보여줄 상품 중 최고 사은품' 을 엔진이 적는다.
   //   손으로 적어둔 숫자는 상품이 바뀌어도 안 바뀌어서 곧 거짓말이 된다.
   function rewardHtml(ranked) {
@@ -690,15 +717,17 @@
     if (!amount) {
       var top = 0;
       ranked.forEach(function (x) { var g = giftOf(x.p); if (g > top) top = g; });
-      amount = top > 0 ? '최대 ' + moneyKo(top) : '';
+      amount = top > 0 ? moneyKo(top) : '';
     }
-    // 켜 놨는데 적을 것이 하나도 없으면 빈 띠가 남는다. 그럴 땐 아예 안 그린다.
-    if (!amount && !w.top && !w.sub) return '';
+
+    // 옛 이름(top) 도 읽는다. 5단계에서 headline 으로 옮기기 전에 저장한 것이 있다.
+    var head = w.headline || w.top || '';
+    if (!head && !w.sub) return '';
 
     return '<div class="dpf-rw">' +
-      (w.top ? '<span class="dpf-rw-t">' + esc(w.top) + '</span>' : '') +
-      (amount ? '<strong class="dpf-rw-a">' + esc(amount) + '</strong>' : '') +
-      (w.sub ? '<span class="dpf-rw-s">' + esc(w.sub) + '</span>' : '') +
+      (w.badge ? '<span class="dpf-rw-tag">' + esc(w.badge) + '</span>' : '') +
+      (head ? '<p class="dpf-rw-h">' + fillTokens(head, amount) + '</p>' : '') +
+      (w.sub ? '<p class="dpf-rw-s">' + fillTokens(w.sub, amount) + '</p>' : '') +
       '</div>';
   }
 
@@ -738,12 +767,42 @@
         ? '<div class="dpf-res dpf-res--n' + Math.min(RES_MAX, ranked.length) + '">' +
           ranked.map(cardHtml).join('') + '</div>'
         : '<p class="dpf-qsub">보여드릴 상품이 없습니다.</p>') +
+      (ranked.length ? actionsHtml(ranked) : '') +
       '<div class="dpf-foot">' +
       '<button type="button" class="dpf-sub" data-dpf-again>다시 고르기</button>' +
       '<button type="button" class="dpf-sub" data-dpf-close>닫기</button>' +
       '</div></div>';
 
     ov.querySelector('[data-dpf-again]').onclick = open;
+
+    // 카드 몸통 = 고르기. 같은 카드를 다시 누르면 풀린다.
+    // ⚠ 카드 안 '신청하기' 버튼까지 고르기로 먹히면 안 된다. 그 버튼은 아래에서 따로 묶고
+    //   여기서는 눌린 곳이 그 버튼인지 먼저 본다.
+    ov.querySelectorAll('[data-dpf-pick]').forEach(function (c) {
+      var choose = function () {
+        var id = c.getAttribute('data-dpf-pick');
+        S.pick = (String(S.pick || '') === String(id)) ? null : id;
+        paintResult();
+      };
+      c.onclick = function (ev) {
+        if (ev.target.closest && ev.target.closest('[data-dpf-apply]')) return;
+        choose();
+      };
+      // 키보드로도 고를 수 있어야 한다. 카드가 버튼 역할을 하기 때문이다.
+      c.onkeydown = function (ev) {
+        if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(); }
+      };
+    });
+
+    var sb = ov.querySelector('[data-dpf-simple]');
+    if (sb) sb.onclick = function () { fireSimple(pickedRow(ranked)); };
+
+    var kb = ov.querySelector('[data-dpf-kakao]');
+    if (kb) kb.onclick = function () {
+      var url = String(actionsOf().kakaoUrl || '').trim();
+      // ⚠ 관리자가 적는 칸이라 javascript: 같은 주소가 들어올 수 있다. http 만 연다.
+      if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
+    };
 
     // 같은 칩을 다시 누르면 꺼진다. 끄는 방법이 없으면 고객이 갇힌다.
     ov.querySelectorAll('[data-chip]').forEach(function (b) {
@@ -760,6 +819,62 @@
         if (hit && typeof S.opt.onApply === 'function') S.opt.onApply(hit.p);
       };
     });
+  }
+
+  // ── 신청 3루트 (2026-08-08) ─────────────────────────────────────
+  // 결과 화면에서 고객이 갈 수 있는 길은 셋이다.
+  //   1) 카드 안 '신청하기'  → 상세로 간다. 약정·옵션까지 고르는 정식 접수.
+  //   2) 바닥 '간편 신청'    → 이름·전화만 받고 그 자리에서 접수. 고른 상품이 실린다.
+  //   3) 바닥 '카카오톡 상담' → 채널 상담방을 새 창으로 연다.
+  //
+  // ★ 왜 카드마다 버튼 세 개를 안 붙였나
+  //   상품 4개면 버튼이 12개가 된다. 고를 것이 많아지면 고객은 고민하다 나간다.
+  //   상품을 정한 사람은 카드에서, 아직 못 정한 사람은 바닥에서 — 길을 갈랐다.
+  //
+  // ★ 카드 몸통을 링크가 아니라 '고르기' 로 바꿨다
+  //   누르면 페이지가 넘어가 버리면 바닥 버튼까지 갈 일이 없다.
+  //   지금은 눌러도 화면이 안 바뀌고, 대신 바닥 버튼이 그 상품을 싣는다.
+  function actionsOf() { return (S.def.result || {}).actions || {}; }
+
+  function pickedRow(ranked) {
+    if (!S.pick) return null;
+    var hit = ranked.filter(function (x) { return String(x.p.id) === String(S.pick); })[0];
+    return hit ? hit.p : null;
+  }
+
+  function actionsHtml(ranked) {
+    var a = actionsOf();
+    var kakaoUrl = String(a.kakaoUrl || '').trim();
+    var simpleOn = a.simpleOn !== false;   // 기본은 켜짐
+    var kakaoOn = a.kakaoOn !== false && !!kakaoUrl;   // 주소가 없으면 못 켠다
+    if (!simpleOn && !kakaoOn) return '';
+
+    var p = pickedRow(ranked);
+    var line = p
+      ? '<span class="dpf-act-on">' + esc(a.pickedLabel || '고른 상품') + ' · <b>' +
+        esc(p.name || '') + '</b></span>'
+      : '<span class="dpf-act-hint">' +
+        esc(a.pickHint || '위에서 상품을 누르면 그 상품으로 접수됩니다') + '</span>';
+
+    return '<div class="dpf-act">' + line + '<div class="dpf-act-btns">' +
+      (simpleOn
+        ? '<button type="button" class="dpf-act-b dpf-act-b--s" data-dpf-simple>' +
+          esc(a.simpleLabel || '3초만에 간편 신청') + '</button>'
+        : '') +
+      (kakaoOn
+        ? '<button type="button" class="dpf-act-b dpf-act-b--k" data-dpf-kakao>' +
+          esc(a.kakaoLabel || '카카오톡 상담') + '</button>'
+        : '') +
+      '</div></div>';
+  }
+
+  // 간편 신청을 실제로 여는 것은 화면 쪽 일이다.
+  // 연결층이 onSimple 을 주면 그걸 쓰고, 없으면 사이트 공용 openSimpleApply 를 쓴다.
+  // 어드민 미리보기에는 둘 다 없다 — 모양만 보는 자리라 조용히 넘어간다.
+  function fireSimple(p) {
+    if (typeof S.opt.onSimple === 'function') { S.opt.onSimple(p); return; }
+    if (typeof window.openSimpleApply === 'function') { window.openSimpleApply(); return; }
+    console.warn('[finder] 간편 신청을 열 방법이 없다 (onSimple 또는 openSimpleApply 필요)');
   }
 
   function cardHtml(x, i) {
@@ -786,11 +901,16 @@
       ? S.opt.cardOf(p, x)
       : '<div class="dpf-name">' + esc(p.name || '') + '</div>' + feeHtml(p);
 
+    var on = String(S.pick || '') === String(p.id);
+
     return (
-      '<div class="dpf-card">' +
+      '<div class="dpf-card' + (on ? ' is-pick' : '') + '" data-dpf-pick="' + esc(p.id) + '"' +
+      ' role="button" tabindex="0" aria-pressed="' + (on ? 'true' : 'false') + '"' +
+      ' title="' + esc(href) + '">' +
       rankTag +
-      '<a class="dpf-card-l" href="' + esc(href) + '">' +
-      '<div class="dpf-thumb">' +
+      (on ? '<span class="dpf-pick">✓</span>' : '') +
+      '<div class="dpf-card-l">' +
+      '<div class="dpf-thumb' + (img ? '' : ' dpf-thumb--no') + '">' +
       (img ? '<img src="' + esc(img) + '" alt="' + esc(p.name) + '" loading="lazy"/>'
            : '<span class="dpf-noimg">이미지 준비중</span>') +
       '</div>' +
@@ -801,9 +921,10 @@
             return '<span class="dpf-why-b">✓ ' + esc(w) + '</span>';
           }).join('') + '</div>'
         : '') +
-      '</a>' +
+      '</div>' +
       (typeof S.opt.onApply === 'function'
-        ? '<button type="button" class="dpf-apply" data-dpf-apply data-id="' + esc(p.id) + '">신청하기</button>'
+        ? '<button type="button" class="dpf-apply" data-dpf-apply data-id="' + esc(p.id) + '">' +
+          esc(actionsOf().applyLabel || '신청하기') + '</button>'
         : '') +
       '</div>'
     );
@@ -966,18 +1087,50 @@
       '.dpf-badge--blue{background:#6c3fc5;}' +
       '.dpf-badge--orange{background:#e08600;}' +
       '.dpf-badge--red{background:#e5484d;}' +
-      // 결과 맨 위 지원금 띠 — 화면을 열자마자 눈에 들어와야 한다
-      '.dpf-rw{display:flex;flex-direction:column;align-items:center;gap:5px;text-align:center;' +
-        'margin:0 0 20px;padding:22px 18px;border-radius:16px;color:#fff;' +
-        'background:linear-gradient(135deg,#6c3fc5 0%,#43268b 100%);}' +
-      '.dpf-rw-t{font-size:13.5px;font-weight:600;opacity:.85;}' +
-      '.dpf-rw-a{font-size:34px;font-weight:900;line-height:1.2;letter-spacing:-.6px;}' +
-      '.dpf-rw-s{font-size:14.5px;font-weight:700;line-height:1.5;}' +
+      // 결과 맨 위 지원금 알림 — 색 띠가 아니라 큰 글자로 세운다.
+      // 배경을 칠하면 띠가 배경으로 읽히고 아래 상품 카드가 더 도드라진다.
+      '.dpf-rw{text-align:center;margin:0 0 22px;padding:24px 20px 22px;border-radius:18px;' +
+        'background:#fff;border:1px solid #ece5fa;box-shadow:0 8px 26px rgba(108,63,197,.10);}' +
+      '.dpf-rw-tag{display:inline-block;margin-bottom:11px;padding:5px 13px;border-radius:99px;' +
+        'background:#f4f0fd;color:#6c3fc5;font-size:12px;font-weight:800;letter-spacing:-.2px;}' +
+      '.dpf-rw-h{margin:0;font-size:29px;font-weight:900;color:#1b1830;line-height:1.35;' +
+        'letter-spacing:-.8px;word-break:keep-all;}' +
+      '.dpf-rw-h b{color:#e5484d;font-weight:900;}' +
+      '.dpf-rw-s{margin:10px 0 0;font-size:15px;font-weight:700;color:#6b6880;line-height:1.55;' +
+        'word-break:keep-all;}' +
+      '.dpf-rw-s b{color:#6c3fc5;font-weight:800;}' +
+      // 사진이 없는 카드는 자리를 낮춘다. 정사각 회색칸이 카드를 키워
+      // 위쪽 지원금 글자보다 눈에 먼저 들어왔다. (2026-08-08)
+      '.dpf-thumb--no{aspect-ratio:auto;height:62px;}' +
+      // 카드 고르기 — 눌린 카드가 한눈에 보여야 바닥 버튼과 이어진다
+      '.dpf-card{cursor:pointer;transition:border-color .15s ease,box-shadow .15s ease;}' +
+      '.dpf-card:hover{border-color:#d6c9f7;}' +
+      '.dpf-card.is-pick{border-color:#6c3fc5;box-shadow:0 0 0 2px rgba(108,63,197,.16);}' +
+      '.dpf-pick{position:absolute;top:-7px;left:-7px;width:24px;height:24px;border-radius:50%;' +
+        'background:#6c3fc5;color:#fff;font-size:13px;font-weight:900;z-index:1;' +
+        'display:flex;align-items:center;justify-content:center;}' +
+      // 바닥 신청 줄 — 간편 신청과 카카오톡
+      '.dpf-act{margin-top:18px;padding:15px 16px;border-radius:14px;background:#faf9fd;' +
+        'border:1px solid #efecf8;display:flex;flex-wrap:wrap;align-items:center;gap:12px;}' +
+      '.dpf-act-hint{font-size:13px;color:#8b88a3;font-weight:600;}' +
+      '.dpf-act-on{font-size:13.5px;color:#6b6880;font-weight:600;}' +
+      '.dpf-act-on b{color:#221f38;font-weight:800;}' +
+      '.dpf-act-btns{margin-left:auto;display:flex;gap:9px;flex-wrap:wrap;}' +
+      '.dpf-act-b{border:none;border-radius:11px;padding:13px 20px;font-size:14.5px;font-weight:800;' +
+        'cursor:pointer;font-family:inherit;white-space:nowrap;transition:transform .12s ease;}' +
+      '.dpf-act-b:hover{transform:translateY(-1px);}' +
+      '.dpf-act-b--s{background:#2563eb;color:#fff;}' +
+      '.dpf-act-b--s:hover{background:#1d4ed8;}' +
+      '.dpf-act-b--k{background:#fee500;color:#181600;}' +
+      '.dpf-act-b--k:hover{background:#f2da00;}' +
+      '@media(max-width:640px){.dpf-act{flex-direction:column;align-items:stretch;gap:10px;}' +
+        '.dpf-act-btns{margin-left:0;}.dpf-act-b{flex:1 1 0;padding:14px 10px;font-size:14px;}}' +
       '@media(max-width:820px){.dpf-res,.dpf-res--n3,.dpf-res--n4{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--card{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--n1{grid-template-columns:1fr;}}' +
       '@media(max-width:520px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
-        '.dpf-rw{padding:17px 14px;}.dpf-rw-a{font-size:26px;}.dpf-rw-s{font-size:13px;}' +
+        '.dpf-rw{padding:19px 14px 17px;border-radius:14px;}' +
+        '.dpf-rw-h{font-size:21px;}.dpf-rw-s{font-size:13px;}' +
         '.dpf-res,.dpf-res--n2,.dpf-res--n3,.dpf-res--n4{grid-template-columns:1fr 1fr;gap:9px;}}';
     var s = document.createElement('style');
     s.textContent = css;

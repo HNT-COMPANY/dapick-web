@@ -83,6 +83,15 @@
       onApply: function (p) {
         window.location.href = '/water-detail?id=' + encodeURIComponent(p.id) + '&apply=1';
       },
+
+      // 결과 바닥의 '간편 신청'. 이름·전화만 받고 그 자리에서 접수한다.
+      // ⚠ productId 를 안 넘긴다. 정수기는 products 표에 없는 카테고리라
+      //   번호를 넘기면 서버가 이어 붙일 상품을 못 찾는다(simple-apply.js 머리말 참고).
+      onSimple: function (p) {
+        if (typeof window.openSimpleApply !== 'function') return;
+        window.openSimpleApply('water', p ? p.name : '', '정수기',
+          { productImageUrl: (p && p.imageUrl) || null });
+      },
     });
   }
 

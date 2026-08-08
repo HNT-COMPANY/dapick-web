@@ -61,6 +61,15 @@
       // 인터넷은 TV·공유기·약정을 골라야 접수가 되는데 파인더에는 그 자리가 없다.
       // 여기서 바로 받으면 고객이 무엇에 신청했는지 모르는 채로 접수된다.
       onApply: function (row) { window.location.href = hrefOf(row); },
+
+      // 결과 바닥의 '간편 신청'. 이름·전화만 받고 그 자리에서 접수한다.
+      // ⚠ productId 를 안 넘긴다. 여기 id 는 'p-kt::500M' 처럼 펼치면서 만든 것이라
+      //   서버에 그런 상품이 없다. 상품명으로 남기면 상담원이 알아본다.
+      onSimple: function (row) {
+        if (typeof window.openSimpleApply !== 'function') return;
+        window.openSimpleApply('internet', row ? row.name : '', '인터넷',
+          { productImageUrl: (row && row.imageUrl) || null });
+      },
     });
   }
 
