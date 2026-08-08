@@ -46,7 +46,10 @@
     + '@media(max-width:768px){.sapply-inline{padding:16px;font-size:15px;margin-top:34px;}'
     + '.ip-pb-actions .sapply-inline,.wd-actions .sapply-inline{flex:1 1 100%;}}'
     // ── 모달 ──
-    + '.sapply-ov{position:fixed;inset:0;z-index:1000;background:rgba(20,18,40,.5);display:none;align-items:center;justify-content:center;padding:16px;}'
+    // ⚠ z-index 는 파인더 덮개(.dpf-ov = 9000)보다 위여야 한다 (2026-08-08).
+    //   1000 이던 때 파인더 결과에서 간편 신청을 열면 파인더 뒤에 깔려 안 보였다.
+    //   이 창은 언제 열리든 맨 앞이어야 한다 — 열렸다는 것 자체가 다른 화면을 멈춘다는 뜻이다.
+    + '.sapply-ov{position:fixed;inset:0;z-index:9500;background:rgba(20,18,40,.5);display:none;align-items:center;justify-content:center;padding:16px;}'
     + '.sapply-ov.on{display:flex;}'
     + '.sapply-card{width:100%;max-width:440px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 20px 60px rgba(0,0,0,.25);}'
     + '.sapply-head{padding:20px 22px 14px;border-bottom:1px solid #eceaf8;display:flex;align-items:center;gap:8px;}'
@@ -231,7 +234,8 @@
   function alertLite(msg){
     var t=document.createElement('div');
     t.textContent=msg;
-    t.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:1100;background:#18172b;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);';
+    // 알림 쪽지는 모달(9500)보다 위여야 한다. 모달 위에서 뜨는 글이다.
+    t.style.cssText='position:fixed;left:50%;bottom:90px;transform:translateX(-50%);z-index:9600;background:#18172b;color:#fff;padding:11px 18px;border-radius:10px;font-size:14px;font-weight:600;box-shadow:0 6px 20px rgba(0,0,0,.25);';
     document.body.appendChild(t); setTimeout(function(){ t.remove(); }, 1800);
   }
 })();

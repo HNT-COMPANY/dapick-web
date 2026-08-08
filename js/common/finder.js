@@ -746,6 +746,14 @@
     var hit = rows.filter(function (x) { return x.s > 0; });
     var ranked = balanced(hit.length ? hit : rows, limit);
 
+    // 고른 상품이 목록에서 사라졌으면(칩을 눌러 걸러졌다) 놓아준다.
+    // 안 그러면 바닥 줄이 화면에 없는 상품 이름을 계속 들고 있는다.
+    if (S.pick && !ranked.some(function (x) { return String(x.p.id) === String(S.pick); })) {
+      S.pick = null;
+    }
+    // 아무것도 안 골랐으면 1등을 켜 둔다. 세 버튼이 곧바로 쓸모 있어야 한다.
+    if (!S.pick && ranked.length) S.pick = ranked[0].p.id;
+
     var best = ranked.length ? ranked[0].s : 0;
     // 아무 조건도 못 맞췄으면 솔직하게 말한다. 그럴듯하게 포장하지 않는다.
     var lead = chip && !ranked.length
@@ -775,24 +783,25 @@
 
     ov.querySelector('[data-dpf-again]').onclick = open;
 
-    // 카드 몸통 = 고르기. 같은 카드를 다시 누르면 풀린다.
-    // ⚠ 카드 안 '신청하기' 버튼까지 고르기로 먹히면 안 된다. 그 버튼은 아래에서 따로 묶고
-    //   여기서는 눌린 곳이 그 버튼인지 먼저 본다.
+    // 카드 몸통 = 고르기.
+    // ⚠ 다시 눌러도 안 풀린다. 하나는 늘 켜져 있어야 바닥 세 버튼이 쓸모가 있다.
     ov.querySelectorAll('[data-dpf-pick]').forEach(function (c) {
       var choose = function () {
-        var id = c.getAttribute('data-dpf-pick');
-        S.pick = (String(S.pick || '') === String(id)) ? null : id;
+        S.pick = c.getAttribute('data-dpf-pick');
         paintResult();
       };
-      c.onclick = function (ev) {
-        if (ev.target.closest && ev.target.closest('[data-dpf-apply]')) return;
-        choose();
-      };
+      c.onclick = choose;
       // 키보드로도 고를 수 있어야 한다. 카드가 버튼 역할을 하기 때문이다.
       c.onkeydown = function (ev) {
         if (ev.key === 'Enter' || ev.key === ' ') { ev.preventDefault(); choose(); }
       };
     });
+
+    var ab = ov.querySelector('[data-dpf-apply]');
+    if (ab) ab.onclick = function () {
+      var p = pickedRow(ranked);
+      if (p && typeof S.opt.onApply === 'function') S.opt.onApply(p);
+    };
 
     var sb = ov.querySelector('[data-dpf-simple]');
     if (sb) sb.onclick = function () { fireSimple(pickedRow(ranked)); };
@@ -813,27 +822,24 @@
       };
     });
 
-    ov.querySelectorAll('[data-dpf-apply]').forEach(function (b) {
-      b.onclick = function () {
-        var hit = ranked.filter(function (x) { return String(x.p.id) === b.dataset.id; })[0];
-        if (hit && typeof S.opt.onApply === 'function') S.opt.onApply(hit.p);
-      };
-    });
   }
 
   // ── 신청 3루트 (2026-08-08) ─────────────────────────────────────
-  // 결과 화면에서 고객이 갈 수 있는 길은 셋이다.
-  //   1) 카드 안 '신청하기'  → 상세로 간다. 약정·옵션까지 고르는 정식 접수.
-  //   2) 바닥 '간편 신청'    → 이름·전화만 받고 그 자리에서 접수. 고른 상품이 실린다.
-  //   3) 바닥 '카카오톡 상담' → 채널 상담방을 새 창으로 연다.
+  // 결과 화면 바닥에 세 버튼이 나란히 선다. 모두 '지금 고른 상품' 을 싣고 간다.
+  //   1) 신청하기      → 상세로 간다. 약정·옵션까지 고르는 정식 접수.
+  //   2) 간편 신청     → 이름·전화만 받고 그 자리에서 접수.
+  //   3) 카카오톡 상담 → 채널 상담방을 새 창으로 연다.
   //
-  // ★ 왜 카드마다 버튼 세 개를 안 붙였나
+  // ★ 왜 카드마다 버튼을 안 붙였나 (2026-08-08 다시 정리)
   //   상품 4개면 버튼이 12개가 된다. 고를 것이 많아지면 고객은 고민하다 나간다.
-  //   상품을 정한 사람은 카드에서, 아직 못 정한 사람은 바닥에서 — 길을 갈랐다.
+  //   카드는 '무엇을' 고르는 자리, 바닥 줄은 '어떻게' 신청할지 고르는 자리로 나눴다.
   //
   // ★ 카드 몸통을 링크가 아니라 '고르기' 로 바꿨다
   //   누르면 페이지가 넘어가 버리면 바닥 버튼까지 갈 일이 없다.
-  //   지금은 눌러도 화면이 안 바뀌고, 대신 바닥 버튼이 그 상품을 싣는다.
+  //
+  // ★ 1등을 미리 골라 둔다
+  //   아무것도 안 골라 두면 세 버튼이 다 '어느 상품인지 모르는 신청' 이 된다.
+  //   1등이 켜져 있으면 그대로 눌러도 되고, 다른 카드를 눌러 바꿔도 된다.
   function actionsOf() { return (S.def.result || {}).actions || {}; }
 
   function pickedRow(ranked) {
@@ -845,9 +851,10 @@
   function actionsHtml(ranked) {
     var a = actionsOf();
     var kakaoUrl = String(a.kakaoUrl || '').trim();
-    var simpleOn = a.simpleOn !== false;   // 기본은 켜짐
-    var kakaoOn = a.kakaoOn !== false && !!kakaoUrl;   // 주소가 없으면 못 켠다
-    if (!simpleOn && !kakaoOn) return '';
+    var applyOn = typeof S.opt.onApply === 'function';
+    var simpleOn = a.simpleOn !== false;              // 기본은 켜짐
+    var kakaoOn = a.kakaoOn !== false && !!kakaoUrl;  // 주소가 없으면 못 켠다
+    if (!applyOn && !simpleOn && !kakaoOn) return '';
 
     var p = pickedRow(ranked);
     var line = p
@@ -857,6 +864,10 @@
         esc(a.pickHint || '위에서 상품을 누르면 그 상품으로 접수됩니다') + '</span>';
 
     return '<div class="dpf-act">' + line + '<div class="dpf-act-btns">' +
+      (applyOn
+        ? '<button type="button" class="dpf-act-b dpf-act-b--a" data-dpf-apply>' +
+          esc(a.applyLabel || '신청하기') + '</button>'
+        : '') +
       (simpleOn
         ? '<button type="button" class="dpf-act-b dpf-act-b--s" data-dpf-simple>' +
           esc(a.simpleLabel || '3초만에 간편 신청') + '</button>'
@@ -922,10 +933,8 @@
           }).join('') + '</div>'
         : '') +
       '</div>' +
-      (typeof S.opt.onApply === 'function'
-        ? '<button type="button" class="dpf-apply" data-dpf-apply data-id="' + esc(p.id) + '">' +
-          esc(actionsOf().applyLabel || '신청하기') + '</button>'
-        : '') +
+      // ⚠ 카드 안에 신청 버튼을 두지 않는다. 신청은 바닥 줄 세 버튼이 맡는다.
+      //   카드마다 버튼을 달면 상품 4개에 버튼 12개가 되어 고객이 고민만 하다 나간다.
       '</div>'
     );
   }
@@ -1018,9 +1027,7 @@
       '.dpf-why{display:flex;flex-direction:column;gap:3px;margin-top:8px;}' +
       '.dpf-why-b{font-size:11.5px;color:#1d7a5f;background:#e9f5f0;border-radius:5px;padding:2px 6px;' +
         'overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}' +
-      '.dpf-apply{margin-top:9px;width:100%;border:none;background:#f4f0fd;color:#5b3fbe;' +
-        'border-radius:9px;padding:9px;font-size:12.5px;font-weight:800;cursor:pointer;font-family:inherit;}' +
-      '.dpf-apply:hover{background:#e9e0fb;}' +
+      // (.dpf-apply 는 카드 안 신청 버튼 자리였다. 버튼을 바닥 줄로 옮기며 없앴다 — 2026-08-08)
       // ── 진행바 (2026-08-07) ──
       '.dpf-prog{flex:1 1 auto;margin-right:12px;}' +
       '.dpf-prog-top{display:flex;justify-content:space-between;align-items:baseline;' +
@@ -1119,12 +1126,17 @@
       '.dpf-act-b{border:none;border-radius:11px;padding:13px 20px;font-size:14.5px;font-weight:800;' +
         'cursor:pointer;font-family:inherit;white-space:nowrap;transition:transform .12s ease;}' +
       '.dpf-act-b:hover{transform:translateY(-1px);}' +
+      '.dpf-act-b--a{background:#6c3fc5;color:#fff;}' +
+      '.dpf-act-b--a:hover{background:#5b34ad;}' +
       '.dpf-act-b--s{background:#2563eb;color:#fff;}' +
       '.dpf-act-b--s:hover{background:#1d4ed8;}' +
       '.dpf-act-b--k{background:#fee500;color:#181600;}' +
       '.dpf-act-b--k:hover{background:#f2da00;}' +
-      '@media(max-width:640px){.dpf-act{flex-direction:column;align-items:stretch;gap:10px;}' +
-        '.dpf-act-btns{margin-left:0;}.dpf-act-b{flex:1 1 0;padding:14px 10px;font-size:14px;}}' +
+      // 버튼 셋이 한 줄에 안 들어가면 줄 전체를 세로로 세운다.
+      '@media(max-width:900px){.dpf-act{flex-direction:column;align-items:stretch;gap:11px;}' +
+        '.dpf-act-btns{margin-left:0;}.dpf-act-b{flex:1 1 0;padding:14px 8px;font-size:13.5px;}}' +
+      '@media(max-width:520px){.dpf-act-btns{flex-direction:column;}' +
+        '.dpf-act-b{width:100%;font-size:14.5px;}}' +
       '@media(max-width:820px){.dpf-res,.dpf-res--n3,.dpf-res--n4{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--card{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--n1{grid-template-columns:1fr;}}' +

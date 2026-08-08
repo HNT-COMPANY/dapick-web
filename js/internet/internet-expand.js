@@ -94,7 +94,11 @@
         put(row, 'speedMbps', speedOf(o.name));
         put(row, 'categoryId', p.categoryId);
         put(row, 'tag', p.tag);
-        put(row, 'imageUrl', p.imageUrl);
+        // 사진은 속도 옵션에 올린 것이 먼저다 (2026-08-08).
+        // ⚠ 통신사 대표 사진(products.image_url)은 어드민에서 '주소 직접 입력' 칸이라
+        //   거의 비어 있다. 반면 옵션 사진은 파일 올리기가 있어 실제로 채워져 있다.
+        //   상세 화면(internet-detail.js)도 옵션 사진을 쓴다 — 같은 사진을 보여준다.
+        put(row, 'imageUrl', o.imageUrl || p.imageUrl);
         put(row, 'description', p.description);
         // 정가는 0 이면 넣지 않는다 — 지금 대부분의 옵션이 결합가만 채워져 있다.
         // 0 을 넣으면 "원가 취소선" 이 0원으로 그려진다.
