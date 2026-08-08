@@ -85,6 +85,11 @@
   </div>
 </section>
 
+<!-- 나만의 인터넷·TV 찾기 진입 버튼 (finder.js 가 그린다)
+     ⚠ 여기에 글자를 적지 않는다. 문구·말풍선은 어드민 '상품 찾기' 2단계에서 정한다.
+     파인더가 없으면 이 자리는 비어 있다. -->
+<div id="internetFinder" style="max-width:1200px;margin:18px auto 0;padding:0 20px;"></div>
+
   <div class="i-board-section">
     <div class="i-board-section-title">통신사를 선택해주세요</div>
     <div class="i-board-section-sub">통신사별 베스트 요금제와 전체 라인업, 사은품 정보를 확인할 수 있어요</div>
@@ -244,6 +249,11 @@
 <!-- 페이지 전용 JS -->
 <script src="js/common/site-banner.js"></script>
 <script src="js/internet/internet.js"></script>
+<!-- 나만의 인터넷·TV 찾기 — 엔진 → 펼치기 → 연결층 순서 -->
+<script src="js/internet/internet-calc.js"></script>
+<script src="js/common/finder.js?v=20260808a"></script>
+<script src="js/internet/internet-expand.js?v=20260808a"></script>
+<script src="js/internet/internet-finder.js?v=20260808a"></script>
 
 <script src="/js/common/track.js"></script>
 </body>

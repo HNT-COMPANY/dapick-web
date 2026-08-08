@@ -18,51 +18,9 @@
 (function () {
   'use strict';
 
-  // 진입 버튼. 정수기는 water.css 에 .wf-cta 가 있지만 인터넷 화면은 그 CSS 를
-  // 싣지 않는다. 새 CSS 파일을 만들지 않고 여기서 필요한 만큼만 넣는다.
-  // (같은 버튼이 세 번째 카테고리에 필요해지면 그때 공용으로 뺀다)
-  var CSS = [
-    // 슬롯 폭은 아래 통신사 선택 바(.iu-carrier-bar)와 같은 규격으로 맞춘다.
-    // 하나만 달라도 세로로 나란히 서는 두 덩어리의 좌우가 어긋나 바로 티가 난다.
-    '.iu-finder-slot{max-width:var(--max-w,1080px);margin:20px auto 0;padding:0 40px}',
-    '@media(max-width:640px){.iu-finder-slot{padding:0 16px;margin-top:14px}}',
-    '.ifd-cta{display:flex;align-items:center;gap:14px;width:100%;padding:18px 22px;',
-    'background:#fff;border:1px solid #e9e2f7;border-radius:16px;cursor:pointer;',
-    'box-shadow:0 2px 16px rgba(108,63,197,.07);text-align:left;transition:border-color .15s}',
-    '.ifd-cta:hover{border-color:#6c3fc5}',
-    '.ifd-cta-ico{width:44px;height:44px;flex-shrink:0;border-radius:12px;background:#f3eeff;',
-    'display:flex;align-items:center;justify-content:center;font-size:20px}',
-    '.ifd-cta-txt{flex:1;min-width:0}',
-    '.ifd-cta-txt b{display:block;font-size:16px;font-weight:700;color:#111827}',
-    '.ifd-cta-txt em{display:block;margin-top:3px;font-size:13px;color:#6b7280;font-style:normal}',
-    '.ifd-cta-go{flex-shrink:0;font-size:14px;font-weight:600;color:#6c3fc5}',
-    '@media(max-width:640px){.ifd-cta{padding:15px 16px;gap:11px}',
-    '.ifd-cta-txt b{font-size:15px}.ifd-cta-txt em{font-size:12px}.ifd-cta-go{font-size:13px}}',
-  ].join('');
-
-  function injectCss() {
-    if (document.getElementById('ifdCtaCss')) return;
-    var s = document.createElement('style');
-    s.id = 'ifdCtaCss';
-    s.textContent = CSS;
-    document.head.appendChild(s);
-  }
-
-  function mountButton() {
-    var slot = document.getElementById('internetFinder');
-    if (!slot) return null;
-    injectCss();
-    slot.innerHTML =
-      '<button type="button" class="ifd-cta" id="ifdOpen">' +
-      '<span class="ifd-cta-ico">🔎</span>' +
-      '<span class="ifd-cta-txt">' +
-      '<b>나만의 인터넷·TV 찾기</b>' +
-      '<em>몇 가지만 답하면 맞는 요금제를 골라드려요</em>' +
-      '</span>' +
-      '<span class="ifd-cta-go">시작하기 ›</span>' +
-      '</button>';
-    return document.getElementById('ifdOpen');
-  }
+  // ⚠ 진입 버튼 글자·모양을 이 파일에 적지 않는다 (2026-08-08).
+  //   버튼 문구·말풍선은 어드민 2단계에서 정하고 엔진(finder.js)이 그린다.
+  //   화면은 빈 칸(#internetFinder) 하나만 둔다.
 
   // 통신사 목록을 받아 속도 옵션 단위로 펼친다.
   function loadProducts() {
@@ -90,14 +48,11 @@
       console.warn('[internet-finder] finder.js 가 안 실렸다');
       return;
     }
-    var btn = mountButton();
-    if (!btn) return;
-
     dpFinder.init({
       // ⚠ UUID 를 적지 않는다. 로컬과 운영의 값이 다르다.
       categorySlug: 'internet',
       categoryType: 'INTERNET_TV',
-      buttonEl: btn,
+      buttonSlot: 'internetFinder',   // 버튼은 엔진이 그린다. 문구는 어드민에 있다.
       loadProducts: loadProducts,
       hrefOf: hrefOf,
       imageOf: function (row) { return row.imageUrl; },

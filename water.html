@@ -94,7 +94,7 @@
   </div>
 </section>
 
-<!-- 나만의 정수기 찾기 진입 버튼 (water-finder.js 가 채운다) -->
+<!-- 나만의 정수기 찾기 진입 버튼 (finder.js 가 그린다. 문구는 어드민 2단계) -->
 <div id="waterFinder"></div>
 
 <!-- ══════════════════════════════════════
@@ -440,16 +440,14 @@
 <!-- 진입 화면 섹션. water.js 의 renderProductCard / getAllProductsFlat 를 쓰므로
      반드시 water.js 뒤에 온다. 이 한 줄만 지우면 예전처럼 브랜드 선택만 남는다. -->
 <script src="js/water/water-home.js"></script>
-<!-- 나만의 정수기 찾기. water.js 의 getAllProductsFlat / renderProductCard 를 쓴다.
-     이 한 줄만 지우면 버튼도 화면도 사라진다. -->
-<!-- 나만의 정수기 찾기.
-     2026-08-06 에 공용 엔진(finder.js)으로 잠깐 바꿨다가 되돌렸다.
-     브랜드 선택지가 코드값(coway·sk)으로 나오고 이미지 카드가 사라져서다.
-     어드민 편집기에서 라벨과 이미지를 넣을 수 있게 된 뒤에 다시 바꾼다.
-     그때는 아래 한 줄을 이 두 줄로 바꾸면 된다:
-       <script src="js/common/finder.js"></script>
-       <script src="js/water/water-finder-v2.js"></script> -->
-<script src="js/water/water-finder.js?v=20260806b"></script>
+<!-- 나만의 정수기 찾기 (2026-08-08 공용 엔진으로 교체)
+     질문·선별기준·버튼 문구·로딩 문구가 전부 어드민 '상품 찾기' 에 있다.
+     화면에는 빈 칸(#waterFinder) 하나만 두고 버튼은 엔진이 그린다.
+     ⚠ 되돌리려면 아래 두 줄을 이 한 줄로 바꾼다:
+       <script src="js/water/water-finder.js"></script>
+     (옛 파일은 안 지웠다. 새 엔진이 실제 데이터로 도는 것을 며칠 보고 지운다) -->
+<script src="js/common/finder.js?v=20260808a"></script>
+<script src="js/water/water-finder-v2.js?v=20260808a"></script>
 <script src="js/water/water-banner.js"></script>
 
 <script src="/js/common/track.js"></script>

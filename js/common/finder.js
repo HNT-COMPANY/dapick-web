@@ -19,7 +19,8 @@
 // 쓰는 법
 //   dpFinder.init({
 //     categoryId : '최상위 카테고리 id',        // 필수
-//     buttonEl   : document.getElementById('x'), // 선택. 없으면 open() 을 직접 부른다
+//     buttonSlot : 'waterFinder',                // 빈 칸의 id. 버튼은 엔진이 그린다
+//                                                // (문구는 어드민 2단계에서 정한다. 화면에 적지 않는다)
 //     loadProducts: function () { return Promise.resolve([...]) },  // 필수
 //     hrefOf : function (p) { return '/water-detail?id=' + p.id; },
 //     imageOf: function (p) { return p.imageUrl; },
@@ -439,16 +440,47 @@
   //
   // 마지막 질문을 고른 순간 결과가 툭 나오면 "이게 다야?" 로 읽힌다.
   // 잠깐 찾는 시늉을 하는 편이 낫다. 시간은 관리자가 못 정한다 — 1.2초로 고정한다.
+  // ── 진입 버튼 ─────────────────────────────────────────────────
+  //
+  // 화면(연결층)은 빈 칸 하나만 두고, 문구는 전부 어드민 2단계에서 온다.
+  // ★ 여기 글자를 화면 파일에 적지 않는 이유 — 적는 순간 문구 하나 바꾸는 데
+  //   개발자와 배포가 필요해진다. 후킹 문구는 자주 바뀌는 값이다.
+  function mountEntry(slot) {
+    injectStyles();
+    var e = S.def.entry || {};
+    var bubble = e.bubble || '';
+    slot.innerHTML =
+      (bubble ? '<span class="dpf-cta-bub">' + esc(bubble) + '</span>' : '') +
+      '<button type="button" class="dpf-cta">' +
+      '<span class="dpf-cta-ico">' + esc(e.icon || '🔎') + '</span>' +
+      '<span class="dpf-cta-txt"><b>' + esc(e.title || S.name || '나만의 상품 찾기') + '</b>' +
+      (e.sub ? '<em>' + esc(e.sub) + '</em>' : '') + '</span>' +
+      '<span class="dpf-cta-go">' + esc(e.label || '시작하기') + ' ›</span>' +
+      '</button>';
+    var btn = slot.querySelector('.dpf-cta');
+    if (btn) btn.addEventListener('click', open);
+  }
+
   function paintLoading() {
     var l = S.def.loading || {};
-    var lines = l.lines || ['고객님의 마음을 읽는 듯한 정확한 추천!', '완벽한 맞춤 상품을 찾고 있어요'];
+    // 어드민에서 두 줄로 적는다. lines(배열)는 옛 정의와의 호환용이다.
+    var lines = [];
+    if (l.title) lines.push(l.title);
+    if (l.sub) lines.push(l.sub);
+    if (!lines.length) {
+      lines = l.lines || ['최대 지원금 상품을 찾고 있어요', '잠시만 기다려주세요'];
+    }
     el().innerHTML =
       '<div class="dpf-box dpf-box--load">' +
       (l.imageUrl ? '<div class="dpf-load-img"><img src="' + esc(l.imageUrl) + '" alt=""/></div>' : '') +
       '<div class="dpf-dots"><i></i><i></i><i></i><i></i></div>' +
       lines.map(function (t) { return '<p class="dpf-load-t">' + esc(t) + '</p>'; }).join('') +
       '</div>';
-    setTimeout(paintResult, 1200);
+    // 기다리는 시간도 어드민에서 정한다.
+    // ⚠ 길수록 '열심히 찾는 느낌' 이 나지만 그만큼 이탈도 는다. 실제 숫자를 보고 조절할 것.
+    var ms = Number(l.ms);
+    if (!(ms >= 0)) ms = 5000;
+    setTimeout(paintResult, ms);
   }
 
   // 점수 순으로 줄 세운다. 칩은 여기서 거르지 않는다 — 칩을 껐을 때 되돌아와야 한다.
@@ -628,6 +660,30 @@
     if (_styled) return;
     _styled = true;
     var css =
+      // ── 진입 버튼 (화면마다 따로 만들지 않는다) ──
+      '.dpf-cta{display:flex;align-items:center;gap:14px;width:100%;padding:18px 22px;' +
+        'background:#fff;border:1px solid #e9e2f7;border-radius:16px;cursor:pointer;text-align:left;' +
+        'box-shadow:0 2px 16px rgba(108,63,197,.07);transition:border-color .15s,transform .15s;}' +
+      '.dpf-cta:hover{border-color:#6c3fc5;transform:translateY(-1px);}' +
+      '.dpf-cta-ico{width:44px;height:44px;flex-shrink:0;border-radius:12px;background:#f3eeff;' +
+        'display:flex;align-items:center;justify-content:center;font-size:20px;}' +
+      '.dpf-cta-txt{flex:1;min-width:0;}' +
+      '.dpf-cta-txt b{display:block;font-size:16px;font-weight:800;color:#221f38;}' +
+      '.dpf-cta-txt em{display:block;margin-top:3px;font-size:13px;color:#6b7280;font-style:normal;}' +
+      '.dpf-cta-go{flex-shrink:0;font-size:14px;font-weight:700;color:#6c3fc5;white-space:nowrap;}' +
+      // 말풍선 — 버튼 위에 살짝 떠서 통통 튄다. 눈이 먼저 가는 자리다.
+      '.dpf-cta-bub{display:inline-block;margin:0 0 8px 14px;padding:6px 13px;position:relative;' +
+        'background:#221f38;color:#fff;font-size:12.5px;font-weight:700;border-radius:999px;' +
+        'animation:dpfBub 1.8s ease-in-out infinite;}' +
+      '.dpf-cta-bub:after{content:"";position:absolute;left:18px;bottom:-5px;width:0;height:0;' +
+        'border-left:5px solid transparent;border-right:5px solid transparent;' +
+        'border-top:6px solid #221f38;}' +
+      '@keyframes dpfBub{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}' +
+      '@media(prefers-reduced-motion:reduce){.dpf-cta-bub{animation:none;}}' +
+      '@media(max-width:640px){.dpf-cta{padding:15px 16px;gap:11px;}' +
+        '.dpf-cta-ico{width:38px;height:38px;font-size:17px;}' +
+        '.dpf-cta-txt b{font-size:15px;}.dpf-cta-txt em{font-size:12px;}' +
+        '.dpf-cta-go{font-size:13px;}.dpf-cta-bub{font-size:11.5px;margin-left:8px;}}' +
       '.dpf-ov{position:fixed;inset:0;z-index:9000;background:rgba(20,17,38,.55);' +
         'display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}' +
       '.dpf-ov[hidden]{display:none;}' +
@@ -829,7 +885,11 @@
       console.warn('[finder] loadProducts 는 필수다');
       return;
     }
-    if (opt.buttonEl) opt.buttonEl.hidden = true;   // 정의를 받기 전에는 버튼을 숨긴다
+    // 정의를 받기 전에는 빈 칸으로 둔다. 파인더가 없으면 그대로 비어 있다.
+    var slot = opt.buttonSlot
+      ? (typeof opt.buttonSlot === 'string' ? document.getElementById(opt.buttonSlot) : opt.buttonSlot)
+      : null;
+    if (slot) slot.innerHTML = '';
 
     resolveCategoryId(opt)
       .then(function (categoryId) {
@@ -855,10 +915,7 @@
         if (!ready) return;
         if (!setup(ready.row.definition || {}, ready.row.name, ready.products, opt)) return;
 
-        if (opt.buttonEl) {
-          opt.buttonEl.hidden = false;
-          opt.buttonEl.addEventListener('click', open);
-        }
+        if (slot) mountEntry(slot);
         if (typeof opt.onReady === 'function') opt.onReady(ready.row);
       })
       .catch(function (e) {

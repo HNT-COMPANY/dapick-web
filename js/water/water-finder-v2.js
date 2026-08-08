@@ -11,8 +11,9 @@
 //   되돌리려면 water.html 에서 <script> 두 줄을 옛 한 줄로 바꾸면 끝난다.
 //   새 엔진이 실제 데이터로 도는 것을 며칠 보고 나서 지운다.
 //
-// ★ 버튼 모양은 그대로 쓴다.
-//   .wf-cta 는 water.css 에 이미 있다. 새로 만들면 디자인이 두 벌이 된다.
+// ★ 진입 버튼 글자를 이 파일에 적지 않는다 (2026-08-08).
+//   버튼 문구·말풍선은 어드민 2단계에서 정하고 엔진이 그린다.
+//   여기 적으면 문구 하나 바꾸는 데 개발자와 배포가 필요해진다.
 //
 // 의존: api.js, finder.js, water.js(getAllProductsFlat / loadWaterProducts)
 // ════════════════════════════════════════════════════════════════════
@@ -58,36 +59,17 @@
     return Promise.resolve([]);
   }
 
-  function mountButton() {
-    var slot = document.getElementById('waterFinder');
-    if (!slot) return null;
-
-    slot.innerHTML =
-      '<button type="button" class="wf-cta" id="wfOpen">' +
-      '<span class="wf-cta-ico">🔎</span>' +
-      '<span class="wf-cta-txt">' +
-      '<b>나만의 정수기 찾기</b>' +
-      '<em>몇 가지만 답하면 맞는 정수기를 골라드려요</em>' +
-      '</span>' +
-      '<span class="wf-cta-go">시작하기 ›</span>' +
-      '</button>';
-    return document.getElementById('wfOpen');
-  }
-
   function init() {
     if (typeof dpFinder === 'undefined') {
       console.warn('[water-finder-v2] finder.js 가 안 실렸다');
       return;
     }
-    var btn = mountButton();
-    if (!btn) return;
-
     dpFinder.init({
       // ⚠ UUID 를 적지 않는다. 로컬과 운영의 값이 다르다.
       //   slug 로 먼저 찾고, 없으면 타입으로 찾는다(정수기는 최상위가 하나뿐이라 안전하다).
       categorySlug: 'water',
       categoryType: 'WATER',
-      buttonEl: btn,
+      buttonSlot: 'waterFinder',   // 버튼은 엔진이 그린다. 문구는 어드민에 있다.
       loadProducts: loadProducts,
       hrefOf: function (p) {
         return '/water-detail?id=' + encodeURIComponent(p.id);
