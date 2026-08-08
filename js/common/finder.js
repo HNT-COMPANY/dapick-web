@@ -428,7 +428,9 @@
   //   여기서 스스로 못 찾으면 미리보기에만 요금이 안 나와서, 관리자가
   //   "요금이 왜 안 뜨지" 로 시간을 버린다. 실제 고객 화면은 멀쩡한데도 그렇다.
   function feeOf(p) {
-    if (typeof S.opt.feeOf === 'function') return Number(S.opt.feeOf(p)) || 0;
+    if (!p || typeof p !== 'object') return 0;
+    // ⚠ 어드민 4단계가 이 함수를 밖에서 직접 부른다. 그때는 S 가 아직 없다.
+    if (S && S.opt && typeof S.opt.feeOf === 'function') return Number(S.opt.feeOf(p)) || 0;
     if (p.monthlyFee != null) return Number(p.monthlyFee) || 0;
     if (p.monthlyPrice != null) return Number(p.monthlyPrice) || 0;
     if (p.pricing && typeof p.pricing === 'object') return minPricing(p.pricing);
@@ -482,9 +484,17 @@
     if (!lines.length) {
       lines = l.lines || ['최대 지원금 상품을 찾고 있어요', '잠시만 기다려주세요'];
     }
+    // 기다리는 동안 브랜드를 보여준다. 5초를 그냥 두면 '이게 뭐지' 가 되고,
+    // 로고가 있으면 '다픽이 찾아주는 중' 으로 읽힌다.
+    // 관리자가 2단계에서 다른 그림을 넣으면 그것이 이긴다.
+    var brand = l.imageUrl
+      ? '<div class="dpf-load-img"><img src="' + esc(l.imageUrl) + '" alt=""/></div>'
+      : '<div class="dpf-load-logo"><img src="/assets/logos/dapicklogo.png" alt="다픽"' +
+        ' onerror="this.parentNode.style.display=\'none\'"/></div>';
+
     el().innerHTML =
       '<div class="dpf-box dpf-box--load">' +
-      (l.imageUrl ? '<div class="dpf-load-img"><img src="' + esc(l.imageUrl) + '" alt=""/></div>' : '') +
+      brand +
       '<div class="dpf-dots"><i></i><i></i><i></i><i></i></div>' +
       lines.map(function (t) { return '<p class="dpf-load-t">' + esc(t) + '</p>'; }).join('') +
       '</div>';
@@ -785,6 +795,11 @@
       // 로딩 화면
       '.dpf-box--load{max-width:420px;text-align:center;padding:40px 24px;}' +
       '.dpf-load-img img{width:100%;max-width:260px;border-radius:50%/40%;}' +
+      // 로고는 로딩 상자 맨 위 가운데. 점보다 먼저 눈에 들어와야 한다.
+      '.dpf-load-logo{margin:0 0 18px;display:flex;justify-content:center;}' +
+      '.dpf-load-logo img{height:34px;width:auto;opacity:.92;}' +
+      '@media(max-width:640px){.dpf-load-logo img{height:28px;}' +
+        '.dpf-load-logo{margin-bottom:14px;}}' +
       '.dpf-dots{display:flex;gap:8px;justify-content:center;margin:22px 0 20px;}' +
       '.dpf-dots i{width:9px;height:9px;border-radius:50%;background:#cfc4f0;' +
         'animation:dpfDot 1.1s infinite ease-in-out;}' +
@@ -952,5 +967,7 @@
     close();
   }, true);
 
-  window.dpFinder = { init: init, preview: preview, open: open, close: close };
+  // feeOf 를 내보내는 이유 — 어드민 4단계 상품 목록에도 같은 월 요금을 보여줘야 한다.
+  // 어드민에 계산을 복사하면 관리자가 본 요금과 고객이 보는 요금이 갈린다.
+  window.dpFinder = { init: init, preview: preview, open: open, close: close, feeOf: feeOf };
 })();
