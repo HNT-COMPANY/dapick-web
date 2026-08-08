@@ -69,7 +69,10 @@
   //   타입까지 맞추려 들면 조용히 안 맞는 경우가 생긴다(가장 찾기 어려운 종류다).
   function ruleMatch(p, rule) {
     if (!rule || !rule.field) return false;
-    var v = pathGet(p, rule.field);
+    // __fee 는 실제 상품 칸이 아니라 '월 요금' 을 가리키는 약속된 이름이다.
+    // 정수기는 pricing 이 3단 중첩이라 요금 칸이 따로 없고, 인터넷은 monthlyFee 다.
+    // 카테고리마다 다른 칸 이름을 관리자가 외우지 않게 하나로 묶는다.
+    var v = rule.field === '__fee' ? feeOf(p) : pathGet(p, rule.field);
     var t = rule.value;
 
     switch (rule.op) {
@@ -87,6 +90,11 @@
         return v != null && Number(v) >= Number(t);
       case 'lte':
         return v != null && Number(v) <= Number(t);
+      case 'between':
+        // 요금대처럼 '얼마부터 얼마까지' 를 한 줄로 본다.
+        // gte 와 lte 두 줄로 나누면 '하나라도 맞으면' 규칙에 걸려 범위가 아니라 둘 중 하나가 된다.
+        if (!Array.isArray(t) || t.length < 2) return false;
+        return v != null && Number(v) >= Number(t[0]) && Number(v) <= Number(t[1]);
       case 'exists':
         return v != null && v !== '' && !(Array.isArray(v) && !v.length);
       default:
@@ -156,9 +164,51 @@
     return hasBrand ? 'brand' : 'carrier';
   }
 
+  // 상품 요금을 보고 만원 단위 구간을 만든다.
+  // 상품이 없는 구간은 만들지 않는다. 고객이 골랐는데 0건이 되는 걸 막는다.
+  function buildFeeOptions(q, products) {
+    var STEP = 10000;
+    var buckets = {};
+    products.forEach(function (p) {
+      var f = feeOf(p);
+      if (!(f > 0)) return;
+      var k = Math.floor(f / STEP);
+      buckets[k] = (buckets[k] || 0) + 1;
+    });
+    var keys = Object.keys(buckets).map(Number).sort(function (a, b) { return a - b; });
+    if (!keys.length) return [];
+
+    var preset = {};
+    (q.options || []).forEach(function (o) { preset[String(o.value)] = o; });
+    var w = Number(q.weight) || 3;
+
+    return keys.map(function (k, i) {
+      var min = k * STEP;
+      var max = min + STEP - 1;
+      var value = min + '-' + max;
+      var base = preset[value] || {};
+      // 마지막 구간은 위가 열려 있다고 적는다. '4만원대' 보다 '4만원 이상' 이 정직하다.
+      var last = i === keys.length - 1;
+      var label = base.label || (last
+        ? Math.floor(min / STEP) + '만원 이상'
+        : (min === 0 ? '1만원 미만' : Math.floor(min / STEP) + '만원대'));
+      return {
+        value: value,
+        label: label,
+        desc: base.desc || (buckets[k] + '개 상품'),
+        image: base.image || '',
+        why: base.why || label,
+        rules: [{ field: '__fee', op: 'between',
+                  value: [min, last ? 9999999 : max], score: w }],
+        pin: base.pin || [],
+      };
+    });
+  }
+
   function buildDynamicOptions(q, products) {
     var src = q.optionSource;
     if (!src) return q.options || [];
+    if (src === 'fee') return buildFeeOptions(q, products);
 
     var field = src === 'brand' ? brandFieldOf(products)
       : src === 'color' ? 'colors'
