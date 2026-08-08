@@ -1134,3 +1134,56 @@ body {
 .i-carousel__slide img {
   background: transparent !important;
 }
+
+/* ══════════════════════════════════════════════════════
+   인터넷 목록 화면 아래쪽 덩어리들 (2026-08-08)
+
+   통신사 선택 아래에 세 가지가 붙는다.
+     1) 요금 문의 폼   — simple-apply.js 가 그린다
+     2) 인터넷TV 후기  — internet-reviews.js 가 그린다
+     3) 자주 묻는 질문 — product-faq.js 가 그린다
+
+   ⚠ 후기와 질문은 각자 자기 폭(max-width:1100px)과 가운데 정렬을
+     자바스크립트로 넣는다. 원래 화면 하나를 통째로 차지하던 것이라서다.
+     여기서는 좌우로 반씩 나눠 쓰므로 그 값을 풀어줘야 한다.
+     아래 .i-itv-half 안쪽 규칙이 그 일을 한다.
+   ══════════════════════════════════════════════════════ */
+.i-itv-sec {
+  max-width: 1200px;
+  margin: 0 auto 72px;
+  padding: 0 5%;
+}
+
+.i-itv-2col {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: start;
+}
+
+.i-itv-half {
+  min-width: 0;
+}
+
+/* 후기·질문이 스스로 넣은 폭과 아래 여백을 푼다. 반씩 나눠 쓰는 자리라서다. */
+.i-itv-half .ivr-box,
+.i-itv-half .dpfaq-box {
+  max-width: none;
+  margin: 0;
+  width: 100%;
+}
+
+/* 후기는 원래 3열 카드다. 반칸에서는 한 줄에 하나씩 쌓는다. */
+.i-itv-half .ivr-grid {
+  grid-template-columns: 1fr;
+}
+
+@media (max-width: 900px) {
+  .i-itv-2col {
+    grid-template-columns: 1fr;
+    gap: 40px;
+  }
+  .i-itv-sec {
+    margin-bottom: 52px;
+  }
+}

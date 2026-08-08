@@ -53,7 +53,7 @@
   <link rel="stylesheet" href="css/common/footer.css"/>
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <link rel="stylesheet" href="css/icon.css"/>
-  <link rel="stylesheet" href="css/internet/internet.css"/>
+  <link rel="stylesheet" href="css/internet/internet.css?v=20260808a"/>
     <link rel="stylesheet" href="css/internet/internet-banner.css"/>
   <link rel="stylesheet" href="css/common/site-banner.css"/>
 
@@ -162,6 +162,34 @@
       -->
     </div>
   </div>
+
+  <!-- ── 요금 문의 (2026-08-08) ─────────────────────────────
+       simple-apply.js 가 그린다. 여기에 입력칸을 적지 않는다 —
+       동의 문구와 접수 규칙이 그 파일 한 곳에 있어야 화면마다 갈리지 않는다.
+       data- 로 부르는 말만 정한다. -->
+  <div class="i-itv-sec"
+       data-simple-apply
+       data-title="우리집 요금제 얼마 나오는지 궁금한가요?"
+       data-sub="다픽에서 최저 요금 알려드릴게요"
+       data-button="최저 요금으로 상담받기"></div>
+
+  <!-- ── 후기와 자주 묻는 질문 (2026-08-08) ──────────────────
+       왼쪽 후기(internet-reviews.js), 오른쪽 질문(product-faq.js).
+       두 파일 다 스스로 붙고 내용이 0건이면 스스로 숨는다.
+       ⚠ 둘 다 자기 폭(max-width:1100px)과 가운데 정렬을 스스로 넣는다.
+         2단 안에서는 그걸 풀어야 해서 아래 i-itv-half 가 덮어쓴다. -->
+  <div class="i-itv-sec i-itv-2col">
+    <div class="i-itv-half">
+      <div id="ipReviews" class="ivr-box" style="display:none;"></div>
+    </div>
+    <div class="i-itv-half">
+      <div class="dpfaq"
+           data-faq-slug="internet"
+           data-faq-name="인터넷"
+           data-faq-title="자주 묻는 질문"
+           hidden></div>
+    </div>
+  </div>
 </div>
 
 <!-- 카카오 플로팅 -->
@@ -253,10 +281,15 @@
 <script src="js/internet/internet-calc.js"></script>
 <!-- 간편 신청 모달. 파인더 결과 바닥의 '간편 신청' 버튼이 이걸 연다.
      실어 두기만 하면 숨은 창 하나가 붙을 뿐, 화면에 보이는 것은 없다. -->
-<script src="js/common/simple-apply.js?v=20260808b"></script>
-<script src="js/common/finder.js?v=20260808i"></script>
+<script src="js/common/simple-apply.js?v=20260808c"></script>
+<script src="js/common/finder.js?v=20260808j"></script>
 <script src="js/internet/internet-expand.js?v=20260808b"></script>
 <script src="js/internet/internet-finder.js?v=20260808b"></script>
+<!-- 후기와 자주 묻는 질문. 둘 다 실어 두기만 하면 스스로 붙는다.
+     rich-render 는 질문 답변의 서식(굵기·표)을 그린다. 없으면 평문으로 내려간다. -->
+<script src="js/internet/internet-reviews.js?v=20260808a"></script>
+<script src="js/common/rich-render.js"></script>
+<script src="js/common/product-faq.js?v=20260808a"></script>
 
 <script src="/js/common/track.js"></script>
 </body>
