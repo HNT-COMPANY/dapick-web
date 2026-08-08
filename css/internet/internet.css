@@ -1173,9 +1173,24 @@ body {
   width: 100%;
 }
 
-/* 후기는 원래 3열 카드다. 반칸에서는 한 줄에 하나씩 쌓는다. */
+/* 후기는 가로형을 지킨다.
+   ⚠ 세로로 쌓으면 화면이 한없이 길어진다. 반칸에서도 옆으로 두 칸씩 놓는다.
+     원래 세 칸이지만 반칸에서 세 칸이면 카드 하나가 180px 밑으로 내려가
+     제목과 본문이 다 눌린다. 두 칸이 반칸에서 읽히는 최대치다. */
 .i-itv-half .ivr-grid {
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+/* 반칸 카드는 사진을 조금 낮춰 세로 길이를 줄인다. */
+.i-itv-half .ivr-thumb {
+  aspect-ratio: 16 / 9;
+}
+
+/* 통신사 고르기보다 위에 놓이는 요금 문의. 배너 바로 아래라 여백을 따로 준다. */
+.i-itv-sec--top {
+  margin-top: 28px;
+  margin-bottom: 8px;
 }
 
 @media (max-width: 900px) {
@@ -1185,5 +1200,15 @@ body {
   }
   .i-itv-sec {
     margin-bottom: 52px;
+  }
+  /* 한 단이 되면 폭이 넉넉하니 후기를 원래대로 옆으로 세 칸 놓는다. */
+  .i-itv-half .ivr-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .i-itv-half .ivr-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }

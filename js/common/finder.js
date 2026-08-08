@@ -781,6 +781,9 @@
       '<div class="dpf-head dpf-head--res">' + resultLogoHtml() +
       '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
       rewardHtml(ranked) +
+      // ⚠ 순서를 바꾸지 말 것. 지원금 다음에 곧장 상품 목록이 오면 흐름이 끊긴다.
+      //   지원금 → 지금 신청 → (그래도 고르고 싶으면) 상품 목록 → 다시 신청.
+      (ranked.length ? actionsHtml(ranked, 'top') : '') +
       '<h2 class="dpf-q dpf-q--big">' + esc(r.title || '이런 상품은 어떠세요?') + '</h2>' +
       '<p class="dpf-qsub">' + esc(lead) + '</p>' +
       chipsHtml() +
@@ -788,7 +791,7 @@
         ? '<div class="dpf-res dpf-res--n' + Math.min(RES_MAX, ranked.length) + '">' +
           ranked.map(cardHtml).join('') + '</div>'
         : '<p class="dpf-qsub">보여드릴 상품이 없습니다.</p>') +
-      (ranked.length ? actionsHtml(ranked) : '') +
+      (ranked.length ? actionsHtml(ranked, 'bottom') : '') +
       '<div class="dpf-foot">' +
       '<button type="button" class="dpf-sub" data-dpf-again>다시 고르기</button>' +
       '<button type="button" class="dpf-sub" data-dpf-close>닫기</button>' +
@@ -810,21 +813,25 @@
       };
     });
 
-    var ab = ov.querySelector('[data-dpf-apply]');
-    if (ab) ab.onclick = function () {
-      var p = pickedRow(ranked);
-      if (p && typeof S.opt.onApply === 'function') S.opt.onApply(p);
-    };
+    // ⚠ 신청 줄이 위아래 두 곳에 있다. querySelector 하나만 잡으면 아래 버튼이 죽는다.
+    ov.querySelectorAll('[data-dpf-apply]').forEach(function (b) {
+      b.onclick = function () {
+        var p = pickedRow(ranked);
+        if (p && typeof S.opt.onApply === 'function') S.opt.onApply(p);
+      };
+    });
 
-    var sb = ov.querySelector('[data-dpf-simple]');
-    if (sb) sb.onclick = function () { fireSimple(pickedRow(ranked)); };
+    ov.querySelectorAll('[data-dpf-simple]').forEach(function (b) {
+      b.onclick = function () { fireSimple(pickedRow(ranked)); };
+    });
 
-    var kb = ov.querySelector('[data-dpf-kakao]');
-    if (kb) kb.onclick = function () {
-      var url = String(actionsOf().kakaoUrl || '').trim();
-      // ⚠ 관리자가 적는 칸이라 javascript: 같은 주소가 들어올 수 있다. http 만 연다.
-      if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
-    };
+    ov.querySelectorAll('[data-dpf-kakao]').forEach(function (b) {
+      b.onclick = function () {
+        var url = String(actionsOf().kakaoUrl || '').trim();
+        // ⚠ 관리자가 적는 칸이라 javascript: 같은 주소가 들어올 수 있다. http 만 연다.
+        if (/^https?:\/\//i.test(url)) window.open(url, '_blank', 'noopener');
+      };
+    });
 
     // 같은 칩을 다시 누르면 꺼진다. 끄는 방법이 없으면 고객이 갇힌다.
     ov.querySelectorAll('[data-chip]').forEach(function (b) {
@@ -861,37 +868,9 @@
     return hit ? hit.p : null;
   }
 
-  function actionsHtml(ranked) {
-    var a = actionsOf();
-    var kakaoUrl = String(a.kakaoUrl || '').trim();
-    var applyOn = typeof S.opt.onApply === 'function';
-    var simpleOn = a.simpleOn !== false;              // 기본은 켜짐
-    var kakaoOn = a.kakaoOn !== false && !!kakaoUrl;  // 주소가 없으면 못 켠다
-    if (!applyOn && !simpleOn && !kakaoOn) return '';
-
-    var amount = amountOf(ranked);
-
-    // ★ 버튼 위에 지원금을 한 번 더 적는다 (2026-08-08)
-    //   맨 위에서 한 번 보여줬어도, 상품을 훑어 내려온 고객의 눈에는
-    //   버튼만 남는다. 누르기 직전에 다시 이유를 보여주는 자리다.
-    var head = a.headline == null ? '{이름}님 숨은 지원금 {금액} 발견!' : a.headline;
-    var sub = a.sub == null ? '비밀 지원금 더 찾으러 갈까요?' : a.sub;
-    var push = (head || sub)
-      ? '<div class="dpf-act-push">' +
-        (head ? '<p class="dpf-act-h">' + fillTokens(head, amount) + '</p>' : '') +
-        (sub ? '<p class="dpf-act-s">' + fillTokens(sub, amount) + '</p>' : '') +
-        '</div>'
-      : '';
-
-    var p = pickedRow(ranked);
-    var line = p
-      ? '<span class="dpf-act-on">' + esc(a.pickedLabel || '고른 상품') + ' · <b>' +
-        esc(p.name || '') + '</b></span>'
-      : '<span class="dpf-act-hint">' +
-        esc(a.pickHint || '위에서 상품을 누르면 그 상품으로 접수됩니다') + '</span>';
-
-    return '<div class="dpf-act">' + push +
-      '<div class="dpf-act-row">' + line + '<div class="dpf-act-btns">' +
+  // 버튼 세 개. 위·아래 두 곳에서 같은 모양으로 쓴다.
+  function actBtnsHtml(a, applyOn, simpleOn, kakaoOn) {
+    return '<div class="dpf-act-btns">' +
       (applyOn
         ? '<button type="button" class="dpf-act-b dpf-act-b--a" data-dpf-apply>' +
           esc(a.applyLabel || '신청하기') + '</button>'
@@ -904,7 +883,54 @@
         ? '<button type="button" class="dpf-act-b dpf-act-b--k" data-dpf-kakao>' +
           esc(a.kakaoLabel || '카카오톡 상담') + '</button>'
         : '') +
-      '</div></div></div>';
+      '</div>';
+  }
+
+  /**
+   * 신청 줄. 결과 화면에 두 번 나온다 (2026-08-08 다시 배치).
+   *
+   * ★ 왜 두 번인가
+   *   지원금을 보여준 바로 다음에 상품 목록이 나오면 흐름이 끊긴다.
+   *   "얼마 받는대" 에서 곧장 "골라보세요" 로 넘어가 버려서, 신청까지 갈 사람도
+   *   상품을 비교하다 나간다. 그래서 지원금 바로 아래에 "3초면 됩니다" 와
+   *   버튼을 먼저 놓고, 그래도 고르고 싶은 사람을 위해 상품 목록을 아래에 둔다.
+   *
+   *   where='top'    지원금 바로 아래. 유도 문구와 버튼만. 아직 카드를 안 봤으므로
+   *                  '고른 상품' 줄은 안 적는다.
+   *   where='bottom' 상품 목록 아래. 고른 상품 이름과 버튼. 카드를 눌러 바꾼 사람이
+   *                  화면을 위로 올리지 않아도 되게 하는 자리다.
+   */
+  function actionsHtml(ranked, where) {
+    var a = actionsOf();
+    var kakaoUrl = String(a.kakaoUrl || '').trim();
+    var applyOn = typeof S.opt.onApply === 'function';
+    var simpleOn = a.simpleOn !== false;              // 기본은 켜짐
+    var kakaoOn = a.kakaoOn !== false && !!kakaoUrl;  // 주소가 없으면 못 켠다
+    if (!applyOn && !simpleOn && !kakaoOn) return '';
+
+    var btns = actBtnsHtml(a, applyOn, simpleOn, kakaoOn);
+
+    if (where === 'top') {
+      var amount = amountOf(ranked);
+      var head = a.headline == null ? '최대 지원금을 당장 알아보는 데 3초면 됩니다' : a.headline;
+      var sub = a.sub == null ? '비밀 지원금 더 찾으러 갈까요?' : a.sub;
+      if (!head && !sub) return '';   // 문구를 다 비우면 위 줄은 통째로 안 그린다
+      return '<div class="dpf-act dpf-act--top">' +
+        '<div class="dpf-act-push">' +
+        (head ? '<p class="dpf-act-h">' + fillTokens(head, amount) + '</p>' : '') +
+        (sub ? '<p class="dpf-act-s">' + fillTokens(sub, amount) + '</p>' : '') +
+        '</div>' + btns + '</div>';
+    }
+
+    var p = pickedRow(ranked);
+    var line = p
+      ? '<span class="dpf-act-on">' + esc(a.pickedLabel || '고른 상품') + ' · <b>' +
+        esc(p.name || '') + '</b></span>'
+      : '<span class="dpf-act-hint">' +
+        esc(a.pickHint || '위에서 상품을 누르면 그 상품으로 접수됩니다') + '</span>';
+
+    return '<div class="dpf-act">' +
+      '<div class="dpf-act-row">' + line + btns + '</div></div>';
   }
 
   // 간편 신청을 실제로 여는 것은 화면 쪽 일이다.
@@ -1173,6 +1199,14 @@
       '.dpf-act-s{margin:6px 0 0;font-size:14px;font-weight:700;color:#6c3fc5;word-break:keep-all;}' +
       '.dpf-act-s b{color:#6c3fc5;}' +
       '.dpf-act-row{display:flex;flex-wrap:wrap;align-items:center;gap:12px;}' +
+      // 위쪽 신청 줄 — 지원금 바로 아래. 문구와 버튼을 가운데로 모은다.
+      // ⚠ 바탕은 흰색을 지킨다. 색을 깔면 그 부분이 배경으로 읽혀 글자가 죽는다.
+      //   위쪽 지원금 알림에서 이미 겪은 일이다. (2026-08-08)
+      '.dpf-act--top{margin:0 0 24px;background:#fff;border-color:#ece5fa;' +
+        'box-shadow:0 6px 22px rgba(108,63,197,.07);}' +
+      '.dpf-act--top .dpf-act-push{margin-bottom:14px;}' +
+      '.dpf-act--top .dpf-act-btns{margin-left:0;justify-content:center;}' +
+      '.dpf-act--top .dpf-act-b{padding:14px 24px;font-size:15px;}' +
       '.dpf-act-hint{font-size:13px;color:#8b88a3;font-weight:600;}' +
       '.dpf-act-on{font-size:13.5px;color:#6b6880;font-weight:600;}' +
       '.dpf-act-on b{color:#221f38;font-weight:800;}' +
