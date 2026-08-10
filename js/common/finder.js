@@ -573,17 +573,58 @@
   // 화면(연결층)은 빈 칸 하나만 두고, 문구는 전부 어드민 2단계에서 온다.
   // ★ 여기 글자를 화면 파일에 적지 않는 이유 — 적는 순간 문구 하나 바꾸는 데
   //   개발자와 배포가 필요해진다. 후킹 문구는 자주 바뀌는 값이다.
+  // 진입 버튼 기본 아이콘 — 얇은 선 돋보기 (2026-08-10).
+  //
+  // ⚠ 기본을 이모지(🔎)로 두지 않는다.
+  //   기기·브라우저마다 다른 그림이 나오고, 혼자만 컬러라 화면에서 튄다.
+  //   관리자가 굳이 이모지를 적으면 그건 그대로 쓴다 — 막지는 않는다.
+  var ICO_SEARCH =
+    '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor"' +
+    ' stroke-width="2" stroke-linecap="round" aria-hidden="true">' +
+    '<circle cx="11" cy="11" r="7"/><path d="M20 20l-3.6-3.6"/></svg>';
+  var ICO_CHEV =
+    '<svg width="9" height="16" viewBox="0 0 9 16" fill="none" stroke="currentColor"' +
+    ' stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+    '<path d="M1.5 1.5L7.5 8l-6 6.5"/></svg>';
+
+  /**
+   * 진입 버튼에 적을 금액 (2026-08-10).
+   *
+   * ★ 관리자가 적은 값만 쓴다. 상품에서 자동으로 뽑지 않는다.
+   *   자동으로 뽑으면 상품 하나 손봤을 뿐인데 버튼의 광고 문구가 저절로 바뀐다.
+   *   화면에 적히는 금액은 사람이 책임지고 적어야 하는 값이다.
+   *   (결과 화면의 reward.amount 는 비우면 자동으로 채운다 — 거긴 성격이 다르다.
+   *    거긴 '이번에 고른 조건에서 나온 값' 이고, 여긴 '늘 걸려 있는 간판' 이다.)
+   */
+  function entryAmount() {
+    return String((S.def.entry || {}).amount || '').trim();
+  }
+
   function mountEntry(slot) {
     injectStyles();
     var e = S.def.entry || {};
     var bubble = e.bubble || '';
+    var amount = entryAmount();
+    var title = e.title || S.name || '나만의 상품 찾기';
+
+    // 금액을 적어 놓고 제목에 {금액} 을 안 넣으면 화면에 안 나온다.
+    // 조용히 사라지면 관리자는 왜 안 나오는지 못 찾는다. 제목 위에 따로 얹고 경고를 남긴다.
+    var orphan = '';
+    if (amount && String(title).indexOf('{금액}') < 0) {
+      orphan = '<span class="dpf-cta-amt">' + esc(amount) + '</span>';
+      console.warn('[finder] 진입 버튼 금액을 적었는데 제목에 {금액} 이 없다. 제목 위에 따로 얹는다');
+    }
+
     slot.innerHTML =
       (bubble ? '<span class="dpf-cta-bub">' + esc(bubble) + '</span>' : '') +
       '<button type="button" class="dpf-cta">' +
-      '<span class="dpf-cta-ico">' + esc(e.icon || '🔎') + '</span>' +
-      '<span class="dpf-cta-txt"><b>' + esc(e.title || S.name || '나만의 상품 찾기') + '</b>' +
+      '<span class="dpf-cta-ico">' + (e.icon ? esc(e.icon) : ICO_SEARCH) + '</span>' +
+      '<span class="dpf-cta-txt">' + orphan +
+      '<b>' + fillTokens(title, amount) + '</b>' +
       (e.sub ? '<em>' + esc(e.sub) + '</em>' : '') + '</span>' +
-      '<span class="dpf-cta-go">' + esc(e.label || '시작하기') + ' ›</span>' +
+      '<span class="dpf-cta-go">' +
+      (e.label ? '<span class="dpf-cta-lb">' + esc(e.label) + '</span>' : '') +
+      ICO_CHEV + '</span>' +
       '</button>';
     var btn = slot.querySelector('.dpf-cta');
     if (btn) btn.addEventListener('click', open);
@@ -1081,16 +1122,30 @@
     _styled = true;
     var css =
       // ── 진입 버튼 (화면마다 따로 만들지 않는다) ──
-      '.dpf-cta{display:flex;align-items:center;gap:14px;width:100%;padding:18px 22px;' +
-        'background:#fff;border:1px solid #e9e2f7;border-radius:16px;cursor:pointer;text-align:left;' +
-        'box-shadow:0 2px 16px rgba(108,63,197,.07);transition:border-color .15s,transform .15s;}' +
-      '.dpf-cta:hover{border-color:#6c3fc5;transform:translateY(-1px);}' +
-      '.dpf-cta-ico{width:44px;height:44px;flex-shrink:0;border-radius:12px;background:#f3eeff;' +
-        'display:flex;align-items:center;justify-content:center;font-size:20px;}' +
+      //
+      // 2026-08-10 다시 그림. 테두리를 빼고 그림자로만 띄운다.
+      // 테두리 + 그림자 + 배경색을 다 쓰면 화면이 시끄러워진다. 하나만 쓴다.
+      // 색은 이 파일이 원래 쓰던 다픽 보라(#6c3fc5)를 그대로 이어받는다 — 새 색을 만들지 않는다.
+      '.dpf-cta{display:flex;align-items:center;gap:14px;width:100%;padding:20px;' +
+        'background:#fff;border:none;border-radius:18px;cursor:pointer;text-align:left;' +
+        'font-family:inherit;box-shadow:0 2px 12px rgba(40,25,80,.07);' +
+        'transition:box-shadow .14s,transform .14s;}' +
+      '.dpf-cta:hover{box-shadow:0 8px 24px rgba(108,63,197,.18);transform:translateY(-1px);}' +
+      '.dpf-cta-ico{width:46px;height:46px;flex-shrink:0;border-radius:50%;background:#f3eeff;' +
+        'color:#6c3fc5;display:flex;align-items:center;justify-content:center;font-size:20px;}' +
+      '.dpf-cta-ico svg{display:block;}' +
       '.dpf-cta-txt{flex:1;min-width:0;}' +
-      '.dpf-cta-txt b{display:block;font-size:16px;font-weight:800;color:#221f38;}' +
-      '.dpf-cta-txt em{display:block;margin-top:3px;font-size:13px;color:#6b7280;font-style:normal;}' +
-      '.dpf-cta-go{flex-shrink:0;font-size:14px;font-weight:700;color:#6c3fc5;white-space:nowrap;}' +
+      // 제목에 {금액} 을 안 넣었을 때 대신 얹는 줄. 넣었으면 이 줄은 아예 안 나온다.
+      '.dpf-cta-amt{display:block;font-size:13px;font-weight:800;color:#6c3fc5;margin-bottom:3px;}' +
+      '.dpf-cta-txt b{display:block;font-size:17px;font-weight:700;letter-spacing:-.6px;' +
+        'line-height:1.44;color:#191f28;word-break:keep-all;}' +
+      // fillTokens 가 {금액} 을 <b> 로 감싼다. 제목 <b> 안의 <b> 가 곧 금액이다.
+      '.dpf-cta-txt b b{color:#6c3fc5;font-weight:800;}' +
+      '.dpf-cta-txt em{display:block;margin-top:5px;font-size:13.5px;color:#8b8a9b;' +
+        'font-style:normal;font-weight:400;}' +
+      '.dpf-cta-go{flex-shrink:0;display:flex;align-items:center;gap:5px;font-size:14px;' +
+        'font-weight:700;color:#6c3fc5;white-space:nowrap;}' +
+      '.dpf-cta-go svg{display:block;color:#c9c5d4;}' +
       // 말풍선 — 버튼 위에 살짝 떠서 통통 튄다. 눈이 먼저 가는 자리다.
       '.dpf-cta-bub{display:inline-block;margin:0 0 8px 14px;padding:6px 13px;position:relative;' +
         'background:#221f38;color:#fff;font-size:12.5px;font-weight:700;border-radius:999px;' +
@@ -1100,10 +1155,12 @@
         'border-top:6px solid #221f38;}' +
       '@keyframes dpfBub{0%,100%{transform:translateY(0);}50%{transform:translateY(-5px);}}' +
       '@media(prefers-reduced-motion:reduce){.dpf-cta-bub{animation:none;}}' +
-      '@media(max-width:640px){.dpf-cta{padding:15px 16px;gap:11px;}' +
-        '.dpf-cta-ico{width:38px;height:38px;font-size:17px;}' +
-        '.dpf-cta-txt b{font-size:15px;}.dpf-cta-txt em{font-size:12px;}' +
-        '.dpf-cta-go{font-size:13px;}.dpf-cta-bub{font-size:11.5px;margin-left:8px;}}' +
+      // 좁은 화면에서는 오른쪽 글자를 지우고 꺾쇠만 남긴다.
+      // 글자를 남기면 제목이 밀려 두 줄이 세 줄이 된다.
+      '@media(max-width:640px){.dpf-cta{padding:17px 16px;gap:12px;}' +
+        '.dpf-cta-ico{width:42px;height:42px;font-size:18px;}' +
+        '.dpf-cta-txt b{font-size:16px;}.dpf-cta-txt em{font-size:12.5px;}' +
+        '.dpf-cta-lb{display:none;}.dpf-cta-bub{font-size:11.5px;margin-left:8px;}}' +
       '.dpf-ov{position:fixed;inset:0;z-index:9000;background:rgba(20,17,38,.55);' +
         'display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}' +
       '.dpf-ov[hidden]{display:none;}' +
