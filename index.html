@@ -171,7 +171,9 @@
   <link rel="stylesheet" href="css/common/footer.css"/>
   <link rel="stylesheet" href="css/common/gnb-user.css"/>
   <link rel="stylesheet" href="css/hero.css"/>
+  <!-- 다픽 AI 검색은 내려 두었다 (2026-08-10). 되살릴 때 이 줄과 아래 <script> 를 함께 푼다.
   <link rel="stylesheet" href="css/home/ai-search.css?v=20260810a"/>
+  -->
   <link rel="stylesheet" href="css/icon.css"/>
   <link rel="stylesheet" href="css/home/payout.css"/>
 
@@ -202,13 +204,15 @@
         <button class="btn-cta-sub" data-track="home_cta_mobile" onclick="goPage('mobile')">휴대폰 가격 비교하기</button>
       </div>
 
-      <!-- ── 다픽 AI 검색 (2026-08-10) ──────────────────────────────
-           위 버튼 두 개는 '이미 정한 사람' 의 문이다. 이 검색창은 '아직 모르는 사람' 의 문이다.
-           고객이 적은 말로 카테고리를 정하고 그 화면의 상품 찾기 결과를 바로 연다.
+      <!-- ── 다픽 AI 검색 — 지금은 내려 두었다 (2026-08-10) ──────────
+           위 버튼 두 개는 '이미 정한 사람' 의 문이고, 이 검색창은 '아직 모르는 사람' 의 문이다.
+           질문·답변 내용을 먼저 만들기로 해서 그때까지 화면에서 뺀다.
 
-           ⚠ 여기에 입력칸을 적지 않는다. ai-search.js 가 그린다.
-             낱말표와 안내 문구가 그 파일 한 곳에 있어야 화면과 판단이 갈리지 않는다. -->
+           ⚠ 코드를 지우지 않았다. 아래 한 줄과 문서 끝의 <script> 주석만 풀면 되살아난다.
+             파일은 js/home/ai-search.js · css/home/ai-search.css 에 그대로 있다.
+             finder.js 의 ?finder=result 도 그대로 산다 — 주소로 직접 열어 볼 수 있다.
       <div id="aiSearch"></div>
+      ────────────────────────────────────────────────────────── -->
     </div>
 
     <!-- ★ 추가: 우측 둥둥 이미지 (src만 본인 이미지로) 
@@ -556,8 +560,9 @@
 <script src="js/home/payout-ticker.js"></script>
 <script src="js/home/apply-ticker.js"></script>
 <script src="js/home/reviews-carousel.js"></script>
-<!-- 검색어를 GA4 로도 보내므로 track.js 보다 먼저 실려도 된다 — dpTrack 은 있으면 쓰고 없으면 넘어간다 -->
+<!-- 다픽 AI 검색은 내려 두었다 (2026-08-10). 위 <link> 와 히어로 안 <div id="aiSearch"> 를 함께 푼다.
 <script src="js/home/ai-search.js?v=20260810a"></script>
+-->
 <script src="js/common/popup.js"></script>
 
 <script src="/js/common/track.js"></script>
