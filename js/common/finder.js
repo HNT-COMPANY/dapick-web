@@ -775,8 +775,11 @@
       .sort(function (a, b) {
         if (b.s !== a.s) return b.s - a.s;
         if (search) {
-          var ga = giftOf(a.p), gb = giftOf(b.p);
-          if (gb !== ga) return gb - ga;
+          // ★ 관리자가 적어 둔 상품이 먼저다 (2026-08-10 사장님 결정).
+          //   상품 표에 우연히 큰 숫자가 들어 있는 것보다, 사람이 골라 적은 것이 앞선다.
+          var ia = giftInfo(a.p), ib = giftInfo(b.p);
+          if (ia.set !== ib.set) return ia.set ? -1 : 1;
+          if (ib.v !== ia.v) return ib.v - ia.v;
         }
         return (a.p.sortOrder || 999) - (b.p.sortOrder || 999);
       });
@@ -850,15 +853,31 @@
     return man + '만원';
   }
 
-  // 상품 하나에 걸린 지원금(사은품). 화면이 giftOf 를 주면 그쪽 말을 따른다.
-  function giftOf(p) {
-    if (!p || typeof p !== 'object') return 0;
-    if (S && S.opt && typeof S.opt.giftOf === 'function') return Number(S.opt.giftOf(p)) || 0;
-    if (p.gift != null) return Number(p.gift) || 0;
-    if (p.giftAmount != null) return Number(p.giftAmount) || 0;
-    if (p.cashback != null) return Number(p.cashback) || 0;
-    return 0;
+  /**
+   * 상품 하나에 걸린 지원금 (2026-08-10 다시 씀).
+   *
+   * ★ 관리자가 4단계에서 적은 값이 가장 세다.
+   *   상품 표의 gift 는 상세 화면용이라 파인더에 그대로 쓰기엔 안 맞을 때가 있고,
+   *   인터넷TV 처럼 화면에서 펼쳐 만든 줄(p-kt::500M)은 상품 표에 아예 없다.
+   *   그런 줄에도 지원금을 걸 수 있어야 해서 파인더가 자기 값을 따로 들고 있는다.
+   *
+   * @returns { v: 금액, set: 관리자가 직접 적었나 }
+   */
+  function giftInfo(p) {
+    if (!p || typeof p !== 'object') return { v: 0, set: false };
+    var m = (S && S.def && S.def.result && S.def.result.gifts) || null;
+    if (m) {
+      var typed = Number(m[String(p.id)]);
+      if (typed > 0) return { v: typed, set: true };
+    }
+    if (S && S.opt && typeof S.opt.giftOf === 'function') return { v: Number(S.opt.giftOf(p)) || 0, set: false };
+    if (p.gift != null) return { v: Number(p.gift) || 0, set: false };
+    if (p.giftAmount != null) return { v: Number(p.giftAmount) || 0, set: false };
+    if (p.cashback != null) return { v: Number(p.cashback) || 0, set: false };
+    return { v: 0, set: false };
   }
+
+  function giftOf(p) { return giftInfo(p).v; }
 
   // 로그인한 고객의 이름. 없으면 '고객'.
   // ⚠ localStorage 는 시크릿 모드나 쿠키 차단에서 통째로 던진다. 감싸 둔다.
@@ -924,12 +943,16 @@
    *
    *   둘 중 하나만 켜져 있어도 상자는 하나다. 둘 다 꺼져 있으면 아예 안 그린다.
    */
-  function heroHtml(ranked) {
-    var rw = rewardInner(ranked);
-    var ac = ranked.length ? actionsHtml(ranked, 'top') : '';
-    if (!rw && !ac) return '';
-    return '<div class="dpf-rw">' + rw + ac + '</div>';
-  }
+  // ⚠ 결과 화면 맨 위의 '지원금 알림 + 신청 줄' 을 통째로 뺐다 (2026-08-10 사장님 결정).
+  //
+  //   전에는 "비밀지원금 최대혜택 발견!" 같은 큰 덩어리가 상품 목록 위에 있었다.
+  //   상품마다 지원금을 적기로 하면서 그 덩어리가 할 일이 없어졌다 —
+  //   같은 말을 위에서 한 번 하고 카드에서 또 한다. 고객은 두 번 읽고 한 번 의심한다.
+  //   신청 줄은 목록 아래 한 곳에만 둔다. 위아래 두 곳이면 무엇이 진짜인지 헷갈린다.
+  //
+  //   ★ rewardInner / amountOf / dpf-rw CSS 는 지우지 않고 남겨 뒀다.
+  //     어드민 5단계 저장값(result.reward)이 아직 DB 에 남아 있고,
+  //     되돌리라는 말이 나오면 여기 한 줄만 되살리면 된다.
 
   // 결과 화면 맨 위 로고. '추천 결과' 라는 딱지 대신 로고를 가운데 둔다 (2026-08-08).
   // 딱지는 관리자 말이지 고객 말이 아니다. 로고는 여기가 어디인지 알려주고 믿음을 준다.
@@ -942,7 +965,8 @@
 
   function paintResult() {
     var r = S.def.result || {};
-    var limit = Math.min(RES_MAX, Number(r.count) || RES_MAX);
+    // 위 묶음 개수. 기본 3 이다 — 아래 지원금 묶음 3 과 합쳐 6 개가 된다 (2026-08-10).
+    var limit = Math.min(RES_MAX, Number(r.count) || 3);
     var all = rank();
 
     // 칩이 켜져 있으면 그 조건에 맞는 것만 남긴다.
@@ -955,13 +979,42 @@
     var hit = rows.filter(function (x) { return x.s > 0; });
     var ranked = balanced(hit.length ? hit : rows, limit);
 
-    // 고른 상품이 목록에서 사라졌으면(칩을 눌러 걸러졌다) 놓아준다.
-    // 안 그러면 바닥 줄이 화면에 없는 상품 이름을 계속 들고 있는다.
-    if (S.pick && !ranked.some(function (x) { return String(x.p.id) === String(S.pick); })) {
+    // ── 아래 묶음 · 지원금 많이 주는 상품 (2026-08-10) ──────────────
+    //
+    // ★ 왜 두 묶음인가
+    //   위는 '고르신 조건에 맞는 것', 아래는 '돈을 많이 주는 것' 이다. 고르는 기준이 다르다.
+    //   한 줄에 섞어 놓으면 요금이 싼 것과 지원금이 큰 것이 뒤엉켜 무엇을 보고 고를지 모른다.
+    //
+    // ⚠ 위에 이미 나온 상품은 아래에 또 안 넣는다.
+    //   같은 상품이 두 번 나오면 6개인 줄 알았는데 4개짜리 목록이 된다.
+    //   그래서 아래 묶음은 '지원금 1위' 가 아니라 '위에 없는 것 중 지원금 1위' 다.
+    var giftLimit = Number(r.giftCount);
+    if (!(giftLimit >= 0)) giftLimit = 3;
+    // ⚠ 검색·지름길로 들어왔으면 위 묶음이 이미 지원금 순이다.
+    //   그 아래에 '지원금 많이 주는 상품' 을 또 붙이면 같은 기준으로 두 번 줄 세운 꼴이고,
+    //   위 3개를 뺀 4~6등이 마치 지원금 1등인 것처럼 보인다.
+    if (S.search) giftLimit = 0;
+    var upTop = {};
+    ranked.forEach(function (x) { upTop[String(x.p.id)] = 1; });
+    var gifted = giftLimit === 0 ? [] : rows
+      .filter(function (x) { return !upTop[String(x.p.id)] && giftOf(x.p) > 0; })
+      .sort(function (a, b) {
+        var ia = giftInfo(a.p), ib = giftInfo(b.p);
+        if (ia.set !== ib.set) return ia.set ? -1 : 1;   // 관리자가 적어 둔 것이 먼저
+        if (ib.v !== ia.v) return ib.v - ia.v;
+        return (a.p.sortOrder || 999) - (b.p.sortOrder || 999);
+      })
+      .slice(0, giftLimit);
+
+    // 고를 수 있는 것은 위아래를 합친 것이다. 아래 카드를 눌러도 신청 줄이 따라와야 한다.
+    var shown = ranked.concat(gifted);
+
+    // 고른 상품이 목록에서 사라졌으면 놓아준다 (칩을 눌러 걸러진 경우).
+    if (S.pick && !shown.some(function (x) { return String(x.p.id) === String(S.pick); })) {
       S.pick = null;
     }
     // 아무것도 안 골랐으면 1등을 켜 둔다. 세 버튼이 곧바로 쓸모 있어야 한다.
-    if (!S.pick && ranked.length) S.pick = ranked[0].p.id;
+    if (!S.pick && shown.length) S.pick = shown[0].p.id;
 
     var best = ranked.length ? ranked[0].s : 0;
     // 아무 조건도 못 맞췄으면 솔직하게 말한다. 그럴듯하게 포장하지 않는다.
@@ -983,17 +1036,22 @@
       '<div class="dpf-box dpf-box--page">' +
       '<div class="dpf-head dpf-head--res">' + resultLogoHtml() +
       '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
-      // ⚠ 순서를 바꾸지 말 것. 지원금 다음에 곧장 상품 목록이 오면 흐름이 끊긴다.
-      //   지원금과 신청은 한 상자다 → (그래도 고르고 싶으면) 상품 목록 → 다시 신청.
-      heroHtml(ranked) +
       '<h2 class="dpf-q dpf-q--big">' + esc(r.title || '이런 상품은 어떠세요?') + '</h2>' +
       '<p class="dpf-qsub">' + esc(lead) + '</p>' +
       chipsHtml() +
       (ranked.length
         ? '<div class="dpf-res dpf-res--n' + Math.min(RES_MAX, ranked.length) + '">' +
-          ranked.map(cardHtml).join('') + '</div>'
+          ranked.map(function (x, i) { return cardHtml(x, i, false); }).join('') + '</div>'
         : '<p class="dpf-qsub">보여드릴 상품이 없습니다.</p>') +
-      (ranked.length ? actionsHtml(ranked, 'bottom') : '') +
+      // 아래 묶음 — 지원금이 큰 상품. 없으면 제목째로 안 그린다(빈 제목은 고장으로 읽힌다).
+      (gifted.length
+        ? '<h2 class="dpf-q dpf-q--big dpf-q--gift">' +
+          esc(r.giftTitle || '지원금 많이 주는 상품') + '</h2>' +
+          (r.giftLead ? '<p class="dpf-qsub">' + esc(r.giftLead) + '</p>' : '') +
+          '<div class="dpf-res dpf-res--n' + Math.min(RES_MAX, gifted.length) + '">' +
+          gifted.map(function (x, i) { return cardHtml(x, i, true); }).join('') + '</div>'
+        : '') +
+      (shown.length ? actionsHtml(shown, 'bottom') : '') +
       '<div class="dpf-foot">' +
       '<button type="button" class="dpf-sub" data-dpf-again>다시 고르기</button>' +
       '<button type="button" class="dpf-sub" data-dpf-close>닫기</button>' +
@@ -1018,13 +1076,13 @@
     // ⚠ 신청 줄이 위아래 두 곳에 있다. querySelector 하나만 잡으면 아래 버튼이 죽는다.
     ov.querySelectorAll('[data-dpf-apply]').forEach(function (b) {
       b.onclick = function () {
-        var p = pickedRow(ranked);
+        var p = pickedRow(shown);
         if (p && typeof S.opt.onApply === 'function') S.opt.onApply(p);
       };
     });
 
     ov.querySelectorAll('[data-dpf-simple]').forEach(function (b) {
-      b.onclick = function () { fireSimple(pickedRow(ranked)); };
+      b.onclick = function () { fireSimple(pickedRow(shown)); };
     });
 
     ov.querySelectorAll('[data-dpf-kakao]').forEach(function (b) {
@@ -1162,13 +1220,29 @@
     return S.opt.imageOf ? S.opt.imageOf(p) : (p && p.imageUrl);
   }
 
-  function cardHtml(x, i) {
+  // 지원금 한 줄. 금액이 없으면 아예 안 그린다 — 0원이라고 적으면 없느니만 못하다.
+  // giftBig=true 면 지원금을 크게, 월 요금을 작게 (아래 묶음용).
+  function giftHtml(p, big) {
+    var v = giftOf(p);
+    if (!(v > 0)) return '';
+    return '<div class="dpf-gift' + (big ? ' dpf-gift--big' : '') + '">' +
+      '최대 지원금 <b>' + esc(moneyKo(v)) + '</b></div>';
+  }
+
+  /**
+   * @param x    { p, s, why }
+   * @param i    이 묶음 안에서 몇 번째인가
+   * @param big  아래 '지원금 많이 주는 상품' 묶음인가 (2026-08-10)
+   */
+  function cardHtml(x, i, big) {
     var p = x.p;
     var img = imageOf(p);
     var href = S.opt.hrefOf ? S.opt.hrefOf(p) : '/product-detail?id=' + encodeURIComponent(p.id);
 
     // 순위는 3등까지만 적는다. 전부 적으면 6등이 나쁜 상품처럼 보인다.
-    var rankTag = i < 3 ? '<span class="dpf-rank">' + (i + 1) + '</span>' : '';
+    // ⚠ 아래 지원금 묶음에는 순위를 안 붙인다. 위쪽 1등과 아래쪽 1등이 나란히 있으면
+    //   무엇이 진짜 1등인지 헷갈린다.
+    var rankTag = (!big && i < 3) ? '<span class="dpf-rank">' + (i + 1) + '</span>' : '';
 
     var badges = badgesOf(p).map(function (b) {
       return '<span class="dpf-badge dpf-badge--' + esc(b.color || 'green') + '">' + esc(b.label || '') + '</span>';
@@ -1182,9 +1256,12 @@
     // ★ 카드 속 내용은 카테고리마다 다르다(인터넷TV=사은품·옵션 / 정수기=약정·주기·색).
     //   전부 정의로 표현하려 들면 카드 하나에 매핑 규칙이 스무 개 붙는다.
     //   화면이 cardOf 를 넘기면 그쪽이 그리고, 없으면 아래 기본 카드를 쓴다.
+    //   ⚠ 화면이 cardOf 를 주면 지원금 줄도 그쪽 몫이다. 우리가 덧붙이면 두 번 나온다.
     var inner = typeof S.opt.cardOf === 'function'
       ? S.opt.cardOf(p, x)
-      : '<div class="dpf-name">' + esc(p.name || '') + '</div>' + feeHtml(p);
+      : '<div class="dpf-name">' + esc(p.name || '') + '</div>' +
+        // 위 묶음은 월 요금이 먼저, 아래 묶음은 지원금이 먼저다. 고르는 기준이 다르다.
+        (big ? giftHtml(p, true) + feeHtml(p) : feeHtml(p) + giftHtml(p, false));
 
     var on = String(S.pick || '') === String(p.id);
 
@@ -1315,6 +1392,12 @@
       '.dpf-name{font-size:13.5px;font-weight:700;color:#221f38;line-height:1.45;' +
         'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}' +
       '.dpf-fee{margin-top:5px;font-size:13px;color:#5b3fbe;}' +
+      // 지원금 줄 (2026-08-10). 위 묶음에서는 작게, 아래 묶음에서는 크게.
+      '.dpf-gift{margin-top:5px;font-size:12.5px;color:#8b8a9b;}' +
+      '.dpf-gift b{font-weight:800;color:#6c3fc5;}' +
+      '.dpf-gift--big{margin-top:6px;font-size:13px;color:#8b8a9b;}' +
+      '.dpf-gift--big b{font-size:16px;letter-spacing:-.3px;}' +
+      '.dpf-q--gift{margin-top:30px;}' +
       '.dpf-fee b{font-weight:800;}' +
       '.dpf-why{display:flex;flex-direction:column;gap:3px;margin-top:8px;}' +
       '.dpf-why-b{font-size:11.5px;color:#1d7a5f;background:#e9f5f0;border-radius:5px;padding:2px 6px;' +
