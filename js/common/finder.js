@@ -300,18 +300,38 @@
     return e;
   }
 
-  function open() {
-    if (!S || !S.def) return;
-    injectStyles();
+  function resetRun() {
     S.answers = {};
     // 검색으로 들어왔다가 '다시 고르기' 를 누른 것이다. 이제부터는 답으로 고른 결과다.
     // 안 끄면 질문에 다 답해도 화면이 계속 "‘정수기’ 로 찾았습니다" 라고 말한다 (2026-08-10).
     S.search = null;
-    S.cur = -1;   // -1 = 시작 화면
+    S.cur = -1;   // -1 = 안내 화면
     S.chip = -1;  // 켜 둔 필터 칩. -1 = 없음
     S.pick = null;  // 결과에서 고른 상품 id. 하단 신청 버튼이 이걸 싣고 간다
+    clearTimeout(S.waitT);
+  }
+
+  function show() {
     el().hidden = false;
     document.body.style.overflow = 'hidden';
+  }
+
+  function open() {
+    if (!S || !S.def) return;
+    injectStyles();
+    resetRun();
+    show();
+    paintEntryWait();
+  }
+
+  // 결과에서 '다시 고르기'.
+  // ⚠ open() 을 쓰지 않는다. 두 번째부터는 앞의 기다림이 방해다 —
+  //   이미 무엇을 하는 화면인지 아는 사람에게 또 3초를 세우면 그냥 닫는다.
+  function restart() {
+    if (!S || !S.def) return;
+    injectStyles();
+    resetRun();
+    show();
     paint();
   }
 
@@ -346,6 +366,9 @@
     var e = document.getElementById('dpf-ov');
     if (e) e.hidden = true;
     document.body.style.overflow = '';
+    // ⚠ 기다림 중에 닫았을 수 있다. 안 끄면 몇 초 뒤 타이머가 깨어나
+    //   닫아 둔 창을 결과 화면으로 갈아엎고, 그 사이 다시 열면 질문을 건너뛴다.
+    if (S) clearTimeout(S.waitT);
   }
 
   function steps() {
@@ -457,19 +480,54 @@
   function paint() {
     var ov = el();
 
-    // 시작 화면
+    // 안내 화면 (2026-08-10 다시 그림)
+    //
+    // ★ 무엇을 몇 개 묻는지 먼저 보여준다
+    //   전에는 제목 한 줄과 시작 버튼뿐이었다. 몇 개인지 모르고 시작하면
+    //   두 번째 질문에서 "언제 끝나지" 가 되고 거기서 나간다.
+    //
+    // ⚠ 목록은 관리자가 2단계에 적은 것만 쓴다 (2026-08-10 고침).
+    //   처음에는 3단계 질문 제목을 자동으로 끌어다 깔았는데, 그건 관리자가 고른 것이 아니다.
+    //   질문 제목은 "몇 분이 함께 쓰시나요?" 처럼 길어서 그대로 늘어놓으면
+    //   이 화면이 또 하나의 벽이 된다. 관리자가 "사용 인원" 처럼 추려 적어야 한다.
+    //   비워 두면 목록 자체가 안 나온다 — 없던 파인더에 저절로 생기지 않는다.
     if (S.cur < 0) {
       var intro = S.def.intro || {};
+
+      // '확인 완료' 는 앞에서 실제로 기다렸을 때만 참말이다.
+      // 관리자가 앞 기다림을 껐으면(ms=0) 이 딱지는 거짓말이라 안 붙인다.
+      var waited = Number(((S.def.entry || {}).loading || {}).ms) !== 0;
+      var badge = (waited && intro.badge !== '')
+        ? '<span class="dpf-ibadge">' + esc(intro.badge || '확인 완료') + '</span>' : '';
+
+      var rows = String(intro.list || '').split('\n')
+        .map(function (t) { return String(t).trim(); })
+        .filter(Boolean)
+        .map(function (t, i) {
+          return '<div class="dpf-irow"><span class="dpf-ino">' + (i + 1) + '</span>' +
+            '<span class="dpf-iv">' + esc(t) + '</span></div>';
+        }).join('');
+
+      // 지름길 — 고를 것이 많으면 나간다. 지원금만 궁금한 사람에게 문을 하나 둔다.
+      // 관리자가 intro.skipOn 을 false 로 두면 없앤다.
+      var skip = intro.skipOn === false ? '' :
+        '<button type="button" class="dpf-skip" data-dpf-skip>' +
+        esc(intro.skipLabel || '지원금 많은 순으로 바로 볼게요') + '</button>';
+
       ov.innerHTML =
-        '<div class="dpf-box">' +
-        '<div class="dpf-head">' + progressHtml() +
+        '<div class="dpf-box dpf-box--intro">' +
+        '<div class="dpf-head">' + badge +
         '<button type="button" class="dpf-x" data-dpf-close aria-label="닫기">✕</button></div>' +
-        '<h2 class="dpf-q">' + esc(intro.title || S.name || '상품 찾기') + '</h2>' +
-        (intro.sub ? '<p class="dpf-qsub">' + esc(intro.sub) + '</p>' : '') +
+        '<h2 class="dpf-ih">' + esc(intro.title || S.name || '상품 찾기') + '</h2>' +
+        (intro.sub ? '<p class="dpf-isub">' + esc(intro.sub) + '</p>' : '') +
+        (rows ? '<div class="dpf-ilist">' + rows + '</div>' : '') +
         '<button type="button" class="dpf-go" data-dpf-next>' +
-        esc(intro.buttonLabel || '시작하기') + '</button>' +
+        esc(intro.buttonLabel || '시작하기') + '</button>' + skip +
         '</div>';
       ov.querySelector('[data-dpf-next]').onclick = next;
+      // 지름길은 검색으로 들어온 것과 같은 자리다 — 질문을 건너뛰고 지원금 큰 순으로.
+      var sk = ov.querySelector('[data-dpf-skip]');
+      if (sk) sk.onclick = function () { openResult(''); };
       return;
     }
 
@@ -630,34 +688,73 @@
     if (btn) btn.addEventListener('click', open);
   }
 
-  function paintLoading() {
-    var l = S.def.loading || {};
-    // 어드민에서 두 줄로 적는다. lines(배열)는 옛 정의와의 호환용이다.
+  // 도는 고리. 점 네 개 대신 이걸 쓴다 (2026-08-10).
+  // 점은 '뭔가 멈춰 있나' 로 읽히고, 도는 고리는 계속 일하고 있다는 뜻으로 읽힌다.
+  var ICO_SPIN =
+    '<svg viewBox="0 0 50 50" fill="none" aria-hidden="true">' +
+    '<circle cx="25" cy="25" r="21" stroke="#f0e9fc" stroke-width="5"/>' +
+    '<path d="M25 4a21 21 0 0 1 21 21" stroke="#6c3fc5" stroke-width="5" stroke-linecap="round"/></svg>';
+
+  /**
+   * 기다림 화면. 두 자리에서 같은 모양으로 쓴다 (2026-08-10).
+   *
+   *   ① 버튼을 누른 직후 (entry.loading)  — 아직 아무것도 안 물어봤다
+   *   ② 답을 다 한 뒤   (loading)         — 실제로 계산이 돈다
+   *
+   * ★ 두 벌로 만들지 않는다. 한쪽만 고쳐지면 같은 파인더인데 화면이 두 얼굴이 된다.
+   *
+   * @param cfg  { title, sub, ms, imageUrl }
+   * @param next 시간이 지나면 부를 것
+   * @param dflt 문구를 하나도 안 적었을 때 쓸 기본값 [첫줄, 둘째줄, 기본ms]
+   */
+  function paintWait(cfg, next, dflt) {
+    var l = cfg || {};
     var lines = [];
     if (l.title) lines.push(l.title);
     if (l.sub) lines.push(l.sub);
-    if (!lines.length) {
-      lines = l.lines || ['최대 지원금 상품을 찾고 있어요', '잠시만 기다려주세요'];
-    }
-    // 기다리는 동안 브랜드를 보여준다. 5초를 그냥 두면 '이게 뭐지' 가 되고,
-    // 로고가 있으면 '다픽이 찾아주는 중' 으로 읽힌다.
-    // 관리자가 2단계에서 다른 그림을 넣으면 그것이 이긴다.
-    var brand = l.imageUrl
+    // lines(배열)는 옛 정의와의 호환용이다.
+    if (!lines.length) lines = l.lines || [dflt[0], dflt[1]];
+
+    var ms = Number(l.ms);
+    if (!(ms >= 0)) ms = dflt[2];
+
+    // 관리자가 그림을 넣으면 고리 대신 그것이 나온다.
+    var art = l.imageUrl
       ? '<div class="dpf-load-img"><img src="' + esc(l.imageUrl) + '" alt=""/></div>'
-      : '<div class="dpf-load-logo"><img src="/assets/logos/dapicklogo.png" alt="다픽"' +
-        ' onerror="this.parentNode.style.display=\'none\'"/></div>';
+      : '<div class="dpf-spin">' + ICO_SPIN + '</div>';
 
     el().innerHTML =
-      '<div class="dpf-box dpf-box--load">' +
-      brand +
-      '<div class="dpf-dots"><i></i><i></i><i></i><i></i></div>' +
-      lines.map(function (t) { return '<p class="dpf-load-t">' + esc(t) + '</p>'; }).join('') +
+      '<div class="dpf-box dpf-box--load">' + art +
+      lines.map(function (t, i) {
+        return '<p class="dpf-load-t' + (i ? ' dpf-load-s' : '') + '">' + esc(t) + '</p>';
+      }).join('') +
+      (ms >= 1000 ? '<p class="dpf-load-n">약 ' + Math.round(ms / 1000) + '초</p>' : '') +
       '</div>';
-    // 기다리는 시간도 어드민에서 정한다.
-    // ⚠ 길수록 '열심히 찾는 느낌' 이 나지만 그만큼 이탈도 는다. 실제 숫자를 보고 조절할 것.
+
+    // ⚠ 반드시 하나만 돈다. 안 그러면 뒤로 갔다 다시 왔을 때 옛 타이머가
+    //   지금 보고 있는 화면을 갈아엎는다.
+    clearTimeout(S.waitT);
+    S.waitT = setTimeout(next, ms);
+  }
+
+  // ① 버튼을 누른 직후. 아직 아무것도 안 물어봤다.
+  //
+  // ★ 왜 묻기도 전에 기다리게 하나
+  //   "내 것을 찾아주는 중" 이라는 느낌을 먼저 만든다. 질문부터 들이밀면 시험지가 된다.
+  //   ⚠ 대신 여기서 나가는 사람이 생긴다. 아무것도 안 받았는데 기다리게 하는 자리다.
+  //     그래서 초를 어드민에서 정하고, 0 으로 두면 이 화면을 통째로 건너뛴다.
+  function paintEntryWait() {
+    var l = (S.def.entry || {}).loading || {};
     var ms = Number(l.ms);
-    if (!(ms >= 0)) ms = 5000;
-    setTimeout(paintResult, ms);
+    if (ms === 0) { S.cur = -1; paint(); return; }   // 관리자가 껐다
+    paintWait(l, function () { S.cur = -1; paint(); },
+      ['내 지원금을 확인하고 있어요', '잠시만 기다려주세요', 3000]);
+  }
+
+  // ② 답을 다 한 뒤. 여기는 실제로 계산이 도는 자리라 기다림이 납득된다.
+  function paintLoading() {
+    paintWait(S.def.loading, paintResult,
+      ['최대 지원금 상품을 찾고 있어요', '잠시만 기다려주세요', 5000]);
   }
 
   // 점수 순으로 줄 세운다. 칩은 여기서 거르지 않는다 — 칩을 껐을 때 되돌아와야 한다.
@@ -902,7 +999,7 @@
       '<button type="button" class="dpf-sub" data-dpf-close>닫기</button>' +
       '</div></div>';
 
-    ov.querySelector('[data-dpf-again]').onclick = open;
+    ov.querySelector('[data-dpf-again]').onclick = restart;
 
     // 카드 몸통 = 고르기.
     // ⚠ 다시 눌러도 안 풀린다. 하나는 늘 켜져 있어야 바닥 세 버튼이 쓸모가 있다.
@@ -1262,6 +1359,12 @@
       '.dpf-load-logo img{height:34px;width:auto;opacity:.92;}' +
       '@media(max-width:640px){.dpf-load-logo img{height:28px;}' +
         '.dpf-load-logo{margin-bottom:14px;}}' +
+      // 도는 고리 (2026-08-10). 점 네 개를 대신한다.
+      // ⚠ 점 CSS(.dpf-dots)는 남겨 둔다 — 옛 정의로 저장된 화면이 아직 있을 수 있다.
+      '.dpf-spin{width:52px;height:52px;margin:0 auto 28px;}' +
+      '.dpf-spin svg{width:52px;height:52px;display:block;animation:dpfSpin 1.05s linear infinite;}' +
+      '@keyframes dpfSpin{to{transform:rotate(360deg);}}' +
+      '@media(prefers-reduced-motion:reduce){.dpf-spin svg{animation-duration:3s;}}' +
       '.dpf-dots{display:flex;gap:8px;justify-content:center;margin:22px 0 20px;}' +
       '.dpf-dots i{width:9px;height:9px;border-radius:50%;background:#cfc4f0;' +
         'animation:dpfDot 1.1s infinite ease-in-out;}' +
@@ -1270,7 +1373,32 @@
       '.dpf-dots i:nth-child(4){animation-delay:.45s;}' +
       '@keyframes dpfDot{0%,100%{background:#cfc4f0;transform:scale(1);}' +
         '50%{background:#6c3fc5;transform:scale(1.25);}}' +
-      '.dpf-load-t{margin:0 0 6px;font-size:15px;font-weight:700;color:#221f38;line-height:1.6;}' +
+      '.dpf-load-t{margin:0;font-size:21px;font-weight:700;color:#191f28;line-height:1.45;' +
+        'letter-spacing:-.85px;word-break:keep-all;}' +
+      '.dpf-load-s{margin:11px 0 0;font-size:15px;font-weight:400;color:#8b8a9b;letter-spacing:0;}' +
+      // 몇 초 걸리는지 적어 준다. 모르고 기다리는 것과 알고 기다리는 것은 다르다.
+      '.dpf-load-n{margin:24px 0 0;font-size:13px;font-weight:600;color:#c9c5d4;}' +
+      // ── 안내 화면 (2026-08-10) ──
+      '.dpf-box--intro{max-width:460px;padding:20px 24px 24px;}' +
+      '.dpf-ibadge{display:inline-block;background:#f3eeff;color:#6c3fc5;border-radius:8px;' +
+        'padding:6px 12px;font-size:13px;font-weight:800;}' +
+      '.dpf-ih{font-size:25px;font-weight:700;letter-spacing:-1px;line-height:1.42;' +
+        'margin:14px 0 10px;color:#191f28;word-break:keep-all;}' +
+      '.dpf-isub{font-size:15px;color:#8b8a9b;line-height:1.65;margin:0 0 24px;}' +
+      '.dpf-ilist{border-top:1px solid #eeecf4;margin-bottom:8px;}' +
+      '.dpf-irow{display:flex;gap:12px;align-items:center;padding:14px 2px;' +
+        'border-bottom:1px solid #eeecf4;}' +
+      '.dpf-ino{width:22px;height:22px;flex-shrink:0;border-radius:7px;background:#f4f4f7;' +
+        'color:#8b8a9b;font-size:11.5px;font-weight:800;display:flex;align-items:center;' +
+        'justify-content:center;}' +
+      '.dpf-iv{font-size:15px;color:#4e5968;font-weight:500;letter-spacing:-.3px;' +
+        'line-height:1.4;word-break:keep-all;}' +
+      // 지름길은 눈에 덜 띄어야 한다. 이게 파란 버튼이면 아무도 질문에 안 답한다.
+      '.dpf-skip{display:block;width:100%;margin-top:6px;border:none;background:none;' +
+        'font-family:inherit;font-size:14.5px;font-weight:500;color:#8b8a9b;' +
+        'padding:12px;cursor:pointer;}' +
+      '.dpf-skip:hover{color:#6c3fc5;}' +
+      '@media(max-width:640px){.dpf-ih{font-size:22px;}.dpf-load-t{font-size:19px;}}' +
       // 결과 — 전면
       '.dpf-box--page{max-width:1100px;}' +
       '.dpf-q--big{font-size:26px;line-height:1.35;}' +
@@ -1383,7 +1511,9 @@
     def.questions.forEach(function (q) {
       q._opts = buildDynamicOptions(q, products);
     });
-    S = { def: def, name: name, products: products, opt: opt || {}, answers: {}, cur: -1, chip: -1 };
+    // waitT — 기다림 화면 타이머. 하나만 돌아야 한다(paintWait 주석 참고).
+    S = { def: def, name: name, products: products, opt: opt || {},
+          answers: {}, cur: -1, chip: -1, waitT: null };
     return true;
   }
 
