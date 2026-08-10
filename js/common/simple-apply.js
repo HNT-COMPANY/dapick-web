@@ -326,6 +326,25 @@
   // 인라인 버튼에서 호출 (onclick="openSimpleApply()")
   window.openSimpleApply = open;
 
+  // 주소에 ?apply=1 이 붙어 있으면 버튼을 안 눌러도 바로 연다 (2026-08-10).
+  //
+  // ★ 왜 필요한가
+  //   배너에 '#apply:water' 를 적어 두면 어느 화면에서든 눌립니다. 그런데 이 파일은
+  //   주소로 카테고리를 정하기 때문에 메인 화면 같은 곳에서는 스스로 꺼져 있다.
+  //   그래서 배너가 그 카테고리 화면으로 보내고, 도착한 뒤 여기서 연다.
+  //   상품 찾기(finder.js) 의 ?finder=1 과 같은 방식이다.
+  function autoOpenFromUrl() {
+    try {
+      if (new URLSearchParams(location.search).get('apply') !== '1') return;
+    } catch (e) { return; }
+    open(null, '', null, { source: 'banner_lead' });
+  }
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', autoOpenFromUrl);
+  } else {
+    autoOpenFromUrl();
+  }
+
   // ── 화면에 박아 넣는 폼 (2026-08-08) ────────────────────
   //
   // 모달은 "버튼을 눌러야" 보인다. 목록 화면에서는 버튼을 안 누르고 지나가는 사람이 대부분이라

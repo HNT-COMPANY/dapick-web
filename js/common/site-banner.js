@@ -4,8 +4,10 @@
 // GET /api/banners?category= → 활성 배너 주입. 0장이면 영역 숨김.
 // 2장 이상이면 화살표/점/자동전환(5s)/hover정지/스와이프. 1장이면 컨트롤 숨김.
 // 클릭 우선순위: linkUrl > 상세페이지(banner-detail.html?id=) > 무동작
-// ★ linkUrl 을 '#finder' 로 적으면 주소로 가지 않고 그 화면의 '상품 찾기' 를 연다 (2026-08-08).
+// ★ linkUrl 에 약속값을 적으면 주소로 가지 않고 그 자리에서 무언가를 연다.
 //   백엔드에 칸을 새로 만들지 않았다 — 이미 있는 링크 칸의 약속값 하나면 되는 일이다.
+//     #finder:{카테고리}   상품 찾기 (2026-08-08)
+//     #apply:{카테고리}    간편 신청 (2026-08-10)
 // 의존: api.js(api.get, ApiResponse.data 언랩) — 페이지에서 먼저 로드.
 // ════════════════════════════════════════════════════
 (function () {
@@ -25,11 +27,31 @@
   //   #finder:internet  인터넷·TV 찾기로 보낸다
   //
   // 뒤에 붙는 이름은 카테고리 주소(slug)다. 어드민 카테고리 관리에 /c/xxx 로 적혀 있다.
-  function finderTarget(dest) {
-    var m = String(dest || '').trim().match(/^#finder(?::([a-z0-9_-]+))?$/i);
-    if (!m) return null;
-    return (m[1] || '').toLowerCase();   // '' = 이 페이지
+  // 카테고리 이름을 부르는 다른 말들.
+  // 관리자가 '인터넷TV' 를 떠올려 internet-tv 라 적어도 통하게 한다.
+  // ⚠ 정본은 어드민 카테고리 관리의 주소(slug)다. 여기 것은 오타를 받아주는 그물이다.
+  var SLUG_ALIAS = { 'internet-tv': 'internet', 'internettv': 'internet', 'itv': 'internet' };
+
+  function normSlug(s) {
+    var k = String(s || '').trim().toLowerCase();
+    return SLUG_ALIAS[k] || k;
   }
+
+  // '#동작:카테고리' 를 읽는다. 카테고리를 안 적으면 '' (이 페이지) 를 준다.
+  //
+  // ★ 왜 콜론으로 가르는가 (2026-08-10)
+  //   카테고리 이름에 하이픈이 들어간다(internet-tv). 'internet-tv-apply' 처럼 붙여 쓰면
+  //   기계가 internet + tv-apply 인지 internet-tv + apply 인지 모른다.
+  //   콜론 앞은 무조건 동작, 뒤는 무조건 카테고리다. 하이픈이 몇 개든 상관없다.
+  function hashTarget(dest, verb) {
+    var re = new RegExp('^#' + verb + '(?::([a-z0-9_-]+))?$', 'i');
+    var m = String(dest || '').trim().match(re);
+    if (!m) return null;
+    return normSlug(m[1] || '');   // '' = 이 페이지
+  }
+
+  function finderTarget(dest) { return hashTarget(dest, 'finder'); }
+  function applyTarget(dest) { return hashTarget(dest, 'apply'); }
 
   // 카테고리별 전용 페이지. 없는 카테고리는 공용 주소(/c/{slug})로 간다.
   // ⚠ 이 목록은 '전용 페이지가 따로 있는 카테고리' 라는 사이트 구조 사실이다.
@@ -38,6 +60,18 @@
 
   function finderPageOf(slug) {
     return FINDER_PAGES[slug] || '/c/' + encodeURIComponent(slug);
+  }
+
+  // 이 배너에 관리자가 쓴 상세 글이 있는가.
+  function hasDetail(b) {
+    return !!(b && (b.hasDetail || (b.detailContent && String(b.detailContent).trim())));
+  }
+
+  // 지금 이 화면에서 간편 신청 창을 열 수 있는가.
+  // ⚠ simple-apply.js 는 주소로 카테고리를 정하고, 모르는 주소에서는 스스로 꺼진다.
+  //   그래서 그 파일이 실려 있어도 여기서 열 수 있다는 보장이 없다.
+  function canApplyHere(slug) {
+    return isHere(slug) && typeof window.openSimpleApply === 'function';
   }
 
   // 지금 보고 있는 페이지가 그 카테고리인가. 맞으면 이동하지 않고 그 자리에서 연다.
@@ -49,7 +83,7 @@
 
   function resolveClick(b) {
     if (b.linkUrl && String(b.linkUrl).trim()) return String(b.linkUrl).trim();
-    if (b.hasDetail || (b.detailContent && String(b.detailContent).trim())) return 'banner-detail.html?id=' + b.id;
+    if (hasDetail(b)) return 'banner-detail.html?id=' + b.id;
     return null;
   }
 
@@ -105,6 +139,26 @@
           // 다른 카테고리다. 그 페이지로 보내고 도착하면 스스로 열린다(finder.js).
           inner = '<a class="sb__link" href="' + esc(finderPageOf(slug) + '?finder=1') + '">' + img + '</a>';
         }
+      } else if (applyTarget(dest) !== null) {
+        // ★ 간편 신청 배너 (2026-08-10)
+        //   상세 글이 있으면 그쪽이 먼저다. 파는 글을 읽고 신청하는 편이 낫고,
+        //   상세 화면 아래에 같은 간편 신청 폼이 붙어 있다.
+        //   상세 글이 없으면 곧장 창을 연다 — 중간에 빈 화면을 끼우지 않는다.
+        var aslug = applyTarget(dest);
+        if (hasDetail(b)) {
+          inner = '<a class="sb__link" href="' + esc('banner-detail.html?id=' + b.id) + '">' + img + '</a>';
+        } else if (canApplyHere(aslug)) {
+          inner = '<a class="sb__link" href="#" data-dpapply="1">' + img + '</a>';
+        } else if (aslug) {
+          // 이 화면에서는 못 연다. 그 카테고리 화면으로 보내고 도착하면 스스로 열린다.
+          inner = '<a class="sb__link" href="' + esc(finderPageOf(aslug) + '?apply=1') + '">' + img + '</a>';
+        } else {
+          // ⚠ 카테고리를 안 골랐는데 이 화면에서도 못 연다.
+          //   아무 카테고리나 찍어 보내면 고객이 엉뚱한 곳에서 신청하게 된다.
+          //   차라리 아무 일도 안 한다. 관리자가 화면을 고르면 풀린다.
+          console.warn('[site-banner] #apply 인데 이 화면에서 못 연다. 배너에 카테고리를 골라라');
+          inner = img;
+        }
       } else {
         inner = '<a class="sb__link" href="' + esc(dest) + '"' +
           (/^https?:/i.test(dest) ? ' target="_blank" rel="noopener"' : '') + '>' + img + '</a>';
@@ -125,6 +179,19 @@
         }
         // 그 카테고리에 파인더가 없으면 open 이 스스로 아무것도 안 한다(finder.js:212).
         dpFinder.open();
+      });
+
+      // 간편 신청 배너 클릭 (2026-08-10)
+      track.addEventListener('click', function (e) {
+        var a = e.target && e.target.closest && e.target.closest('[data-dpapply]');
+        if (!a) return;
+        e.preventDefault();
+        if (typeof window.openSimpleApply !== 'function') {
+          console.warn('[site-banner] 이 화면에 간편 신청(simple-apply.js)이 실려 있지 않다');
+          return;
+        }
+        // 카테고리는 넘기지 않는다 — simple-apply.js 가 주소로 이미 정해 두었다.
+        window.openSimpleApply(null, '', null, { source: 'banner_lead' });
       });
     }
 
