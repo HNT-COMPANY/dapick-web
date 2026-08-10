@@ -24,7 +24,11 @@ const BASE_URL = (() => {
   return 'https://api.dapick.co.kr'; // 운영 박음 (Cloudflare Pages 박은 영역 포함)
 })();
 
-console.log('[api] BASE_URL =', BASE_URL);
+// ⚠ dpLog 를 그냥 부르지 않는다. config.js 를 안 실은 화면이나
+//   옛 config.js 가 캐시에 남은 브라우저에서 ReferenceError 가 난다.
+//   로그 한 줄 때문에 그 뒤 코드가 통째로 안 도는 것이 훨씬 나쁘다.
+var apiLog = (typeof dpLog === 'function') ? dpLog : function () {};
+apiLog('[api] BASE_URL =', BASE_URL);
 
 // ── 토큰 갱신 중복 방지 플래그 ───────────────────────────────────
 // 여러 요청이 동시에 401 받아도 갱신은 한 번만 실행
@@ -154,5 +158,5 @@ const api = {
 async function submitConsultApi(name, phone, summary) {
   // 추후 백엔드 Application API 연결
   // return await api.post('/api/applications', { name, phone, summary });
-  console.log('[API] 상담 신청:', { name, phone, summary });
+  apiLog('[API] 상담 신청:', { name, phone, summary });   // ⚠ 전화번호가 찍힌다. 운영에서는 조용해야 한다
 }

@@ -74,7 +74,9 @@
 
 
   <!-- Structured Data (JSON-LD) — 외부 분리 -->
-  <script src="js/seo/structured-data-mobile.js" defer></script>
+  <!-- 경로를 고쳤다 (2026-08-10). js/seo/ 폴더는 없고 파일은 js/common/ 에 있다.
+       전에는 404 가 HTML 로 돌아와 콘솔에 빨간 오류가 났다. -->
+  <script src="js/common/structured-data-mobile.js" defer></script>
 
   <!-- ── 카카오맵 SDK (https 명시 박음, autoload=false → mobile.js에서 lazy load) ── -->
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=33e40eaf10ae42730be369f1d1bf5828&libraries=services&autoload=false"></script>
@@ -483,12 +485,12 @@
 <!-- ════════════════════════════════════════════════════
      공통 JS (전 페이지 동일)
      ════════════════════════════════════════════════════ -->
-<script src="js/common/config.js"></script>
-<script src="js/common/api.js"></script>
+<script src="js/common/config.js?v=20260810a"></script>
+<script src="js/common/api.js?v=20260810a"></script>
 <script src="js/common/auth.js"></script>
 <script src="js/common/utils.js"></script>
 <script src="js/common/application.js"></script>
-<script src="js/common/gnb.js"></script>
+<script src="js/common/gnb.js?v=20260810a"></script>
 <script src="js/common/gnb-user.js"></script>
 
 <!-- 간편 신청 (2026-08-10 추가) — 배너 '간편 신청 받기' 가 이 화면에서 창을 열려면 필요하다.

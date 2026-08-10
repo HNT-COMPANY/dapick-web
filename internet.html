@@ -58,7 +58,11 @@
   <link rel="stylesheet" href="css/common/site-banner.css"/>
 
 
-  <script src="js/seo/structured-data-internet.js" defer></script>
+  <!-- ⚠ js/seo/structured-data-internet.js 를 부르고 있었는데 그 파일도 폴더도 없다 (2026-08-10).
+       서버가 404 대신 index 페이지(HTML)를 돌려줘서 브라우저가
+       "MIME type is not executable" 빨간 오류를 냈다. 화면은 멀쩡했지만
+       콘솔 맨 위가 늘 빨개서 진짜 오류가 묻혔다. 부르는 줄을 지운다.
+       인터넷 구조화 데이터가 필요해지면 그때 파일을 만들고 이 줄을 되살린다. -->
 </head>
 <body>
 
@@ -269,12 +273,12 @@
 </footer>
 
 <!-- 공통 JS -->
-<script src="js/common/config.js"></script>
-<script src="js/common/api.js"></script>
+<script src="js/common/config.js?v=20260810a"></script>
+<script src="js/common/api.js?v=20260810a"></script>
 <script src="js/common/auth.js"></script>
 <script src="js/common/utils.js"></script>
 <script src="js/common/application.js"></script>
-<script src="js/common/gnb.js"></script>
+<script src="js/common/gnb.js?v=20260810a"></script>
 <script src="js/common/gnb-user.js"></script>
 
 

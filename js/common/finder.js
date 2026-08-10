@@ -1357,7 +1357,7 @@
       '.dpf-ov{position:fixed;inset:0;z-index:9000;background:rgba(20,17,38,.55);' +
         'display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}' +
       '.dpf-ov[hidden]{display:none;}' +
-      '.dpf-box{width:100%;max-width:520px;background:#fff;border-radius:18px;padding:24px 22px 20px;' +
+      '.dpf-box{width:100%;max-width:620px;background:#fff;border-radius:18px;padding:24px 22px 20px;' +
         'font-family:"Noto Sans KR",sans-serif;box-shadow:0 20px 60px rgba(20,17,38,.28);}' +
       '.dpf-box--wide{max-width:860px;}' +
       '.dpf-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}' +
@@ -1381,8 +1381,10 @@
       '.dpf-opts--n1{grid-template-columns:1fr;}' +
       '.dpf-opts--n2{grid-template-columns:repeat(2,1fr);}' +
       '.dpf-opts--n3{grid-template-columns:repeat(3,1fr);}' +
-      '.dpf-opt--card{align-items:center;text-align:center;gap:6px;padding:16px 12px;}' +
-      '.dpf-opt-img{display:flex;align-items:center;justify-content:center;width:100%;height:52px;}' +
+      // 그림을 크게 (2026-08-10). 52px 은 무엇을 그린 그림인지 알아볼 수 없는 크기였다.
+      // 카드형 선택지는 로고나 그림을 보고 고르는 자리라 그림이 주인공이어야 한다.
+      '.dpf-opt--card{align-items:center;text-align:center;gap:10px;padding:22px 16px;}' +
+      '.dpf-opt-img{display:flex;align-items:center;justify-content:center;width:100%;height:96px;}' +
       '.dpf-opt-img img{max-width:100%;max-height:100%;object-fit:contain;}' +
       '.dpf-opt--card .dpf-opt-l{font-size:14px;}' +
       '.dpf-foot{display:flex;gap:8px;justify-content:space-between;margin-top:18px;}' +
@@ -1589,14 +1591,30 @@
       '@media(max-width:520px){.dpf-act{padding:16px 14px;}' +
         '.dpf-act-h{font-size:17px;}.dpf-act-s{font-size:13px;}' +
         '.dpf-act-btns{flex-direction:column;}.dpf-act-b{width:100%;font-size:14.5px;}}' +
+      // ── 좁아지면 세로로 쌓는다 (2026-08-10) ──────────────────
+      //
+      // ★ 폰에서 가로 2칸을 유지하면 카드가 반토막이 나서 이름이 세 줄로 접히고
+      //   그림은 손톱만 해진다. 세로로 한 줄씩 쌓으면 그림도 글자도 제 크기로 나온다.
+      //   토스가 폰에서 모든 목록을 세로로 두는 이유와 같다.
       '@media(max-width:820px){.dpf-res,.dpf-res--n3,.dpf-res--n4{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--card{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--n1{grid-template-columns:1fr;}}' +
+      // 폰 — 선택지도 결과 카드도 한 줄에 하나. 카드는 가로로 눕힌다.
+      '@media(max-width:600px){' +
+        '.dpf-opts--card,.dpf-opts--n1,.dpf-opts--n2,.dpf-opts--n3{grid-template-columns:1fr;}' +
+        '.dpf-opt--card{flex-direction:row;align-items:center;text-align:left;gap:14px;padding:14px 16px;}' +
+        '.dpf-opt--card .dpf-opt-img{width:78px;height:60px;flex-shrink:0;}' +
+        '.dpf-opt--card .dpf-opt-body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px;}' +
+        '.dpf-res,.dpf-res--n1,.dpf-res--n2,.dpf-res--n3,.dpf-res--n4{grid-template-columns:1fr;gap:10px;}' +
+        '.dpf-card{flex-direction:row;align-items:center;gap:13px;padding:12px;}' +
+        '.dpf-card-l{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;}' +
+        '.dpf-thumb{width:84px;height:84px;flex-shrink:0;margin:0;}' +
+        '.dpf-rank{top:8px;left:8px;}' +
+      '}' +
       '@media(max-width:520px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
         '.dpf-rw{padding:19px 14px 17px;border-radius:14px;}' +
         '.dpf-rw-h{font-size:21px;}.dpf-rw-s{font-size:13px;}.dpf-rw-n{font-size:15.5px;}' +
-        '.dpf-thumb{height:104px;}' +
-        '.dpf-res,.dpf-res--n2,.dpf-res--n3,.dpf-res--n4{grid-template-columns:1fr 1fr;gap:9px;}}';
+      '}';
     var s = document.createElement('style');
     s.textContent = css;
     document.head.appendChild(s);

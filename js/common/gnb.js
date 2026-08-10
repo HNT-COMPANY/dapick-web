@@ -354,7 +354,7 @@ function injectDynamicGnbCats() {
       );
 
     // 안 뜰 때 어디서 걸렸는지 바로 보이게 남긴다
-    console.info(
+    (typeof dpInfo === 'function' ? dpInfo : function () {})(
       `[gnb] 카테고리 ${all.length}건 중 추가 대상 ${extras.length}건`,
       all.map(
         (c) =>
