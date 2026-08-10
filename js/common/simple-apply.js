@@ -9,6 +9,10 @@
 //   dpMountSimpleApply(칸, { title, sub, catApi, catLabel })
 //   모달을 안 열고 페이지 안에서 바로 받는다. 인터넷 목록 화면이 쓴다.
 //
+// ★ 유입 출처 (2026-08-10)
+//   어느 화면 어느 버튼에서 열었는지를 접수와 함께 보낸다. 값은 GA4 이벤트 이름과 같다.
+//   서버에 그 칸이 아직 없어도 조용히 버려지므로 웹이 먼저 보내도 안 터진다.
+//
 //   ⚠ 동의 문구와 접수 규칙을 여기 한 곳에 둔다.
 //     화면마다 폼을 따로 만들면 개인정보 동의 문구가 갈린다. 그건 법적으로 위험하다.
 //     문구(AGREE_HTML)와 접수(postApply)를 모달과 박아 넣는 폼이 함께 쓴다.
@@ -94,6 +98,15 @@
     return '';
   }
 
+  // 화면이 출처를 안 알려줬을 때 쓰는 값. 경로로 짐작한다.
+  // 정확한 이름은 버튼을 만든 쪽이 넘긴다 — 여기 것은 마지막 그물이다.
+  function defaultSource() {
+    if (path.indexOf('water') >= 0) return 'water_page';
+    if (path.indexOf('internet') >= 0) return 'internet_page';
+    if (path.indexOf('rental') >= 0) return 'rental_page';
+    return 'web_etc';
+  }
+
   // 접수. 서버로 보내는 규칙을 여기 한 곳에 둔다.
   function postApply(p, cat, extra) {
     var m = document.getElementById(p + 'Marketing');
@@ -108,6 +121,9 @@
       phone: fmtPhone(onlyDigits(document.getElementById(p + 'Phone').value)),
       content: (document.getElementById(p + 'Memo').value || '').trim(),
       marketingAgreed: m ? m.checked : false,
+      // 어디서 눌렀나. 화면이 안 알려주면 경로로 대충 적는다 —
+      // 빈 값보다는 '어느 화면이었다' 라도 남는 편이 낫다.
+      source: (extra && extra.source) || defaultSource(),
     };
     // api.js 가 안 실린 화면에서는 접수를 못 한다. 실패로 알린다.
     if (typeof api === 'undefined' || !api.post) {
@@ -232,7 +248,7 @@
   // 서버에는 'airconditioner' 라는 글자 하나만 남고 어느 상품인지가 안 남았다.
   // 그러면 나중에 그 고객이 후기를 써도 그 상품 상세에는 못 띄운다 —
   // 상품 상세는 상품 id 로 후기를 찾기 때문이다.
-  var pick = { categoryId: null, productId: null, productName: null, productImageUrl: null };
+  var pick = { categoryId: null, productId: null, productName: null, productImageUrl: null, source: null };
 
   /**
    * 모달 열기.
@@ -261,6 +277,8 @@
     pick.productId = o.productId || null;
     pick.productName = productName ? String(productName).slice(0, 100) : null;
     pick.productImageUrl = o.productImageUrl ? String(o.productImageUrl).slice(0, 500) : null;
+    // 버튼마다 다른 이름이 온다. 안 주면 아래 defaultSource() 가 경로로 짐작한다.
+    pick.source = o.source ? String(o.source).slice(0, 40) : null;
 
     resetToForm();
     // 상품명은 '덮어쓰기'다 — 다른 상품에서 다시 열었을 때 앞 상품명이 남으면 안 된다.
@@ -365,7 +383,7 @@
       busy = true;
       var was = go.textContent;
       go.textContent = '접수 중...';
-      postApply('sai', cat, o.pick || null)
+      postApply('sai', cat, { source: o.source || null })
         .then(function () {
           document.getElementById('sainForm').style.display = 'none';
           document.getElementById('sainDone').classList.add('on');
@@ -389,6 +407,7 @@
       title: box.getAttribute('data-title') || '',
       sub: box.getAttribute('data-sub') || '',
       button: box.getAttribute('data-button') || '',
+      source: box.getAttribute('data-source') || '',
     });
   }
   if (document.readyState === 'loading') {

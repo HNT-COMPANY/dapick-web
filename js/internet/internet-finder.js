@@ -68,7 +68,7 @@
       onSimple: function (row) {
         if (typeof window.openSimpleApply !== 'function') return;
         window.openSimpleApply('internet', row ? row.name : '', '인터넷',
-          { productImageUrl: (row && row.imageUrl) || null });
+          { productImageUrl: (row && row.imageUrl) || null, source: 'finder_result' });
       },
     });
   }

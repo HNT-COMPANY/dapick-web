@@ -90,7 +90,7 @@
       onSimple: function (p) {
         if (typeof window.openSimpleApply !== 'function') return;
         window.openSimpleApply('water', p ? p.name : '', '정수기',
-          { productImageUrl: (p && p.imageUrl) || null });
+          { productImageUrl: (p && p.imageUrl) || null, source: 'finder_result' });
       },
     });
   }
