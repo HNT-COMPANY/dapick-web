@@ -601,6 +601,9 @@
   //   "요금이 왜 안 뜨지" 로 시간을 버린다. 실제 고객 화면은 멀쩡한데도 그렇다.
   function feeOf(p) {
     if (!p || typeof p !== 'object') return 0;
+    // ★ 조합 상품은 관리자가 적은 요금이 정답이다 (2026-08-10).
+    //   연결층의 feeOf 는 상품 표를 읽는데, 조합은 상품 표에 없어서 늘 0 이 나온다.
+    if (p.__combo) return Number(p.__combo.fee) || 0;
     // ⚠ 어드민 4단계가 이 함수를 밖에서 직접 부른다. 그때는 S 가 아직 없다.
     if (S && S.opt && typeof S.opt.feeOf === 'function') return Number(S.opt.feeOf(p)) || 0;
     if (p.monthlyFee != null) return Number(p.monthlyFee) || 0;
@@ -1077,7 +1080,18 @@
     ov.querySelectorAll('[data-dpf-apply]').forEach(function (b) {
       b.onclick = function () {
         var p = pickedRow(shown);
-        if (p && typeof S.opt.onApply === 'function') S.opt.onApply(p);
+        if (!p) return;
+        // ★ 조합 상품은 상세 화면이 없다 (2026-08-10).
+        //   그대로 onApply 로 넘기면 없는 주소로 보내 404 가 뜬다.
+        //   관리자가 링크를 적어 뒀으면 그리로, 안 적었으면 간편 신청으로 받는다.
+        if (p.__combo) {
+          var u = String(p.__combo.linkUrl || '').trim();
+          // ⚠ 관리자가 적는 칸이라 javascript: 같은 주소가 들어올 수 있다. http 와 / 만 연다.
+          if (/^(https?:\/\/|\/)/i.test(u)) { window.location.href = u; return; }
+          fireSimple(p);
+          return;
+        }
+        if (typeof S.opt.onApply === 'function') S.opt.onApply(p);
       };
     });
 
@@ -1237,7 +1251,9 @@
   function cardHtml(x, i, big) {
     var p = x.p;
     var img = imageOf(p);
-    var href = S.opt.hrefOf ? S.opt.hrefOf(p) : '/product-detail?id=' + encodeURIComponent(p.id);
+    var href = p.__combo
+      ? String(p.__combo.linkUrl || '')
+      : (S.opt.hrefOf ? S.opt.hrefOf(p) : '/product-detail?id=' + encodeURIComponent(p.id));
 
     // 순위는 3등까지만 적는다. 전부 적으면 6등이 나쁜 상품처럼 보인다.
     // ⚠ 아래 지원금 묶음에는 순위를 안 붙인다. 위쪽 1등과 아래쪽 1등이 나란히 있으면
@@ -1260,6 +1276,9 @@
     var inner = typeof S.opt.cardOf === 'function'
       ? S.opt.cardOf(p, x)
       : '<div class="dpf-name">' + esc(p.name || '') + '</div>' +
+        // 조합 상품은 무엇이 묶였는지 한 줄로 알려준다. 이름만으로는 알 수 없다.
+        (p.__combo && p.__combo.sub
+          ? '<div class="dpf-combo">' + esc(p.__combo.sub) + '</div>' : '') +
         // 위 묶음은 월 요금이 먼저, 아래 묶음은 지원금이 먼저다. 고르는 기준이 다르다.
         (big ? giftHtml(p, true) + feeHtml(p) : feeHtml(p) + giftHtml(p, false));
 
@@ -1393,6 +1412,8 @@
         'display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}' +
       '.dpf-fee{margin-top:5px;font-size:13px;color:#5b3fbe;}' +
       // 지원금 줄 (2026-08-10). 위 묶음에서는 작게, 아래 묶음에서는 크게.
+      // 조합 상품의 구성 한 줄 (2026-08-10)
+      '.dpf-combo{margin-top:4px;font-size:12px;color:#8b8a9b;line-height:1.5;word-break:keep-all;}' +
       '.dpf-gift{margin-top:5px;font-size:12.5px;color:#8b8a9b;}' +
       '.dpf-gift b{font-weight:800;color:#6c3fc5;}' +
       '.dpf-gift--big{margin-top:6px;font-size:13px;color:#8b8a9b;}' +
@@ -1584,11 +1605,47 @@
   // ── 진입 ─────────────────────────────────────────────────────────
 
   // 정의와 상품을 받아 상태를 세운다. 서버에서 받든 어드민이 손에 들고 있든 여기로 모인다.
+  /**
+   * 조합 상품 — 관리자가 여러 상품을 묶어 하나로 만든 항목 (2026-08-10).
+   *
+   * ★ 왜 필요한가
+   *   인터넷·TV 는 '100M + TV + 공유기' 가 한 덩어리로 팔린다. 그런데 상품 표에는
+   *   그 덩어리가 없다. 화면이 통신사 1줄을 속도별로 펼쳐 만들 뿐이라 TV·공유기까지는
+   *   못 만든다. 관리자가 직접 묶어 이름과 요금과 지원금을 적을 자리가 있어야 한다.
+   *
+   * ★ 상품인 척하게 만든다
+   *   { id, name } 만 갖추면 점수·고정·사진·지원금·배지가 전부 그대로 돈다.
+   *   엔진에 조합 전용 길을 따로 내면 그 길만 빠뜨리는 버그가 생긴다.
+   *
+   * ⚠ id 는 관리자가 만들 때 정해 둔다. 여기서 새로 만들면 저장할 때마다 값이 바뀌어
+   *   4단계에서 골라 둔 것과 사진·지원금이 통째로 끊긴다.
+   */
+  function comboRows(def) {
+    var list = (def && def.result && def.result.combos) || [];
+    if (!Array.isArray(list)) return [];
+    return list
+      .filter(function (c) { return c && c.id && String(c.name || '').trim(); })
+      .map(function (c) {
+        return {
+          id: String(c.id),
+          name: String(c.name),
+          sortOrder: Number(c.sortOrder) || 0,
+          // 연결층이 읽는 이름으로도 넣어 둔다(인터넷은 monthlyFee 를 본다).
+          monthlyFee: Number(c.fee) || 0,
+          imageUrl: c.imageUrl || '',
+          __combo: c,
+        };
+      });
+  }
+
   function setup(def, name, products, opt) {
     if (!Array.isArray(def && def.questions) || !def.questions.length) {
       console.warn('[finder] 정의에 질문이 없다');
       return false;
     }
+    // 관리자가 만든 조합 상품을 후보에 섞는다. 앞에 둬야 동점일 때 먼저 나온다.
+    products = comboRows(def).concat(arr(products));
+
     // 문항마다 실제로 그릴 선택지를 미리 만들어 둔다.
     // 그릴 때마다 계산하면 상품 수가 많을 때 화면이 끊긴다.
     def.questions.forEach(function (q) {
