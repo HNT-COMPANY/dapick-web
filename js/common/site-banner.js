@@ -151,7 +151,7 @@
         //     읽을거리를 내밀면 거기서 나간다. 이 동작은 상세 글을 안 쓰는 자리다.
         //     상세 글을 보여주고 싶으면 배너 동작을 '아무 동작 없음' 으로 두면 된다.
         var aslug = applyTarget(dest);
-        // 배너 라벨(altText)을 실어 보낸다. 접수 내용 앞에 '##배너 접수건 (라벨)' 로 남는다.
+        // 배너 라벨(altText)을 실어 보낸다. 접수 내용 앞에 '(라벨) 인터넷 배너 클릭시 간편 신청 클릭' 로 남는다.
         var blabel = String(b.altText || '').slice(0, 120);
         if (canApplyHere(aslug)) {
           inner = '<a class="sb__link" href="#" data-dpapply="1" data-dpblabel="' +

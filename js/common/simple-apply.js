@@ -123,7 +123,7 @@
    * 고객이 적은 내용 앞에 관리자용 표식을 붙인다 (2026-08-10).
    *
    * ★ 왜 입력칸에 미리 적어 두지 않나
-   *   '##배너 접수건' 을 내용칸에 넣으면 고객이 그걸 보고 지우거나, 자기 문의 앞에 붙은
+   *   '(배너 이름) 인터넷 배너 클릭시…' 를 내용칸에 넣으면 고객이 그걸 보고 지우거나,
    *   알 수 없는 글자에 당황한다. 표식은 관리자에게 필요한 것이지 고객에게 할 말이 아니다.
    *   그래서 화면에는 안 보이고 보낼 때만 앞에 붙인다.
    *
@@ -292,12 +292,19 @@
   //   (아래 autoOpenFromUrl) 두 경로가 있다. 문구를 양쪽에 적으면 한쪽만 고쳐진다.
   //   그러면 같은 배너인데 화면에 따라 다른 말을 하고, 접수 표식도 갈린다.
   //
-  // ⚠ '##' 은 관리자 접수 목록에서 눈에 띄라고 붙인 표시다. 고객은 이 글자를 못 본다.
+  // ⚠ 이 줄은 상담사가 읽는 글이다. 사람 말로 적는다 (2026-08-10 고침).
+  //   처음에 '##배너 접수건 (라벨)' 로 적었는데, 접수 목록에서 보면 코드 조각이 낀 것처럼 읽힌다.
+  //   상담사는 이 줄을 보고 고객에게 무슨 말부터 꺼낼지 정한다 — 기계용 표시가 아니라 안내문이다.
   var BANNER_TITLE = '숨은 지원금 3초만에 확인하세요!';
 
   function bannerNote(label) {
     var l = String(label == null ? '' : label).trim();
-    return l ? '##배너 접수건 (' + l + ')' : '##배너 접수건';
+    // ⚠ CAT.label 이 아니라 DEFAULT_CAT.label 을 쓴다.
+    //   CAT.label 은 직전에 연 창이 갈아끼운 값이라, 상품 상세를 한 번 열었다가
+    //   배너를 누르면 그 상품 이름이 남아 엉뚱한 카테고리로 적힌다.
+    //   DEFAULT_CAT 는 이 화면의 카테고리라 안 흔들린다.
+    var trail = DEFAULT_CAT.label + ' 배너 클릭시 간편 신청 클릭';
+    return l ? '(' + l + ') ' + trail : trail;
   }
 
   /**
@@ -333,7 +340,7 @@
     // ── 배너처럼 부르는 쪽이 화면을 갈아끼우는 경우 (2026-08-10) ──
     //
     // ⚠ 둘 다 매번 덮어쓴다. 배너로 열었다가 인라인 버튼으로 다시 열면
-    //   앞의 문구와 '##배너 접수건' 이 남아, 배너에서 오지 않은 접수가 배너 건으로 기록된다.
+    //   앞의 문구와 배너 안내줄이 남아, 배너에서 오지 않은 접수가 배너 건으로 기록된다.
     pick.adminNote = o.adminNote ? String(o.adminNote).slice(0, 200) : null;
     var titleEl = document.getElementById('sapplyTitle');
     if (titleEl) titleEl.textContent = o.title ? String(o.title).slice(0, 60) : DEFAULT_TITLE;
@@ -344,8 +351,22 @@
     memoEl.value = productName ? (productName + ' 문의합니다.') : '';
     ov.classList.add('on');
   }
-  function close(){ ov.classList.remove('on'); }
-  function resetToForm(){ form.style.display=''; foot.style.display=''; confirmEl.classList.remove('on'); done.classList.remove('on'); }
+  // ── 접수 완료 후 자동 닫기 (2026-08-10) ──────────────────
+  //
+  // 접수가 끝나면 3초 뒤에 창이 스스로 닫힌다.
+  // 다 끝났는데 닫기를 한 번 더 누르게 하면, 그 한 번을 안 누르고 그냥 두거나
+  // 뒤로가기로 나가는 사람이 생긴다. 할 일이 끝났으면 화면이 알아서 비켜야 한다.
+  //
+  // ⚠ 타이머를 반드시 하나만 들고 있고, 창을 열거나 닫을 때 끈다.
+  //   안 끄면 접수 → (3초 안에) 손으로 닫고 다시 열기 를 했을 때
+  //   방금 연 창이 남은 타이머에 맞아 저절로 닫힌다.
+  var DONE_CLOSE_MS = 3000;
+  var doneTimer = null;
+
+  function stopDoneTimer(){ if (doneTimer) { clearTimeout(doneTimer); doneTimer = null; } }
+
+  function close(){ stopDoneTimer(); ov.classList.remove('on'); }
+  function resetToForm(){ stopDoneTimer(); form.style.display=''; foot.style.display=''; confirmEl.classList.remove('on'); done.classList.remove('on'); }
 
   // 전화번호 자동 하이픈
   phoneEl.addEventListener('input', function(){ phoneEl.value=fmtPhone(phoneEl.value); });
@@ -372,6 +393,9 @@
     postApply('sa', CAT, pick)
       .then(function(){
         confirmEl.classList.remove('on'); done.classList.add('on');
+        // 다 끝났으면 화면이 알아서 비킨다 (2026-08-10).
+        stopDoneTimer();
+        doneTimer = setTimeout(close, DONE_CLOSE_MS);
       })
       .catch(function(err){
         alertLite((err && err.message) || '접수에 실패했습니다. 잠시 후 다시 시도해주세요.');
@@ -397,7 +421,7 @@
   //   상품 찾기(finder.js) 의 ?finder=1 과 같은 방식이다.
   //
   // ?bl= 에 배너 라벨이 실려 온다 (2026-08-10). 접수 내용 앞의 관리자 표식에 쓴다.
-  // 없어도 '##배너 접수건' 까지는 남는다 — 어느 배너인지만 모른다.
+  // 없어도 '인터넷 배너 클릭시 간편 신청 클릭' 까지는 남는다 — 어느 배너인지만 모른다.
   function autoOpenFromUrl() {
     var bl = '';
     try {
