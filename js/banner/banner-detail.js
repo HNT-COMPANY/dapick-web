@@ -163,10 +163,6 @@
     document.getElementById('bdArticle').hidden = false;
     var load = document.getElementById('bdLoading'); if (load) load.remove();
 
-    // 글이 그려진 뒤에 간편 신청 폼을 보인다 (2026-08-10).
-    // 불러오기에 실패하면 이 줄까지 안 오므로 빈 화면에 폼만 남지 않는다.
-    var apply = document.getElementById('bdApply');
-    if (apply) apply.hidden = false;
     if (window.lucide && lucide.createIcons) lucide.createIcons();
   }
 
