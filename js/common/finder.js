@@ -304,12 +304,42 @@
     if (!S || !S.def) return;
     injectStyles();
     S.answers = {};
+    // 검색으로 들어왔다가 '다시 고르기' 를 누른 것이다. 이제부터는 답으로 고른 결과다.
+    // 안 끄면 질문에 다 답해도 화면이 계속 "‘정수기’ 로 찾았습니다" 라고 말한다 (2026-08-10).
+    S.search = null;
     S.cur = -1;   // -1 = 시작 화면
     S.chip = -1;  // 켜 둔 필터 칩. -1 = 없음
     S.pick = null;  // 결과에서 고른 상품 id. 하단 신청 버튼이 이걸 싣고 간다
     el().hidden = false;
     document.body.style.overflow = 'hidden';
     paint();
+  }
+
+  /**
+   * 질문을 건너뛰고 결과부터 연다 — 메인 검색창이 쓴다 (2026-08-10).
+   *
+   * ★ 왜 질문을 건너뛰나
+   *   검색창에 무언가를 적은 사람은 이미 말을 했다. 거기에 대고 다시 7문항을 물으면
+   *   "물어보라며" 가 된다. 검색어가 곧 답이라고 보고 결과로 간다.
+   *
+   * ★ 왜 결과 화면을 따로 안 만들었나
+   *   지원금 문구·배지·칩·신청 세 버튼이 전부 어드민에 있고 이 파일이 그린다.
+   *   검색용으로 한 벌 더 만들면 관리자가 어드민에서 문구를 고쳐도 검색 결과만 옛말을 한다.
+   *
+   * ⚠ 답이 없으니 모든 상품이 0점이다. rank() 가 검색일 때만 지원금 순으로 갈라 준다.
+   *   그 분기가 없으면 검색 결과가 관리자 정렬순서 그대로 나온다.
+   */
+  function openResult(q) {
+    if (!S || !S.def) return;
+    injectStyles();
+    S.answers = {};
+    S.cur = -1;
+    S.chip = -1;
+    S.pick = null;
+    S.search = { q: String(q == null ? '' : q).trim() };
+    el().hidden = false;
+    document.body.style.overflow = 'hidden';
+    paintLoading();   // 로딩 문구·기다리는 시간은 어드민 2단계 것을 그대로 쓴다
   }
 
   function close() {
@@ -590,7 +620,15 @@
   }
 
   // 점수 순으로 줄 세운다. 칩은 여기서 거르지 않는다 — 칩을 껐을 때 되돌아와야 한다.
+  //
+  // ★ 검색으로 들어온 경우는 지원금 큰 순이다 (2026-08-10)
+  //   메인 검색창은 질문을 하지 않는다. 답이 없으니 모든 상품이 0점이고,
+  //   그대로 두면 관리자 정렬순서(sortOrder)대로 나온다 — 검색어와 아무 상관이 없다.
+  //   기획서의 결과 문구가 "최대 지원금 많이 받을 수 있는 상품" 이므로 그 말에 맞춘다.
+  //   ⚠ 검색이 아닌 보통 파인더의 동점 처리는 건드리지 않았다.
+  //     관리자가 정한 순서를 지원금이 덮어쓰면 4단계에서 맞춰 둔 순서가 무의미해진다.
   function rank() {
+    var search = !!S.search;
     return S.products
       .map(function (p) {
         var sc = scoreOf(p);
@@ -598,6 +636,10 @@
       })
       .sort(function (a, b) {
         if (b.s !== a.s) return b.s - a.s;
+        if (search) {
+          var ga = giftOf(a.p), gb = giftOf(b.p);
+          if (gb !== ga) return gb - ga;
+        }
         return (a.p.sortOrder || 999) - (b.p.sortOrder || 999);
       });
   }
@@ -785,11 +827,18 @@
 
     var best = ranked.length ? ranked[0].s : 0;
     // 아무 조건도 못 맞췄으면 솔직하게 말한다. 그럴듯하게 포장하지 않는다.
+    //
+    // ⚠ 검색으로 들어왔을 때 '고르신 조건' 이라고 말하면 안 된다 — 고른 것이 없다.
+    //   물어본 적 없는 조건을 들먹이면 고객은 자기가 뭘 놓쳤나 하고 되돌아간다.
     var lead = chip && !ranked.length
       ? '고르신 조건에 맞는 상품이 없습니다. 다른 항목을 눌러보세요.'
-      : best === 0
-        ? (r.leadEmpty || '고르신 조건에 딱 맞는 상품을 아직 찾지 못했습니다. 대신 많이 찾는 상품을 보여드립니다.')
-        : (r.leadMatched || '고르신 조건에 가까운 순서로 보여드립니다.');
+      : (S.search
+        ? (S.search.q
+            ? '‘' + S.search.q + '’ 로 찾았습니다. 지원금이 큰 순서로 보여드립니다.'
+            : '지원금이 큰 순서로 보여드립니다.')
+        : best === 0
+          ? (r.leadEmpty || '고르신 조건에 딱 맞는 상품을 아직 찾지 못했습니다. 대신 많이 찾는 상품을 보여드립니다.')
+          : (r.leadMatched || '고르신 조건에 가까운 순서로 보여드립니다.'));
 
     var ov = el();
     ov.innerHTML =
@@ -951,9 +1000,18 @@
   // 간편 신청을 실제로 여는 것은 화면 쪽 일이다.
   // 연결층이 onSimple 을 주면 그걸 쓰고, 없으면 사이트 공용 openSimpleApply 를 쓴다.
   // 어드민 미리보기에는 둘 다 없다 — 모양만 보는 자리라 조용히 넘어간다.
+  //
+  // ★ 두 번째 인자로 출처를 넘긴다 (2026-08-10)
+  //   같은 결과 화면이라도 '상품 찾기로 왔나' 와 '메인 검색으로 왔나' 는 다른 문이다.
+  //   어느 문이 돈이 되는지 세려면 접수에 다르게 남아야 한다.
+  //   연결층이 이 값을 안 읽으면 예전처럼 finder_result 로 남는다 — 안 터진다.
   function fireSimple(p) {
-    if (typeof S.opt.onSimple === 'function') { S.opt.onSimple(p); return; }
-    if (typeof window.openSimpleApply === 'function') { window.openSimpleApply(); return; }
+    var src = S.search ? 'ai_search' : null;
+    if (typeof S.opt.onSimple === 'function') { S.opt.onSimple(p, src); return; }
+    if (typeof window.openSimpleApply === 'function') {
+      window.openSimpleApply(null, '', null, { source: src || 'finder_result' });
+      return;
+    }
     console.warn('[finder] 간편 신청을 열 방법이 없다 (onSimple 또는 openSimpleApply 필요)');
   }
 
@@ -1367,8 +1425,14 @@
         // 주소에 ?finder=1 이 붙어 있으면 버튼을 안 눌러도 바로 연다.
         // 다른 페이지 배너에서 '이 카테고리 찾기' 로 보낼 때 쓴다 —
         // 고객은 배너를 누르자마자 질문이 시작되는 것으로 느낀다.
+        //
+        // ?finder=result 는 질문을 건너뛰고 결과부터 연다 (2026-08-10 메인 검색창).
+        // ?q= 에 고객이 적은 말이 실려 온다. 결과 문구에 그대로 되비춘다.
         try {
-          if (new URLSearchParams(location.search).get('finder') === '1') open();
+          var sp = new URLSearchParams(location.search);
+          var f = sp.get('finder');
+          if (f === '1') open();
+          else if (f === 'result') openResult(sp.get('q'));
         } catch (x) {}
         if (typeof opt.onReady === 'function') opt.onReady(ready.row);
       })
@@ -1389,5 +1453,7 @@
 
   // feeOf 를 내보내는 이유 — 어드민 4단계 상품 목록에도 같은 월 요금을 보여줘야 한다.
   // 어드민에 계산을 복사하면 관리자가 본 요금과 고객이 보는 요금이 갈린다.
-  window.dpFinder = { init: init, preview: preview, open: open, close: close, feeOf: feeOf };
+  window.dpFinder = {
+    init: init, preview: preview, open: open, openResult: openResult, close: close, feeOf: feeOf,
+  };
 })();

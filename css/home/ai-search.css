@@ -1,0 +1,119 @@
+/* ══════════════════════════════════════════════════════════════
+   ai-search.css — 메인 히어로 안 검색창 (2026-08-10 신설)
+
+   히어로 배경이 짙은 남보라라서 흰 상자를 얹는다.
+   ⚠ 히어로 안에 들어가는 것이 전제다. 다른 밝은 배경에 그대로 쓰면
+     안내 문구(.ais-hint)와 칩이 안 보인다 — 흰 글자다.
+   ══════════════════════════════════════════════════════════════ */
+
+.ais {
+  margin-top: 22px;
+  max-width: 620px;
+}
+
+/* 입력칸 한 덩어리. 테두리는 상자가 갖고 input 은 알맹이만 맡는다 —
+   input 에 테두리를 주면 브라우저마다 안쪽 여백이 달라 버튼과 높이가 어긋난다. */
+.ais-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #fff;
+  border-radius: 999px;
+  padding: 7px 8px 7px 20px;
+  box-shadow: 0 10px 30px rgba(10, 6, 40, 0.35);
+}
+
+.ais-ico {
+  font-size: 18px;
+  line-height: 1;
+  flex: 0 0 auto;
+  opacity: 0.6;
+}
+
+.ais-in {
+  flex: 1 1 auto;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  font-size: 16px; /* ⚠ 16px 미만이면 iOS 가 입력할 때 화면을 확대한다 */
+  color: #16123a;
+  padding: 12px 0;
+}
+.ais-in::placeholder {
+  color: #8b8aa3;
+}
+/* 검색 타입 기본 X 버튼 제거 — 우리 버튼과 겹쳐 보인다 */
+.ais-in::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+.ais-go {
+  flex: 0 0 auto;
+  border: 0;
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 13px 26px;
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  background: linear-gradient(135deg, #5b3df5 0%, #3d5bf5 100%);
+  transition: transform 0.12s ease, box-shadow 0.12s ease;
+}
+.ais-go:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(70, 60, 220, 0.45);
+}
+.ais-go:active {
+  transform: none;
+}
+
+/* 안내 문구. 할 말이 없으면 빈 문자열이라 자리를 안 차지한다. */
+.ais-hint {
+  margin: 10px 2px 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.86);
+}
+.ais-hint:empty {
+  display: none;
+}
+
+.ais-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.ais-chip {
+  cursor: pointer;
+  border-radius: 999px;
+  padding: 9px 16px;
+  font-size: 14px;
+  font-weight: 600;
+  color: #fff;
+  background: rgba(255, 255, 255, 0.14);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  transition: background 0.12s ease;
+}
+.ais-chip:hover {
+  background: rgba(255, 255, 255, 0.26);
+}
+
+@media (max-width: 640px) {
+  .ais {
+    margin-top: 18px;
+    max-width: none;
+  }
+  .ais-box {
+    padding: 6px 6px 6px 16px;
+  }
+  .ais-in {
+    padding: 11px 0;
+  }
+  .ais-go {
+    padding: 12px 18px;
+    font-size: 14px;
+  }
+}

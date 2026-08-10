@@ -87,10 +87,13 @@
       // 결과 바닥의 '간편 신청'. 이름·전화만 받고 그 자리에서 접수한다.
       // ⚠ productId 를 안 넘긴다. 정수기는 products 표에 없는 카테고리라
       //   번호를 넘기면 서버가 이어 붙일 상품을 못 찾는다(simple-apply.js 머리말 참고).
-      onSimple: function (p) {
+      //
+      // src — 엔진이 알려주는 출처 (2026-08-10). 메인 검색으로 들어왔으면 'ai_search' 다.
+      //   안 주면 예전대로 'finder_result'. 어느 문이 돈이 되는지 세려고 나눈다.
+      onSimple: function (p, src) {
         if (typeof window.openSimpleApply !== 'function') return;
         window.openSimpleApply('water', p ? p.name : '', '정수기',
-          { productImageUrl: (p && p.imageUrl) || null, source: 'finder_result' });
+          { productImageUrl: (p && p.imageUrl) || null, source: src || 'finder_result' });
       },
     });
   }
