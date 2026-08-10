@@ -7,8 +7,9 @@
 // ★ linkUrl 에 약속값을 적으면 주소로 가지 않고 그 자리에서 무언가를 연다.
 //   백엔드에 칸을 새로 만들지 않았다 — 이미 있는 링크 칸의 약속값 하나면 되는 일이다.
 //     #finder:{카테고리}   상품 찾기 (2026-08-08)
-//     #apply:{카테고리}    간편 신청 (2026-08-10)
+//     #apply:{카테고리}    간편 신청 (2026-08-10) — 상세페이지를 거치지 않는다
 // 의존: api.js(api.get, ApiResponse.data 언랩) — 페이지에서 먼저 로드.
+//       #apply 를 쓰려면 그 화면에 simple-apply.js 도 실려 있어야 한다.
 // ════════════════════════════════════════════════════
 (function () {
   'use strict';
@@ -141,17 +142,25 @@
         }
       } else if (applyTarget(dest) !== null) {
         // ★ 간편 신청 배너 (2026-08-10)
-        //   상세 글이 있으면 그쪽이 먼저다. 파는 글을 읽고 신청하는 편이 낫고,
-        //   상세 화면 아래에 같은 간편 신청 폼이 붙어 있다.
-        //   상세 글이 없으면 곧장 창을 연다 — 중간에 빈 화면을 끼우지 않는다.
+        //
+        //   배너를 누르면 곧장 간편 신청 창이 열린다. 중간에 아무것도 끼우지 않는다.
+        //
+        //   ⚠ 상세 글이 있어도 상세 화면으로 보내지 않는다 (2026-08-10 바꿈).
+        //     처음에는 '파는 글을 읽고 신청하는 편이 낫다' 고 보아 상세를 먼저 띄웠다.
+        //     그런데 배너를 누른 사람은 이미 마음이 정해진 사람이다 —
+        //     읽을거리를 내밀면 거기서 나간다. 이 동작은 상세 글을 안 쓰는 자리다.
+        //     상세 글을 보여주고 싶으면 배너 동작을 '아무 동작 없음' 으로 두면 된다.
         var aslug = applyTarget(dest);
-        if (hasDetail(b)) {
-          inner = '<a class="sb__link" href="' + esc('banner-detail.html?id=' + b.id) + '">' + img + '</a>';
-        } else if (canApplyHere(aslug)) {
-          inner = '<a class="sb__link" href="#" data-dpapply="1">' + img + '</a>';
+        // 배너 라벨(altText)을 실어 보낸다. 접수 내용 앞에 '##배너 접수건 (라벨)' 로 남는다.
+        var blabel = String(b.altText || '').slice(0, 120);
+        if (canApplyHere(aslug)) {
+          inner = '<a class="sb__link" href="#" data-dpapply="1" data-dpblabel="' +
+            esc(blabel) + '">' + img + '</a>';
         } else if (aslug) {
           // 이 화면에서는 못 연다. 그 카테고리 화면으로 보내고 도착하면 스스로 열린다.
-          inner = '<a class="sb__link" href="' + esc(finderPageOf(aslug) + '?apply=1') + '">' + img + '</a>';
+          inner = '<a class="sb__link" href="' +
+            esc(finderPageOf(aslug) + '?apply=1' + (blabel ? '&bl=' + encodeURIComponent(blabel) : '')) +
+            '">' + img + '</a>';
         } else {
           // ⚠ 카테고리를 안 골랐는데 이 화면에서도 못 연다.
           //   아무 카테고리나 찍어 보내면 고객이 엉뚱한 곳에서 신청하게 된다.
@@ -191,7 +200,17 @@
           return;
         }
         // 카테고리는 넘기지 않는다 — simple-apply.js 가 주소로 이미 정해 두었다.
-        window.openSimpleApply(null, '', null, { source: 'banner_lead' });
+        //
+        // 문구와 관리자 표식은 simple-apply.js 가 내보낸 것을 쓴다 (2026-08-10).
+        // 여기 따로 적으면 '그 자리에서 연 창' 과 '넘어가서 열린 창' 이 다른 말을 한다.
+        var B = window.dpBannerApply || {};
+        window.openSimpleApply(null, '', null, {
+          source: 'banner_lead',
+          title: B.title,
+          adminNote: typeof B.note === 'function'
+            ? B.note(a.getAttribute('data-dpblabel') || '')
+            : null,
+        });
       });
     }
 

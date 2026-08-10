@@ -32,6 +32,16 @@
   else if (path.indexOf('rental') >= 0) CAT = { key: 'RENTAL', api: 'rental', label: '렌탈' };
   else if (path.indexOf('water') >= 0) CAT = { key: 'WATER', api: 'water', label: '정수기' };
   else if (path.indexOf('internet') >= 0) CAT = { key: 'INTERNET_TV', api: 'internet', label: '인터넷' };
+  // 휴대폰·카드 (2026-08-10 추가).
+  //
+  // ★ 왜 이제 넣나
+  //   배너가 이 화면들에도 있는데 여기 줄이 없어서 아래 return 에 걸려 모듈이 통째로 꺼졌다.
+  //   그래서 휴대폰·카드 배너를 '간편 신청 받기' 로 맞춰 놔도 눌러도 아무 일이 없었다.
+  //   오류도 안 났다 — 조용히 안 되는 종류라 원인을 찾기 어렵다.
+  //
+  // ⚠ 맨 위 /c/ 판별보다 뒤에 있어야 한다. 'card' 는 관리자 카테고리 주소에도 흔히 든다.
+  else if (path.indexOf('mobile') >= 0) CAT = { key: 'MOBILE', api: 'mobile', label: '휴대폰' };
+  else if (path.indexOf('card') >= 0) CAT = { key: 'CARD', api: 'card', label: '카드' };
   else return; // 대상 페이지 아님
 
   var PH = '원하는 상품명이 있거나 간단한 글로 ' + CAT.label + ' 문의 혹은 지원금 문의로 간편하게 접수하세요';
@@ -104,7 +114,28 @@
     if (path.indexOf('water') >= 0) return 'water_page';
     if (path.indexOf('internet') >= 0) return 'internet_page';
     if (path.indexOf('rental') >= 0) return 'rental_page';
+    if (path.indexOf('mobile') >= 0) return 'mobile_page';
+    if (path.indexOf('card') >= 0) return 'card_page';
     return 'web_etc';
+  }
+
+  /**
+   * 고객이 적은 내용 앞에 관리자용 표식을 붙인다 (2026-08-10).
+   *
+   * ★ 왜 입력칸에 미리 적어 두지 않나
+   *   '##배너 접수건' 을 내용칸에 넣으면 고객이 그걸 보고 지우거나, 자기 문의 앞에 붙은
+   *   알 수 없는 글자에 당황한다. 표식은 관리자에게 필요한 것이지 고객에게 할 말이 아니다.
+   *   그래서 화면에는 안 보이고 보낼 때만 앞에 붙인다.
+   *
+   * ⚠ 서버가 내용을 1000자까지 받는다. 넘치면 뒤를 자른다 —
+   *   앞을 자르면 표식이 사라져 어디서 온 접수인지 모르게 된다.
+   */
+  function withNote(note, memo) {
+    var body = String(memo == null ? '' : memo).trim();
+    var tag = String(note == null ? '' : note).trim();
+    if (!tag) return body;
+    var joined = body ? tag + '\n' + body : tag;
+    return joined.length > 1000 ? joined.slice(0, 1000) : joined;
   }
 
   // 접수. 서버로 보내는 규칙을 여기 한 곳에 둔다.
@@ -119,7 +150,8 @@
       productImageUrl: (extra && extra.productImageUrl) || null,
       name: (document.getElementById(p + 'Name').value || '').trim(),
       phone: fmtPhone(onlyDigits(document.getElementById(p + 'Phone').value)),
-      content: (document.getElementById(p + 'Memo').value || '').trim(),
+      // 관리자용 표식이 있으면 고객 글 앞에 붙는다 (2026-08-10). 화면에는 안 보인다.
+      content: withNote(extra && extra.adminNote, document.getElementById(p + 'Memo').value),
       marketingAgreed: m ? m.checked : false,
       // 어디서 눌렀나. 화면이 안 알려주면 경로로 대충 적는다 —
       // 빈 값보다는 '어느 화면이었다' 라도 남는 편이 낫다.
@@ -215,7 +247,7 @@
   wrap.innerHTML = ''
     + '<div class="sapply-ov" id="sapplyOv">'
     +   '<div class="sapply-card" role="dialog" aria-modal="true">'
-    +     '<div class="sapply-head"><b>3초만에 간편 신청</b><span class="cat">' + esc(CAT.label) + '</span><button class="sapply-x" id="sapplyX" aria-label="닫기">✕</button></div>'
+    +     '<div class="sapply-head"><b id="sapplyTitle">3초만에 간편 신청</b><span class="cat">' + esc(CAT.label) + '</span><button class="sapply-x" id="sapplyX" aria-label="닫기">✕</button></div>'
     +     '<div class="sapply-body" id="sapplyForm">'
     +       fieldsHtml('sa', PH)
     +       agreeHtml('sa')
@@ -248,7 +280,25 @@
   // 서버에는 'airconditioner' 라는 글자 하나만 남고 어느 상품인지가 안 남았다.
   // 그러면 나중에 그 고객이 후기를 써도 그 상품 상세에는 못 띄운다 —
   // 상품 상세는 상품 id 로 후기를 찾기 때문이다.
-  var pick = { categoryId: null, productId: null, productName: null, productImageUrl: null, source: null };
+  var pick = { categoryId: null, productId: null, productName: null, productImageUrl: null, source: null, adminNote: null };
+
+  // 모달 머리글 기본값. 다른 문구로 열었다가 다시 열 때 여기로 되돌린다.
+  var DEFAULT_TITLE = '3초만에 간편 신청';
+
+  // ── 배너에서 연 창 (2026-08-10) ──────────────────────────
+  //
+  // ★ 왜 이 두 줄이 site-banner.js 가 아니라 여기에 있나
+  //   배너를 그 자리에서 눌렀을 때(site-banner.js)와 다른 화면으로 넘어가서 열렸을 때
+  //   (아래 autoOpenFromUrl) 두 경로가 있다. 문구를 양쪽에 적으면 한쪽만 고쳐진다.
+  //   그러면 같은 배너인데 화면에 따라 다른 말을 하고, 접수 표식도 갈린다.
+  //
+  // ⚠ '##' 은 관리자 접수 목록에서 눈에 띄라고 붙인 표시다. 고객은 이 글자를 못 본다.
+  var BANNER_TITLE = '숨은 지원금 3초만에 확인하세요!';
+
+  function bannerNote(label) {
+    var l = String(label == null ? '' : label).trim();
+    return l ? '##배너 접수건 (' + l + ')' : '##배너 접수건';
+  }
 
   /**
    * 모달 열기.
@@ -279,6 +329,14 @@
     pick.productImageUrl = o.productImageUrl ? String(o.productImageUrl).slice(0, 500) : null;
     // 버튼마다 다른 이름이 온다. 안 주면 아래 defaultSource() 가 경로로 짐작한다.
     pick.source = o.source ? String(o.source).slice(0, 40) : null;
+
+    // ── 배너처럼 부르는 쪽이 화면을 갈아끼우는 경우 (2026-08-10) ──
+    //
+    // ⚠ 둘 다 매번 덮어쓴다. 배너로 열었다가 인라인 버튼으로 다시 열면
+    //   앞의 문구와 '##배너 접수건' 이 남아, 배너에서 오지 않은 접수가 배너 건으로 기록된다.
+    pick.adminNote = o.adminNote ? String(o.adminNote).slice(0, 200) : null;
+    var titleEl = document.getElementById('sapplyTitle');
+    if (titleEl) titleEl.textContent = o.title ? String(o.title).slice(0, 60) : DEFAULT_TITLE;
 
     resetToForm();
     // 상품명은 '덮어쓰기'다 — 다른 상품에서 다시 열었을 때 앞 상품명이 남으면 안 된다.
@@ -326,6 +384,10 @@
   // 인라인 버튼에서 호출 (onclick="openSimpleApply()")
   window.openSimpleApply = open;
 
+  // 배너가 그 자리에서 창을 열 때 같은 문구·같은 표식을 쓰게 내보낸다 (2026-08-10).
+  // site-banner.js 가 자기 문구를 따로 적으면 두 경로가 갈린다.
+  window.dpBannerApply = { title: BANNER_TITLE, note: bannerNote };
+
   // 주소에 ?apply=1 이 붙어 있으면 버튼을 안 눌러도 바로 연다 (2026-08-10).
   //
   // ★ 왜 필요한가
@@ -333,11 +395,21 @@
   //   주소로 카테고리를 정하기 때문에 메인 화면 같은 곳에서는 스스로 꺼져 있다.
   //   그래서 배너가 그 카테고리 화면으로 보내고, 도착한 뒤 여기서 연다.
   //   상품 찾기(finder.js) 의 ?finder=1 과 같은 방식이다.
+  //
+  // ?bl= 에 배너 라벨이 실려 온다 (2026-08-10). 접수 내용 앞의 관리자 표식에 쓴다.
+  // 없어도 '##배너 접수건' 까지는 남는다 — 어느 배너인지만 모른다.
   function autoOpenFromUrl() {
+    var bl = '';
     try {
-      if (new URLSearchParams(location.search).get('apply') !== '1') return;
+      var sp = new URLSearchParams(location.search);
+      if (sp.get('apply') !== '1') return;
+      bl = String(sp.get('bl') || '').trim().slice(0, 120);
     } catch (e) { return; }
-    open(null, '', null, { source: 'banner_lead' });
+    open(null, '', null, {
+      source: 'banner_lead',
+      title: BANNER_TITLE,
+      adminNote: bannerNote(bl),
+    });
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', autoOpenFromUrl);
