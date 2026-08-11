@@ -1506,10 +1506,19 @@
       // ⚠ 폰에서만이다. PC 는 세로 막대라 아래를 안 가린다.
       '@media(max-width:640px){body.dpf-stk-pad{padding-bottom:78px;}}' +
 
+      // ⚠ align-items:center 로 두면 안 된다 (2026-08-11 폰에서 잡았다).
+      //   가운데 정렬한 flex 아이템이 덮개보다 길어지면 넘친 만큼이 위아래로 똑같이
+      //   삐져나가는데, 위로 삐져나간 부분은 스크롤로 닿을 수 없어 통째로 잘린다.
+      //   결과 화면이 길어진 뒤로 폰에서 맨 위 제목·지원금 줄이 안 보였다.
+      //
+      //   flex-start + 상자에 margin:auto 가 정답이다. 남는 자리가 있으면 auto 가
+      //   위아래로 나눠 가져 가운데 정렬 그대로고, 넘치면 auto 가 0 이 되어 위가 안 잘린다.
       '.dpf-ov{position:fixed;inset:0;z-index:9000;background:rgba(20,17,38,.55);' +
-        'display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}' +
+        'display:flex;align-items:flex-start;justify-content:center;padding:20px;' +
+        'overflow-y:auto;-webkit-overflow-scrolling:touch;}' +
       '.dpf-ov[hidden]{display:none;}' +
-      '.dpf-box{width:100%;max-width:620px;background:#fff;border-radius:18px;padding:24px 22px 20px;' +
+      '.dpf-box{width:100%;max-width:620px;margin:auto;background:#fff;border-radius:18px;' +
+        'padding:24px 22px 20px;' +
         'font-family:"Noto Sans KR",sans-serif;box-shadow:0 20px 60px rgba(20,17,38,.28);}' +
       '.dpf-box--wide{max-width:860px;}' +
       '.dpf-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}' +
@@ -1759,8 +1768,17 @@
         '.dpf-opt--card .dpf-opt-body{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;gap:2px;}' +
         '.dpf-res,.dpf-res--n1,.dpf-res--n2,.dpf-res--n3,.dpf-res--n4{grid-template-columns:1fr;gap:10px;}' +
         '.dpf-card{flex-direction:row;align-items:center;gap:13px;padding:12px;}' +
-        '.dpf-card-l{flex:1 1 auto;min-width:0;display:flex;flex-direction:column;}' +
-        '.dpf-thumb{width:84px;height:84px;flex-shrink:0;margin:0;}' +
+        // ⚠ 사진(.dpf-thumb)은 .dpf-card-l 안에 있다. 그래서 .dpf-card 를 눕혀도
+        //   사진은 안 눕고 글자 위에 그대로 있었다 (2026-08-10 에 눕힌 줄 알았는데
+        //   실제 폰 화면은 계속 세로였다 — 2026-08-11 에 잡았다).
+        //   card-l 자체를 두 칸 격자로 만든다: 왼쪽 칸은 사진이 세로로 다 차지하고,
+        //   이름·요금·지원금·이유는 전부 오른쪽 칸에 순서대로 쌓인다.
+        '.dpf-card-l{flex:1 1 auto;min-width:0;display:grid;' +
+          'grid-template-columns:84px minmax(0,1fr);column-gap:13px;row-gap:0;}' +
+        '.dpf-card-l>*{grid-column:2;min-width:0;}' +
+        // span 8 — 한 카드에 들어갈 수 있는 줄 수보다 넉넉히. 빈 행은 높이가 0 이라 안 보인다.
+        '.dpf-card-l>.dpf-thumb{grid-column:1;grid-row:1/span 8;align-self:center;' +
+          'width:84px;height:84px;margin:0;}' +
         '.dpf-rank{top:8px;left:8px;}' +
       '}' +
       '@media(max-width:520px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
