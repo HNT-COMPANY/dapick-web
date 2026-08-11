@@ -753,9 +753,16 @@
     var orphan = (amount && String(title).indexOf('{금액}') < 0)
       ? '<span class="dpf-stk-amt">' + esc(amount) + '</span>' : '';
 
+    // 말풍선도 진입 버튼 것을 그대로 가져온다 (2026-08-11).
+    // 바만 있으면 '무엇을 찾는 버튼인지' 는 알아도 '왜 지금 눌러야 하는지' 가 없다.
+    // 둥둥 뜨는 움직임은 진입 버튼과 같은 dpfBub 를 쓴다 — 애니메이션을 두 벌로 만들지 않는다.
+    var bubble = String(e.bubble == null ? '' : e.bubble).trim();
+
     var wrap = document.createElement('div');
     wrap.className = 'dpf-stk-wrap';
     wrap.innerHTML =
+      '<div class="dpf-stk-in">' +
+      (bubble ? '<span class="dpf-stk-bub">' + esc(bubble) + '</span>' : '') +
       '<button type="button" class="dpf-stk" title="' + esc(fillTokensPlain(title, amount)) + '">' +
       '<span class="dpf-stk-ico">' + (e.icon ? esc(e.icon) : ICO_SEARCH) + '</span>' +
       '<span class="dpf-stk-body">' + orphan +
@@ -764,7 +771,8 @@
       '<span class="dpf-stk-go">' +
       (label ? '<span class="dpf-stk-lb">' + esc(label) + '</span>' : '') +
       ICO_CHEV + '</span>' +
-      '</button>';
+      '</button>' +
+      '</div>';
     document.body.appendChild(wrap);
     STK.el = wrap;
 
@@ -1485,8 +1493,19 @@
       //   진한 바탕 위에서 뭉개진다. 흰 바탕에 진한 글자가 같은 크기에서 훨씬 잘 읽힌다.
       //   보라는 테두리와 금액 줄에만 남긴다 — 브랜드색은 유지하면서 글자를 살린다.
       //   진입 버튼(.dpf-cta)과 같은 색 체계라 위아래 두 버튼이 한 벌로 보인다.
+      '.dpf-stk-in{max-width:680px;margin:0 auto;}' +
+      // 말풍선 — 진입 버튼(.dpf-cta-bub)과 같은 모양·같은 dpfBub 움직임.
+      // pointer-events 를 끈다. 말풍선이 버튼 위를 살짝 덮는데 거길 눌렀을 때
+      // 아무 일도 안 일어나면 고장으로 읽힌다.
+      '.dpf-stk-bub{pointer-events:none;display:inline-block;position:relative;' +
+        'margin:0 0 9px 18px;padding:6px 13px;background:#221f38;color:#fff;' +
+        'font-size:12.5px;font-weight:700;letter-spacing:-.3px;border-radius:999px;' +
+        'box-shadow:0 4px 14px rgba(20,17,38,.22);animation:dpfBub 1.8s ease-in-out infinite;}' +
+      '.dpf-stk-bub:after{content:"";position:absolute;left:18px;bottom:-5px;width:0;height:0;' +
+        'border-left:5px solid transparent;border-right:5px solid transparent;' +
+        'border-top:6px solid #221f38;}' +
       '.dpf-stk{pointer-events:auto;display:flex;align-items:center;gap:13px;' +
-        'width:100%;max-width:680px;margin:0 auto;padding:13px 18px;' +
+        'width:100%;padding:13px 18px;' +
         'border:1.5px solid #6c3fc5;border-radius:16px;background:#fff;color:#221f38;' +
         'cursor:pointer;text-align:left;font-family:"Noto Sans KR",sans-serif;' +
         'box-shadow:0 10px 30px rgba(20,17,38,.16);' +
@@ -1507,7 +1526,8 @@
       '.dpf-stk-go{flex-shrink:0;display:flex;align-items:center;gap:5px;' +
         'font-size:13.5px;font-weight:800;color:#6c3fc5;}' +
       '.dpf-stk-go svg{color:#c9c5d4;}' +
-      '@media(prefers-reduced-motion:reduce){.dpf-stk-wrap{transition:opacity .01s;transform:none;}}' +
+      '@media(prefers-reduced-motion:reduce){.dpf-stk-wrap{transition:opacity .01s;transform:none;}' +
+        '.dpf-stk-bub{animation:none;}}' +
       // 좁은 화면 — 오른쪽 짧은 글자를 지우고 꺾쇠만 남긴다.
       // 남기면 제목이 밀려 잘린다. 제목이 무엇을 확인하는지 말해 주는 쪽이다.
       '@media(max-width:640px){' +
@@ -1518,6 +1538,7 @@
         '.dpf-stk-lb{display:none;}' +
         '.dpf-stk-tx{font-size:15.5px;}' +
         '.dpf-stk-amt{font-size:11.5px;}' +
+        '.dpf-stk-bub{font-size:11.5px;margin:0 0 8px 12px;padding:5px 11px;max-width:calc(100% - 24px);}' +
       '}' +
       // 가로바가 마지막 줄을 덮지 않게 자리를 만든다. 뜰 때만 붙는다.
       'body.dpf-stk-pad{padding-bottom:96px;}' +
