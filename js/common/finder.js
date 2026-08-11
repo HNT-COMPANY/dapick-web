@@ -1480,9 +1480,14 @@
       //   display:none 으로 여닫으면 툭 나타나 페이지가 튀는 것처럼 보인다.
       //   visibility 로 눌러 두고 transform 으로 아래에서 떠올린다. 살짝 넘겼다가
       //   제자리로 오는 곡선(cubic-bezier 끝 값 1.3)이라 뜰 때 통통 뜨는 느낌이 난다.
+      // ⚠ 감싸는 띠에 배경을 깔지 않는다 (2026-08-11 오후에 뺐다).
+      //   흰 그라데이션을 깔았더니 이 띠가 화면 폭 전체를 덮으면서 오른쪽 아래 카카오
+      //   상담 버튼을 뿌옇게 가렸다. 클릭은 통과했지만 눈에는 가려 보였다.
+      //   남의 스크립트가 띄우는 버튼이라 그쪽 z-index 를 올릴 수 없다 — 이쪽이 비켜난다.
+      //   바 자체가 흰 카드에 그림자를 지고 있어서 배경 없이도 본문과 구분된다.
       '.dpf-stk-wrap{position:fixed;z-index:8000;left:0;right:0;bottom:0;' +
         'padding:12px 16px calc(12px + env(safe-area-inset-bottom));' +
-        'background:linear-gradient(to top,rgba(255,255,255,.97) 58%,rgba(255,255,255,0));' +
+        'background:none;' +
         'pointer-events:none;opacity:0;visibility:hidden;transform:translateY(22px);' +
         'transition:opacity .24s ease,transform .34s cubic-bezier(.22,.9,.3,1.3),visibility 0s .34s;}' +
       '.dpf-stk-wrap.is-on{opacity:1;visibility:visible;transform:none;transition-delay:0s;}' +
