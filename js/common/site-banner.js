@@ -8,6 +8,7 @@
 //   백엔드에 칸을 새로 만들지 않았다 — 이미 있는 링크 칸의 약속값 하나면 되는 일이다.
 //     #finder:{카테고리}   상품 찾기 (2026-08-08)
 //     #apply:{카테고리}    간편 신청 (2026-08-10) — 상세페이지를 거치지 않는다
+//   창 제목은 배너마다 다르게 둘 수 있다(applyTitle 칸). 비우면 화면 기본 문구.
 // 의존: api.js(api.get, ApiResponse.data 언랩) — 페이지에서 먼저 로드.
 //       #apply 를 쓰려면 그 화면에 simple-apply.js 도 실려 있어야 한다.
 // ════════════════════════════════════════════════════
@@ -153,11 +154,15 @@
         var aslug = applyTarget(dest);
         // 배너 라벨(altText)을 실어 보낸다. 접수 내용 앞에 '(라벨) 인터넷 배너 클릭시 간편 신청 클릭' 로 남는다.
         var blabel = String(b.altText || '').slice(0, 120);
+        // 배너마다 다른 신청 창 제목 (2026-08-11). 비어 있으면 화면 기본 문구가 나간다.
+        var btitle = String(b.applyTitle || '').slice(0, 60);
         if (canApplyHere(aslug)) {
           inner = '<a class="sb__link" href="#" data-dpapply="1" data-dpblabel="' +
-            esc(blabel) + '">' + img + '</a>';
+            esc(blabel) + '" data-dptitle="' + esc(btitle) + '">' + img + '</a>';
         } else if (aslug) {
           // 이 화면에서는 못 연다. 그 카테고리 화면으로 보내고 도착하면 스스로 열린다.
+          // ⚠ 제목은 주소에 안 싣는다. 고객이 보는 주소창에 광고 문구가 그대로 찍히고,
+          //   길어지면 잘린다. 넘어간 화면에서는 기본 문구로 연다.
           inner = '<a class="sb__link" href="' +
             esc(finderPageOf(aslug) + '?apply=1' + (blabel ? '&bl=' + encodeURIComponent(blabel) : '')) +
             '">' + img + '</a>';
@@ -204,9 +209,11 @@
         // 문구와 관리자 표식은 simple-apply.js 가 내보낸 것을 쓴다 (2026-08-10).
         // 여기 따로 적으면 '그 자리에서 연 창' 과 '넘어가서 열린 창' 이 다른 말을 한다.
         var B = window.dpBannerApply || {};
+        // 관리자가 이 배너에 적어 둔 제목이 있으면 그것이 이긴다 (2026-08-11).
+        var t = (a.getAttribute('data-dptitle') || '').trim();
         window.openSimpleApply(null, '', null, {
           source: 'banner_lead',
-          title: B.title,
+          title: t || B.title,
           adminNote: typeof B.note === 'function'
             ? B.note(a.getAttribute('data-dpblabel') || '')
             : null,
