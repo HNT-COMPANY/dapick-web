@@ -380,6 +380,60 @@ function injectDynamicGnbCats() {
         const label = item.querySelector('.cat-label');
         if (label) bindGnbDropdownLabel(label);
       });
+
+    // 붙이고 나서 줄 수를 다시 센다. 이게 없으면 관리자가 만든 카테고리가 늘어나
+    // 세 줄이 돼도 그대로 세 줄로 남는다.
+    dpFitCatBar();
+  });
+}
+
+// ── 카테고리 줄 맞춤 (2026-08-11) ────────────────────────────────
+//
+// 넓은 화면은 격자라 몇 줄이 되든 열이 맞는다. 다만 **세 줄**이 되면 헤더가 화면
+// 위쪽을 통째로 먹는다. 그때는 줄바꿈을 접고 한 줄 + 옆으로 밀기로 갈아탄다.
+//
+// ★ 줄 수는 CSS 로 셀 수 없다. 항목들의 위쪽 좌표가 몇 종류인지로 센다.
+// ★ 격자일 때만 갈아탄다. 터치 기기는 원래부터 한 줄 + 가로 스크롤이다.
+function dpFitCatBar() {
+  const bar = document.querySelector('.cat-bar');
+  const inner = bar && bar.querySelector('.cat-inner');
+  if (!inner) return;
+
+  inner.classList.remove('is-scroll');
+
+  const items = inner.querySelectorAll('.cat-item');
+  if (items.length) {
+    const tops = {};
+    items.forEach((el) => { tops[Math.round(el.offsetTop)] = 1; });
+    let isGrid = false;
+    try { isGrid = window.getComputedStyle(inner).display === 'grid'; } catch (e) {}
+    if (isGrid && Object.keys(tops).length >= 3) inner.classList.add('is-scroll');
+  }
+
+  dpMarkCatOverflow(bar, inner);
+}
+
+// 옆으로 밀 것이 남아 있으면 오른쪽 끝에 신호를 켠다.
+// 2px 여유 — 브라우저가 소수점으로 재서 같은 폭인데도 1px 씩 차이가 난다.
+function dpMarkCatOverflow(bar, inner) {
+  const rest = inner.scrollWidth - inner.clientWidth - inner.scrollLeft;
+  bar.classList.toggle('is-overflow', rest > 2);
+}
+
+function dpBindCatBar() {
+  const bar = document.querySelector('.cat-bar');
+  const inner = bar && bar.querySelector('.cat-inner');
+  if (!inner || inner.dataset.dpFitBound) return;
+  inner.dataset.dpFitBound = '1';
+
+  // 끝까지 밀면 신호를 끈다. 더 볼 게 없는데 화살표가 남으면 있는 줄 알고 또 민다.
+  inner.addEventListener('scroll', () => dpMarkCatOverflow(bar, inner), { passive: true });
+
+  // 폴드를 펴고 접을 때마다 줄 수가 달라진다. 창 크기가 바뀌면 다시 센다.
+  let t = null;
+  window.addEventListener('resize', () => {
+    clearTimeout(t);
+    t = setTimeout(dpFitCatBar, 120);
   });
 }
 
@@ -411,6 +465,8 @@ function toggleGnbMore(btn) {
   setupGnbDropdownToggle();
   injectWaterGnbDropdown(); // 정수기 브랜드 드롭다운 (비동기 - 실패 시 일반 링크 유지)
   injectDynamicGnbCats(); // 관리자가 만든 카테고리 이어붙이기 (비동기 - 실패 시 기본 4개만)
+  dpBindCatBar();         // 카테고리 줄 맞춤 — 창 크기 변화와 밀기 신호를 잡는다
+  dpFitCatBar();          // 기본 4개만으로도 한 번 센다 (API 가 실패해도 신호는 맞다)
   document.addEventListener('click', (e) => {
     const more = document.querySelector('.gnb-more');
     const card = document.getElementById('gnbMoreCard');
