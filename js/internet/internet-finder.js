@@ -53,6 +53,12 @@
       categorySlug: 'internet',
       categoryType: 'INTERNET_TV',
       buttonSlot: 'internetFinder',   // 버튼은 엔진이 그린다. 문구는 어드민에 있다.
+
+      // 따라오는 버튼 (2026-08-11). 이 화면은 통신사 카드·요금 문의·후기·질문으로
+      // 길어서, 맨 위 진입 버튼이 한 번만 내려도 화면 밖으로 사라진다.
+      // 문구는 위 진입 버튼 것을 그대로 쓴다 — 엔진이 알아서 가져간다.
+      sticky: true,
+
       loadProducts: loadProducts,
       hrefOf: hrefOf,
       imageOf: function (row) { return row.imageUrl; },

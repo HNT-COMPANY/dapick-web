@@ -691,6 +691,82 @@
     if (btn) btn.addEventListener('click', open);
   }
 
+  // ══════════════════════════════════════════════════════════════════
+  // 따라오는 진입 버튼 (2026-08-11) — opt.sticky 를 켠 화면에만 붙는다
+  //
+  // 왜 만들었나
+  //   인터넷·TV 화면은 배너 → 통신사 카드 → 요금 문의 → 후기 → 질문으로 길다.
+  //   맨 위 진입 버튼은 한 번만 내려도 화면 밖으로 사라지고, 그 뒤로는 파인더로
+  //   돌아갈 길이 아예 없다. 길이가 긴 화면일수록 파인더를 만든 값을 못 받는다.
+  //
+  // ★ 문구를 따로 만들지 않는다
+  //   어드민 2단계의 진입 버튼 제목·금액·아이콘을 그대로 쓴다. 따로 두면 관리자가
+  //   한쪽만 고쳐서 같은 화면의 두 버튼이 다른 말을 하게 된다.
+  //
+  // ★ 원래 버튼이 보이는 동안은 안 띄운다
+  //   같은 문구가 두 번 보이면 고장으로 읽힌다. IntersectionObserver 를 쓴다 —
+  //   scroll 마다 위치를 재면 긴 화면에서 스크롤이 버벅인다.
+  //   ⚠ '안 보임' 만으로는 부족하다. 화면 아래로 아직 안 나온 경우도 안 보임이라,
+  //     그것만 보면 페이지 맨 위에서부터 따라오는 버튼이 떠 버린다.
+  //     위로 지나간 경우(top < 0)만 띄운다.
+  //
+  // ★ 오버레이보다 아래 층(z-index 8000)에 둔다
+  //   파인더 덮개(9000)·간편신청 덮개(9500)가 화면을 다 덮으므로 따로 숨기지 않아도
+  //   가려진다. 숨기는 코드를 따로 두면 닫을 때 되살리는 것을 잊기 쉽다.
+  // ══════════════════════════════════════════════════════════════════
+  var STK = { el: null, obs: null, on: false };
+
+  function stickyShow(v) {
+    if (!STK.el || STK.on === v) return;
+    STK.on = v;
+    STK.el.hidden = !v;
+    // 폰에서는 화면 아래 가로바다. 마지막 줄(푸터·신청 버튼)을 덮지 않게 자리를 만든다.
+    document.body.classList.toggle('dpf-stk-pad', v);
+  }
+
+  function mountSticky(slot) {
+    if (STK.el || !slot) return;                              // 한 화면에 하나만
+    if (typeof IntersectionObserver !== 'function') return;   // 없는 브라우저는 조용히 넘어간다
+
+    var e = S.def.entry || {};
+    var amount = entryAmount();
+    var title = e.stickyTitle || e.title || S.name || '나만의 상품 찾기';
+
+    var wrap = document.createElement('div');
+    wrap.className = 'dpf-stk-wrap';
+    wrap.hidden = true;
+    wrap.innerHTML =
+      '<button type="button" class="dpf-stk">' +
+      '<span class="dpf-stk-ico">' + (e.icon ? esc(e.icon) : ICO_SEARCH) + '</span>' +
+      '<span class="dpf-stk-tx">' + fillTokens(title, amount) + '</span>' +
+      '<span class="dpf-stk-go">' + ICO_CHEV + '</span>' +
+      '</button>';
+    document.body.appendChild(wrap);
+    STK.el = wrap;
+
+    var b = wrap.querySelector('.dpf-stk');
+    if (b) b.addEventListener('click', open);
+
+    STK.obs = new IntersectionObserver(function (list) {
+      list.forEach(function (x) {
+        stickyShow(!x.isIntersecting && x.boundingClientRect.top < 0);
+      });
+    }, { threshold: 0 });
+    STK.obs.observe(slot);
+  }
+
+  // 폰에서 요금 문의 입력칸에 글을 쓰는 동안은 비켜 준다.
+  // 키보드가 올라오면 화면이 반으로 줄고, 그 위에 가로바까지 얹히면 입력칸이 안 보인다.
+  document.addEventListener('focusin', function (ev) {
+    if (!STK.el) return;
+    var t = ev.target;
+    var tag = t && t.tagName;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT') STK.el.classList.add('is-away');
+  });
+  document.addEventListener('focusout', function () {
+    if (STK.el) STK.el.classList.remove('is-away');
+  });
+
   // 도는 고리. 점 네 개 대신 이걸 쓴다 (2026-08-10).
   // 점은 '뭔가 멈춰 있나' 로 읽히고, 도는 고리는 계속 일하고 있다는 뜻으로 읽힌다.
   var ICO_SPIN =
@@ -1354,6 +1430,37 @@
         '.dpf-cta-ico{width:42px;height:42px;font-size:18px;}' +
         '.dpf-cta-txt b{font-size:16px;}.dpf-cta-txt em{font-size:12.5px;}' +
         '.dpf-cta-lb{display:none;}.dpf-cta-bub{font-size:11.5px;margin-left:8px;}}' +
+
+      // ── 따라오는 진입 버튼 (2026-08-11) ──────────────────────────
+      // PC 는 오른쪽 아래 알약, 폰은 화면 아래 가로바. 폰에서 오른쪽 아래 작은 버튼은
+      // 엄지에서 멀고 다른 요소를 덮기 쉬워서, 넓은 화면과 좁은 화면을 다르게 잡는다.
+      '.dpf-stk-wrap{position:fixed;z-index:8000;right:24px;bottom:24px;transition:opacity .18s;}' +
+      '.dpf-stk-wrap[hidden]{display:none;}' +
+      '.dpf-stk-wrap.is-away{opacity:0;pointer-events:none;}' +
+      '.dpf-stk{display:flex;align-items:center;gap:10px;max-width:340px;padding:13px 18px;' +
+        'border:none;border-radius:999px;background:#6c3fc5;color:#fff;cursor:pointer;' +
+        'font-family:"Noto Sans KR",sans-serif;box-shadow:0 10px 30px rgba(108,63,197,.35);' +
+        'animation:dpfStkUp .28s ease;}' +
+      '.dpf-stk:hover{background:#5b34ab;}' +
+      '.dpf-stk-ico{width:26px;height:26px;flex-shrink:0;display:flex;align-items:center;' +
+        'justify-content:center;font-size:18px;}' +
+      '.dpf-stk-ico svg{width:20px;height:20px;display:block;}' +
+      '.dpf-stk-tx{flex:1;min-width:0;font-size:14.5px;font-weight:700;letter-spacing:-.4px;' +
+        'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;}' +
+      '.dpf-stk-tx b{font-weight:900;}' +
+      '.dpf-stk-go{flex-shrink:0;display:flex;color:rgba(255,255,255,.75);}' +
+      '@keyframes dpfStkUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}' +
+      '@media(prefers-reduced-motion:reduce){.dpf-stk{animation:none;}}' +
+      '@media(max-width:640px){' +
+        '.dpf-stk-wrap{right:0;left:0;bottom:0;' +
+          'padding:10px 12px calc(10px + env(safe-area-inset-bottom));' +
+          'background:linear-gradient(to top,rgba(255,255,255,.97) 55%,rgba(255,255,255,0));}' +
+        '.dpf-stk{width:100%;max-width:none;justify-content:center;padding:15px 16px;border-radius:14px;}' +
+        '.dpf-stk-tx{flex:0 1 auto;font-size:15px;}' +
+      '}' +
+      // 가로바가 마지막 줄을 덮지 않게 자리를 만든다. 뜰 때만 붙는다.
+      '@media(max-width:640px){body.dpf-stk-pad{padding-bottom:78px;}}' +
+
       '.dpf-ov{position:fixed;inset:0;z-index:9000;background:rgba(20,17,38,.55);' +
         'display:flex;align-items:center;justify-content:center;padding:20px;overflow-y:auto;}' +
       '.dpf-ov[hidden]{display:none;}' +
@@ -1765,7 +1872,12 @@
         if (!ready) return;
         if (!setup(ready.row.definition || {}, ready.row.name, ready.products, opt)) return;
 
-        if (slot) mountEntry(slot);
+        if (slot) {
+          mountEntry(slot);
+          // 따라오는 버튼은 화면이 켜야 붙는다. 기본으로 켜면 정수기 등 다른 화면이
+          // 손도 안 댔는데 모양이 바뀐다.
+          if (opt.sticky) mountSticky(slot);
+        }
 
         // 주소에 ?finder=1 이 붙어 있으면 버튼을 안 눌러도 바로 연다.
         // 다른 페이지 배너에서 '이 카테고리 찾기' 로 보낼 때 쓴다 —
