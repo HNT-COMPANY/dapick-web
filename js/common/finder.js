@@ -1465,7 +1465,7 @@
       '@media(prefers-reduced-motion:reduce){.dpf-cta-bub{animation:none;}}' +
       // 좁은 화면에서는 오른쪽 글자를 지우고 꺾쇠만 남긴다.
       // 글자를 남기면 제목이 밀려 두 줄이 세 줄이 된다.
-      '@media(max-width:640px){.dpf-cta{padding:17px 16px;gap:12px;}' +
+      '@media(max-width:768px){.dpf-cta{padding:17px 16px;gap:12px;}' +
         '.dpf-cta-ico{width:42px;height:42px;font-size:18px;}' +
         '.dpf-cta-txt b{font-size:16px;}.dpf-cta-txt em{font-size:12.5px;}' +
         '.dpf-cta-lb{display:none;}.dpf-cta-bub{font-size:11.5px;margin-left:8px;}}' +
@@ -1535,7 +1535,7 @@
         '.dpf-stk-bub{animation:none;}}' +
       // 좁은 화면 — 오른쪽 짧은 글자를 지우고 꺾쇠만 남긴다.
       // 남기면 제목이 밀려 잘린다. 제목이 무엇을 확인하는지 말해 주는 쪽이다.
-      '@media(max-width:640px){' +
+      '@media(max-width:768px){' +
         '.dpf-stk-wrap{padding:10px 12px calc(10px + env(safe-area-inset-bottom));}' +
         '.dpf-stk{gap:11px;padding:12px 14px;border-radius:14px;}' +
         '.dpf-stk-ico{width:36px;height:36px;}' +
@@ -1547,7 +1547,7 @@
       '}' +
       // 가로바가 마지막 줄을 덮지 않게 자리를 만든다. 뜰 때만 붙는다.
       'body.dpf-stk-pad{padding-bottom:96px;}' +
-      '@media(max-width:640px){body.dpf-stk-pad{padding-bottom:86px;}}' +
+      '@media(max-width:768px){body.dpf-stk-pad{padding-bottom:86px;}}' +
 
       // ⚠ align-items:center 로 두면 안 된다 (2026-08-11 폰에서 잡았다).
       //   가운데 정렬한 flex 아이템이 덮개보다 길어지면 넘친 만큼이 위아래로 똑같이
@@ -1667,7 +1667,7 @@
       // 로고는 로딩 상자 맨 위 가운데. 점보다 먼저 눈에 들어와야 한다.
       '.dpf-load-logo{margin:0 0 18px;display:flex;justify-content:center;}' +
       '.dpf-load-logo img{height:34px;width:auto;opacity:.92;}' +
-      '@media(max-width:640px){.dpf-load-logo img{height:28px;}' +
+      '@media(max-width:768px){.dpf-load-logo img{height:28px;}' +
         '.dpf-load-logo{margin-bottom:14px;}}' +
       // 도는 고리 (2026-08-10). 점 네 개를 대신한다.
       // ⚠ 점 CSS(.dpf-dots)는 남겨 둔다 — 옛 정의로 저장된 화면이 아직 있을 수 있다.
@@ -1708,7 +1708,7 @@
         'font-family:inherit;font-size:14.5px;font-weight:500;color:#8b8a9b;' +
         'padding:12px;cursor:pointer;}' +
       '.dpf-skip:hover{color:#6c3fc5;}' +
-      '@media(max-width:640px){.dpf-ih{font-size:22px;}.dpf-load-t{font-size:19px;}}' +
+      '@media(max-width:768px){.dpf-ih{font-size:22px;}.dpf-load-t{font-size:19px;}}' +
       // 결과 — 전면
       '.dpf-box--page{max-width:1100px;}' +
       '.dpf-q--big{font-size:26px;line-height:1.35;}' +
@@ -1748,7 +1748,7 @@
       '.dpf-head--res .dpf-x{position:absolute;right:0;top:50%;transform:translateY(-50%);}' +
       '.dpf-rlogo{display:flex;justify-content:center;}' +
       '.dpf-rlogo img{height:30px;width:auto;opacity:.95;}' +
-      '@media(max-width:520px){.dpf-rlogo img{height:24px;}}' +
+      '@media(max-width:480px){.dpf-rlogo img{height:24px;}}' +
       // 사진이 없어도 같은 높이를 지킨다. 회색칸만 남고 글자 자리는 그대로다.
       '.dpf-thumb--no{background:#f6f5fa;}' +
       // 카드 고르기 — 눌린 카드가 한눈에 보여야 바닥 버튼과 이어진다
@@ -1790,9 +1790,9 @@
       '.dpf-act-b--k{background:#fee500;color:#181600;}' +
       '.dpf-act-b--k:hover{background:#f2da00;}' +
       // 버튼 셋이 한 줄에 안 들어가면 줄 전체를 세로로 세운다.
-      '@media(max-width:900px){.dpf-act-row{flex-direction:column;align-items:stretch;gap:11px;}' +
+      '@media(max-width:1024px){.dpf-act-row{flex-direction:column;align-items:stretch;gap:11px;}' +
         '.dpf-act-btns{margin-left:0;}.dpf-act-b{flex:1 1 0;padding:14px 8px;font-size:13.5px;}}' +
-      '@media(max-width:520px){.dpf-act{padding:16px 14px;}' +
+      '@media(max-width:480px){.dpf-act{padding:16px 14px;}' +
         '.dpf-act-h{font-size:17px;}.dpf-act-s{font-size:13px;}' +
         '.dpf-act-btns{flex-direction:column;}.dpf-act-b{width:100%;font-size:14.5px;}}' +
       // ── 좁아지면 세로로 쌓는다 (2026-08-10) ──────────────────
@@ -1800,11 +1800,17 @@
       // ★ 폰에서 가로 2칸을 유지하면 카드가 반토막이 나서 이름이 세 줄로 접히고
       //   그림은 손톱만 해진다. 세로로 한 줄씩 쌓으면 그림도 글자도 제 크기로 나온다.
       //   토스가 폰에서 모든 목록을 세로로 두는 이유와 같다.
-      '@media(max-width:820px){.dpf-res,.dpf-res--n3,.dpf-res--n4{grid-template-columns:repeat(2,1fr);}' +
+      // 태블릿 세로(아이패드 820~1024)까지 두 칸. 네 칸을 그대로 두면 카드가 종잇장이 된다.
+      '@media(max-width:1024px){.dpf-res,.dpf-res--n3,.dpf-res--n4{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--card{grid-template-columns:repeat(2,1fr);}' +
         '.dpf-opts--n1{grid-template-columns:1fr;}}' +
-      // 폰 — 선택지도 결과 카드도 한 줄에 하나. 카드는 가로로 눕힌다.
-      '@media(max-width:600px){' +
+      // 폰과 폴드 펼침 — 선택지도 결과 카드도 한 줄에 하나. 카드는 가로로 눕힌다.
+      //
+      // ★ 왜 768px 인가 (2026-08-11 에 600 에서 올림)
+      //   갤럭시 Z Fold 를 펼치면 CSS 폭이 673~717px 이다. 600px 로 끊어 두면
+      //   펼치는 순간 PC 레이아웃이 나온다 — 폰에서는 멀쩡한데 폴드만 깨져 보였던 이유다.
+      //   768px 은 아이패드 세로까지 덮는다. 각 레포 CLAUDE.md 의 기준 폭 표를 따른다.
+      '@media(max-width:768px){' +
         '.dpf-opts--card,.dpf-opts--n1,.dpf-opts--n2,.dpf-opts--n3{grid-template-columns:1fr;}' +
         '.dpf-opt--card{flex-direction:row;align-items:center;text-align:left;gap:14px;padding:14px 16px;}' +
         '.dpf-opt--card .dpf-opt-img{width:78px;height:60px;flex-shrink:0;}' +
@@ -1824,9 +1830,27 @@
           'width:84px;height:84px;margin:0;}' +
         '.dpf-rank{top:8px;left:8px;}' +
       '}' +
-      '@media(max-width:520px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
+      '@media(max-width:480px){.dpf-box{padding:18px 16px 16px;}.dpf-q{font-size:18px;}' +
         '.dpf-rw{padding:19px 14px 17px;border-radius:14px;}' +
         '.dpf-rw-h{font-size:21px;}.dpf-rw-s{font-size:13px;}.dpf-rw-n{font-size:15.5px;}' +
+      '}' +
+      // ── 아주 좁은 화면 (2026-08-11 신설) ────────────────────────
+      //
+      // 갤럭시 Z Fold 를 접으면 겉화면이 344px 다. 여기서 가로로 삐져나가면
+      // 화면을 좌우로 밀어야 글자가 보이고, 그 순간 사람은 그냥 닫는다.
+      // 덮개 여백과 사진 칸을 한 번 더 줄여 자리를 만든다.
+      //   344 − 덮개 20 − 상자 24 − 카드 24 = 276px 안에 사진 64 + 사이 10 + 글자 202
+      '@media(max-width:359px){' +
+        '.dpf-ov{padding:10px;}' +
+        '.dpf-box{padding:14px 12px 12px;}' +
+        '.dpf-card-l{grid-template-columns:64px minmax(0,1fr);column-gap:10px;}' +
+        '.dpf-card-l>.dpf-thumb{width:64px;height:64px;}' +
+        '.dpf-opt--card .dpf-opt-img{width:62px;height:50px;}' +
+        '.dpf-stk{padding:11px 12px;gap:9px;}' +
+        '.dpf-stk-tx{font-size:14px;}' +
+        '.dpf-stk-ico{width:32px;height:32px;}' +
+        '.dpf-cta{padding:14px 13px;gap:10px;}' +
+        '.dpf-cta-ico{width:38px;height:38px;}' +
       '}';
     var s = document.createElement('style');
     s.textContent = css;
