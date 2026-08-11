@@ -1480,36 +1480,44 @@
       '.dpf-stk-wrap.is-on{opacity:1;visibility:visible;transform:none;transition-delay:0s;}' +
       '.dpf-stk-wrap.is-away{opacity:0;transform:translateY(22px);pointer-events:none;}' +
       // 버튼만 눌린다. 감싸는 띠는 클릭을 통과시켜 뒤 본문을 가로막지 않는다.
-      '.dpf-stk{pointer-events:auto;display:flex;align-items:center;gap:12px;' +
-        'width:100%;max-width:680px;margin:0 auto;padding:13px 18px;border:none;' +
-        'border-radius:16px;background:#6c3fc5;color:#fff;cursor:pointer;text-align:left;' +
-        'font-family:"Noto Sans KR",sans-serif;box-shadow:0 10px 30px rgba(108,63,197,.34);' +
-        'transition:background .15s ease,box-shadow .15s ease;}' +
-      '.dpf-stk:hover{background:#5b34ab;box-shadow:0 12px 34px rgba(108,63,197,.42);}' +
-      '.dpf-stk-ico{width:38px;height:38px;flex-shrink:0;border-radius:50%;' +
-        'background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;' +
-        'font-size:18px;}' +
-      '.dpf-stk-ico svg{width:20px;height:20px;display:block;}' +
+      // ★ 흰 바탕 + 보라 테두리 (2026-08-11 오후에 바꿈)
+      //   보라 바탕에 흰 글자로 만들었더니 글자가 읽히지 않았다. 흰 글자는 획이 얇아
+      //   진한 바탕 위에서 뭉개진다. 흰 바탕에 진한 글자가 같은 크기에서 훨씬 잘 읽힌다.
+      //   보라는 테두리와 금액 줄에만 남긴다 — 브랜드색은 유지하면서 글자를 살린다.
+      //   진입 버튼(.dpf-cta)과 같은 색 체계라 위아래 두 버튼이 한 벌로 보인다.
+      '.dpf-stk{pointer-events:auto;display:flex;align-items:center;gap:13px;' +
+        'width:100%;max-width:680px;margin:0 auto;padding:13px 18px;' +
+        'border:1.5px solid #6c3fc5;border-radius:16px;background:#fff;color:#221f38;' +
+        'cursor:pointer;text-align:left;font-family:"Noto Sans KR",sans-serif;' +
+        'box-shadow:0 10px 30px rgba(20,17,38,.16);' +
+        'transition:background .15s ease,box-shadow .15s ease,border-color .15s ease;}' +
+      '.dpf-stk:hover{background:#faf7ff;border-color:#5b34ab;' +
+        'box-shadow:0 12px 34px rgba(108,63,197,.24);}' +
+      '.dpf-stk-ico{width:40px;height:40px;flex-shrink:0;border-radius:50%;' +
+        'background:#f3eeff;color:#6c3fc5;display:flex;align-items:center;' +
+        'justify-content:center;font-size:18px;}' +
+      '.dpf-stk-ico svg{width:21px;height:21px;display:block;}' +
       '.dpf-stk-body{flex:1;min-width:0;}' +
       // 금액을 적었는데 제목에 {금액} 이 없을 때 제목 위에 얹는 줄.
-      '.dpf-stk-amt{display:block;font-size:11.5px;font-weight:800;letter-spacing:-.3px;' +
-        'color:#e6dcff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-      '.dpf-stk-tx{display:block;font-size:15px;font-weight:800;letter-spacing:-.4px;' +
-        'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-      '.dpf-stk-tx b{font-weight:900;}' +
+      '.dpf-stk-amt{display:block;font-size:12px;font-weight:800;letter-spacing:-.3px;' +
+        'color:#6c3fc5;margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.dpf-stk-tx{display:block;font-size:16.5px;font-weight:800;letter-spacing:-.5px;' +
+        'color:#1c1930;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.dpf-stk-tx b{color:#6c3fc5;font-weight:900;}' +
       '.dpf-stk-go{flex-shrink:0;display:flex;align-items:center;gap:5px;' +
-        'font-size:13px;font-weight:700;color:rgba(255,255,255,.86);}' +
-      '.dpf-stk-go svg{color:rgba(255,255,255,.7);}' +
+        'font-size:13.5px;font-weight:800;color:#6c3fc5;}' +
+      '.dpf-stk-go svg{color:#c9c5d4;}' +
       '@media(prefers-reduced-motion:reduce){.dpf-stk-wrap{transition:opacity .01s;transform:none;}}' +
       // 좁은 화면 — 오른쪽 짧은 글자를 지우고 꺾쇠만 남긴다.
       // 남기면 제목이 밀려 잘린다. 제목이 무엇을 확인하는지 말해 주는 쪽이다.
       '@media(max-width:640px){' +
         '.dpf-stk-wrap{padding:10px 12px calc(10px + env(safe-area-inset-bottom));}' +
-        '.dpf-stk{gap:10px;padding:13px 15px;border-radius:14px;}' +
-        '.dpf-stk-ico{width:34px;height:34px;}' +
+        '.dpf-stk{gap:11px;padding:12px 14px;border-radius:14px;}' +
+        '.dpf-stk-ico{width:36px;height:36px;}' +
+        '.dpf-stk-ico svg{width:19px;height:19px;}' +
         '.dpf-stk-lb{display:none;}' +
-        '.dpf-stk-tx{font-size:14.5px;}' +
-        '.dpf-stk-amt{font-size:11px;}' +
+        '.dpf-stk-tx{font-size:15.5px;}' +
+        '.dpf-stk-amt{font-size:11.5px;}' +
       '}' +
       // 가로바가 마지막 줄을 덮지 않게 자리를 만든다. 뜰 때만 붙는다.
       'body.dpf-stk-pad{padding-bottom:96px;}' +
