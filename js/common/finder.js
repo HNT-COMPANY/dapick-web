@@ -692,16 +692,24 @@
   }
 
   // ══════════════════════════════════════════════════════════════════
-  // 따라오는 진입 버튼 (2026-08-11) — opt.sticky 를 켠 화면에만 붙는다
+  // 따라오는 진입 버튼 (2026-08-11) — 파인더가 붙는 모든 화면에 공통으로 붙는다
   //
   // 왜 만들었나
-  //   인터넷·TV 화면은 배너 → 통신사 카드 → 요금 문의 → 후기 → 질문으로 길다.
+  //   상품 화면은 배너 → 상품 목록 → 요금 문의 → 후기 → 질문으로 길다.
   //   맨 위 진입 버튼은 한 번만 내려도 화면 밖으로 사라지고, 그 뒤로는 파인더로
   //   돌아갈 길이 아예 없다. 길이가 긴 화면일수록 파인더를 만든 값을 못 받는다.
   //
+  // ★ 넓은 화면도 좁은 화면도 화면 아래 가로바다 (2026-08-11 오후에 통일)
+  //   처음에는 PC 만 왼쪽 세로 막대로 만들었다. 폭이 86px 이라 긴 제목이 안 들어가
+  //   짧은 글자(label)만 보여 줬는데, '3초만에 확인하세요' 만 남으니 무엇을 확인하는지
+  //   알 수 없었다. 문구를 줄이는 순간 문맥이 통째로 사라진다.
+  //   가로바는 제목·금액·짧은 글자를 다 담을 수 있다. 넓은 화면에서는 가운데로
+  //   모아 두어 화면 아래를 통째로 막지 않는다.
+  //
   // ★ 문구를 따로 만들지 않는다
-  //   어드민 2단계의 진입 버튼 제목·금액·아이콘을 그대로 쓴다. 따로 두면 관리자가
-  //   한쪽만 고쳐서 같은 화면의 두 버튼이 다른 말을 하게 된다.
+  //   어드민 2단계의 진입 버튼 제목·금액·부제·짧은 글자·아이콘을 그대로 쓴다.
+  //   관리자가 어드민에서 고치면 이 바도 같이 바뀐다. 따로 두면 한쪽만 고쳐서
+  //   같은 화면의 두 버튼이 다른 말을 하게 된다.
   //
   // ★ 원래 버튼이 보이는 동안은 안 띄운다
   //   같은 문구가 두 번 보이면 고장으로 읽힌다. IntersectionObserver 를 쓴다 —
@@ -709,6 +717,10 @@
   //   ⚠ '안 보임' 만으로는 부족하다. 화면 아래로 아직 안 나온 경우도 안 보임이라,
   //     그것만 보면 페이지 맨 위에서부터 따라오는 버튼이 떠 버린다.
   //     위로 지나간 경우(top < 0)만 띄운다.
+  //
+  // ★ hidden 이 아니라 클래스로 여닫는다
+  //   hidden 은 display:none 이라 나타나고 사라지는 동안이 없다. 툭 나타나면
+  //   페이지가 튀는 것처럼 보인다. visibility + transform 으로 아래에서 떠오르게 한다.
   //
   // ★ 오버레이보다 아래 층(z-index 8000)에 둔다
   //   파인더 덮개(9000)·간편신청 덮개(9500)가 화면을 다 덮으므로 따로 숨기지 않아도
@@ -719,8 +731,8 @@
   function stickyShow(v) {
     if (!STK.el || STK.on === v) return;
     STK.on = v;
-    STK.el.hidden = !v;
-    // 폰에서는 화면 아래 가로바다. 마지막 줄(푸터·신청 버튼)을 덮지 않게 자리를 만든다.
+    STK.el.classList.toggle('is-on', v);
+    // 마지막 줄(푸터·신청 버튼)을 덮지 않게 자리를 만든다.
     document.body.classList.toggle('dpf-stk-pad', v);
   }
 
@@ -731,19 +743,27 @@
     var e = S.def.entry || {};
     var amount = entryAmount();
     var title = e.stickyTitle || e.title || S.name || '나만의 상품 찾기';
-    // 어드민 2단계의 짧은 글자(label). PC 세로 리모컨은 폭이 86px 이라 긴 제목이 안 들어간다.
-    // 짧은 말이 적혀 있으면 그걸 쓰고, 없으면 제목을 넣고 네 줄에서 자른다.
+    // 오른쪽 끝의 짧은 글자. 진입 버튼의 .dpf-cta-lb 와 같은 값이다.
+    // ⚠ 이걸로 제목을 대신하지 않는다. '3초만에 확인하세요' 만 남으면 무엇을
+    //   확인하는지 알 수 없다 — 제목 옆에 거드는 말로만 쓴다.
     var label = String(e.label == null ? '' : e.label).trim();
 
+    // 금액을 적어 놓고 제목에 {금액} 을 안 넣었으면 제목 위에 따로 얹는다.
+    // 진입 버튼(mountEntry)과 같은 규칙이어야 두 버튼이 같은 말을 한다.
+    var orphan = (amount && String(title).indexOf('{금액}') < 0)
+      ? '<span class="dpf-stk-amt">' + esc(amount) + '</span>' : '';
+
     var wrap = document.createElement('div');
-    wrap.className = 'dpf-stk-wrap' + (label ? ' has-lb' : '');
-    wrap.hidden = true;
+    wrap.className = 'dpf-stk-wrap';
     wrap.innerHTML =
       '<button type="button" class="dpf-stk" title="' + esc(fillTokensPlain(title, amount)) + '">' +
       '<span class="dpf-stk-ico">' + (e.icon ? esc(e.icon) : ICO_SEARCH) + '</span>' +
-      '<span class="dpf-stk-tx">' + fillTokens(title, amount) + '</span>' +
+      '<span class="dpf-stk-body">' + orphan +
+        '<span class="dpf-stk-tx">' + fillTokens(title, amount) + '</span>' +
+      '</span>' +
+      '<span class="dpf-stk-go">' +
       (label ? '<span class="dpf-stk-lb">' + esc(label) + '</span>' : '') +
-      '<span class="dpf-stk-go">' + ICO_CHEV + '</span>' +
+      ICO_CHEV + '</span>' +
       '</button>';
     document.body.appendChild(wrap);
     STK.el = wrap;
@@ -1444,67 +1464,56 @@
 
       // ── 따라오는 진입 버튼 (2026-08-11) ──────────────────────────
       //
-      // PC 는 화면 왼쪽 가운데 세로 리모컨, 폰은 화면 아래 가로바.
+      // 넓은 화면도 좁은 화면도 화면 아래 가로바. 모양이 하나여야 관리자가 어드민에서
+      // 문구를 고쳤을 때 두 화면에서 같은 것을 보게 된다.
+      // 넓은 화면에서는 max-width 로 가운데에 모아 아래를 통째로 막지 않는다.
       //
-      // ★ 왜 오른쪽이 아니라 왼쪽인가 (2026-08-11 오후에 옮김)
-      //   오른쪽 아래는 이미 카카오 상담 버튼 두 개가 쓰고 있다. 거기에 하나 더 얹으면
-      //   세 개가 겹쳐 서로를 가린다. 왼쪽은 비어 있고, 본문이 가운데 정렬이라
-      //   좁은 세로 막대는 글자를 안 덮는다.
-      //
-      // ★ 왜 PC 에서 가로바를 안 쓰나
-      //   넓은 화면 아래를 가로로 다 막으면 광고 띠처럼 읽히고, 스크롤할 때마다
-      //   본문 마지막 줄을 계속 가린다. 폰은 화면이 좁아 반대다 — 아래 가로바가
-      //   엄지에 가장 가깝다.
-      //
-      // ★ 흰 바탕 + 보라 테두리로 세운 이유
-      //   이 화면은 본문이 희고 푸터가 검다. 보라 알약은 검은 푸터 위에서 묻힌다.
-      //   흰 카드에 보라 테두리면 밝은 데서도 어두운 데서도 떠 보인다.
-      '.dpf-stk-wrap{position:fixed;z-index:8000;left:18px;top:50%;transform:translateY(-50%);' +
-        'transition:opacity .18s;}' +
-      '.dpf-stk-wrap[hidden]{display:none;}' +
-      '.dpf-stk-wrap.is-away{opacity:0;pointer-events:none;}' +
-      '.dpf-stk{display:flex;flex-direction:column;align-items:center;gap:8px;width:86px;' +
-        'padding:14px 8px;border:1.5px solid #6c3fc5;border-radius:16px;background:#fff;' +
-        'color:#3a3550;cursor:pointer;font-family:"Noto Sans KR",sans-serif;' +
-        'box-shadow:0 8px 26px rgba(20,17,38,.16);animation:dpfStkIn .28s ease;}' +
-      '.dpf-stk:hover{background:#f7f3ff;box-shadow:0 10px 30px rgba(108,63,197,.24);}' +
-      '.dpf-stk-ico{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:#6c3fc5;' +
-        'color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;}' +
+      // ★ 나타나고 사라지는 동안을 만든다 (물방울처럼 떠오르게)
+      //   display:none 으로 여닫으면 툭 나타나 페이지가 튀는 것처럼 보인다.
+      //   visibility 로 눌러 두고 transform 으로 아래에서 떠올린다. 살짝 넘겼다가
+      //   제자리로 오는 곡선(cubic-bezier 끝 값 1.3)이라 뜰 때 통통 뜨는 느낌이 난다.
+      '.dpf-stk-wrap{position:fixed;z-index:8000;left:0;right:0;bottom:0;' +
+        'padding:12px 16px calc(12px + env(safe-area-inset-bottom));' +
+        'background:linear-gradient(to top,rgba(255,255,255,.97) 58%,rgba(255,255,255,0));' +
+        'pointer-events:none;opacity:0;visibility:hidden;transform:translateY(22px);' +
+        'transition:opacity .24s ease,transform .34s cubic-bezier(.22,.9,.3,1.3),visibility 0s .34s;}' +
+      '.dpf-stk-wrap.is-on{opacity:1;visibility:visible;transform:none;transition-delay:0s;}' +
+      '.dpf-stk-wrap.is-away{opacity:0;transform:translateY(22px);pointer-events:none;}' +
+      // 버튼만 눌린다. 감싸는 띠는 클릭을 통과시켜 뒤 본문을 가로막지 않는다.
+      '.dpf-stk{pointer-events:auto;display:flex;align-items:center;gap:12px;' +
+        'width:100%;max-width:680px;margin:0 auto;padding:13px 18px;border:none;' +
+        'border-radius:16px;background:#6c3fc5;color:#fff;cursor:pointer;text-align:left;' +
+        'font-family:"Noto Sans KR",sans-serif;box-shadow:0 10px 30px rgba(108,63,197,.34);' +
+        'transition:background .15s ease,box-shadow .15s ease;}' +
+      '.dpf-stk:hover{background:#5b34ab;box-shadow:0 12px 34px rgba(108,63,197,.42);}' +
+      '.dpf-stk-ico{width:38px;height:38px;flex-shrink:0;border-radius:50%;' +
+        'background:rgba(255,255,255,.18);display:flex;align-items:center;justify-content:center;' +
+        'font-size:18px;}' +
       '.dpf-stk-ico svg{width:20px;height:20px;display:block;}' +
-      // 긴 제목은 네 줄에서 자른다. 전체 문구는 마우스를 올리면 뜬다(title 속성).
-      '.dpf-stk-tx{font-size:12.5px;font-weight:800;line-height:1.35;letter-spacing:-.4px;' +
-        'text-align:center;word-break:keep-all;display:-webkit-box;-webkit-line-clamp:4;' +
-        '-webkit-box-orient:vertical;overflow:hidden;}' +
-      '.dpf-stk-tx b{color:#6c3fc5;font-weight:900;}' +
-      // 짧은 글자를 적어 뒀으면 세로 리모컨은 그걸 쓴다. 잘릴 일이 없다.
-      '.dpf-stk-lb{display:none;}' +
-      '.dpf-stk-wrap.has-lb .dpf-stk-lb{display:block;font-size:13px;font-weight:800;' +
-        'line-height:1.35;letter-spacing:-.4px;text-align:center;word-break:keep-all;}' +
-      '.dpf-stk-wrap.has-lb .dpf-stk-tx{display:none;}' +
-      '.dpf-stk-go{display:none;}' +
-      '@keyframes dpfStkIn{from{opacity:0;transform:translateX(-14px);}to{opacity:1;transform:none;}}' +
-      '@keyframes dpfStkUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}' +
-      '@media(prefers-reduced-motion:reduce){.dpf-stk{animation:none;}}' +
-      // 좁은 화면 — 화면 아래 가로바로 갈아탄다. 세로용 규칙을 전부 되돌린다.
+      '.dpf-stk-body{flex:1;min-width:0;}' +
+      // 금액을 적었는데 제목에 {금액} 이 없을 때 제목 위에 얹는 줄.
+      '.dpf-stk-amt{display:block;font-size:11.5px;font-weight:800;letter-spacing:-.3px;' +
+        'color:#e6dcff;margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.dpf-stk-tx{display:block;font-size:15px;font-weight:800;letter-spacing:-.4px;' +
+        'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+      '.dpf-stk-tx b{font-weight:900;}' +
+      '.dpf-stk-go{flex-shrink:0;display:flex;align-items:center;gap:5px;' +
+        'font-size:13px;font-weight:700;color:rgba(255,255,255,.86);}' +
+      '.dpf-stk-go svg{color:rgba(255,255,255,.7);}' +
+      '@media(prefers-reduced-motion:reduce){.dpf-stk-wrap{transition:opacity .01s;transform:none;}}' +
+      // 좁은 화면 — 오른쪽 짧은 글자를 지우고 꺾쇠만 남긴다.
+      // 남기면 제목이 밀려 잘린다. 제목이 무엇을 확인하는지 말해 주는 쪽이다.
       '@media(max-width:640px){' +
-        '.dpf-stk-wrap{left:0;right:0;top:auto;bottom:0;transform:none;' +
-          'padding:10px 12px calc(10px + env(safe-area-inset-bottom));' +
-          'background:linear-gradient(to top,rgba(255,255,255,.97) 55%,rgba(255,255,255,0));}' +
-        '.dpf-stk{flex-direction:row;width:100%;justify-content:center;gap:10px;' +
-          'padding:15px 16px;border:none;border-radius:14px;background:#6c3fc5;color:#fff;' +
-          'box-shadow:0 8px 24px rgba(108,63,197,.32);animation:dpfStkUp .28s ease;}' +
-        '.dpf-stk:hover{background:#6c3fc5;}' +
-        '.dpf-stk-ico{width:26px;height:26px;background:rgba(255,255,255,.18);}' +
-        // 가로바는 폭이 넉넉하다. 짧은 말 대신 제목을 그대로 보여준다.
-        '.dpf-stk-tx,.dpf-stk-wrap.has-lb .dpf-stk-tx{display:block;font-size:15px;font-weight:700;' +
-          'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
-        '.dpf-stk-tx b{color:#fff;}' +
-        '.dpf-stk-wrap.has-lb .dpf-stk-lb{display:none;}' +
-        '.dpf-stk-go{display:flex;color:rgba(255,255,255,.75);}' +
+        '.dpf-stk-wrap{padding:10px 12px calc(10px + env(safe-area-inset-bottom));}' +
+        '.dpf-stk{gap:10px;padding:13px 15px;border-radius:14px;}' +
+        '.dpf-stk-ico{width:34px;height:34px;}' +
+        '.dpf-stk-lb{display:none;}' +
+        '.dpf-stk-tx{font-size:14.5px;}' +
+        '.dpf-stk-amt{font-size:11px;}' +
       '}' +
       // 가로바가 마지막 줄을 덮지 않게 자리를 만든다. 뜰 때만 붙는다.
-      // ⚠ 폰에서만이다. PC 는 세로 막대라 아래를 안 가린다.
-      '@media(max-width:640px){body.dpf-stk-pad{padding-bottom:78px;}}' +
+      'body.dpf-stk-pad{padding-bottom:96px;}' +
+      '@media(max-width:640px){body.dpf-stk-pad{padding-bottom:86px;}}' +
 
       // ⚠ align-items:center 로 두면 안 된다 (2026-08-11 폰에서 잡았다).
       //   가운데 정렬한 flex 아이템이 덮개보다 길어지면 넘친 만큼이 위아래로 똑같이
@@ -1937,9 +1946,11 @@
 
         if (slot) {
           mountEntry(slot);
-          // 따라오는 버튼은 화면이 켜야 붙는다. 기본으로 켜면 정수기 등 다른 화면이
-          // 손도 안 댔는데 모양이 바뀐다.
-          if (opt.sticky) mountSticky(slot);
+          // 따라오는 바는 파인더가 붙는 모든 화면에 기본으로 붙는다 (2026-08-11).
+          // 화면마다 켜게 두면 새 카테고리를 만들 때마다 켜는 것을 잊는다 —
+          // 잊어도 오류가 안 나서 '왜 저 화면만 없지' 를 나중에 찾게 된다.
+          // 특정 화면에서만 빼려면 sticky: false 를 준다.
+          if (opt.sticky !== false) mountSticky(slot);
         }
 
         // 주소에 ?finder=1 이 붙어 있으면 버튼을 안 눌러도 바로 연다.
