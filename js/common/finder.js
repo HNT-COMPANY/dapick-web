@@ -731,14 +731,18 @@
     var e = S.def.entry || {};
     var amount = entryAmount();
     var title = e.stickyTitle || e.title || S.name || '나만의 상품 찾기';
+    // 어드민 2단계의 짧은 글자(label). PC 세로 리모컨은 폭이 86px 이라 긴 제목이 안 들어간다.
+    // 짧은 말이 적혀 있으면 그걸 쓰고, 없으면 제목을 넣고 네 줄에서 자른다.
+    var label = String(e.label == null ? '' : e.label).trim();
 
     var wrap = document.createElement('div');
-    wrap.className = 'dpf-stk-wrap';
+    wrap.className = 'dpf-stk-wrap' + (label ? ' has-lb' : '');
     wrap.hidden = true;
     wrap.innerHTML =
-      '<button type="button" class="dpf-stk">' +
+      '<button type="button" class="dpf-stk" title="' + esc(fillTokensPlain(title, amount)) + '">' +
       '<span class="dpf-stk-ico">' + (e.icon ? esc(e.icon) : ICO_SEARCH) + '</span>' +
       '<span class="dpf-stk-tx">' + fillTokens(title, amount) + '</span>' +
+      (label ? '<span class="dpf-stk-lb">' + esc(label) + '</span>' : '') +
       '<span class="dpf-stk-go">' + ICO_CHEV + '</span>' +
       '</button>';
     document.body.appendChild(wrap);
@@ -971,6 +975,13 @@
   // 관리자가 적은 글에서 {금액} · {이름} 을 실제 값으로 바꾼다.
   // ⚠ 먼저 esc 로 다 막고 나서 자리표를 바꾼다. 순서를 뒤집으면
   //   고객 이름에 태그가 들어 있을 때 그대로 화면에 실린다.
+  // 같은 자리표를 글자만으로 채운다 — 마우스 툴팁(title 속성)처럼 태그를 못 넣는 자리용.
+  function fillTokensPlain(s, amount) {
+    return String(s == null ? '' : s)
+      .replace(/\{금액\}/g, amount || '')
+      .replace(/\{이름\}/g, userName());
+  }
+
   function fillTokens(s, amount) {
     return esc(s)
       .replace(/\{금액\}/g, amount ? '<b>' + esc(amount) + '</b>' : '')
@@ -1432,33 +1443,67 @@
         '.dpf-cta-lb{display:none;}.dpf-cta-bub{font-size:11.5px;margin-left:8px;}}' +
 
       // ── 따라오는 진입 버튼 (2026-08-11) ──────────────────────────
-      // PC 는 오른쪽 아래 알약, 폰은 화면 아래 가로바. 폰에서 오른쪽 아래 작은 버튼은
-      // 엄지에서 멀고 다른 요소를 덮기 쉬워서, 넓은 화면과 좁은 화면을 다르게 잡는다.
-      '.dpf-stk-wrap{position:fixed;z-index:8000;right:24px;bottom:24px;transition:opacity .18s;}' +
+      //
+      // PC 는 화면 왼쪽 가운데 세로 리모컨, 폰은 화면 아래 가로바.
+      //
+      // ★ 왜 오른쪽이 아니라 왼쪽인가 (2026-08-11 오후에 옮김)
+      //   오른쪽 아래는 이미 카카오 상담 버튼 두 개가 쓰고 있다. 거기에 하나 더 얹으면
+      //   세 개가 겹쳐 서로를 가린다. 왼쪽은 비어 있고, 본문이 가운데 정렬이라
+      //   좁은 세로 막대는 글자를 안 덮는다.
+      //
+      // ★ 왜 PC 에서 가로바를 안 쓰나
+      //   넓은 화면 아래를 가로로 다 막으면 광고 띠처럼 읽히고, 스크롤할 때마다
+      //   본문 마지막 줄을 계속 가린다. 폰은 화면이 좁아 반대다 — 아래 가로바가
+      //   엄지에 가장 가깝다.
+      //
+      // ★ 흰 바탕 + 보라 테두리로 세운 이유
+      //   이 화면은 본문이 희고 푸터가 검다. 보라 알약은 검은 푸터 위에서 묻힌다.
+      //   흰 카드에 보라 테두리면 밝은 데서도 어두운 데서도 떠 보인다.
+      '.dpf-stk-wrap{position:fixed;z-index:8000;left:18px;top:50%;transform:translateY(-50%);' +
+        'transition:opacity .18s;}' +
       '.dpf-stk-wrap[hidden]{display:none;}' +
       '.dpf-stk-wrap.is-away{opacity:0;pointer-events:none;}' +
-      '.dpf-stk{display:flex;align-items:center;gap:10px;max-width:340px;padding:13px 18px;' +
-        'border:none;border-radius:999px;background:#6c3fc5;color:#fff;cursor:pointer;' +
-        'font-family:"Noto Sans KR",sans-serif;box-shadow:0 10px 30px rgba(108,63,197,.35);' +
-        'animation:dpfStkUp .28s ease;}' +
-      '.dpf-stk:hover{background:#5b34ab;}' +
-      '.dpf-stk-ico{width:26px;height:26px;flex-shrink:0;display:flex;align-items:center;' +
-        'justify-content:center;font-size:18px;}' +
+      '.dpf-stk{display:flex;flex-direction:column;align-items:center;gap:8px;width:86px;' +
+        'padding:14px 8px;border:1.5px solid #6c3fc5;border-radius:16px;background:#fff;' +
+        'color:#3a3550;cursor:pointer;font-family:"Noto Sans KR",sans-serif;' +
+        'box-shadow:0 8px 26px rgba(20,17,38,.16);animation:dpfStkIn .28s ease;}' +
+      '.dpf-stk:hover{background:#f7f3ff;box-shadow:0 10px 30px rgba(108,63,197,.24);}' +
+      '.dpf-stk-ico{width:38px;height:38px;flex-shrink:0;border-radius:50%;background:#6c3fc5;' +
+        'color:#fff;display:flex;align-items:center;justify-content:center;font-size:18px;}' +
       '.dpf-stk-ico svg{width:20px;height:20px;display:block;}' +
-      '.dpf-stk-tx{flex:1;min-width:0;font-size:14.5px;font-weight:700;letter-spacing:-.4px;' +
-        'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;text-align:left;}' +
-      '.dpf-stk-tx b{font-weight:900;}' +
-      '.dpf-stk-go{flex-shrink:0;display:flex;color:rgba(255,255,255,.75);}' +
+      // 긴 제목은 네 줄에서 자른다. 전체 문구는 마우스를 올리면 뜬다(title 속성).
+      '.dpf-stk-tx{font-size:12.5px;font-weight:800;line-height:1.35;letter-spacing:-.4px;' +
+        'text-align:center;word-break:keep-all;display:-webkit-box;-webkit-line-clamp:4;' +
+        '-webkit-box-orient:vertical;overflow:hidden;}' +
+      '.dpf-stk-tx b{color:#6c3fc5;font-weight:900;}' +
+      // 짧은 글자를 적어 뒀으면 세로 리모컨은 그걸 쓴다. 잘릴 일이 없다.
+      '.dpf-stk-lb{display:none;}' +
+      '.dpf-stk-wrap.has-lb .dpf-stk-lb{display:block;font-size:13px;font-weight:800;' +
+        'line-height:1.35;letter-spacing:-.4px;text-align:center;word-break:keep-all;}' +
+      '.dpf-stk-wrap.has-lb .dpf-stk-tx{display:none;}' +
+      '.dpf-stk-go{display:none;}' +
+      '@keyframes dpfStkIn{from{opacity:0;transform:translateX(-14px);}to{opacity:1;transform:none;}}' +
       '@keyframes dpfStkUp{from{opacity:0;transform:translateY(14px);}to{opacity:1;transform:none;}}' +
       '@media(prefers-reduced-motion:reduce){.dpf-stk{animation:none;}}' +
+      // 좁은 화면 — 화면 아래 가로바로 갈아탄다. 세로용 규칙을 전부 되돌린다.
       '@media(max-width:640px){' +
-        '.dpf-stk-wrap{right:0;left:0;bottom:0;' +
+        '.dpf-stk-wrap{left:0;right:0;top:auto;bottom:0;transform:none;' +
           'padding:10px 12px calc(10px + env(safe-area-inset-bottom));' +
           'background:linear-gradient(to top,rgba(255,255,255,.97) 55%,rgba(255,255,255,0));}' +
-        '.dpf-stk{width:100%;max-width:none;justify-content:center;padding:15px 16px;border-radius:14px;}' +
-        '.dpf-stk-tx{flex:0 1 auto;font-size:15px;}' +
+        '.dpf-stk{flex-direction:row;width:100%;justify-content:center;gap:10px;' +
+          'padding:15px 16px;border:none;border-radius:14px;background:#6c3fc5;color:#fff;' +
+          'box-shadow:0 8px 24px rgba(108,63,197,.32);animation:dpfStkUp .28s ease;}' +
+        '.dpf-stk:hover{background:#6c3fc5;}' +
+        '.dpf-stk-ico{width:26px;height:26px;background:rgba(255,255,255,.18);}' +
+        // 가로바는 폭이 넉넉하다. 짧은 말 대신 제목을 그대로 보여준다.
+        '.dpf-stk-tx,.dpf-stk-wrap.has-lb .dpf-stk-tx{display:block;font-size:15px;font-weight:700;' +
+          'white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}' +
+        '.dpf-stk-tx b{color:#fff;}' +
+        '.dpf-stk-wrap.has-lb .dpf-stk-lb{display:none;}' +
+        '.dpf-stk-go{display:flex;color:rgba(255,255,255,.75);}' +
       '}' +
       // 가로바가 마지막 줄을 덮지 않게 자리를 만든다. 뜰 때만 붙는다.
+      // ⚠ 폰에서만이다. PC 는 세로 막대라 아래를 안 가린다.
       '@media(max-width:640px){body.dpf-stk-pad{padding-bottom:78px;}}' +
 
       '.dpf-ov{position:fixed;inset:0;z-index:9000;background:rgba(20,17,38,.55);' +
