@@ -393,7 +393,11 @@ function injectDynamicGnbCats() {
 // 위쪽을 통째로 먹는다. 그때는 줄바꿈을 접고 한 줄 + 옆으로 밀기로 갈아탄다.
 //
 // ★ 줄 수는 CSS 로 셀 수 없다. 항목들의 위쪽 좌표가 몇 종류인지로 센다.
-// ★ 격자일 때만 갈아탄다. 터치 기기는 원래부터 한 줄 + 가로 스크롤이다.
+// ★ 줄바꿈이 켜진 화면에서만 갈아탄다. 터치 기기는 원래부터 한 줄 + 가로 스크롤이라
+//   갈아탈 것이 없다.
+//   ⚠ display 값(grid/flex)으로 판정하지 않는다. 배치 방식은 바뀔 수 있고,
+//     실제로 2026-08-11 에 격자 → flex 로 한 번 바뀌었다. 그때 grid 로 굳어 있던
+//     검사 때문에 세 줄이 돼도 영영 안 갈아탔다. 물어야 할 것은 '줄바꿈이 켜졌나' 다.
 function dpFitCatBar() {
   const bar = document.querySelector('.cat-bar');
   const inner = bar && bar.querySelector('.cat-inner');
@@ -405,9 +409,12 @@ function dpFitCatBar() {
   if (items.length) {
     const tops = {};
     items.forEach((el) => { tops[Math.round(el.offsetTop)] = 1; });
-    let isGrid = false;
-    try { isGrid = window.getComputedStyle(inner).display === 'grid'; } catch (e) {}
-    if (isGrid && Object.keys(tops).length >= 3) inner.classList.add('is-scroll');
+    let wraps = false;
+    try {
+      const fw = window.getComputedStyle(inner).flexWrap;
+      wraps = fw === 'wrap' || fw === 'wrap-reverse';
+    } catch (e) {}
+    if (wraps && Object.keys(tops).length >= 3) inner.classList.add('is-scroll');
   }
 
   dpMarkCatOverflow(bar, inner);
