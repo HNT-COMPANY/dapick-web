@@ -291,6 +291,8 @@
       //   주석이 본문만큼 커져 무엇이 제목인지 안 보인다.
       footAlign: ALIGN[o.footAlign] ? o.footAlign : 'right',
       footSize: numIn(o.footSize, 8, 60, 14),
+      // 폰에서 배너를 얼마나 높게 볼 것인가. 250 은 390px 폭에서 세 줄이 넉넉히 든다.
+      moH: numIn(o.moH, 120, 600, 250),
     };
   }
 
@@ -396,6 +398,16 @@
     // 읽어 줘야 할 내용은 img 의 alt(altText)가 이미 갖고 있다. 두 번 읽히면 시끄럽다.
   }
 
+  // 문구가 있는 슬라이드에 붙일 클래스와 변수.
+  //   is-ov      — 폰에서 세로를 늘리는 규칙이 이 클래스에만 걸린다
+  //   --sb-mo-h  — 그 높이
+  // ⚠ 슬라이드는 site-banner.js 가 만든다. 여기서 직접 못 붙여 값만 넘긴다.
+  function slideMod(ov) {
+    var o = norm(ov);
+    if (!o.lines.length) return { cls: '', style: '' };
+    return { cls: ' is-ov', style: '--sb-mo-h:' + o.moH + ';' };
+  }
+
   // 미리보기용 한 줄 요약 (어드민 목록에서 쓴다)
   function summary(ov) {
     var o = norm(ov);
@@ -423,6 +435,35 @@
       '.sb__ov{--bo-k:1;position:absolute;inset:0;display:flex;flex-direction:column;' +
         'justify-content:center;padding:0 var(--bo-pad,clamp(20px,5vw,72px));' +
         'pointer-events:none;z-index:2;}',
+      // 하단 주석 (2026-08-12). 배너 세로가 좁아 본문에 주석까지 쌓으면 넘친다.
+      //   ⚠ --bo-k · --bo-pad 를 본문과 똑같이 정의해야 한다. 안 하면 폰에서
+      //     본문만 줄고 주석은 PC 크기로 남는다.
+      '.sb__ovfoot{--bo-k:1;position:absolute;left:0;right:0;bottom:0;' +
+        'display:flex;flex-direction:column;pointer-events:none;z-index:2;' +
+        'padding:0 var(--bo-pad,clamp(20px,5vw,72px)) calc(18px * var(--bo-k,1));}',
+      '.sb__ovfoot--left{align-items:flex-start;text-align:left;}',
+      '.sb__ovfoot--center{align-items:center;text-align:center;}',
+      '.sb__ovfoot--right{align-items:flex-end;text-align:right;}',
+      '.sb__ovfoot .sb__ov-in{max-width:min(560px,72%);gap:.18em;line-height:1.45;' +
+        'text-shadow:0 1px 10px rgba(0,0,0,.45);}',
+      // 폰·태블릿에서 배너 세로를 늘린다.
+      //
+      // 배너 이미지는 가로형이다(1600x420 안팎, 약 3.8:1).
+      // 폰 폭 390px 에서 그 비율 그대로면 높이가 100px 남짓 — 문구 두 줄이면 벌써 넘친다.
+      // 실제로 세 줄짜리 배너에서 마지막 줄이 배너 밖으로 밀려 안 보였다.
+      //
+      // ⚠ 이미지 좌우가 잘린다(cover). 그래서 문구가 있는 배너(.is-ov)에만 건다 —
+      //   문구 없는 배너까지 자르면 관리자가 만든 이미지가 이유 없이 잘려 나간다.
+      //   가운데를 기준으로 자른다. 배너는 보통 한쪽에 글자, 반대쪽에 사진이라
+      //   가운데가 가장 덜 아쉽다.
+      '@media(max-width:900px){',
+      '.sb__slide.is-ov img{aspect-ratio:calc(768 / (var(--sb-mo-h,250) * 1.35));' +
+        'height:auto;object-fit:cover;object-position:center;}',
+      '}',
+      '@media(max-width:480px){',
+      '.sb__slide.is-ov img{aspect-ratio:calc(390 / var(--sb-mo-h,250));' +
+        'height:auto;object-fit:cover;object-position:center;}',
+      '}',
       '.sb__ov--left{align-items:flex-start;text-align:left;}',
       '.sb__ov--center{align-items:center;text-align:center;}',
       '.sb__ov--right{align-items:flex-end;text-align:right;}',
@@ -497,6 +538,7 @@
     MAX_LINES: MAX_LINES,
     MAX_PARTS: MAX_PARTS,
     fonts: function () { return FONTS.slice(); },
+    slideMod: slideMod,
     fontOf: function (key) { return fontByKey[key] || fontByKey.system; },
     nearestWeight: nearestWeight,
     norm: norm,

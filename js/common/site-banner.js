@@ -130,6 +130,15 @@
     return o.html(b.overlay);
   }
 
+  // 문구가 있는 슬라이드에만 붙는 클래스·변수.
+  // 폰에서 배너 세로를 늘리는 규칙이 여기에 걸린다 — 문구 없는 배너는 안 건드린다
+  // (건드리면 관리자가 만든 이미지 좌우가 이유 없이 잘린다).
+  function ovSlide(b) {
+    var o = OV();
+    if (!o || !o.slideMod || !b || !b.overlay) return { cls: '', style: '' };
+    return o.slideMod(b.overlay);
+  }
+
   // 지금 보이는 슬라이드에만 문구를 켠다.
   //
   // 켜지는 조건이 둘이다 —
@@ -226,7 +235,10 @@
       // 이미지 위에 얹는 문구 (2026-08-12). 없으면 빈 문자열이라 전과 똑같다.
       // ⚠ 문구를 링크(a) 밖에 두는 이유 — 안에 넣으면 글자를 드래그로 선택할 때
       //   링크가 딸려 열린다. 클릭은 문구가 pointer-events 를 꺼서 아래 이미지로 지나간다.
-      return '<div class="sb__slide">' + inner + ovHtml(b) + '</div>';
+      var sm = ovSlide(b);
+      return '<div class="sb__slide' + sm.cls + '"' +
+        (sm.style ? ' style="' + sm.style + '"' : '') + '>' +
+        inner + ovHtml(b) + '</div>';
     }).join('');
 
     // #finder 배너 클릭. 슬라이드가 다시 그려져도 살아남게 묶음에 한 번만 건다.
