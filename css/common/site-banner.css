@@ -1,8 +1,33 @@
 /* ════════════════════════════════════════════════════
    site-banner.css — 카테고리 공용 상단 배너(캐러셀)
    DB 배너(관리자 등록)를 site-banner.js 가 주입. 활성 0장이면 숨김.
+
+   ★ 2026-08-12 폭 통일 — 배너 좌우 끝을 그 페이지 본문과 맞춘다.
+     전에는 어디서나 1180px / 좌우 64px 고정이라 실폭 1052 였다.
+     본문은 페이지마다 1120~1400 이어서 배너만 100~350px 좁게 들어가
+     좌우 끝이 어긋나 보였다. (2026-08-04 에 정수기만 따로 맞춘 적이 있다)
+
+     이제 두 변수로 정한다. 페이지가 안 정하면 공용 본문 폭을 그대로 쓴다.
+       --sb-w    배너 바깥 폭   (기본 --max-w = 1200px)
+       --sb-pad  좌우 여백      (기본 24px)
+     변수는 :root 나 body 에 둔다. .sb 에 직접 두면 안 된다 —
+     이 파일과 페이지 css 중 어느 쪽이 나중에 실리는지가 페이지마다 달라서
+     같은 자리를 두고 겨루면 이기는 쪽이 화면마다 뒤집힌다.
+
+     페이지별 실폭 (넓은 화면):
+       정수기 1400 (.wf-cta)   인터넷 1352 (.i-board-section)
+       카테고리 1152 (.cg-wrap) 카드·렌탈·휴대폰 1120 (.wrap / .m-wrap)
+
+   ⚠ 화살표가 배너 이미지 위에 겹친다. 여백이 64 → 24 로 줄었기 때문이다.
+     밖에 두려면 그만큼 배너가 좁아진다 — 그러면 통일한 의미가 없다.
+     정수기에서 2026-08-04 에 이미 같은 선택을 했고, 그 모양으로 맞춘다.
    ════════════════════════════════════════════════════ */
-.sb { max-width:1180px; margin:28px auto; padding:0 64px; position:relative; }
+.sb {
+  max-width: var(--sb-w, var(--max-w, 1200px));
+  margin: 28px auto;
+  padding: 0 var(--sb-pad, 24px);
+  position: relative;
+}
 .sb[hidden] { display:none !important; }
 .sb__viewport { position:relative; overflow:hidden; border-radius:16px; }
 .sb__track { display:flex; transition:transform .55s cubic-bezier(.4,0,.2,1); }
@@ -19,15 +44,16 @@
 }
 .sb__arrow:hover { background:#5b5bd6; color:#fff; box-shadow:0 6px 18px rgba(91,91,214,.35); }
 .sb__arrow:active { transform:translateY(-50%) scale(.94); }
-.sb__arrow.prev { left:20px; }
-.sb__arrow.next { right:20px; }
+.sb__arrow.prev { left:16px; }
+.sb__arrow.next { right:16px; }
 .sb__dots { position:absolute; bottom:14px; left:0; right:0; display:flex; justify-content:center; gap:9px; z-index:3; }
 .sb__dot { width:9px; height:9px; border-radius:50%; border:none; cursor:pointer; background:rgba(255,255,255,.6); transition:all .25s; padding:0; }
 .sb__dot.active { background:#fff; width:26px; border-radius:5px; }
 @media (max-width:768px) {
-  .sb { padding:0 16px; }
+  /* 폰에서는 본문도 전부 16px 여백으로 모인다. 페이지가 다르게 쓰면 --sb-pad-m 로 정한다. */
+  .sb { padding:0 var(--sb-pad-m, 16px); }
   .sb__viewport { border-radius:10px; }
   .sb__arrow { width:36px; height:36px; font-size:18px; }
-  .sb__arrow.prev { left:-4px; }
-  .sb__arrow.next { right:-4px; }
+  .sb__arrow.prev { left:8px; }
+  .sb__arrow.next { right:8px; }
 }

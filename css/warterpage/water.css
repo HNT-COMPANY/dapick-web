@@ -2648,39 +2648,27 @@
    ⚠ padding 을 0 으로 만들면 좌우 64px 안에 있던 화살표가 배너 이미지 위로 올라온다.
      폭을 정확히 맞추면서 화살표 자리를 배너 밖에 두는 것은 불가능하다
      (밖에 두려면 그만큼 배너가 좁아진다). 캐러셀 화살표를 안쪽에 겹치는 쪽을 골랐다.
-   ════════════════════════════════════════════════════════════ */
-/* 나만의 정수기 찾기 진입 버튼 자리 (finder.js 가 채운다).
-   ⚠ 폭은 바로 위 배너(.sb)와 같은 규격이어야 한다 —
-      둘이 세로로 나란히 서기 때문에 한 곳만 달라도 좌우가 어긋나 바로 티가 난다.
-   버튼 모양 자체는 엔진이 그린다(.dpf-cta). 여기서는 자리와 폭만 잡는다. */
-.water-page #waterFinder {
-  width: calc(100% - 80px);
-  max-width: 1400px;
-  margin: 20px auto 28px;
-}
-@media (max-width: 768px) {
-  .water-page #waterFinder { width: calc(100% - 32px); margin: 16px auto 22px; }
-}
 
-.water-page .sb {
-  width: calc(100% - 80px);
-  max-width: 1400px;
-  padding: 0;
-  margin: 28px auto 0;
+   ★ 2026-08-12 — 폭을 모든 카테고리에 통일하면서 site-banner.css 가 변수를 읽게 바뀌었다.
+     여기서는 값만 알려준다. 나오는 폭은 전과 똑같다:
+       전 width:calc(100% - 80px) + max-width:1400  →  min(화면-80, 1400)
+       후 max-width:1480 + padding:0 40             →  min(화면, 1480) - 80  (같은 값)
+     화살표 16px 은 이제 공용 규칙이라 여기서 다시 안 적는다.
+   ════════════════════════════════════════════════════════════ */
+.water-page {
+  --sb-w: 1480px;
+  --sb-pad: 40px;
 }
-.water-page .sb__arrow.prev { left: 16px; }
-.water-page .sb__arrow.next { right: 16px; }
+/* 배너 아래는 '나만의 정수기 찾기' 가 바로 붙는다. 아래 여백은 그쪽이 갖는다. */
+.water-page .sb { margin: 28px auto 0; }
 
 /* 배너가 없는 날(활성 0장)에도 찾기 박스의 위 여백이 그대로여야 한다.
    .sb[hidden] 이면 margin 이 사라지므로 .wf-cta 의 위 여백은 건드리지 않는다. */
 
 @media (max-width: 768px) {
-  .water-page .sb {
-    width: calc(100% - 32px); /* .wf-cta 모바일 폭과 동일 */
-    margin: 20px auto 0;
-  }
-  .water-page .sb__arrow.prev { left: 8px; }
-  .water-page .sb__arrow.next { right: 8px; }
+  /* 폰에서는 .wf-cta 도 좌우 16px 이라 공용 기본값(--sb-pad-m 16px)이 그대로 맞다.
+     화살표 8px 도 공용 규칙이 준다. 여기서는 위 여백만 줄인다. */
+  .water-page .sb { margin: 20px auto 0; }
 }
 
 /* 상품 뷰(브랜드를 고른 뒤)에서도 배너·찾기가 남는다.
