@@ -14,8 +14,13 @@
 //   어드민 banner-edit.js 가 입력할 때마다 같은 함수로 미리보기를 그린다
 //
 // 담기는 모양 (전부 선택 — 없으면 기본값)
-//   { lines:['첫 줄','둘째 줄','셋째 줄'], font:'pretendard', weight:800,
-//     size:46, color:'#ffffff', align:'left', anim:'up', shade:true }
+//   { lines:[{text:'첫 줄',size:42,color:'#fff',x:0,y:0}, ...],  줄마다 따로 준다
+//     font:'pretendard', weight:800,
+//     size:44, color:'#ffffff',      줄에 안 적으면 쓰는 기본값
+//     align:'left', x:0, y:0,        align 이 큰 자리, x·y 가 px 미세조정
+//     anim:'up', shade:false }
+//
+// ⚠ 옛 모양(lines 가 문자열 배열)도 그대로 읽는다. 이미 저장된 배너가 깨지면 안 된다.
 // ════════════════════════════════════════════════════
 (function () {
   'use strict';
@@ -87,28 +92,67 @@
   //   #rgb / #rrggbb 모양만 통과시킨다.
   var ALIGN = { left: 1, center: 1, right: 1 };
   var ANIM = { up: 1, down: 1, none: 1 };
+  var HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i;
+
+  // 범위 밖이거나 숫자가 아니면 fb 로 떨어뜨린다
+  function numIn(v, lo, hi, fb) {
+    var n = Number(v);
+    return isFinite(n) && n >= lo && n <= hi ? Math.round(n) : fb;
+  }
+  function hex(v, fb) {
+    var c = String(v == null ? '' : v).trim();
+    return HEX.test(c) ? c : fb;
+  }
+
+  // 줄 하나 = { text, size, color }.
+  // size·color 는 null 이면 '기본값을 쓴다' 는 뜻이다 — 0 이나 '' 로 두면
+  // '0px' · '색 없음' 과 구분이 안 된다.
+  //
+  // ⚠ 문자열 배열로 저장된 옛 배너를 같이 읽는다 (2026-08-12 오전에 그 모양으로 저장됐다).
+  //
+  // 줄 수는 관리자가 늘린다(2026-08-12). 여섯에서 끊는 이유 —
+  // 배너 높이가 360px 안팎이라 기본 크기(44px)로 여섯 줄이면 이미 꽉 찬다.
+  // 더 받아 봐야 배너 밖으로 넘쳐 아래가 잘린다.
+  var MAX_LINES = 6;
+
+  function normLines(o) {
+    var raw = Array.isArray(o.lines) ? o.lines : [];
+    return raw.slice(0, MAX_LINES).map(function (l) {
+      if (l && typeof l === 'object') {
+        return {
+          text: String(l.text == null ? '' : l.text).trim(),
+          size: numIn(l.size, 12, 200, null),
+          color: hex(l.color, null),
+          // 이 줄만 미는 값 (2026-08-12). 0 이 정상값이라 기본을 null 이 아니라 0 으로 둔다.
+          x: numIn(l.x, -600, 600, 0),
+          y: numIn(l.y, -400, 400, 0),
+        };
+      }
+      return { text: String(l == null ? '' : l).trim(), size: null, color: null, x: 0, y: 0 };
+    }).filter(function (l) { return l.text !== ''; });
+  }
 
   function norm(ov) {
     var o = ov && typeof ov === 'object' ? ov : {};
-    var lines = Array.isArray(o.lines) ? o.lines : [];
-    var size = Number(o.size);
     var weight = Number(o.weight);
-    var color = String(o.color == null ? '' : o.color).trim();
 
     return {
-      lines: lines.slice(0, 3).map(function (s) {
-        return String(s == null ? '' : s).trim();
-      }).filter(function (s) { return s !== ''; }),
+      lines: normLines(o),
       font: fontByKey[o.font] ? o.font : 'system',
       // 44 는 배너 높이(360 안팎)에서 세 줄이 답답하지 않게 들어가는 크기다
-      size: isFinite(size) && size >= 12 && size <= 120 ? Math.round(size) : 44,
+      size: numIn(o.size, 12, 200, 44),
       weight: isFinite(weight) && weight >= 100 && weight <= 900 ? Math.round(weight / 100) * 100 : 800,
-      color: /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(color) ? color : '#ffffff',
+      color: hex(o.color, '#ffffff'),
       align: ALIGN[o.align] ? o.align : 'left',
       anim: ANIM[o.anim] ? o.anim : 'up',
-      // 기본 켜짐. 밝은 배너에 흰 글자를 얹으면 안 보이는데,
-      // 관리자는 어두운 배너로 만들어 보고 켜는 것을 잊는다.
-      shade: o.shade !== false,
+      // 자리 미세조정 (2026-08-12). align 이 큰 자리를 잡고 여기서 px 로 민다.
+      // ⚠ 넓은 화면 기준 px 이다. 좁아지면 글자와 같은 비율(--bo-k)로 같이 줄어든다 —
+      //   px 을 고정하면 폰에서 글자가 배너 밖으로 나간다.
+      x: numIn(o.x, -600, 600, 0),
+      y: numIn(o.y, -400, 400, 0),
+      // 기본 꺼짐 (2026-08-12 바꿈). 켜 두니 어두운 배너에도 검은 띠가 겹쳐 보였다.
+      // 글자 그림자(text-shadow)는 늘 있어서 웬만한 배경에서는 그대로 읽힌다.
+      shade: o.shade === true,
     };
   }
 
@@ -123,24 +167,45 @@
   //
   // ⚠ pointer-events 를 꺼 둔다. 배너를 누르면 링크로 가야 하는데
   //   문구가 위에 덮여 있으면 글자 위를 눌렀을 때 아무 일도 안 일어난다.
+
+  // 넓은 화면 기준 px 을 '화면에 맞게 줄어드는 px' 으로 바꾼다.
+  // 관리자가 42px 라고 적으면 넓은 화면에서 42px, 폰에서는 그 46% 다.
+  function k(px) {
+    return 'calc(' + px + 'px * var(--bo-k,1))';
+  }
+
   function html(ov) {
     var o = norm(ov);
     if (!o.lines.length) return '';
     loadFont(o.font);
 
     var f = fontByKey[o.font] || fontByKey.system;
+    // 크기와 자리를 --bo-k 로 곱한다. 화면이 좁아지면 그 변수만 줄어들어
+    // 글자도 자리도 같은 비율로 따라온다 (아래 미디어쿼리).
     var style =
       'font-family:' + f.stack + ';' +
       'font-weight:' + o.weight + ';' +
-      'font-size:' + o.size + 'px;' +
-      'color:' + o.color + ';';
+      'font-size:' + k(o.size) + ';' +
+      'color:' + o.color + ';' +
+      (o.x || o.y
+        ? 'transform:translate(' + k(o.x) + ',' + k(o.y) + ');'
+        : '');
 
     return '<div class="sb__ov sb__ov--' + o.align + ' sb__ov--' + o.anim +
       (o.shade ? ' is-shade' : '') + '" aria-hidden="true">' +
       '<div class="sb__ov-in" style="' + style + '">' +
-      o.lines.map(function (t, i) {
-        return '<span class="sb__ov-line" style="transition-delay:' + (i * 0.15) + 's">' +
-          esc(t) + '</span>';
+      o.lines.map(function (l, i) {
+        var st = 'transition-delay:' + (i * 0.15) + 's;';
+        // 줄에 값이 있을 때만 덮어쓴다. 없으면 위 기본값이 그대로 내려온다.
+        if (l.size != null) st += 'font-size:' + k(l.size) + ';';
+        if (l.color) st += 'color:' + l.color + ';';
+        // 줄 하나만 미는 값.
+        // ⚠ transform 을 안 쓴다 — 들어오는 움직임이 이미 transform 을 쓰고 있어서
+        //   여기서 또 쓰면 둘 중 하나가 덮여 사라진다. margin 은 안 싸운다.
+        //   그리고 margin-top 은 뜻도 맞다 — 위 줄과의 '여백' 그 자체다.
+        if (l.x) st += 'margin-left:' + k(l.x) + ';';
+        if (l.y) st += 'margin-top:' + k(l.y) + ';';
+        return '<span class="sb__ov-line" style="' + st + '">' + esc(l.text) + '</span>';
       }).join('') +
       '</div></div>';
     // aria-hidden 인 이유 — 이 글자는 배너 이미지의 일부다.
@@ -151,7 +216,7 @@
   function summary(ov) {
     var o = norm(ov);
     if (!o.lines.length) return '';
-    return o.lines.join(' / ');
+    return o.lines.map(function (l) { return l.text; }).join(' / ');
   }
 
   var styled = false;
@@ -161,7 +226,11 @@
     var css = [
       // 슬라이드 위에 겹친다. 슬라이드가 position:relative 여야 자리가 잡힌다 —
       // site-banner.css 의 .sb__slide 에 그 규칙이 같이 들어간다.
-      '.sb__ov{position:absolute;inset:0;display:flex;flex-direction:column;' +
+      // --bo-k : 넓은 화면 1, 좁아지면 줄어든다. 글자 크기와 자리 이동이 이 값을 곱한다.
+      //   전에는 .sb__ov-in 에 font-size:.62em 을 걸어 줄였는데,
+      //   줄마다 크기를 따로 주기 시작하면서 그 방식으로는 안 된다 —
+      //   줄이 px 을 직접 가지면 부모의 em 이 안 먹는다.
+      '.sb__ov{--bo-k:1;position:absolute;inset:0;display:flex;flex-direction:column;' +
         'justify-content:center;padding:0 clamp(20px,5vw,72px);pointer-events:none;z-index:2;}',
       '.sb__ov--left{align-items:flex-start;text-align:left;}',
       '.sb__ov--center{align-items:center;text-align:center;}',
@@ -201,12 +270,13 @@
       // 글자 크기를 화면 폭에 따라 줄인다. 관리자가 넣은 46px 를 폰에서 그대로 쓰면
       // 한 줄에 네 글자만 들어가 배너 밖으로 넘친다.
       '@media(max-width:900px){',
-      '.sb__ov{padding:0 clamp(16px,4.5vw,32px);}',
-      '.sb__ov-in{font-size:.62em !important;max-width:78%;gap:.24em;}',
+      '.sb__ov{--bo-k:.62;padding:0 clamp(16px,4.5vw,32px);}',
+      '.sb__ov-in{max-width:78%;gap:.24em;}',
       '.sb__ov--center .sb__ov-in{max-width:92%;}',
       '}',
       '@media(max-width:480px){',
-      '.sb__ov-in{font-size:.46em !important;max-width:86%;}',
+      '.sb__ov{--bo-k:.46;}',
+      '.sb__ov-in{max-width:86%;}',
       // 폰에서는 배너가 낮아 그라데이션이 좁다. 전체를 조금 더 어둡게 깐다.
       '.sb__ov.is-shade::before{background:linear-gradient(90deg,' +
         'rgba(10,8,24,.68) 0%,rgba(10,8,24,.42) 60%,rgba(10,8,24,.18) 100%);}',
@@ -220,6 +290,7 @@
 
   window.DapickBannerOverlay = {
     FONTS: FONTS,
+    MAX_LINES: MAX_LINES,
     fonts: function () { return FONTS.slice(); },
     norm: norm,
     has: has,
