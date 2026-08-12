@@ -31,7 +31,9 @@
 //     monthlyFee, contractMonths, brandName, brandLogoUrl,
 //     specs:  { 자유칸key: 값 },
 //     options:{ rentalPlans:[{months,monthlyFee}], cardDiscount:숫자,
-//               partnerCards:[...], summary:[{label,value}], panelNotes:[{label,value}] } }
+//               partnerCards:[...], panelNotes:[{label,value}],
+//               summary:[{type,label,value,choices}],   type: text | select | image (없으면 text)
+//               choiceRows:[{label,choices,value}] } }  고객이 고르는 칸만 한 벌 더
 //   ⚠ options 안의 이름은 어드민 저장 코드(product-edit.js 의 peSubmit)가 정한 것이다.
 //     여기서 다른 이름으로 읽으면 관리자가 넣은 값이 화면에서 조용히 사라진다.
 //
@@ -366,11 +368,18 @@
       rows.push({ label: k, value: text });
     });
 
+    // 관리자가 이 상품에만 만든 줄 (options.summary).
+    // 2026-08-12 부터 줄마다 type 이 붙는다 — text / select / image.
+    //   type 이 없는 옛 줄은 text 로 본다. 이미 등록된 상품이 깨지면 안 된다.
+    //   select 는 고객이 고르는 값이라 표가 아니라 아래 choicesHtml 이 맡는다.
+    //   image 는 주소를 글자로 찍으면 안 되므로 그림으로 그린다 (렌탈사 로고 등).
     ((p.options && p.options.summary) || []).forEach(function (r) {
       if (!r) return;
+      var t = r.type || 'text';
+      if (t === 'select') return;
       var text = (r.value == null ? '' : String(r.value)).trim();
       if (!text && !opts.showMissing) return;
-      rows.push({ label: r.label || '(항목 없음)', value: text });
+      rows.push({ label: r.label || '(항목 없음)', value: text, image: t === 'image' });
     });
 
     if (!rows.length) {
@@ -381,13 +390,49 @@
 
     return '<div class="pv2-specbox"><div class="pv2-specgrid">' +
       rows.map(function (r) {
+        var val = r.image
+          ? '<img class="pv2-specimg" src="' + esc(r.value) + '" alt="' + esc(r.label) + '" />'
+          : esc(r.value);
         return '<div class="pv2-speccell">' +
           '<div class="pv2-speckey">' + esc(r.label) + '</div>' +
-          '<div class="pv2-specval">' + (r.value ? esc(r.value) : miss(opts, '미입력')) + '</div>' +
+          '<div class="pv2-specval">' + (r.value ? val : miss(opts, '미입력')) + '</div>' +
           '</div>';
       }).join('') +
       '</div></div>';
     // 한 줄에 라벨 하나 값 하나. 자리 배치는 아래 CSS(.pv2-speccell)가 맡는다.
+  }
+
+  // 고객이 고르는 칸 — 설치유형 스탠드형/벽걸이형 같은 것.
+  //
+  // 요약표와 나누는 이유: 요약표는 "이 상품은 이렇습니다" 고 여기는 "당신이 고르세요" 다.
+  // 표 안에 드롭다운을 끼워 넣으면 고를 수 있는 줄인지 아닌지 눈으로 구분이 안 된다.
+  // 자리는 약정 기간 바로 아래다 — 신청 전에 정해야 하는 값끼리 모아 둔다.
+  //
+  // ⚠ options.choiceRows 라는 이름은 어드민 저장 코드(peChoiceRowsOut)가 정한 것이다.
+  //   옛 상품에는 이 칸이 없다 — 없으면 아무것도 안 그린다.
+  function choicesHtml(p, opts) {
+    var rows = ((p.options && p.options.choiceRows) || []).filter(function (r) {
+      return r && r.choices && r.choices.length;
+    });
+    if (!rows.length) return '';
+
+    return '<div class="pv2-choices">' +
+      rows.map(function (r, i) {
+        var label = r.label || '선택';
+        return '<div class="pv2-choice">' +
+          '<div class="pv2-choice-label">' + esc(label) + '</div>' +
+          '<select class="pv2-choice-sel" data-pv2-choice="' + i + '"' +
+          ' data-label="' + esc(label) + '">' +
+          r.choices.map(function (c) {
+            // 관리자가 기본값을 정해 뒀으면 그걸 켜 둔다. 없으면 첫 보기가 켜진다 —
+            // 빈 값으로 두면 고객이 안 고르고 신청해서 무엇을 원했는지 알 수 없다.
+            var on = r.value ? c === r.value : false;
+            return '<option value="' + esc(c) + '"' + (on ? ' selected' : '') + '>' + esc(c) + '</option>';
+          }).join('') +
+          '</select>' +
+          '</div>';
+      }).join('') +
+      '</div>';
   }
 
   // base 칸은 specs 가 아니라 상품의 진짜 항목에서 값을 찾는다.
@@ -438,6 +483,7 @@
           specHtml(p, fields, opts) +
           feeBoxHtml(p, opts) +
           plansHtml(p, opts) +
+          choicesHtml(p, opts) +
           (opts.actionsHtml ? '<div class="pv2-actions">' + opts.actionsHtml + '</div>' : '') +
           notesHtml(p, fields, opts) +
         '</div>' +
@@ -516,14 +562,23 @@
   }
 
   // 지금 고객이 보고 있는 요금·약정. 신청 접수에 이 값을 실어야 한다.
+  //
+  // choices 는 관리자가 만든 "고르는 칸" 의 현재 값이다 ({설치유형:'벽걸이형'}).
+  // 신청서에 안 실으면 상담원이 고객에게 다시 물어야 한다.
   function selection(hostEl) {
     var root = rootOf(hostEl);
-    if (!root) return { monthlyFee: null, months: null };
+    if (!root) return { monthlyFee: null, months: null, choices: {} };
     var f = root.getAttribute('data-selected-fee');
     var m = root.getAttribute('data-selected-months');
+    var choices = {};
+    root.querySelectorAll('[data-pv2-choice]').forEach(function (sel) {
+      var label = sel.getAttribute('data-label') || '';
+      if (label) choices[label] = sel.value;
+    });
     return {
       monthlyFee: f === null || f === '' ? null : Number(f),
-      months: m === null || m === '' ? null : Number(m)
+      months: m === null || m === '' ? null : Number(m),
+      choices: choices
     };
   }
 
@@ -599,6 +654,18 @@
         'align-items:start;padding:7px 0;}',
       '.pv2-speckey{font-size:13.5px;color:#8b8898;font-weight:500;line-height:1.5;}',
       '.pv2-specval{font-size:13.5px;color:#2a2a35;font-weight:600;word-break:break-word;line-height:1.5;}',
+      // 이미지 줄(렌탈사 로고 등). 값 자리에 그대로 넣으므로 높이를 묶어 둔다 —
+      // 안 묶으면 큰 로고 한 장이 표 전체를 밀어낸다.
+      '.pv2-specimg{max-height:26px;max-width:100%;width:auto;object-fit:contain;display:block;}',
+      /* 고르는 칸 — 관리자가 만든 드롭다운 (설치유형 등). 약정 기간 바로 아래. */
+      '.pv2-choices{display:flex;flex-direction:column;gap:10px;margin-bottom:18px;}',
+      '.pv2-choice-label{font-size:12.5px;font-weight:700;color:#8b8898;margin-bottom:6px;}',
+      '.pv2-choice-sel{width:100%;height:46px;padding:0 14px;border:1.5px solid #e6e3f0;' +
+        'border-radius:12px;background:#fff;font-size:14.5px;font-weight:600;color:#221f38;' +
+        'font-family:inherit;cursor:pointer;appearance:none;' +
+        "background-image:url(\"data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b8898' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E\");" +
+        'background-repeat:no-repeat;background-position:right 14px center;}',
+      '.pv2-choice-sel:focus{outline:none;border-color:#6c3fc5;}',
       /* 미리보기 전용 */
       '.pv2-miss{color:#c9ccd6;font-weight:400;font-size:13px;}',
       /* 좁은 칸(어드민 미리보기) — 모바일 규칙과 같은 모양을 창 크기와 무관하게 적용한다 */
@@ -620,6 +687,7 @@
       '.pv2-root--narrow .pv2-speccell{grid-template-columns:88px minmax(0,1fr);gap:10px;padding:5px 0;}',
       '.pv2-root--narrow .pv2-speckey{font-size:12.5px;}',
       '.pv2-root--narrow .pv2-specval{font-size:12.5px;}',
+      '.pv2-root--narrow .pv2-choice-sel{height:42px;font-size:13.5px;}',
       /* 모바일 */
       '@media(max-width:900px){',
       '.pv2-body{grid-template-columns:1fr;gap:24px;}',
