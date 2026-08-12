@@ -14,13 +14,18 @@
 //   어드민 banner-edit.js 가 입력할 때마다 같은 함수로 미리보기를 그린다
 //
 // 담기는 모양 (전부 선택 — 없으면 기본값)
-//   { lines:[{text:'첫 줄',size:42,color:'#fff',x:0,y:0}, ...],  줄마다 따로 준다
+//   { lines:[{ parts:[{text:'나는',size:44},{text:' 너를 좋아해',size:72,color:'#ffd400',weight:900}],
+//              x:0, y:0 }, ...],
+//            한 줄이 조각 여러 개다 — 조각마다 크기·색·굵기를 따로 준다
 //     font:'pretendard', weight:800,
 //     size:44, color:'#ffffff',      줄에 안 적으면 쓰는 기본값
 //     align:'left', x:0, y:0,        align 이 큰 자리, x·y 가 px 미세조정
 //     anim:'up', shade:false }
 //
-// ⚠ 옛 모양(lines 가 문자열 배열)도 그대로 읽는다. 이미 저장된 배너가 깨지면 안 된다.
+// ⚠ 옛 모양 두 가지를 같이 읽는다. 이미 저장된 배너가 깨지면 안 된다.
+//     lines: ['첫 줄', ...]                       (오전)
+//     lines: [{text:'첫 줄', size, color, x, y}]  (오후)
+//   둘 다 조각 하나짜리 줄로 바꿔 읽는다.
 // ════════════════════════════════════════════════════
 (function () {
   'use strict';
@@ -182,21 +187,53 @@
   // 더 받아 봐야 배너 밖으로 넘쳐 아래가 잘린다.
   var MAX_LINES = 6;
 
-  function normLines(o) {
+  // 한 줄을 조각 몇 개까지 쪼갤 수 있나. 넷이면 '나는 / 너를 / 정말 / 좋아해' 다 —
+  // 그보다 잘게 쪼개면 관리 화면이 감당이 안 되고, 읽는 사람도 강조를 못 알아본다.
+  var MAX_PARTS = 4;
+
+  // 조각 하나 = { text, size, color, weight }.
+  // size·color·weight 가 null 이면 '줄 바깥 기본값을 쓴다' 는 뜻이다.
+  //
+  // ⚠ text 를 trim 하지 않는다. 조각 사이 공백이 글자의 일부다 —
+  //   '나는' + ' 너를 좋아해' 에서 앞 공백을 지우면 '나는너를' 로 붙는다.
+  function normPart(p, fontKey) {
+    var q = p && typeof p === 'object' ? p : {};
+    return {
+      text: String(q.text == null ? '' : q.text),
+      size: numIn(q.size, 12, 200, null),
+      color: hex(q.color, null),
+      weight: q.weight == null ? null : nearestWeight(fontKey, q.weight),
+    };
+  }
+
+  function normLines(o, fontKey) {
     var raw = Array.isArray(o.lines) ? o.lines : [];
     return raw.slice(0, MAX_LINES).map(function (l) {
-      if (l && typeof l === 'object') {
+      // 1) 문자열 (오전에 저장된 모양)
+      if (typeof l === 'string') {
+        var t = l.trim();
+        return { parts: t ? [normPart({ text: t }, fontKey)] : [], x: 0, y: 0 };
+      }
+      if (!l || typeof l !== 'object') return null;
+
+      var x = numIn(l.x, -600, 600, 0);
+      var y = numIn(l.y, -400, 400, 0);
+
+      // 2) 조각으로 쪼갠 줄 (지금 모양)
+      if (Array.isArray(l.parts)) {
         return {
-          text: String(l.text == null ? '' : l.text).trim(),
-          size: numIn(l.size, 12, 200, null),
-          color: hex(l.color, null),
-          // 이 줄만 미는 값 (2026-08-12). 0 이 정상값이라 기본을 null 이 아니라 0 으로 둔다.
-          x: numIn(l.x, -600, 600, 0),
-          y: numIn(l.y, -400, 400, 0),
+          parts: l.parts.slice(0, MAX_PARTS)
+            .map(function (p) { return normPart(p, fontKey); })
+            .filter(function (p) { return p.text !== ''; }),
+          x: x, y: y,
         };
       }
-      return { text: String(l == null ? '' : l).trim(), size: null, color: null, x: 0, y: 0 };
-    }).filter(function (l) { return l.text !== ''; });
+
+      // 3) 조각 없이 글자 하나뿐인 줄 (오후에 저장된 모양)
+      var one = normPart(l, fontKey);
+      one.text = one.text.trim();
+      return { parts: one.text ? [one] : [], x: x, y: y };
+    }).filter(function (l) { return l && l.parts.length; });
   }
 
   // 그 글꼴이 가진 굵기 중 가장 가까운 것.
@@ -216,7 +253,8 @@
     var font = fontByKey[o.font] ? o.font : 'system';
 
     return {
-      lines: normLines(o),
+      // 조각의 굵기를 그 글꼴이 가진 값으로 떨어뜨려야 해서 글꼴을 넘긴다
+      lines: normLines(o, font),
       font: font,
       // 44 는 배너 높이(360 안팎)에서 세 줄이 답답하지 않게 들어가는 크기다
       size: numIn(o.size, 12, 200, 44),
@@ -275,16 +313,27 @@
       '<div class="sb__ov-in" style="' + style + '">' +
       o.lines.map(function (l, i) {
         var st = 'transition-delay:' + (i * 0.15) + 's;';
-        // 줄에 값이 있을 때만 덮어쓴다. 없으면 위 기본값이 그대로 내려온다.
-        if (l.size != null) st += 'font-size:' + k(l.size) + ';';
-        if (l.color) st += 'color:' + l.color + ';';
         // 줄 하나만 미는 값.
         // ⚠ transform 을 안 쓴다 — 들어오는 움직임이 이미 transform 을 쓰고 있어서
         //   여기서 또 쓰면 둘 중 하나가 덮여 사라진다. margin 은 안 싸운다.
         //   그리고 margin-top 은 뜻도 맞다 — 위 줄과의 '여백' 그 자체다.
         if (l.x) st += 'margin-left:' + k(l.x) + ';';
         if (l.y) st += 'margin-top:' + k(l.y) + ';';
-        return '<span class="sb__ov-line" style="' + st + '">' + esc(l.text) + '</span>';
+
+        // 조각마다 제 값이 있을 때만 감싼다. 없으면 글자만 그대로 이어 붙인다 —
+        // 쓸데없는 span 이 줄줄이 생기면 나중에 화면을 들여다볼 때 읽기 어렵다.
+        //
+        // ⚠ 조각 사이에 줄바꿈이나 공백을 넣지 않는다. HTML 에서 그 사이 공백은
+        //   진짜 공백으로 나가서 '나는' 과 '너를' 이 뜻하지 않게 벌어진다.
+        var inner = l.parts.map(function (p) {
+          var ps = '';
+          if (p.size != null) ps += 'font-size:' + k(p.size) + ';';
+          if (p.color) ps += 'color:' + p.color + ';';
+          if (p.weight != null) ps += 'font-weight:' + p.weight + ';';
+          return ps ? '<span style="' + ps + '">' + esc(p.text) + '</span>' : esc(p.text);
+        }).join('');
+
+        return '<span class="sb__ov-line" style="' + st + '">' + inner + '</span>';
       }).join('') +
       '</div></div>';
     // aria-hidden 인 이유 — 이 글자는 배너 이미지의 일부다.
@@ -295,7 +344,9 @@
   function summary(ov) {
     var o = norm(ov);
     if (!o.lines.length) return '';
-    return o.lines.map(function (l) { return l.text; }).join(' / ');
+    return o.lines.map(function (l) {
+      return l.parts.map(function (p) { return p.text; }).join('');
+    }).join(' / ');
   }
 
   var styled = false;
@@ -309,8 +360,13 @@
       //   전에는 .sb__ov-in 에 font-size:.62em 을 걸어 줄였는데,
       //   줄마다 크기를 따로 주기 시작하면서 그 방식으로는 안 된다 —
       //   줄이 px 을 직접 가지면 부모의 em 이 안 먹는다.
+      // ⚠ 좌우 여백에 vw 를 그대로 쓰지 않고 변수로 뺀다.
+      //   vw 는 '보고 있는 창' 기준이라, 어드민 미리보기(축소판)에서는
+      //   배너 폭이 아니라 어드민 창 폭을 따라가 실제와 여백이 달라진다.
+      //   어드민은 --bo-pad 에 그 폭에서의 진짜 값을 넣어 준다.
       '.sb__ov{--bo-k:1;position:absolute;inset:0;display:flex;flex-direction:column;' +
-        'justify-content:center;padding:0 clamp(20px,5vw,72px);pointer-events:none;z-index:2;}',
+        'justify-content:center;padding:0 var(--bo-pad,clamp(20px,5vw,72px));' +
+        'pointer-events:none;z-index:2;}',
       '.sb__ov--left{align-items:flex-start;text-align:left;}',
       '.sb__ov--center{align-items:center;text-align:center;}',
       '.sb__ov--right{align-items:flex-end;text-align:right;}',
@@ -349,7 +405,7 @@
       // 글자 크기를 화면 폭에 따라 줄인다. 관리자가 넣은 46px 를 폰에서 그대로 쓰면
       // 한 줄에 네 글자만 들어가 배너 밖으로 넘친다.
       '@media(max-width:900px){',
-      '.sb__ov{--bo-k:.62;padding:0 clamp(16px,4.5vw,32px);}',
+      '.sb__ov{--bo-k:.62;padding:0 var(--bo-pad,clamp(16px,4.5vw,32px));}',
       '.sb__ov-in{max-width:78%;gap:.24em;}',
       '.sb__ov--center .sb__ov-in{max-width:92%;}',
       '}',
@@ -370,6 +426,7 @@
   window.DapickBannerOverlay = {
     FONTS: FONTS,
     MAX_LINES: MAX_LINES,
+    MAX_PARTS: MAX_PARTS,
     fonts: function () { return FONTS.slice(); },
     fontOf: function (key) { return fontByKey[key] || fontByKey.system; },
     nearestWeight: nearestWeight,
