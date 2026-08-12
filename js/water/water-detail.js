@@ -9,6 +9,19 @@
 //     (CONTRACT_LABELS / BRAND_META / openDialog / openKakaoConsult 재사용)
 // ════════════════════════════════════════════════════
 
+// 에너지효율을 사람이 읽는 말로 (2026-08-12).
+//
+// ⚠ 9 는 '9등급' 이 아니라 '최저소비효율기준 만족' 이라는 약속값이다.
+//   energy_grade 는 숫자 칸(Integer)이라 글자를 못 담아서, 안 쓰는 숫자 하나를 정했다.
+//   고르는 자리는 어드민 water-edit.html 의 에너지효율 드롭다운이다.
+//   한쪽만 고치면 어드민에서 고른 것과 고객이 보는 글자가 달라진다.
+function energyLabel(v) {
+  if (v == null || v === '') return '';
+  var n = Number(v);
+  if (n === 9) return '최저소비효율기준 만족';
+  return n + '등급';
+}
+
 let WD_PRODUCT = null; // 조회된 상품 (water.js groupByBrand 형태로 정규화)
 let WD_BRAND_KEY = null;
 let WD_COLOR = '';
@@ -731,7 +744,7 @@ const SPEC_ROWS = [
   { label: '제품 크기', get: (p) => specSizeText(p) },
   { label: '제품 무게', get: (p) => p.weight || '' },
   { label: '소비 전력', get: (p) => p.power || '' },
-  { label: '에너지 등급', get: (p) => (p.energyGrade != null ? `${p.energyGrade}등급` : '') },
+  { label: '에너지 등급', get: (p) => energyLabel(p.energyGrade) },
   { label: '필터 개수', get: (p) => (p.filterCount != null ? `${p.filterCount}개` : '') },
   { label: '필터 교체', get: (p) => p.careInterval || '' },
   { label: '조작 기능', get: (p) => p.controlFeatures || '' },
@@ -752,7 +765,7 @@ function renderSpecBody() {
     { label: '제품유형', value: specEnumLabel(p.installType) },
     { label: '필터방식', value: specEnumLabel(p.filterType) },
     { label: '살균방식', value: specEnumList(p.sanitizing) },
-    { label: '에너지효율', value: p.energyGrade != null ? `${p.energyGrade}등급` : '' },
+    { label: '에너지효율', value: energyLabel(p.energyGrade) },
   ];
   const cellsHtml = cells
     .map((c) => {
@@ -831,7 +844,7 @@ function specSectionsInnerHtml(p) {
   ].filter((it) => it.value !== '');
   const specRight = [
     { label: '제품 무게', value: withUnit(p.weight, 'kg') },
-    { label: '에너지효율', value: p.energyGrade != null ? `${p.energyGrade}등급` : '' },
+    { label: '에너지효율', value: energyLabel(p.energyGrade) },
   ].filter((it) => it.value !== '');
   const specCells = [];
   const specRows = Math.max(specLeft.length, specRight.length);
