@@ -21,7 +21,9 @@
 //     size:44, color:'#ffffff',      줄에 안 적으면 쓰는 기본값
 //     align:'left', x:0, y:0,        align 이 큰 자리, x·y 가 px 미세조정
 //     anim:'up', shade:false,
-//     footAlign:'right', footSize:14 }   줄에 slot:'foot' 을 주면 하단 주석으로 간다
+//     footAlign:'right', footSize:14,    줄에 slot:'foot' 을 주면 하단 주석으로 간다
+//     moH:250, pcH:0 }                   배너 높이(px). 문구가 있을 때만 쓴다.
+//                                        pcH 는 0 이면 '이미지 원본 비율 그대로'
 //
 // ⚠ 옛 모양 두 가지를 같이 읽는다. 이미 저장된 배너가 깨지면 안 된다.
 //     lines: ['첫 줄', ...]                       (오전)
@@ -293,6 +295,19 @@
       footSize: numIn(o.footSize, 8, 60, 14),
       // 폰에서 배너를 얼마나 높게 볼 것인가. 250 은 390px 폭에서 세 줄이 넉넉히 든다.
       moH: numIn(o.moH, 120, 600, 250),
+      // PC 에서 배너 높이 (2026-08-12). 0 은 '이미지 원본 비율 그대로' 다.
+      //
+      // 왜 필요한가: 문구 상자는 이미지 전체에 겹쳐 세로 가운데에 놓인다(inset:0).
+      //   그래서 이미지 세로가 다르면 같은 값을 넣어도 글자 자리가 달라 보인다.
+      //   1600x420 배너는 글자가 위에서 210px, 1600x560 배너는 280px 지점이다.
+      //   실제로 '같은 값인데 배치가 다르다' 는 말이 나왔다.
+      //
+      // 곁들여 고쳐지는 것: 캐러셀이 넘어갈 때 배너마다 높이가 다르면
+      //   아래 내용이 위아래로 튄다. 높이를 맞추면 그것도 없어진다.
+      //
+      // ⚠ 기본이 0(강제 안 함)인 이유 — 이미 올려 둔 배너의 모양을 말없이 바꾸면 안 된다.
+      //   관리자가 값을 정한 배너만 잘라 맞춘다.
+      pcH: numIn(o.pcH, 0, 900, 0),
     };
   }
 
@@ -405,7 +420,13 @@
   function slideMod(ov) {
     var o = norm(ov);
     if (!o.lines.length) return { cls: '', style: '' };
-    return { cls: ' is-ov', style: '--sb-mo-h:' + o.moH + ';' };
+    // ⚠ pcH 가 0 이면 has-pch 를 안 붙인다.
+    //   aspect-ratio:calc(1600 / 0) 은 무한대라 배너가 통째로 깨진다.
+    //   '값이 있을 때만 켜는 클래스' 로 막는다.
+    return {
+      cls: ' is-ov' + (o.pcH ? ' has-pch' : ''),
+      style: '--sb-mo-h:' + o.moH + ';' + (o.pcH ? '--sb-pc-h:' + o.pcH + ';' : ''),
+    };
   }
 
   // 미리보기용 한 줄 요약 (어드민 목록에서 쓴다)
@@ -456,6 +477,12 @@
       //   문구 없는 배너까지 자르면 관리자가 만든 이미지가 이유 없이 잘려 나간다.
       //   가운데를 기준으로 자른다. 배너는 보통 한쪽에 글자, 반대쪽에 사진이라
       //   가운데가 가장 덜 아쉽다.
+      // PC 는 관리자가 높이를 정한 배너만 맞춘다 (2026-08-12).
+      //   1600 은 배너 실폭이다. 화면이 좁아지면 폭이 줄고 높이도 비율대로 같이 준다.
+      '@media(min-width:901px){',
+      '.sb__slide.is-ov.has-pch img{aspect-ratio:calc(1600 / var(--sb-pc-h,420));' +
+        'height:auto;object-fit:cover;object-position:center;}',
+      '}',
       '@media(max-width:900px){',
       '.sb__slide.is-ov img{aspect-ratio:calc(768 / (var(--sb-mo-h,250) * 1.35));' +
         'height:auto;object-fit:cover;object-position:center;}',
