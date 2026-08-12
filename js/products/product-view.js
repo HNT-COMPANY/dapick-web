@@ -40,9 +40,40 @@
 // fields = 카테고리에 정의된 입력 칸 목록.
 //   [{ key, label, type, unit, base, showOnCard, showInPanel, showOnSpec }]
 //   여기 없는 specs key 는 key 를 그대로 이름으로 써서 보여준다 - 감추면 값이 사라진 것처럼 보인다.
+//
+//   ⚠ 비어 있으면 아래 DEFAULT_FIELDS 로 떨어진다 (2026-08-12).
+//     입력 양식을 안 붙인 카테고리는 이 목록이 비어서 요약표가 통째로 안 나왔다.
+//     어드민 미리보기는 자기 기본 칸(PE_DEFAULT_SCHEMA)이 있어서 잘 나왔고,
+//     웹만 비어 있어 '관리자 화면엔 보이는데 실제 화면엔 없다' 가 됐다.
 // ════════════════════════════════════════════════════════════════
 (function (global) {
   'use strict';
+
+  // ── 입력 양식이 없는 카테고리에서 쓰는 기본 칸 (2026-08-12) ──
+  //
+  // 왜 필요한가: 카테고리에 입력 양식을 안 붙이면 웹이 받는 칸 목록이 빈 배열이다.
+  //   그러면 요약표가 통째로 안 나온다 — 제목·모델명·렌탈사·월 렌탈료를 다 적었는데도.
+  //   어드민 미리보기는 자기 기본 칸(product-edit.js 의 PE_DEFAULT_SCHEMA)이 있어서
+  //   잘 나왔고, 웹만 비어 있어 '관리자 화면엔 보이는데 실제 화면엔 없다' 가 됐다.
+  //
+  // ⚠ 어드민 product-edit.js 의 PE_DEFAULT_SCHEMA 와 key·label·type 이 같아야 한다.
+  //   한쪽만 고치면 관리자가 본 미리보기와 고객 화면이 다시 갈린다.
+  //   그쪽은 '입력 칸을 그리는 목록' 이고 이쪽은 '화면을 그리는 목록' 이라 파일이 갈렸다.
+  var DEFAULT_FIELDS = [
+    { key: 'imageUrl', label: '대표 이미지', type: 'image', base: true },
+    // ⚠ 제목은 요약표에 안 넣는다. 화면 맨 위에 크게 이미 있다 —
+    //   표에 또 넣으면 같은 글자가 두 번 나온다.
+    //   입력 칸으로는 필요하므로 목록에는 남기고 표시만 끈다.
+    { key: 'name', label: '제목(상품명)', type: 'text', base: true, showOnSpec: false },
+    { key: 'modelName', label: '모델명', type: 'text', base: true },
+    { key: 'brandId', label: '렌탈사', type: 'brand', base: true },
+    { key: 'rentalPlans', label: '렌탈기간', type: 'plans', base: true },
+    { key: 'monthlyFee', label: '월 렌탈료', type: 'number', base: true },
+    { key: 'cardDiscount', label: '카드할인시 금액', type: 'number', base: true },
+    { key: 'partnerCards', label: '제휴카드', type: 'cards', base: true },
+    { key: 'galleryImages', label: '상세 이미지', type: 'images', base: true },
+    { key: 'description', label: '설명', type: 'textarea', base: true },
+  ];
 
   // ── 뱃지 종류 ──────────────────────────────────────────────
   // ⚠ 어드민 상품 등록 화면의 선택지도 이 목록을 쓴다. 여기만 고치면 양쪽에 반영된다.
@@ -466,6 +497,11 @@
     var opts = options || {};
     if (!p.options) p.options = {};
 
+    // 카테고리에 입력 양식이 없으면 기본 칸으로 그린다.
+    // ⚠ 값이 없는 칸은 showMissing:false 라 어차피 안 그려진다 —
+    //   기본 칸을 깔아도 빈 줄이 늘어나지 않는다.
+    var fs = (fields && fields.length) ? fields : DEFAULT_FIELDS;
+
     // 처음 선택값을 루트에 적어둔다. 신청 버튼을 만드는 쪽이 이걸 읽어
     // "고객이 지금 보고 있는 요금" 을 그대로 접수한다.
     // 이게 없으면 48개월을 고른 고객의 신청서에 60개월 최저가가 실린다.
@@ -480,12 +516,12 @@
       '<div class="pv2-body">' +
         '<div class="pv2-left">' + galleryHtml(p, opts) + mediaActionsHtml(opts) + '</div>' +
         '<div class="pv2-right">' +
-          specHtml(p, fields, opts) +
+          specHtml(p, fs, opts) +
           feeBoxHtml(p, opts) +
           plansHtml(p, opts) +
           choicesHtml(p, opts) +
           (opts.actionsHtml ? '<div class="pv2-actions">' + opts.actionsHtml + '</div>' : '') +
-          notesHtml(p, fields, opts) +
+          notesHtml(p, fs, opts) +
         '</div>' +
       '</div>' +
       '</div>';
