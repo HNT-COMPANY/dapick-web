@@ -387,6 +387,7 @@
           '</div>';
       }).join('') +
       '</div></div>';
+    // 한 줄에 라벨 하나 값 하나. 자리 배치는 아래 CSS(.pv2-speccell)가 맡는다.
   }
 
   // base 칸은 specs 가 아니라 상품의 진짜 항목에서 값을 찾는다.
@@ -401,13 +402,17 @@
   // 화면 구성 (2026-08-01 개편):
   //
   //   [뱃지 · 렌탈사 · 상품명 · 모델명 · 해시태그]
-  //   [ 이미지 ]  [ 요금 → 약정 → 신청 버튼 → 안내 줄 ]
-  //   [ 요약정보 표 — 폭 전체 ]
+  //   [ 이미지 ]  [ 요약정보 → 요금 → 약정 → 신청 버튼 → 안내 줄 ]
   //
-  // 요약표를 2열 밖으로 뺀 이유:
-  //   오른쪽 좁은 칸에 두면 "냉방능력 / 2.30 kW" 같은 짧은 값이 두 줄로 접히고
-  //   표가 세로로 길게 늘어져 신청 영역이 한참 위로 밀린다.
-  //   폭 전체를 쓰면 같은 항목 수가 절반 높이에 들어간다.
+  // ★ 2026-08-12 — 요약표를 오른쪽 패널 안으로 되돌렸다. 08-01 판단을 뒤집는다.
+  //   그때는 "오른쪽 좁은 칸에 두면 짧은 값이 두 줄로 접히고 표가 세로로 길어진다" 였다.
+  //   실제 화면을 놓고 보니 그 걱정은 표를 4열로 깔았기 때문에 생긴 것이었다 —
+  //   한 칸이 폭의 4분의 1이라 "4K UHD (3,840 x 2,160)" 이 접혔다.
+  //   라벨 왼쪽 값 오른쪽 두 칸으로 세우면 한 줄에 다 들어간다.
+  //
+  //   그리고 이 값들은 고객이 상품을 고를 때 읽는 것이다. 화면 아래로 내려 두면
+  //   해상도를 확인하려고 신청 영역을 지나쳐 내려갔다가 다시 올라와야 한다.
+  //   요금 위에 두면 위에서 아래로 한 번에 읽힌다 — 사양을 보고 값을 보고 신청한다.
   //
   // 약정 버튼을 요금 바로 아래에 두는 이유 - 눌렀을 때 바뀌는 숫자가 바로 위에 있어야
   // "이 버튼이 저 숫자를 바꾼다" 가 눈에 보인다. 멀리 떨어뜨리면 바뀐 줄도 모른다.
@@ -430,13 +435,13 @@
       '<div class="pv2-body">' +
         '<div class="pv2-left">' + galleryHtml(p, opts) + mediaActionsHtml(opts) + '</div>' +
         '<div class="pv2-right">' +
+          specHtml(p, fields, opts) +
           feeBoxHtml(p, opts) +
           plansHtml(p, opts) +
           (opts.actionsHtml ? '<div class="pv2-actions">' + opts.actionsHtml + '</div>' : '') +
           notesHtml(p, fields, opts) +
         '</div>' +
       '</div>' +
-      specHtml(p, fields, opts) +
       '</div>';
   }
 
@@ -585,10 +590,15 @@
       /* 요약정보 */
       /* 2열 밖으로 나와 폭 전체를 쓴다. 그만큼 칸을 4개로 늘려 표가 세로로 안 늘어지게 한다.
          auto-fit 을 안 쓰는 이유 - 폭이 넓으면 7~8열까지 벌어져 어느 줄이 짝인지 안 보인다. */
-      '.pv2-specbox{margin-top:34px;background:#f7f7fa;border-radius:12px;padding:26px 24px;}',
-      '.pv2-specgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:22px 24px;}',
-      '.pv2-speckey{font-size:13px;color:#9a97ad;font-weight:500;}',
-      '.pv2-specval{font-size:14.5px;color:#2a2a35;font-weight:600;margin-top:5px;word-break:break-word;line-height:1.45;}',
+      // 요약정보 — 라벨 왼쪽, 값 오른쪽. 한 줄에 한 항목 (2026-08-12).
+      // 회색 상자를 벗겼다. 요금·신청과 같은 패널 안에 들어오면서 상자가 겹쳐 보였다.
+      '.pv2-specbox{margin-bottom:20px;padding-bottom:18px;border-bottom:1px solid #eceaf3;}',
+      '.pv2-specgrid{display:block;}',
+      // 라벨 폭을 고정한다. 값이 왼쪽 끝을 맞춰 서야 눈이 아래로 훑을 수 있다.
+      '.pv2-speccell{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;' +
+        'align-items:start;padding:7px 0;}',
+      '.pv2-speckey{font-size:13.5px;color:#8b8898;font-weight:500;line-height:1.5;}',
+      '.pv2-specval{font-size:13.5px;color:#2a2a35;font-weight:600;word-break:break-word;line-height:1.5;}',
       /* 미리보기 전용 */
       '.pv2-miss{color:#c9ccd6;font-weight:400;font-size:13px;}',
       /* 좁은 칸(어드민 미리보기) — 모바일 규칙과 같은 모양을 창 크기와 무관하게 적용한다 */
@@ -606,9 +616,10 @@
       '.pv2-root--narrow .pv2-brand img{height:18px;}',
       '.pv2-root--narrow .pv2-note{padding:10px 12px;font-size:12.5px;}',
       '.pv2-root--narrow .pv2-note-key{flex:0 0 88px;}',  /* 72px 이면 "가입가능연령" 이 두 줄로 접힌다 */
-      '.pv2-root--narrow .pv2-specbox{margin-top:20px;padding:16px 14px;}',
-      '.pv2-root--narrow .pv2-specgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:14px 10px;}',
-      '.pv2-root--narrow .pv2-specval{font-size:13.5px;}',
+      '.pv2-root--narrow .pv2-specbox{margin-bottom:16px;padding-bottom:14px;}',
+      '.pv2-root--narrow .pv2-speccell{grid-template-columns:88px minmax(0,1fr);gap:10px;padding:5px 0;}',
+      '.pv2-root--narrow .pv2-speckey{font-size:12.5px;}',
+      '.pv2-root--narrow .pv2-specval{font-size:12.5px;}',
       /* 모바일 */
       '@media(max-width:900px){',
       '.pv2-body{grid-template-columns:1fr;gap:24px;}',
@@ -620,8 +631,9 @@
       '.pv2-plan{padding:11px 13px;}',
       '.pv2-plan-m,.pv2-plan-f{font-size:13px;}',
       '.pv2-note-key{flex:0 0 80px;}',
-      '.pv2-specbox{margin-top:24px;padding:18px 16px;}',
-      '.pv2-specgrid{grid-template-columns:repeat(2,minmax(0,1fr));gap:16px 12px;}',
+      '.pv2-specbox{margin-bottom:16px;padding-bottom:14px;}',
+      // 폰은 라벨 폭을 더 줄인다. 104px 를 그대로 두면 값이 들어갈 자리가 안 남는다.
+      '.pv2-speccell{grid-template-columns:92px minmax(0,1fr);gap:10px;padding:6px 0;}',
       '}'
     ].join('');
     var el = document.createElement('style');
