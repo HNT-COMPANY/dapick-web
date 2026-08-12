@@ -378,8 +378,12 @@
         'rgba(10,8,24,.15) 0%,rgba(10,8,24,.55) 50%,rgba(10,8,24,.15) 100%);}',
       '.sb__ov--right.is-shade::before{background:linear-gradient(270deg,' +
         'rgba(10,8,24,.62) 0%,rgba(10,8,24,.28) 45%,transparent 72%);}',
+      // ⚠ min-width:0 과 word-break — 긴 낱말 하나가 배너보다 길면 밖으로 삐져나간다.
+      //   바깥은 overflow:hidden 이라 삐져나간 만큼 그냥 잘려서, 관리자는
+      //   '글자가 사라졌다' 로 본다. 넘치면 자르지 말고 접는다.
       '.sb__ov-in{position:relative;display:flex;flex-direction:column;gap:.28em;' +
-        'line-height:1.24;letter-spacing:-.02em;max-width:min(620px,62%);' +
+        'line-height:1.24;letter-spacing:-.02em;max-width:min(620px,62%);min-width:0;' +
+        'word-break:keep-all;overflow-wrap:anywhere;' +
         'text-shadow:0 2px 18px rgba(0,0,0,.35);}',
       '.sb__ov--center .sb__ov-in{max-width:min(760px,86%);}',
 
@@ -411,7 +415,11 @@
       '}',
       '@media(max-width:480px){',
       '.sb__ov{--bo-k:.46;}',
-      '.sb__ov-in{max-width:86%;}',
+      // 폰은 배너가 낮고 좁다. 글자가 옆으로 붙는 자리가 없어 폭을 거의 다 준다.
+      '.sb__ov-in{max-width:94%;}',
+      '.sb__ov--center .sb__ov-in{max-width:96%;}',
+      // 줄 사이도 좁힌다 — 폰 배너 높이에 여섯 줄이 들어가려면 여기서 줄여야 한다
+      '.sb__ov-in{gap:.18em;line-height:1.2;}',
       // 폰에서는 배너가 낮아 그라데이션이 좁다. 전체를 조금 더 어둡게 깐다.
       '.sb__ov.is-shade::before{background:linear-gradient(90deg,' +
         'rgba(10,8,24,.68) 0%,rgba(10,8,24,.42) 60%,rgba(10,8,24,.18) 100%);}',
