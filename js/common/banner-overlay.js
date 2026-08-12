@@ -43,26 +43,93 @@
   //   3) 아래 배열에 한 줄 넣는다. 어드민 드롭다운은 이 배열을 그대로 읽는다
   //
   // stack 에 대체 글꼴을 남기는 이유 — CDN 이 죽어도 글자는 보여야 한다.
+  // ⚠ weights — 그 글꼴이 진짜로 가진 굵기다.
+  //   한글 디스플레이 글꼴은 대부분 굵기가 하나뿐이다(400).
+  //   목록에 없는 굵기를 고르면 브라우저가 억지로 굵게 그리거나(가짜 굵기)
+  //   그냥 무시한다 — 관리자는 '굵기를 바꿨는데 안 바뀐다' 를 겪는다.
+  //   그래서 어드민이 이 배열만 보여준다.
+  //
+  // ⚠ latin — 영문·숫자를 그 글꼴이 갖고 있는가.
+  //   검은고딕은 한글과 숫자만 있고 알파벳이 없다. 'SKT 5G' 를 적으면
+  //   알파벳만 대체 글꼴로 떨어져 한 줄 안에서 모양이 섞인다.
   var FONTS = [
     {
       key: 'system',
       name: '기본 (사이트 글꼴)',
       css: null,           // 이미 사이트가 싣고 있다. 더 받지 않는다
       stack: "'Noto Sans KR', -apple-system, BlinkMacSystemFont, sans-serif",
+      weights: [400, 500, 600, 700, 800, 900],
+      latin: true,
     },
     {
       key: 'pretendard',
-      name: '프리텐다드',
+      name: '프리텐다드 · 반듯한 고딕',
       // SIL 오픈 폰트 라이선스 — 글꼴 단독 판매만 금지, 상업 이용·재배포 허용
       css: 'https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css',
       stack: "'Pretendard', 'Noto Sans KR', sans-serif",
+      weights: [400, 500, 600, 700, 800, 900],
+      latin: true,
     },
     {
       key: 'noto',
-      name: '노토 산스',
+      name: '노토 산스 · 기본 고딕',
       // SIL 오픈 폰트 라이선스. 사이트가 이미 싣고 있어 더 받지 않는다
       css: null,
       stack: "'Noto Sans KR', sans-serif",
+      weights: [400, 500, 600, 700, 800, 900],
+      latin: true,
+    },
+    // ── 아래는 구글 폰트. 전부 SIL 오픈 폰트 라이선스이고 공식 CDN 이 있다.
+    //   사이트가 이미 구글 폰트를 쓰고 있어(Noto Sans KR) 새로 생기는 의존이 아니다.
+    //   display=swap — 글꼴을 받는 동안 대체 글꼴로 먼저 보여준다.
+    //   빼면 다 받을 때까지 글자가 아예 안 보인다.
+    {
+      key: 'blackhansans',
+      name: '검은고딕 · 아주 굵은 제목 (영문 없음)',
+      css: 'https://fonts.googleapis.com/css2?family=Black+Han+Sans&display=swap',
+      stack: "'Black Han Sans', 'Noto Sans KR', sans-serif",
+      weights: [400],
+      latin: false,   // 한글·숫자·문장부호만 있다
+    },
+    {
+      key: 'gasoek',
+      name: '가석원 · 초굵은 임팩트',
+      css: 'https://fonts.googleapis.com/css2?family=Gasoek+One&display=swap',
+      stack: "'Gasoek One', 'Noto Sans KR', sans-serif",
+      weights: [400],
+      latin: true,
+    },
+    {
+      key: 'dohyeon',
+      name: '도현 · 굵고 친근한 고딕',
+      css: 'https://fonts.googleapis.com/css2?family=Do+Hyeon&display=swap',
+      stack: "'Do Hyeon', 'Noto Sans KR', sans-serif",
+      weights: [400],
+      latin: true,
+    },
+    {
+      key: 'jua',
+      name: '주아 · 둥글둥글 부드러운',
+      css: 'https://fonts.googleapis.com/css2?family=Jua&display=swap',
+      stack: "'Jua', 'Noto Sans KR', sans-serif",
+      weights: [400],
+      latin: true,
+    },
+    {
+      key: 'notoserif',
+      name: '노토 명조 · 차분하고 고급스러운',
+      css: 'https://fonts.googleapis.com/css2?family=Noto+Serif+KR:wght@400;600;700;900&display=swap',
+      stack: "'Noto Serif KR', serif",
+      weights: [400, 600, 700, 900],
+      latin: true,
+    },
+    {
+      key: 'gugi',
+      name: '구기 · 개성 있는 디스플레이',
+      css: 'https://fonts.googleapis.com/css2?family=Gugi&display=swap',
+      stack: "'Gugi', 'Noto Sans KR', sans-serif",
+      weights: [400],
+      latin: true,
     },
   ];
 
@@ -132,16 +199,28 @@
     }).filter(function (l) { return l.text !== ''; });
   }
 
+  // 그 글꼴이 가진 굵기 중 가장 가까운 것.
+  // 없는 굵기를 그대로 내보내면 브라우저가 가짜로 굵게 그려 글자가 뭉개진다.
+  function nearestWeight(fontKey, want) {
+    var f = fontByKey[fontKey] || fontByKey.system;
+    var list = f.weights && f.weights.length ? f.weights : [400];
+    var w = Number(want);
+    if (!isFinite(w)) w = 800;
+    return list.reduce(function (a, b) {
+      return Math.abs(b - w) < Math.abs(a - w) ? b : a;
+    });
+  }
+
   function norm(ov) {
     var o = ov && typeof ov === 'object' ? ov : {};
-    var weight = Number(o.weight);
+    var font = fontByKey[o.font] ? o.font : 'system';
 
     return {
       lines: normLines(o),
-      font: fontByKey[o.font] ? o.font : 'system',
+      font: font,
       // 44 는 배너 높이(360 안팎)에서 세 줄이 답답하지 않게 들어가는 크기다
       size: numIn(o.size, 12, 200, 44),
-      weight: isFinite(weight) && weight >= 100 && weight <= 900 ? Math.round(weight / 100) * 100 : 800,
+      weight: nearestWeight(font, o.weight),
       color: hex(o.color, '#ffffff'),
       align: ALIGN[o.align] ? o.align : 'left',
       anim: ANIM[o.anim] ? o.anim : 'up',
@@ -292,6 +371,8 @@
     FONTS: FONTS,
     MAX_LINES: MAX_LINES,
     fonts: function () { return FONTS.slice(); },
+    fontOf: function (key) { return fontByKey[key] || fontByKey.system; },
+    nearestWeight: nearestWeight,
     norm: norm,
     has: has,
     html: html,
