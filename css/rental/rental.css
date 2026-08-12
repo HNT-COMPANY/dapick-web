@@ -1,10 +1,5 @@
 /* ── 렌탈 전용 보강 스타일 (water.css 위에 덧입힘) ───────── */
 
-/* 상단 배너 좌우 끝을 본문(.wrap, common.css)과 맞춘다 (2026-08-12 폭 통일).
-   렌탈은 water.css 를 같이 쓰지만 body 에 .water-page 가 없어서
-   정수기 폭(1400)이 아니라 공용 폭(1200)을 쓴다. 본문이 .wrap 이라 여백은 40px. */
-:root { --sb-pad: 40px; }
-
 /* 품목(brand) 선택 그리드 - 아정당 스타일 아이콘 그리드 */
 .r-item-grid {
   display: grid;
