@@ -20,7 +20,8 @@
 //     font:'pretendard', weight:800,
 //     size:44, color:'#ffffff',      줄에 안 적으면 쓰는 기본값
 //     align:'left', x:0, y:0,        align 이 큰 자리, x·y 가 px 미세조정
-//     anim:'up', shade:false }
+//     anim:'up', shade:false,
+//     footAlign:'right', footSize:14 }   줄에 slot:'foot' 을 주면 하단 주석으로 간다
 //
 // ⚠ 옛 모양 두 가지를 같이 읽는다. 이미 저장된 배너가 깨지면 안 된다.
 //     lines: ['첫 줄', ...]                       (오전)
@@ -208,6 +209,11 @@
       size: numIn(q.size, 12, 200, null),
       color: hex(q.color, null),
       weight: q.weight == null ? null : nearestWeight(fontKey, q.weight),
+      // 형광 — 글자 둘레에 색이 번진다 (2026-08-12).
+      //   glow      번지는 색. 없으면 형광 없음
+      //   glowBlur  얼마나 넓게 번지나 (px). 넓은 화면 기준이라 --bo-k 가 같이 줄인다
+      glow: hex(q.glow, null),
+      glowBlur: numIn(q.glowBlur, 0, 120, 18),
     };
   }
 
@@ -217,12 +223,17 @@
       // 1) 문자열 (오전에 저장된 모양)
       if (typeof l === 'string') {
         var t = l.trim();
-        return { parts: t ? [normPart({ text: t }, fontKey)] : [], x: 0, y: 0 };
+        return { parts: t ? [normPart({ text: t }, fontKey)] : [], x: 0, y: 0, slot: 'main' };
       }
       if (!l || typeof l !== 'object') return null;
 
       var x = numIn(l.x, -600, 600, 0);
       var y = numIn(l.y, -400, 400, 0);
+      // 이 줄이 어디로 가는가 (2026-08-12).
+      //   main — 가운데 쌓이는 본문
+      //   foot — 배너 아래쪽에 작게 붙는 주석 ('※ 상품 및 계약 조건에 따라 …')
+      // 배너는 세로가 좁아 본문에 주석까지 쌓으면 넘친다. 주석은 자리가 다르다.
+      var slot = l.slot === 'foot' ? 'foot' : 'main';
 
       // 2) 조각으로 쪼갠 줄 (지금 모양)
       if (Array.isArray(l.parts)) {
@@ -230,14 +241,14 @@
           parts: l.parts.slice(0, MAX_PARTS)
             .map(function (p) { return normPart(p, fontKey); })
             .filter(function (p) { return p.text !== ''; }),
-          x: x, y: y,
+          x: x, y: y, slot: slot,
         };
       }
 
       // 3) 조각 없이 글자 하나뿐인 줄 (오후에 저장된 모양)
       var one = normPart(l, fontKey);
       one.text = one.text.trim();
-      return { parts: one.text ? [one] : [], x: x, y: y };
+      return { parts: one.text ? [one] : [], x: x, y: y, slot: slot };
     }).filter(function (l) { return l && l.parts.length; });
   }
 
@@ -275,6 +286,11 @@
       // 기본 꺼짐 (2026-08-12 바꿈). 켜 두니 어두운 배너에도 검은 띠가 겹쳐 보였다.
       // 글자 그림자(text-shadow)는 늘 있어서 웬만한 배경에서는 그대로 읽힌다.
       shade: o.shade === true,
+      // 하단 주석 덩어리. 본문과 자리가 달라 정렬·크기를 따로 갖는다.
+      // 14px 인 이유 — 주석은 눈에 안 띄어야 한다. 본문 기본(44px)을 물려주면
+      //   주석이 본문만큼 커져 무엇이 제목인지 안 보인다.
+      footAlign: ALIGN[o.footAlign] ? o.footAlign : 'right',
+      footSize: numIn(o.footSize, 8, 60, 14),
     };
   }
 
@@ -313,11 +329,17 @@
         ? 'transform:translate(' + k(o.x) + ',' + k(o.y) + ');'
         : '');
 
-    return '<div class="sb__ov sb__ov--' + o.align + ' sb__ov--' + o.anim +
-      (o.shade ? ' is-shade' : '') + '" aria-hidden="true">' +
-      '<div class="sb__ov-in" style="' + style + '">' +
-      o.lines.map(function (l, i) {
-        var st = 'transition-delay:' + (i * 0.15) + 's;';
+    var main = [];
+    var foot = [];
+    o.lines.forEach(function (l) { (l.slot === 'foot' ? foot : main).push(l); });
+
+    // 주석은 본문 뒤에 이어서 들어온다. 같이 튀어나오면 눈이 어디를 봐야 할지 모른다.
+    // 0.15 를 그냥 곱하면 3번째 줄에서 0.44999999999999996 이 나온다.
+    // 화면은 같지만 값이 지저분하고 검사도 못 잡는다.
+    var delayOf = function (i) { return (Math.round(i * 15) / 100) + 's'; };
+
+    var lineHtml = function (l, i) {
+        var st = 'transition-delay:' + delayOf(i) + ';';
         // 줄 하나만 미는 값.
         // ⚠ transform 을 안 쓴다 — 들어오는 움직임이 이미 transform 을 쓰고 있어서
         //   여기서 또 쓰면 둘 중 하나가 덮여 사라진다. margin 은 안 싸운다.
@@ -335,12 +357,41 @@
           if (p.size != null) ps += 'font-size:' + k(p.size) + ';';
           if (p.color) ps += 'color:' + p.color + ';';
           if (p.weight != null) ps += 'font-weight:' + p.weight + ';';
+          // 형광. 두 겹으로 깐다 — 한 겹이면 옅어서 형광으로 안 보이고,
+          // 세 겹부터는 글자 획이 뭉개진다.
+          // ⚠ 마지막에 검은 그림자를 다시 얹는다. text-shadow 는 통째로 덮어쓰는 값이라
+          //   빼면 .sb__ov-in 의 그림자가 이 조각에서만 사라져 밝은 배경에서 안 읽힌다.
+          if (p.glow) {
+            var b = k(p.glowBlur);
+            var b2 = k(Math.round(p.glowBlur * 2));
+            ps += 'text-shadow:0 0 ' + b + ' ' + p.glow + ',0 0 ' + b2 + ' ' + p.glow +
+              ',0 2px 18px rgba(0,0,0,.35);';
+          }
           return ps ? '<span style="' + ps + '">' + esc(p.text) + '</span>' : esc(p.text);
         }).join('');
 
         return '<span class="sb__ov-line" style="' + st + '">' + inner + '</span>';
-      }).join('') +
-      '</div></div>';
+    };
+
+    var out = '';
+    if (main.length) {
+      out += '<div class="sb__ov sb__ov--' + o.align + ' sb__ov--' + o.anim +
+        (o.shade ? ' is-shade' : '') + '" aria-hidden="true">' +
+        '<div class="sb__ov-in" style="' + style + '">' +
+        main.map(lineHtml).join('') +
+        '</div></div>';
+    }
+    if (foot.length) {
+      // 주석은 글꼴만 본문과 같이 가고 크기·색은 제 값을 쓴다.
+      // ⚠ 굵기도 물려받지 않는다 — 본문이 900 이면 주석까지 900 이 되어 안 눌린다.
+      var fs = 'font-family:' + f.stack + ';font-size:' + k(o.footSize) + ';' +
+        'color:' + o.color + ';font-weight:400;';
+      out += '<div class="sb__ovfoot sb__ovfoot--' + o.footAlign + ' sb__ov--' + o.anim +
+        '" aria-hidden="true"><div class="sb__ov-in" style="' + fs + '">' +
+        foot.map(function (l, i) { return lineHtml(l, main.length + i); }).join('') +
+        '</div></div>';
+    }
+    return out;
     // aria-hidden 인 이유 — 이 글자는 배너 이미지의 일부다.
     // 읽어 줘야 할 내용은 img 의 alt(altText)가 이미 갖고 있다. 두 번 읽히면 시끄럽다.
   }
@@ -414,11 +465,16 @@
       // 글자 크기를 화면 폭에 따라 줄인다. 관리자가 넣은 46px 를 폰에서 그대로 쓰면
       // 한 줄에 네 글자만 들어가 배너 밖으로 넘친다.
       '@media(max-width:900px){',
+      '.sb__ovfoot{--bo-k:.62;padding-left:var(--bo-pad,clamp(16px,4.5vw,32px));' +
+        'padding-right:var(--bo-pad,clamp(16px,4.5vw,32px));}',
+      '.sb__ovfoot .sb__ov-in{max-width:86%;}',
       '.sb__ov{--bo-k:.62;padding:0 var(--bo-pad,clamp(16px,4.5vw,32px));}',
       '.sb__ov-in{max-width:78%;gap:.24em;}',
       '.sb__ov--center .sb__ov-in{max-width:92%;}',
       '}',
       '@media(max-width:480px){',
+      '.sb__ovfoot{--bo-k:.46;}',
+      '.sb__ovfoot .sb__ov-in{max-width:94%;}',
       '.sb__ov{--bo-k:.46;}',
       // 폰은 배너가 낮고 좁다. 글자가 옆으로 붙는 자리가 없어 폭을 거의 다 준다.
       '.sb__ov-in{max-width:94%;}',
