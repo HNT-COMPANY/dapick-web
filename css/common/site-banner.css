@@ -37,7 +37,9 @@
 .sb[hidden] { display:none !important; }
 .sb__viewport { position:relative; overflow:hidden; border-radius:16px; }
 .sb__track { display:flex; transition:transform .55s cubic-bezier(.4,0,.2,1); }
-.sb__slide { flex:0 0 100%; min-width:100%; }
+/* 문구(.sb__ov)가 이 안에 겹쳐 앉는다 — 기준점이 없으면 화면 왼쪽 위로 튄다.
+   문구 자체의 모양은 banner-overlay.js 가 갖는다(어드민 미리보기와 같은 코드). */
+.sb__slide { flex:0 0 100%; min-width:100%; position:relative; }
 .sb__slide img { width:100%; height:auto; display:block; }
 .sb__link { display:block; cursor:pointer; }
 .sb__arrow {

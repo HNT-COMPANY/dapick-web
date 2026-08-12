@@ -118,6 +118,52 @@
     }).catch(function () { hide(el); });
   }
 
+  // 문구 그리기는 banner-overlay.js 가 맡는다 (어드민 미리보기와 같은 코드다).
+  // 그 파일이 안 실린 화면에서도 배너는 그대로 나와야 하므로 없으면 조용히 건너뛴다.
+  function OV() {
+    return typeof DapickBannerOverlay !== 'undefined' ? DapickBannerOverlay : null;
+  }
+  function ovHtml(b) {
+    var o = OV();
+    if (!o || !b || !b.overlay || !o.has(b.overlay)) return '';
+    o.injectStyles();
+    return o.html(b.overlay);
+  }
+
+  // 지금 보이는 슬라이드에만 문구를 켠다.
+  //
+  // 켜지는 조건이 둘이다 —
+  //   1) 배너 영역이 화면 안에 있다 (스크롤로 내렸다 다시 올리면 다시 재생)
+  //   2) 그 슬라이드가 지금 보이는 장이다 (캐러셀이 넘어오면 재생)
+  // 둘 다 만족해야 켠다. 안 보이는 장의 문구를 미리 켜 두면 넘어왔을 때 이미 끝나 있다.
+  function paintOn(el) {
+    var slides = el.querySelectorAll('.sb__slide');
+    var on = el.__sbSeen === true;
+    var cur = el.__sbIdx || 0;
+    for (var i = 0; i < slides.length; i++) {
+      slides[i].classList.toggle('is-on', on && i === cur);
+    }
+  }
+
+  // 화면에 들어왔는가. 들어올 때마다 다시 재생하므로 한 번 보고 끝내지 않는다
+  // (unobserve 하지 않는다).
+  function watchSeen(el) {
+    if (el.__sbWatch) return;
+    if (typeof IntersectionObserver !== 'function') {
+      // 옛 브라우저에서는 그냥 늘 켜 둔다. 안 움직일 뿐 글자는 보인다.
+      el.__sbSeen = true;
+      paintOn(el);
+      return;
+    }
+    el.__sbWatch = new IntersectionObserver(function (list) {
+      for (var i = 0; i < list.length; i++) {
+        el.__sbSeen = list[i].isIntersecting;
+      }
+      paintOn(el);
+    }, { threshold: 0.25 });
+    el.__sbWatch.observe(el);
+  }
+
   function build(el, rows) {
     var track = el.querySelector('.sb__track');
     var dotsWrap = el.querySelector('.sb__dots');
@@ -177,7 +223,10 @@
         inner = '<a class="sb__link" href="' + esc(dest) + '"' +
           (/^https?:/i.test(dest) ? ' target="_blank" rel="noopener"' : '') + '>' + img + '</a>';
       }
-      return '<div class="sb__slide">' + inner + '</div>';
+      // 이미지 위에 얹는 문구 (2026-08-12). 없으면 빈 문자열이라 전과 똑같다.
+      // ⚠ 문구를 링크(a) 밖에 두는 이유 — 안에 넣으면 글자를 드래그로 선택할 때
+      //   링크가 딸려 열린다. 클릭은 문구가 pointer-events 를 꺼서 아래 이미지로 지나간다.
+      return '<div class="sb__slide">' + inner + ovHtml(b) + '</div>';
     }).join('');
 
     // #finder 배너 클릭. 슬라이드가 다시 그려져도 살아남게 묶음에 한 번만 건다.
@@ -228,6 +277,9 @@
     if (dotsWrap) dotsWrap.style.display = multi ? '' : 'none';
 
     el.hidden = false; el.style.display = '';
+    el.__sbIdx = 0;
+    watchSeen(el);
+    paintOn(el);
     if (!multi) { track.style.transform = 'translateX(0)'; return; }
 
     dotsWrap.innerHTML = '';
@@ -247,6 +299,8 @@
     function render() {
       track.style.transform = 'translateX(-' + (idx * 100) + '%)';
       for (var k = 0; k < dots.length; k++) dots[k].className = 'sb__dot' + (k === idx ? ' active' : '');
+      el.__sbIdx = idx;
+      paintOn(el);   // 넘어온 장의 문구를 재생한다
     }
     function go(n) { idx = (n + total) % total; render(); }
     function nextf() { go(idx + 1); }

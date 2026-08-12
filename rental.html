@@ -346,7 +346,11 @@
      이 줄이 없으면 배너를 눌러도 아무 일도 안 일어난다(콘솔 경고만 남는다).
      ⚠ site-banner.js 보다 먼저 실어야 배너가 그려질 때 창을 열 수 있는지 판단할 수 있다. -->
 <script src="js/common/simple-apply.js?v=20260810d"></script>
-<script src="js/common/site-banner.js?v=20260810b"></script>
+<!-- 배너 위에 얹는 문구 (2026-08-12). site-banner.js 보다 먼저 실어야
+     배너를 그릴 때 문구를 같이 붙일 수 있다.
+     ⚠ 어드민(dapick-admin/js/common/banner-overlay.js)과 같은 파일이다. -->
+<script src="js/common/banner-overlay.js?v=20260812b"></script>
+<script src="js/common/site-banner.js?v=20260812b"></script>
 <script src="js/rental/rental.js"></script>
  
  

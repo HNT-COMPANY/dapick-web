@@ -182,7 +182,11 @@
 <script src="js/common/utils.js"></script>
 <script src="js/common/gnb.js?v=20260811b"></script>
 <script src="js/common/gnb-user.js"></script>
-<script src="js/common/site-banner.js"></script>
+<!-- 배너 위에 얹는 문구 (2026-08-12). site-banner.js 보다 먼저 실어야
+     배너를 그릴 때 문구를 같이 붙일 수 있다.
+     ⚠ 어드민(dapick-admin/js/common/banner-overlay.js)과 같은 파일이다. -->
+<script src="js/common/banner-overlay.js?v=20260812b"></script>
+<script src="js/common/site-banner.js?v=20260812b"></script>
 <!-- 나만의 상품 찾기 (2026-08-11 신설)
      simple-apply 는 결과 바닥의 '간편 신청' 이 쓴다. finder 보다 먼저 실려야 한다.
      연결층을 따로 두지 않는다 — category.js 가 이미 slug·카테고리·상품을 들고 있다. -->
