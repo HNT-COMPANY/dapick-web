@@ -22,8 +22,8 @@
 //     align:'left', x:0, y:0,        align 이 큰 자리, x·y 가 px 미세조정
 //     anim:'up', shade:false,
 //     footAlign:'right', footSize:14,    줄에 slot:'foot' 을 주면 하단 주석으로 간다
-//     moH:250, pcH:0 }                   배너 높이(px). 문구가 있을 때만 쓴다.
-//                                        pcH 는 0 이면 '이미지 원본 비율 그대로'
+//     moH:0, pcH:0 }                     배너 높이(px). 문구가 있을 때만 쓴다.
+//                                        둘 다 0 이면 '이미지 원본 비율 그대로'
 //
 // ⚠ 옛 모양 두 가지를 같이 읽는다. 이미 저장된 배너가 깨지면 안 된다.
 //     lines: ['첫 줄', ...]                       (오전)
@@ -293,8 +293,19 @@
       //   주석이 본문만큼 커져 무엇이 제목인지 안 보인다.
       footAlign: ALIGN[o.footAlign] ? o.footAlign : 'right',
       footSize: numIn(o.footSize, 8, 60, 14),
-      // 폰에서 배너를 얼마나 높게 볼 것인가. 250 은 390px 폭에서 세 줄이 넉넉히 든다.
-      moH: numIn(o.moH, 120, 600, 250),
+      // 폰에서 배너를 얼마나 높게 볼 것인가. 0 은 '이미지 원본 비율 그대로' 다.
+      //
+      // ★ 2026-08-13 — 기본을 250 에서 0 으로 되돌린다.
+      //   250 을 기본으로 켜 두니 문구를 한 줄만 얹은 배너까지 폰에서 390x250 비율로
+      //   잘려 나갔다. 가로로 긴 배너(1600x360 이면 4.4:1)를 1.56:1 로 만드는 것이라
+      //   좌우가 크게 날아간다. 정수기 배너에서 "짤려 보인다" 는 말이 나온 원인이다.
+      //
+      //   자르는 것은 '글자가 배너 밖으로 밀릴 때만' 쓰는 수단이지 기본값이 아니다.
+      //   PC 쪽(pcH)은 처음부터 이 규칙이었다. 폰도 같게 맞춘다.
+      //
+      // ⚠ 이미 저장된 배너에는 moH 값이 들어 있다 — 자동으로 안 풀린다.
+      //   관리자가 그 배너의 '폰에서 배너 높이' 를 0(원본 비율)으로 내려야 한다.
+      moH: numIn(o.moH, 0, 600, 0),
       // PC 에서 배너 높이 (2026-08-12). 0 은 '이미지 원본 비율 그대로' 다.
       //
       // 왜 필요한가: 문구 상자는 이미지 전체에 겹쳐 세로 가운데에 놓인다(inset:0).
@@ -358,11 +369,18 @@
     var lineHtml = function (l, i) {
         var st = 'transition-delay:' + delayOf(i) + ';';
         // 줄 하나만 미는 값.
-        // ⚠ transform 을 안 쓴다 — 들어오는 움직임이 이미 transform 을 쓰고 있어서
-        //   여기서 또 쓰면 둘 중 하나가 덮여 사라진다. margin 은 안 싸운다.
-        //   그리고 margin-top 은 뜻도 맞다 — 위 줄과의 '여백' 그 자체다.
-        if (l.x) st += 'margin-left:' + k(l.x) + ';';
-        if (l.y) st += 'margin-top:' + k(l.y) + ';';
+        //
+        // ★ 2026-08-13 — margin 에서 position:relative 로 바꿨다.
+        //   margin-top 은 그 줄을 밀면서 '아래 줄까지 전부' 같이 내린다 (세로로 쌓인 상자라
+        //   위 줄이 차지하는 자리가 늘어나면 나머지가 밀린다). 관리자가 2번 줄만 내리려고
+        //   값을 넣었는데 3·4번 줄까지 따라 내려가서 "전체가 밀린다" 는 말이 나왔다.
+        //   relative 의 top·left 는 자리를 차지한 채 겉모습만 옮긴다 — 다른 줄이 안 움직인다.
+        //
+        // ⚠ transform 은 여전히 못 쓴다 — 들어오는 움직임(translateY)이 이미 쓰고 있어서
+        //   여기서 또 쓰면 둘 중 하나가 덮여 사라진다. top·left 는 그것과 안 싸운다.
+        if (l.x || l.y) st += 'position:relative;';
+        if (l.x) st += 'left:' + k(l.x) + ';';
+        if (l.y) st += 'top:' + k(l.y) + ';';
 
         // 조각마다 제 값이 있을 때만 감싼다. 없으면 글자만 그대로 이어 붙인다 —
         // 쓸데없는 span 이 줄줄이 생기면 나중에 화면을 들여다볼 때 읽기 어렵다.
@@ -420,12 +438,14 @@
   function slideMod(ov) {
     var o = norm(ov);
     if (!o.lines.length) return { cls: '', style: '' };
-    // ⚠ pcH 가 0 이면 has-pch 를 안 붙인다.
+    // ⚠ 높이가 0 이면 클래스를 안 붙인다.
     //   aspect-ratio:calc(1600 / 0) 은 무한대라 배너가 통째로 깨진다.
     //   '값이 있을 때만 켜는 클래스' 로 막는다.
+    //   moH 도 2026-08-13 부터 같은 규칙이다 — 안 정한 배너는 폰에서 안 잘린다.
     return {
-      cls: ' is-ov' + (o.pcH ? ' has-pch' : ''),
-      style: '--sb-mo-h:' + o.moH + ';' + (o.pcH ? '--sb-pc-h:' + o.pcH + ';' : ''),
+      cls: ' is-ov' + (o.pcH ? ' has-pch' : '') + (o.moH ? ' has-moh' : ''),
+      style: (o.moH ? '--sb-mo-h:' + o.moH + ';' : '') +
+        (o.pcH ? '--sb-pc-h:' + o.pcH + ';' : ''),
     };
   }
 
@@ -483,12 +503,17 @@
       '.sb__slide.is-ov.has-pch img{aspect-ratio:calc(1600 / var(--sb-pc-h,420));' +
         'height:auto;object-fit:cover;object-position:center;}',
       '}',
+      // 태블릿도 폰 값(moH)을 쓰되 1.35 배로 늘려 잡는다. 폭이 넓으니 그만큼 높아야
+      // 글자와 이미지의 비율이 폰에서 본 것과 비슷하게 남는다.
+      // 2026-08-13 — 여기도 has-moh 에만 건다. 안 그러면 폰은 안 잘리는데 태블릿만 잘린다.
       '@media(max-width:900px){',
-      '.sb__slide.is-ov img{aspect-ratio:calc(768 / (var(--sb-mo-h,250) * 1.35));' +
+      '.sb__slide.is-ov.has-moh img{aspect-ratio:calc(768 / (var(--sb-mo-h,250) * 1.35));' +
         'height:auto;object-fit:cover;object-position:center;}',
       '}',
+      // 폰 배너 높이. 관리자가 정한 배너에만 걸린다 (2026-08-13 부터).
+      // 안 정한 배너는 원본 비율 그대로라 좌우가 안 잘린다.
       '@media(max-width:480px){',
-      '.sb__slide.is-ov img{aspect-ratio:calc(390 / var(--sb-mo-h,250));' +
+      '.sb__slide.is-ov.has-moh img{aspect-ratio:calc(390 / var(--sb-mo-h,250));' +
         'height:auto;object-fit:cover;object-position:center;}',
       '}',
       '.sb__ov--left{align-items:flex-start;text-align:left;}',
