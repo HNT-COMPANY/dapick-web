@@ -192,7 +192,11 @@
      연결층을 따로 두지 않는다 — category.js 가 이미 slug·카테고리·상품을 들고 있다. -->
 <script src="js/common/simple-apply.js?v=20260811a"></script>
 <script src="js/common/finder.js?v=20260811g"></script>
-<script src="js/category/category.js?v=20260811a"></script>
+<!-- 목록 카드의 뱃지를 상세 화면과 같은 함수로 그리기 위해 싣는다 (2026-08-26).
+     category.js 보다 먼저 실려야 한다. 안 실려도 목록은 그대로 돈다 — 뱃지만 안 나온다.
+     ⚠ 어드민(dapick-admin/js/products/product-view.js)과 같은 파일이다. -->
+<script src="js/products/product-view.js?v=20260826e"></script>
+<script src="js/category/category.js?v=20260826a"></script>
 <script src="/js/common/track.js"></script>
 </body>
 </html>

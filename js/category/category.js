@@ -208,6 +208,23 @@ function cgSetSort(s) {
   cgRender();
 }
 
+// 목록 카드의 뱃지 (2026-08-26)
+//
+// ⚠ 상세 화면과 같은 함수(product-view.js 의 badgesHtml)를 쓴다.
+//   여기서 따로 그리면 목록과 상세의 뱃지 모양이 갈린다 — 그 일이 전에 있었다.
+//   그래서 category.html 이 product-view.js 를 싣는다.
+//   그 파일이 안 실려도 목록은 그대로 돈다 (뱃지만 안 나온다).
+//
+// 스타일은 product-view.js 가 갖고 있다. 한 번만 넣으면 되고,
+// 두 번 불러도 안쪽에서 막는다.
+function cgBadges(p) {
+  const list = (p && p.options && p.options.badges) || [];
+  if (!list.length) return '';
+  if (typeof DapickProductView === 'undefined' || !DapickProductView.badgesHtml) return '';
+  DapickProductView.injectStyles();
+  return DapickProductView.badgesHtml(list, 'cg-badges');
+}
+
 function cgRender() {
   const grid = document.getElementById('cg-grid');
   const rows = cgRows.slice();
@@ -234,6 +251,7 @@ function cgRender() {
       return `
       <div class="cg-card" onclick="cgOpen('${cgEsc(p.id)}')">
         <div class="cg-thumb">${img}</div>
+        ${cgBadges(p)}
         <div class="cg-model">${cgEsc(cgModel(p))}</div>
         <div class="cg-name">${cgEsc(p.name)}</div>
         ${cgFee(p.monthlyFee)}

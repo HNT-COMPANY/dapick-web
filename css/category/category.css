@@ -159,6 +159,16 @@
   color: var(--text-muted, #9ca3af);
 }
 
+/* 뱃지 줄 (2026-08-26) — 썸네일 아래, 모델명 위.
+   딱지 하나하나의 모양(.pv2-badge)은 product-view.js 가 갖고 있다.
+   여기서는 자리만 잡는다. 한쪽만 고쳐도 목록과 상세가 안 갈리게 하려는 것. */
+.cg-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 6px;
+}
+
 /* 모델명 — 제목 위, 작게 */
 .cg-model {
   font-size: 12px;

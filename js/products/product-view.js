@@ -221,19 +221,64 @@
     return opts.showMissing ? '<div class="pv2-brand">' + miss(opts, '렌탈사 미입력') + '</div>' : '';
   }
 
+  // ── 뱃지 ────────────────────────────────────────────────────
+  //
+  // ★ 2026-08-26 — 관리자가 문구·색을 직접 정하는 자유 뱃지가 들어왔다.
+  //   그래서 options.badges 에 두 가지 모양이 섞여 있다. 둘 다 그린다.
+  //
+  //   1) 옛 모양 — 'best' 같은 글자.  아래 BADGES 에서 문구·색을 찾는다.
+  //   2) 새 모양 — { text, bg, fg }.  관리자가 적은 그대로 그린다.
+  //
+  // ⚠ 옛 모양을 버리면 안 된다. 이미 저장된 상품의 뱃지가 통째로 사라진다.
+  //   목록에 없는 글자가 오면 그 한 줄만 건너뛴다 — 화면 전체가 깨지지 않게.
+  //
+  // ⚠ 색은 관리자가 넣은 값이 style 로 나간다. 반드시 걸러야 한다.
+  //   norm() 을 안 거치면 "red;background:url(...)" 같은 값이 그대로 들어간다.
+  function badgeColor(v, fallback) {
+    var s = String(v == null ? '' : v).trim();
+    if (/^#[0-9a-fA-F]{6}$/.test(s)) return s.toLowerCase();
+    if (/^#[0-9a-fA-F]{3}$/.test(s)) {
+      return ('#' + s[1] + s[1] + s[2] + s[2] + s[3] + s[3]).toLowerCase();
+    }
+    return fallback;
+  }
+
+  // 어떤 모양이 와도 { text, bg, fg } 로 만든다. 못 쓸 값이면 null.
+  function normBadge(v) {
+    if (typeof v === 'string') {
+      for (var i = 0; i < BADGES.length; i++) {
+        if (BADGES[i].key === v) {
+          return { text: BADGES[i].label, bg: BADGES[i].color, fg: '#ffffff' };
+        }
+      }
+      return null;
+    }
+    if (!v || typeof v !== 'object') return null;
+    var text = String(v.text == null ? '' : v.text).trim();
+    if (!text) return null;
+    return {
+      text: text,
+      bg: badgeColor(v.bg, '#6b7280'),
+      fg: badgeColor(v.fg, '#ffffff'),
+    };
+  }
+
+  // 목록 카드와 상세 화면이 같은 함수를 쓴다 — 두 자리의 모양이 갈리면 안 된다.
+  function badgesHtml(list, cls) {
+    var items = (list || []).map(normBadge).filter(function (b) { return b; });
+    if (!items.length) return '';
+    return '<div class="' + (cls || 'pv2-badges') + '">' + items.map(function (b) {
+      return '<span class="pv2-badge" style="background:' + b.bg + ';color:' + b.fg + '">' +
+        esc(b.text) + '</span>';
+    }).join('') + '</div>';
+  }
+
   // 제목 줄 — 렌탈사 / 상품명 / 모델명 / 해시태그
   function headHtml(p, opts) {
     var tags = (p.options && p.options.hashtags) || [];
     var badges = (p.options && p.options.badges) || [];
 
-    var badgeHtml = badges.length
-      ? '<div class="pv2-badges">' + badges.map(function (k) {
-          var b = null;
-          for (var i = 0; i < BADGES.length; i++) if (BADGES[i].key === k) b = BADGES[i];
-          if (!b) return '';
-          return '<span class="pv2-badge" style="background:' + b.color + '">' + esc(b.label) + '</span>';
-        }).join('') + '</div>'
-      : '';
+    var badgeHtml = badgesHtml(badges);
 
     var tagHtml = tags.length
       ? '<div class="pv2-tags">' + tags.map(function (t) {
@@ -812,6 +857,10 @@
     bindGallery: bindGallery, // 썸네일만
     bindPlans: bindPlans,     // 약정 버튼만
     selection: selection,     // 지금 선택된 요금·약정
+    // 목록 카드도 상세와 같은 모양으로 뱃지를 그려야 한다.
+    // 카테고리 목록(category.js)이 이 둘을 쓴다.
+    badgesHtml: badgesHtml,
+    normBadge: normBadge,
     BADGES: BADGES
   };
 })(window);
