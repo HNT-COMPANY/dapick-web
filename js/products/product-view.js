@@ -170,11 +170,79 @@
     })[0];
   }
 
+  // ── 렌탈 유형 (2026-08-26) ──────────────────────────────────
+  //
+  // ★ 왜 생겼나
+  //   같은 에어컨인데 스탠드형 36개월 38,000 / 벽걸이형 36개월 36,000 처럼
+  //   유형에 따라 요금이 다른 상품이 있다. 전에는 요금표가 [{months,monthlyFee}] 뿐이라
+  //   담을 자리가 없었다 — 관리자가 상품을 두 개로 쪼개 올리는 수밖에 없었다.
+  //
+  // ★ 어떻게 담나 — 요금표 줄에 type 을 붙인다
+  //   [{ type:'스탠드형', months:36, monthlyFee:38000 },
+  //    { type:'벽걸이형', months:36, monthlyFee:36000 }]
+  //
+  // ⚠ type 이 없는 줄은 '모든 유형 공통' 이다.
+  //   이미 등록된 상품은 전부 type 이 없다. 그래서 옛 상품은 유형 칸이 아예 안 나오고
+  //   지금까지와 똑같이 돈다. 이 규칙을 깨면 등록된 상품이 전부 요금을 잃는다.
+  //
+  // ⚠ 유형 이름의 정본은 요금표다 (2026-08-26 결정).
+  //   4단계 '고르는 칸' 에도 설치유형 드롭다운을 만들 수 있는데, 두 곳에 같은 이름을
+  //   적으면 한 글자만 달라도 요금이 안 바뀐다. 그래서 요금표에 유형이 있으면
+  //   같은 이름의 '고르는 칸' 은 안 그린다(choicesHtml 참고).
+  function planTypes(p) {
+    var plans = (p.options && p.options.rentalPlans) || [];
+    var seen = {};
+    var out = [];
+    plans.forEach(function (pl) {
+      var t = pl && pl.type != null ? String(pl.type).trim() : '';
+      if (!t || seen[t]) return;
+      seen[t] = 1;
+      out.push(t);
+    });
+    return out;
+  }
+
+  // 유형 칸을 그릴지. 하나뿐이면 안 그린다 —
+  // 고를 게 없는 버튼 하나는 "왜 안 눌리지" 만 만든다(약정 버튼과 같은 규칙).
+  function hasTypeChoice(p) {
+    return planTypes(p).length > 1;
+  }
+
+  // 관리자가 정한 유형 칸 이름. 안 적었으면 '유형'.
+  function planTypeLabel(p) {
+    var l = p.options && p.options.planTypeLabel;
+    l = l == null ? '' : String(l).trim();
+    return l || '유형';
+  }
+
+  // 지금 보고 있는 유형. 부르는 쪽이 wantType 을 주면 그것, 없으면 첫 유형.
+  function pickedType(p, opts) {
+    var types = planTypes(p);
+    if (!types.length) return '';
+    var want = opts && opts.wantType != null ? String(opts.wantType).trim() : '';
+    if (want && types.indexOf(want) !== -1) return want;
+    return types[0];
+  }
+
+  // 그 유형에서 고를 수 있는 약정 줄들.
+  // type 이 없는 줄(공통)은 어느 유형에서나 같이 나온다.
+  function plansOfType(p, type) {
+    var plans = (p.options && p.options.rentalPlans) || [];
+    if (!type) return plans;
+    return plans.filter(function (pl) {
+      var t = pl && pl.type != null ? String(pl.type).trim() : '';
+      return !t || t === type;
+    });
+  }
+
   // 처음에 켜 둘 기간.
   // 찜·비교·마이페이지에서 "48개월로 보던 그 화면"으로 돌아올 수 있어야 하므로,
   // 부르는 쪽이 wantMonths 를 주면 그 줄을 켠다. 없거나 못 찾으면 가장 싼 줄.
+  //
+  // ⚠ 유형이 있는 상품은 '지금 보고 있는 유형' 안에서만 고른다.
+  //   전체에서 고르면 스탠드형을 보고 있는데 벽걸이형 요금이 켜진다.
   function pickedPlan(p, opts) {
-    var plans = (p.options && p.options.rentalPlans) || [];
+    var plans = plansOfType(p, pickedType(p, opts));
     if (!plans.length) return null;
     var want = opts && opts.wantMonths;
     if (want !== null && want !== undefined && want !== '') {
@@ -342,9 +410,8 @@
 
   // 기간 표에 고를 게 둘 이상 있는지. 하나뿐이면 버튼을 만들지 않는다 -
   // 누를 수 없는 버튼 하나는 "왜 안 눌리지" 만 만든다.
-  function hasPlanChoice(p) {
-    var plans = (p.options && p.options.rentalPlans) || [];
-    return plans.length > 1;
+  function hasPlanChoice(p, opts) {
+    return plansOfType(p, pickedType(p, opts)).length > 1;
   }
 
   // 오른쪽 위 — 요금 상자. 월 렌탈료 / 제휴카드 할인 두 칸.
@@ -353,11 +420,11 @@
   //   기간을 고를 수 있는 상품은 고른 순간 그 값이 최저가가 아니다.
   //   "최저 월 렌탈료" 라고 써두고 48개월 값을 보여주면 거짓말이 된다.
   function feeBoxHtml(p, opts) {
-    var plans = (p.options && p.options.rentalPlans) || [];
     var picked = pickedPlan(p, opts);
     var fee = picked ? picked.monthlyFee : p.monthlyFee;
     var discount = p.options ? p.options.cardDiscount : null;
-    var label = hasPlanChoice(p) ? '월 렌탈료' : '최저 월 렌탈료';
+    // 유형이 여러 개면 '최저' 라고 쓸 수 없다 — 다른 유형에 더 싼 줄이 있을 수 있다.
+    var label = (hasPlanChoice(p, opts) || hasTypeChoice(p)) ? '월 렌탈료' : '최저 월 렌탈료';
 
     var left = '<div class="pv2-feecell pv2-feecell--main">' +
       '<div class="pv2-feelabel">' + label + '</div>' +
@@ -382,34 +449,81 @@
   //
   // 보여주는 순서는 관리자가 입력한 순서 그대로 둔다. 여기서 정렬하면
   // 관리자가 "내가 넣은 순서와 다르게 나온다" 를 겪는다. 정렬이 필요하면 입력 쪽에서 한다.
+  // 유형 고르기 — 약정 버튼 바로 위. 누르면 아래 약정 목록이 통째로 바뀐다.
+  //
+  // 자리를 약정 위에 두는 이유: 유형이 약정보다 상위 결정이다.
+  // 스탠드형인지 벽걸이형인지 정해야 그 안에서 몇 개월을 고를 수 있다.
+  function planTypesHtml(p, opts) {
+    if (!hasTypeChoice(p)) return '';
+    var types = planTypes(p);
+    var cur = pickedType(p, opts);
+
+    return '<div class="pv2-ptypes">' +
+      '<div class="pv2-plans-label">' + esc(planTypeLabel(p)) + '</div>' +
+      '<div class="pv2-ptypes-btns">' +
+      types.map(function (t) {
+        // 그 유형의 가장 싼 값을 같이 보여준다 — 눌러 보기 전에 비교가 된다.
+        // 그 값이 곧 이 유형으로 바꿨을 때 켜질 줄이라, 클릭 처리도 이걸 그대로 쓴다.
+        var cheap = cheapestPlan(plansOfType(p, t));
+        var many = plansOfType(p, t).length > 1;
+        return '<button type="button" class="pv2-ptype' + (t === cur ? ' is-on' : '') + '"' +
+          ' data-pv2-ptype="' + esc(t) + '"' +
+          ' data-months="' + esc(cheap && cheap.months != null ? cheap.months : '') + '"' +
+          ' data-fee="' + esc(cheap && cheap.monthlyFee != null ? cheap.monthlyFee : '') + '">' +
+          '<span class="pv2-ptype-t">' + esc(t) + '</span>' +
+          (cheap && cheap.monthlyFee != null
+            ? '<span class="pv2-ptype-f">월 ' + esc(won(cheap.monthlyFee)) + (many ? '~' : '') + '</span>' : '') +
+          '</button>';
+      }).join('') +
+      '</div></div>';
+  }
+
+  // ⚠ 유형이 여러 개면 유형마다 약정 덩어리를 하나씩 다 그려 두고, 지금 유형 것만 보인다.
+  //   눌렀을 때 다시 그리지 않고 보이기만 바꾸려는 것이다.
+  //   bind() 는 상품 데이터를 안 들고 있어서(담는 칸에 리스너만 붙인다) 다시 그릴 수가 없다.
+  //   약정이 스무 개씩 되는 상품은 없으므로 다 그려 둬도 무겁지 않다.
   function plansHtml(p, opts) {
-    var plans = (p.options && p.options.rentalPlans) || [];
-    if (!plans.length) {
+    var all = (p.options && p.options.rentalPlans) || [];
+    if (!all.length) {
       return opts.showMissing
         ? '<div class="pv2-plans"><div class="pv2-miss">렌탈기간이 아직 없습니다</div></div>'
         : '';
     }
-    if (plans.length < 2) return '';
 
-    var want = pickedPlan(p, opts);
-    var marked = false;
+    var types = planTypes(p);
+    var multi = types.length > 1;
+    var groups = multi ? types : [''];   // 유형이 없거나 하나뿐이면 한 덩어리
+    var cur = pickedType(p, opts);
 
-    return '<div class="pv2-plans">' +
-      '<div class="pv2-plans-label">약정 기간</div>' +
-      '<div class="pv2-plans-btns">' +
-      plans.map(function (pl, i) {
-        // 같은 요금이 두 줄이면 앞엣것 하나만 켠다. 둘 다 켜지면 어느 값이 실릴지 알 수 없다.
-        var on = !marked && want && pl.monthlyFee === want.monthlyFee && pl.months === want.months;
-        if (on) marked = true;
-        return '<button type="button" class="pv2-plan' + (on ? ' is-on' : '') + '"' +
-          ' data-pv2-plan="' + i + '"' +
-          ' data-months="' + esc(pl.months == null ? '' : pl.months) + '"' +
-          ' data-fee="' + esc(pl.monthlyFee == null ? '' : pl.monthlyFee) + '">' +
-          '<span class="pv2-plan-m">' + esc(pl.months == null ? '기간 미입력' : pl.months + '개월') + '</span>' +
-          '<span class="pv2-plan-f">' + (pl.monthlyFee != null ? '월 ' + esc(won(pl.monthlyFee)) : '요금 미입력') + '</span>' +
-          '</button>';
-      }).join('') +
-      '</div></div>';
+    return groups.map(function (t) {
+      var plans = plansOfType(p, t);
+      // 고를 게 하나뿐인 유형은 버튼을 안 만든다. 요금 상자가 이미 그 값을 보여준다.
+      if (plans.length < 2) return '';
+
+      // 이 덩어리 안에서 켜 둘 줄. 지금 유형이면 화면과 같아야 하고,
+      // 숨겨진 유형은 나중에 눌렀을 때 켜질 값이라 가장 싼 줄로 둔다.
+      var want = t === cur ? pickedPlan(p, opts) : cheapestPlan(plans);
+      var marked = false;
+      var shown = !multi || t === cur;
+
+      return '<div class="pv2-plans' + (shown ? '' : ' is-off') + '" data-pv2-plans="' + esc(t) + '">' +
+        '<div class="pv2-plans-label">약정 기간</div>' +
+        '<div class="pv2-plans-btns">' +
+        plans.map(function (pl, i) {
+          // 같은 요금이 두 줄이면 앞엣것 하나만 켠다. 둘 다 켜지면 어느 값이 실릴지 알 수 없다.
+          var on = !marked && want && pl.monthlyFee === want.monthlyFee && pl.months === want.months;
+          if (on) marked = true;
+          return '<button type="button" class="pv2-plan' + (on ? ' is-on' : '') + '"' +
+            ' data-pv2-plan="' + i + '"' +
+            ' data-ptype="' + esc(t) + '"' +
+            ' data-months="' + esc(pl.months == null ? '' : pl.months) + '"' +
+            ' data-fee="' + esc(pl.monthlyFee == null ? '' : pl.monthlyFee) + '">' +
+            '<span class="pv2-plan-m">' + esc(pl.months == null ? '기간 미입력' : pl.months + '개월') + '</span>' +
+            '<span class="pv2-plan-f">' + (pl.monthlyFee != null ? '월 ' + esc(won(pl.monthlyFee)) : '요금 미입력') + '</span>' +
+            '</button>';
+        }).join('') +
+        '</div></div>';
+    }).join('');
   }
 
   // 신청 패널 안내 줄 — A/S 기간·가입가능연령처럼 "요금 옆에서 알려줘야 하는" 것들.
@@ -526,8 +640,14 @@
   // ⚠ options.choiceRows 라는 이름은 어드민 저장 코드(peChoiceRowsOut)가 정한 것이다.
   //   옛 상품에는 이 칸이 없다 — 없으면 아무것도 안 그린다.
   function choicesHtml(p, opts) {
+    // ⚠ 2026-08-26 — 요금표의 유형 칸과 이름이 같은 줄은 안 그린다.
+    //   드롭다운이 두 개 나오면 고객은 어느 쪽이 요금을 바꾸는지 알 수 없고,
+    //   요금이 안 바뀌는 쪽을 고른 채 신청하면 상담원이 다른 값을 받는다.
+    //   유형 이름의 정본은 요금표다.
+    var typeLabel = hasTypeChoice(p) ? planTypeLabel(p) : '';
     var rows = ((p.options && p.options.choiceRows) || []).filter(function (r) {
-      return r && r.choices && r.choices.length;
+      if (!r || !r.choices || !r.choices.length) return false;
+      return !typeLabel || String(r.label || '').trim() !== typeLabel;
     });
     if (!rows.length) return '';
 
@@ -592,10 +712,14 @@
     var init = pickedPlan(p, opts);
     var initFee = init ? init.monthlyFee : p.monthlyFee;
     var initMonths = init ? init.months : p.contractMonths;
+    // 유형도 같이 적는다 — 신청서에 '스탠드형' 이 안 실리면 상담원이 다시 물어야 한다.
+    var initType = pickedType(p, opts);
 
     return '<div class="pv2-root' + (opts.narrow ? ' pv2-root--narrow' : '') + '"' +
       ' data-selected-fee="' + esc(initFee == null ? '' : initFee) + '"' +
-      ' data-selected-months="' + esc(initMonths == null ? '' : initMonths) + '">' +
+      ' data-selected-months="' + esc(initMonths == null ? '' : initMonths) + '"' +
+      ' data-selected-type="' + esc(initType) + '"' +
+      ' data-type-label="' + esc(hasTypeChoice(p) ? planTypeLabel(p) : '') + '">' +
       // ★ 2026-08-26 — 제목 블록을 오른쪽 칸 맨 위로 옮겼다.
       //   전에는 화면 전체 폭 위에 혼자 있었다. 그러면 제목은 왼쪽 끝에 붙고
       //   값(요약표·요금)은 오른쪽에 있어, 눈이 좌우로 한 번 건너뛰어야 했다.
@@ -610,6 +734,7 @@
           headHtml(p, opts) +
           specHtml(p, fs, opts) +
           feeBoxHtml(p, opts) +
+          planTypesHtml(p, opts) +
           plansHtml(p, opts) +
           choicesHtml(p, opts) +
           (opts.actionsHtml ? '<div class="pv2-actions">' + opts.actionsHtml + '</div>' : '') +
@@ -646,6 +771,69 @@
     });
   }
 
+  // 요금 상자 숫자를 바꾼다. 약정 버튼과 유형 버튼이 둘 다 쓴다.
+  function setFeeText(hostEl, feeText) {
+    var val = hostEl.querySelector('.pv2-feecell--main .pv2-feeval');
+    if (val) val.textContent = feeText === '' || feeText == null ? '' : won(feeText);
+  }
+
+  // 유형 버튼 클릭 (2026-08-26) — 아래 약정 목록을 통째로 갈아 끼운다.
+  //
+  // 다시 그리지 않는다. 유형마다 약정 덩어리가 이미 다 그려져 있고 보이기만 바꾼다
+  // (plansHtml 참고). bind() 는 상품 데이터를 안 들고 있어서 다시 그릴 수가 없다.
+  function bindTypes(hostEl) {
+    if (!hostEl) return;
+    hostEl.addEventListener('click', function (e) {
+      var btn = e.target.closest && e.target.closest('[data-pv2-ptype]');
+      if (!btn) return;
+
+      var type = btn.getAttribute('data-pv2-ptype') || '';
+      var root = rootOf(hostEl);
+
+      hostEl.querySelectorAll('[data-pv2-ptype]').forEach(function (b) {
+        b.classList.toggle('is-on', b === btn);
+      });
+
+      // 이 유형의 약정 덩어리만 보인다
+      hostEl.querySelectorAll('[data-pv2-plans]').forEach(function (box) {
+        box.classList.toggle('is-off', box.getAttribute('data-pv2-plans') !== type);
+      });
+
+      // 바뀐 유형에서 켜 둘 줄 — 그 유형의 가장 싼 줄이다(유형 버튼이 들고 있다).
+      // 켜 두지 않으면 약정 버튼이 전부 꺼진 채로 남아, 어느 값이 실릴지 화면으로 알 수 없다.
+      var months = btn.getAttribute('data-months') || '';
+      var fee = btn.getAttribute('data-fee') || '';
+      var box = hostEl.querySelector('[data-pv2-plans="' + cssEsc(type) + '"]');
+      if (box) {
+        var marked = false;
+        box.querySelectorAll('[data-pv2-plan]').forEach(function (b) {
+          var hit = !marked && b.getAttribute('data-months') === months;
+          if (hit) marked = true;
+          b.classList.toggle('is-on', hit);
+        });
+      }
+
+      setFeeText(hostEl, fee);
+      if (root) {
+        root.setAttribute('data-selected-type', type);
+        root.setAttribute('data-selected-fee', fee);
+        root.setAttribute('data-selected-months', months);
+      }
+
+      hostEl.dispatchEvent(new CustomEvent('pv2-selection-change', {
+        bubbles: true,
+        detail: selection(hostEl)
+      }));
+    });
+  }
+
+  // 유형 이름은 관리자가 적은 글자다. 따옴표가 들어오면 선택자가 깨진다.
+  function cssEsc(s) {
+    var v = String(s == null ? '' : s);
+    if (typeof CSS !== 'undefined' && CSS && CSS.escape) return CSS.escape(v);
+    return v.replace(/["\\]/g, '\\$&');
+  }
+
   // 약정 버튼 클릭 — 요금 상자 숫자를 바꾸고 선택값을 루트에 적는다.
   function bindPlans(hostEl) {
     if (!hostEl) return;
@@ -655,16 +843,19 @@
 
       var root = rootOf(hostEl);
       var feeText = btn.getAttribute('data-fee');
-      var val = hostEl.querySelector('.pv2-feecell--main .pv2-feeval');
-      if (val) val.textContent = feeText === '' ? '' : won(feeText);
+      setFeeText(hostEl, feeText);
 
-      hostEl.querySelectorAll('[data-pv2-plan]').forEach(function (b) {
+      // ⚠ 같은 유형 안에서만 끈다. 다른 유형 덩어리까지 끄면
+      //   유형을 되돌렸을 때 아무 줄도 안 켜져 있다.
+      var box = btn.closest('[data-pv2-plans]') || hostEl;
+      box.querySelectorAll('[data-pv2-plan]').forEach(function (b) {
         b.classList.toggle('is-on', b === btn);
       });
 
       if (root) {
         root.setAttribute('data-selected-fee', feeText || '');
         root.setAttribute('data-selected-months', btn.getAttribute('data-months') || '');
+        root.setAttribute('data-selected-type', btn.getAttribute('data-ptype') || '');
       }
 
       // 찜·비교는 '상품' 이 아니라 '조합' 단위다(정수기와 같은 규칙).
@@ -686,6 +877,7 @@
     if (!hostEl || hostEl.__pv2Bound) return;
     hostEl.__pv2Bound = true;
     bindGallery(hostEl);
+    bindTypes(hostEl);
     bindPlans(hostEl);
   }
 
@@ -695,17 +887,25 @@
   // 신청서에 안 실으면 상담원이 고객에게 다시 물어야 한다.
   function selection(hostEl) {
     var root = rootOf(hostEl);
-    if (!root) return { monthlyFee: null, months: null, choices: {} };
+    if (!root) return { monthlyFee: null, months: null, planType: '', choices: {} };
     var f = root.getAttribute('data-selected-fee');
     var m = root.getAttribute('data-selected-months');
+    var t = root.getAttribute('data-selected-type') || '';
     var choices = {};
     root.querySelectorAll('[data-pv2-choice]').forEach(function (sel) {
       var label = sel.getAttribute('data-label') || '';
       if (label) choices[label] = sel.value;
     });
+    // 유형도 choices 에 같이 넣는다 (2026-08-26).
+    // 신청서를 만드는 쪽(simple-apply·application)은 choices 만 훑는다 —
+    // planType 만 따로 두면 그쪽 코드를 다 고쳐야 하고, 하나라도 빠뜨리면
+    // 상담원이 스탠드형인지 벽걸이형인지 모르는 신청서를 받는다.
+    var typeLabel = root.getAttribute('data-type-label') || '';
+    if (t && typeLabel && !choices[typeLabel]) choices[typeLabel] = t;
     return {
       monthlyFee: f === null || f === '' ? null : Number(f),
       months: m === null || m === '' ? null : Number(m),
+      planType: t,
       choices: choices
     };
   }
@@ -752,6 +952,22 @@
       '.pv2-feelabel{font-size:13px;color:#8a8fa3;font-weight:500;}',
       '.pv2-feeval{font-size:24px;font-weight:800;margin-top:6px;letter-spacing:-.5px;color:#18172b;}',
       '.pv2-feecell--discount .pv2-feeval{color:#e8590c;}',
+      /* 렌탈 유형 고르기 (2026-08-26) — 약정 위. 유형이 상위 결정이라 먼저 온다.
+         약정은 세로로 쌓지만 유형은 보통 둘이라 가로로 나눠 넣는다.
+         셋 이상이면 줄바꿈해서 두 줄이 된다(flex-wrap). */
+      '.pv2-ptypes{margin-top:14px;}',
+      '.pv2-ptypes-btns{display:flex;flex-wrap:wrap;gap:8px;}',
+      '.pv2-ptype{flex:1 1 130px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;'
+        + 'border:1px solid #e4e2ee;border-radius:9px;background:#fff;padding:11px 13px;'
+        + 'cursor:pointer;text-align:left;line-height:1.3;transition:border-color .12s,background .12s;}',
+      '.pv2-ptype:hover{border-color:#c8c4dc;}',
+      '.pv2-ptype-t{font-size:14px;font-weight:700;color:#4a4860;}',
+      '.pv2-ptype-f{font-size:12.5px;font-weight:700;color:#9a97ad;}',
+      '.pv2-ptype.is-on{border-color:#18172b;background:#18172b;}',
+      '.pv2-ptype.is-on .pv2-ptype-t{color:#fff;}',
+      '.pv2-ptype.is-on .pv2-ptype-f{color:#fff;}',
+      /* 지금 유형이 아닌 약정 덩어리. 지우지 않고 숨긴다 — 유형을 되돌릴 때 다시 그리지 않으려는 것. */
+      '.pv2-plans.is-off{display:none;}',
       /* 약정 기간 고르기 */
       '.pv2-plans{margin-top:14px;}',
       '.pv2-plans-label{font-size:13px;color:#8a8fa3;font-weight:600;margin-bottom:8px;}',
