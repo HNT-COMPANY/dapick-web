@@ -540,10 +540,18 @@
     return '<div class="pv2-root' + (opts.narrow ? ' pv2-root--narrow' : '') + '"' +
       ' data-selected-fee="' + esc(initFee == null ? '' : initFee) + '"' +
       ' data-selected-months="' + esc(initMonths == null ? '' : initMonths) + '">' +
-      headHtml(p, opts) +
+      // ★ 2026-08-26 — 제목 블록을 오른쪽 칸 맨 위로 옮겼다.
+      //   전에는 화면 전체 폭 위에 혼자 있었다. 그러면 제목은 왼쪽 끝에 붙고
+      //   값(요약표·요금)은 오른쪽에 있어, 눈이 좌우로 한 번 건너뛰어야 했다.
+      //   지금은 오른쪽 칸에서 [뱃지·렌탈사·제목·모델명] → 요약표 → 요금 → 약정 순으로
+      //   위에서 아래로 한 줄기로 읽힌다. 요약표의 모델명 바로 위에 제목이 붙는다.
+      //
+      // 1열로 접히면 이미지가 먼저 나오고 그 아래 제목이 온다. 그대로 둔다 —
+      //   폰에서는 사진을 먼저 보고 이름을 읽는 것이 자연스럽고, 커머스 화면이 대개 그렇다.
       '<div class="pv2-body">' +
         '<div class="pv2-left">' + galleryHtml(p, opts) + mediaActionsHtml(opts) + '</div>' +
         '<div class="pv2-right">' +
+          headHtml(p, opts) +
           specHtml(p, fs, opts) +
           feeBoxHtml(p, opts) +
           plansHtml(p, opts) +
@@ -653,13 +661,16 @@
     var css = [
       '.pv2-root{font-family:inherit;color:#18172b;}',
       /* 제목 */
-      '.pv2-head{padding:0 0 22px;}',
+      // 2026-08-26 — 오른쪽 칸 맨 위로 옮겼다. 전체 폭일 때 쓰던 아래 여백(22px)은
+      //   요약표와 너무 벌어져서 16 으로 줄이고, 아래에 옅은 줄을 넣어 값과 구분한다.
+      '.pv2-head{padding:0 0 16px;margin-bottom:16px;border-bottom:1px solid #f1f0f6;}',
       '.pv2-badges{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:10px;}',
       '.pv2-badge{font-size:11px;font-weight:800;color:#fff;border-radius:4px;padding:3px 7px;line-height:1.3;}',
       '.pv2-brand{margin-bottom:9px;}',
       '.pv2-brand img{height:22px;width:auto;max-width:150px;object-fit:contain;display:block;}',
       '.pv2-brand-name{font-size:14px;font-weight:700;color:#6b6880;}',
-      '.pv2-name{font-size:27px;font-weight:800;line-height:1.35;margin:0;letter-spacing:-.5px;}',
+      // 오른쪽 칸은 전체 폭보다 좁다. 27px 그대로면 긴 제목이 네 줄까지 접힌다.
+      '.pv2-name{font-size:23px;font-weight:800;line-height:1.35;margin:0;letter-spacing:-.5px;}',
       '.pv2-model{font-size:16px;color:#b0aec2;margin-top:4px;font-weight:500;}',
       '.pv2-tags{display:flex;flex-wrap:wrap;gap:6px;margin-top:14px;}',
       '.pv2-tag{font-size:12px;color:#6b6880;background:#f4f4f7;border-radius:5px;padding:5px 9px;line-height:1.3;}',
