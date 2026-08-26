@@ -67,6 +67,17 @@
     { key: 'name', label: '제목(상품명)', type: 'text', base: true, showOnSpec: false },
     { key: 'modelName', label: '모델명', type: 'text', base: true },
     { key: 'brandId', label: '렌탈사', type: 'brand', base: true },
+    // ★ 2026-08-26 추가 — 어느 카테고리든 거의 다 쓰는 두 칸이라 기본으로 깐다.
+    //
+    // ⚠ 렌탈사(brandId)와 브랜드(maker)는 다른 값이다.
+    //   렌탈사 = 계약 상대(LG헬로비전·SK매직). 제목 위에 로고가 붙는다.
+    //   브랜드 = 만든 회사(삼성·LG전자). 제목 앞의 [삼성] 이 그것이다.
+    //   key 를 brand 로 안 짓는 이유 — brandName·brandDirect 와 섞여 읽기 어려워진다.
+    //
+    // ⚠ base 가 아니다. 상품 본체가 아니라 specs 에 들어 있는 값이라
+    //   baseValue() 가 아니라 p.specs 에서 찾아야 한다.
+    { key: 'maker', label: '브랜드', type: 'text' },
+    { key: 'itemType', label: '품목', type: 'text' },
     { key: 'rentalPlans', label: '렌탈기간', type: 'plans', base: true },
     { key: 'monthlyFee', label: '월 렌탈료', type: 'number', base: true },
     { key: 'cardDiscount', label: '카드할인시 금액', type: 'number', base: true },
