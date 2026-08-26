@@ -236,6 +236,9 @@
             <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="RO"><span>RO필터</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="NANO"><span>나노필터</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="HOLLOW_FIBER"><span>중공사막필터</span></label>
+            <!-- 2026-08-26 추가. ⚠ data-value 는 백엔드 FilterType 의 code 와 글자가 같아야 한다.
+                 어긋나면 눌러도 아무 상품이 안 걸린다 (조용히 0건). -->
+            <label class="wf-opt"><input type="checkbox" data-filter="filterType" data-value="PRE_BLOCK_CARBON"><span>프리블록카본필터</span></label>
           </div>
         </div>
         <div class="wtf-group">
@@ -258,6 +261,8 @@
             <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="UV"><span>UV살균</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="HIGH_TEMP"><span>고온살균</span></label>
             <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="ELECTROLYTIC"><span>전해수살균</span></label>
+            <!-- 2026-08-26 추가. ⚠ data-value 는 백엔드 SanitizingType 의 code 와 글자가 같아야 한다. -->
+            <label class="wf-opt"><input type="checkbox" data-filter="sanitizing" data-value="AUTO_DRAIN"><span>자동 배수</span></label>
           </div>
         </div>
         <div class="wtf-group">
