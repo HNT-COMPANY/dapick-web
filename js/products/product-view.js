@@ -101,6 +101,34 @@
     return Number(v).toLocaleString() + '원';
   }
 
+  // ── 이미지 주소 보정 (2026-08-26) ─────────────────────────
+  //
+  // 왜: 업로드한 파일이 DB 에 '/uploads/common/xxx.png' 처럼 상대 주소로 들어 있다.
+  //   그 주소는 '지금 보고 있는 사이트' 기준이라, 어드민에서는 admin.dapick.co.kr/uploads/…,
+  //   고객 화면에서는 dapick.co.kr/uploads/… 를 찾는다. 파일은 api.dapick.co.kr 에 있으니
+  //   양쪽 다 404 다. 값은 멀쩡히 들어오는데 그림만 안 나온다.
+  //
+  //   렌탈사 로고에서 이게 드러났다 — 브랜드 관리 화면은 같은 보정(bmLogoSrc)을 이미
+  //   하고 있어서 거기서는 잘 보였다. 그래서 "로고 값이 안 들어온다" 로 보였던 것이다.
+  //
+  // ⚠ 이미 절대 주소(https://…)로 저장된 것도 많다. 그건 그대로 둔다 —
+  //   앞에 뭘 붙이면 오히려 깨진다. '/uploads/' 로 시작하는 것만 손본다.
+  //
+  // ⚠ 서버 주소를 여기서 정하지 않는다. 웹은 DAPICK_CONFIG, 어드민은 API_BASE 로
+  //   각자 이미 갖고 있다. 여기서 또 적으면 세 곳이 갈린다.
+  function apiBase() {
+    if (typeof DAPICK_CONFIG !== 'undefined' && DAPICK_CONFIG && DAPICK_CONFIG.API_BASE_URL) {
+      return DAPICK_CONFIG.API_BASE_URL;
+    }
+    if (typeof API_BASE !== 'undefined' && API_BASE) return API_BASE;
+    return '';
+  }
+
+  function imgSrc(url) {
+    var u = String(url == null ? '' : url);
+    return u.indexOf('/uploads/') === 0 ? apiBase() + u : u;
+  }
+
   // 미리보기에서만 "○○ 없음" 을 보여준다. 실제 화면에서는 빈 자리를 조용히 접는다.
   function miss(opts, text) {
     return opts.showMissing ? '<span class="pv2-miss">' + esc(text) + '</span>' : '';
@@ -174,7 +202,7 @@
   function brandHtml(p, opts) {
     var b = brandOf(p);
     if (b.logoUrl) {
-      return '<div class="pv2-brand"><img src="' + esc(b.logoUrl) + '" alt="' + esc(b.name) + '"/></div>';
+      return '<div class="pv2-brand"><img src="' + esc(imgSrc(b.logoUrl)) + '" alt="' + esc(b.name) + '"/></div>';
     }
     if (b.name) {
       return '<div class="pv2-brand"><span class="pv2-brand-name">' + esc(b.name) + '</span></div>';
@@ -230,7 +258,7 @@
     }
 
     return '<div class="pv2-gallery">' +
-      '<div class="pv2-mainimg"><img id="pv2-mainimg-el" src="' + esc(p.imageUrl) + '" alt="' + esc(p.name || '') + '"/></div>' +
+      '<div class="pv2-mainimg"><img id="pv2-mainimg-el" src="' + esc(imgSrc(p.imageUrl)) + '" alt="' + esc(p.name || '') + '"/></div>' +
       '</div>';
   }
 
@@ -422,7 +450,7 @@
     return '<div class="pv2-specbox"><div class="pv2-specgrid">' +
       rows.map(function (r) {
         var val = r.image
-          ? '<img class="pv2-specimg" src="' + esc(r.value) + '" alt="' + esc(r.label) + '" />'
+          ? '<img class="pv2-specimg" src="' + esc(imgSrc(r.value)) + '" alt="' + esc(r.label) + '" />'
           : esc(r.value);
         return '<div class="pv2-speccell">' +
           '<div class="pv2-speckey">' + esc(r.label) + '</div>' +
@@ -677,7 +705,13 @@
       '.pv2-note{display:flex;align-items:flex-start;gap:12px;padding:12px 16px;font-size:13.5px;}',
       '.pv2-note + .pv2-note{border-top:1px solid #f4f3f8;}',
       '.pv2-note-key{flex:0 0 92px;color:#9a97ad;font-weight:500;}',
-      '.pv2-note-val{flex:1;color:#2a2a35;font-weight:600;word-break:break-word;line-height:1.5;}',
+      // ★ 2026-08-26 — white-space:pre-line 추가.
+      //   어드민 입력이 textarea 이고 "내용 (여러 줄 가능)" 이라고 안내까지 하는데,
+      //   화면에서는 줄바꿈이 통째로 무시돼 한 줄로 이어 붙었다.
+      //   pre-line 은 관리자가 친 엔터만 살리고 연속 공백은 하나로 합친다 —
+      //   pre 나 pre-wrap 을 쓰면 붙여넣기에 딸려온 공백까지 그대로 나가 들쭉날쭉해진다.
+      '.pv2-note-val{flex:1;color:#2a2a35;font-weight:600;word-break:break-word;' +
+        'line-height:1.5;white-space:pre-line;}',
       /* 요약정보 */
       /* 2열 밖으로 나와 폭 전체를 쓴다. 그만큼 칸을 4개로 늘려 표가 세로로 안 늘어지게 한다.
          auto-fit 을 안 쓰는 이유 - 폭이 넓으면 7~8열까지 벌어져 어느 줄이 짝인지 안 보인다. */
@@ -689,7 +723,10 @@
       '.pv2-speccell{display:grid;grid-template-columns:104px minmax(0,1fr);gap:12px;' +
         'align-items:start;padding:7px 0;}',
       '.pv2-speckey{font-size:13.5px;color:#8b8898;font-weight:500;line-height:1.5;}',
-      '.pv2-specval{font-size:13.5px;color:#2a2a35;font-weight:600;word-break:break-word;line-height:1.5;}',
+      // 요약표 값도 줄바꿈을 살린다 (2026-08-26). 양식의 여러 줄 칸(textarea)이
+      // 이 표로 들어올 수 있어서, 안내 줄만 고치면 같은 값이 자리마다 다르게 보인다.
+      '.pv2-specval{font-size:13.5px;color:#2a2a35;font-weight:600;word-break:break-word;' +
+        'line-height:1.5;white-space:pre-line;}',
       // 이미지 줄(렌탈사 로고 등). 값 자리에 그대로 넣으므로 높이를 묶어 둔다 —
       // 안 묶으면 큰 로고 한 장이 표 전체를 밀어낸다.
       '.pv2-specimg{max-height:26px;max-width:100%;width:auto;object-fit:contain;display:block;}',
