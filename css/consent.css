@@ -1,8 +1,8 @@
-/* ════════════════════════════════════════════════════
+/*
    consent.css — 다픽 지원금 지급 및 환수 동의서
    정식 법률 계약서 룩 (흰 종이 카드 + 검정 본문 + 남색 표 헤더)
    기능/입력 로직(v3)은 그대로, 디자인만 계약서답게.
-   ════════════════════════════════════════════════════ */
+    */
 /* Pretendard 전역 로드 (consent.html은 reset.css 미로드 → 여기서 직접 로드). @import는 모든 룰보다 앞. */
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
 
@@ -60,9 +60,9 @@ html, body {
 .state__text { margin: 0; font-size: 15px; color: var(--muted); }
 .state--error .state__title { color: var(--danger); }
 
-/* ════════════════════════════════════════════════════
+/*
    문서 카드 (A4 종이 느낌)
-   ════════════════════════════════════════════════════ */
+    */
 .doc {
   background: var(--paper);
   border: 1px solid #d3d3d3;
@@ -166,9 +166,9 @@ html, body {
 .doc__affirm-title { margin: 0 0 7px; font-size: 15px; font-weight: 800; color: var(--consent-navy); }
 .doc__affirm-text { margin: 0; font-size: 14px; color: var(--ink-soft); }
 
-/* ════════════════════════════════════════════════════
+/*
    갑/을 계약 당사자 (하나의 표 — 좌:갑 / 우:을, 행 높이 정렬)
-   ════════════════════════════════════════════════════ */
+    */
 .ctable {
   width: 100%;
   border-collapse: collapse;
@@ -309,9 +309,9 @@ html, body {
 .btn-submit:active { background: var(--navy-dark); }
 .btn-submit:disabled { background: #9aa6bb; cursor: not-allowed; }
 
-/* ════════════════════════════════════════════════════
+/*
    서명 모달
-   ════════════════════════════════════════════════════ */
+    */
 .sign-overlay {
   position: fixed;
   inset: 0;
@@ -367,9 +367,9 @@ html, body {
 .btn-primary { color: #fff; background: var(--navy); border: 0; }
 .btn-primary:active { background: var(--navy-dark); }
 
-/* ════════════════════════════════════════════════════
+/*
    반응형
-   ════════════════════════════════════════════════════ */
+    */
 
 /* 태블릿 이하 — 종이 여백 축소 */
 @media (max-width: 680px) {

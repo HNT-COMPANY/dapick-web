@@ -1,9 +1,9 @@
-// ════════════════════════════════════════════════════
+//
 // best-grid.js — 메인 베스트 요금제 동적 렌더
 // GET /api/internet-tv-products?best=true → #bestGrid 카드 렌더
 // 금액은 InternetCalc.calculate 단일 출처(자체 계산 금지)
 // 카드 대표 금액 = internetOptions[0](첫 번째 옵션)
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 

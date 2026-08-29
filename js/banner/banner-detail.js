@@ -1,8 +1,8 @@
-// ════════════════════════════════════════════════════
+//
 // banner-detail.js — 배너 상세페이지 (linkUrl 없이 상세를 만든 배너의 클릭 진입지)
 // GET /api/banners/{id} → detailContent(Quill Delta) 렌더.
 // 렌더러(커스텀 blot + delta→HTML)는 카드 상세(card-detail.js)와 동일 shape 유지 필수.
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 

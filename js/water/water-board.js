@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // water-board.js — 메인보드(브랜드 선택) ↔ 상품뷰 전환 + 브랜드 동적 렌더
 // 브랜드 데이터 = 어드민 '브랜드 관리' → GET /api/brands?categoryType=WATER
 //   (로더는 gnb.js 의 dpFetchWaterBrands — GNB 드롭다운과 같은 fetch 를 공유)
@@ -7,7 +7,7 @@
 // - 상품뷰 브랜드 탭 · 필터 브랜드 체크박스도 같은 데이터로 렌더
 // 의존: utils.js(escapeHtml/escapeAttr), gnb.js(dpFetchWaterBrands/dpBrandLogoSrc),
 //       water.js(switchBrand/applyFilters — BRAND_INFO 는 여기 전역을 읽음)
-// ════════════════════════════════════════════════════
+//
 
 // 코드 → { name, logo, desc }. water.js(switchBrand 헤더)와 공유하는 페이지 전역.
 let BRAND_INFO = {};

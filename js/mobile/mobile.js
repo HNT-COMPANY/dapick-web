@@ -1,6 +1,6 @@
 // mobile.js — 다픽 휴대폰 페이지
 
-// ══════════════════════════════════════════════════════
+//
 // 매장 데이터
 // ──────────────────────────────────────────────────────
 // 2026-07-25: 하드코딩 STORES 배열 → 백엔드 API(/api/stores) 조회로 전환.
@@ -12,7 +12,7 @@
 // 옛 필드 중 사라진 것: secretBenefit, images — 어디서도 렌더되지 않던 값이다.
 // detailUrl(상세페이지 파일명)은 응답에 아직 오지만 이 파일은 쓰지 않는다 —
 // 상세 주소는 slug 하나로 정해진다(6bb1810). 백엔드에서 컬럼째 빼는 건 별도 백로그.
-// ══════════════════════════════════════════════════════
+//
 let STORES = [];
 let storesLoaded = false; // 조회가 끝났는지 (실패해도 true)
 let storesLoadError = null; // 실패 사유. 있으면 '매장 없음'이 아니라 '불러오기 실패'를 띄운다
@@ -49,9 +49,9 @@ function mEsc(v) {
 let currentModalStoreId = null;
 let kakaoMapSdkReady = false;
 
-// ════════════════════════════════════════════════════
+//
 // 1. 지역 필터 — 탭 active 토글 + 카드 필터링
-// ════════════════════════════════════════════════════
+//
 let currentRegion = 'ulsan';
 
 function selectRegion(region, btnEl) {
@@ -64,9 +64,9 @@ function selectRegion(region, btnEl) {
   renderStores(region);
 }
 
-// ════════════════════════════════════════════════════
+//
 // 2. 매장 카드 동적 렌더 (STORES 데이터 박힌 후 호출됨)
-// ════════════════════════════════════════════════════
+//
 function renderStores(region) {
   const grid = document.getElementById('mStoreGrid');
   if (!grid) return;
@@ -121,9 +121,9 @@ function renderStores(region) {
     .join('');
 }
 
-// ════════════════════════════════════════════════════
+//
 // 3. 지점안내 모달 — 열기 / 닫기 / 채우기
-// ════════════════════════════════════════════════════
+//
 function openStoreModal(storeId) {
   const modal = document.getElementById('storeModal');
   if (!modal) return;
@@ -262,9 +262,9 @@ document.addEventListener('keydown', (e) => {
   }
 });
 
-// ════════════════════════════════════════════════════
+//
 // 4. 카카오맵 — Lazy Load + 매장 위치 표시
-// ════════════════════════════════════════════════════
+//
 function loadKakaoMapSdk() {
   return new Promise((resolve, reject) => {
     if (kakaoMapSdkReady) {
@@ -359,9 +359,9 @@ function showMapError(msg) {
   }
 }
 
-// ════════════════════════════════════════════════════
+//
 // 5. 페이지 이동 — water.js의 goPage 패턴 통일
-// ════════════════════════════════════════════════════
+//
 function goPage(page) {
   const map = {
     mobile: 'mobile.html',
@@ -373,9 +373,9 @@ function goPage(page) {
   window.location.href = map[page] || 'index.html';
 }
 
-// ════════════════════════════════════════════════════
+//
 // 7. 초기 렌더 — 첫 탭 자동 active + 매장 API 조회 + 페이드업 초기화
-// ════════════════════════════════════════════════════
+//
 document.addEventListener('DOMContentLoaded', () => {
   const activeTab = document.querySelector(
     `.m-region-tab[data-region="${currentRegion}"]`,
@@ -387,9 +387,9 @@ document.addEventListener('DOMContentLoaded', () => {
   initHeroTextRepeat();
 });
 
-// ════════════════════════════════════════════════════
+//
 // 8. 스크롤 페이드 업 애니메이션 (반복 재생, unobserve 금지)
-// ════════════════════════════════════════════════════
+//
 function initFadeUp() {
   const targets = document.querySelectorAll('.m-fade-up');
   if (!targets.length || !('IntersectionObserver' in window)) return;
@@ -413,9 +413,9 @@ function initFadeUp() {
   targets.forEach((t) => io.observe(t));
 }
 
-// ════════════════════════════════════════════════════
+//
 // 9. HERO 텍스트 순차 등장 (반복 재생, unobserve 금지 — 협업룰 §9)
-// ════════════════════════════════════════════════════
+//
 function initHeroTextRepeat() {
   const targets = document.querySelectorAll(
     '.m-hero-title, .m-hero-sub, .m-hero-visual',

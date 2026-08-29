@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // internet-product-base.js v10 — 인터넷·TV 빌더 (아정당식 카드)
 // ────────────────────────────────────────────────────
 // v10 변경점 (6/17):
@@ -20,7 +20,7 @@
 //   init({provider}): 레거시 6개 페이지
 //   백엔드: GET /api/internet-tv-products (전체 활성 → carrier 필터)
 //   discountMeta: { gift, cardDiscount, bundleDiscount }
-// ════════════════════════════════════════════════════
+//
 
 window.InternetProductBase = (function () {
   'use strict';
@@ -573,7 +573,7 @@ window.InternetProductBase = (function () {
           renderTvOptions();
           _selectedSetTop = null;
           renderSetTopOptions();
-          // ★TV1 OFF → TV2 토글·섹션 연쇄 해제 (종속)
+          // TV1 OFF → TV2 토글·섹션 연쇄 해제 (종속)
           _toggles.tv2 = false;
           _selectedTv2 = null;
           renderTv2Options();
@@ -601,7 +601,7 @@ window.InternetProductBase = (function () {
         toggleSection('ipTv2Section', input.checked);
         if (input.checked) {
           moveSectionToEnd('ipTv2Section');
-          // ★TV2 자동선택 안 함 — 빈 상태 노출만 (추가 비용, 사용자 명시 선택)
+          // TV2 자동선택 안 함 — 빈 상태 노출만 (추가 비용, 사용자 명시 선택)
           renderTv2Options();
         } else {
           _selectedTv2 = null;
@@ -719,7 +719,7 @@ window.InternetProductBase = (function () {
     }
 
     // 안내 문구는 가격 컬럼(.ip-pb-prices, flex-column) 안에 쌓는다.
-    // ★그리드(.ip-pricebar-inner: 1fr 1fr auto) 자식으로 넣으면 버튼 칸을
+    // 그리드(.ip-pricebar-inner: 1fr 1fr auto) 자식으로 넣으면 버튼 칸을
     //   밀어내므로, hint(ipSettopHint)와 동일하게 가격 컬럼 내부에 append.
     const notesBox =
       document.querySelector('.ip-pb-prices') || (giftEl && giftEl.parentNode);

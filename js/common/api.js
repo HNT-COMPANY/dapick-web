@@ -1,7 +1,7 @@
-// ════════════════════════════════════════════════════
+//
 // api.js — 다픽 웹 API 클라이언트
 // BASE_URL은 config.js 박혀있으면 거기서 박음, 박지 않으면 자체 분기 박음
-// ════════════════════════════════════════════════════
+//
 
 // ── BASE_URL 박음 (환경 자동 분기) ────────────────────────────────
 const BASE_URL = (() => {
@@ -24,7 +24,7 @@ const BASE_URL = (() => {
   return 'https://api.dapick.co.kr'; // 운영 박음 (Cloudflare Pages 박은 영역 포함)
 })();
 
-// ⚠ dpLog 를 그냥 부르지 않는다. config.js 를 안 실은 화면이나
+// dpLog 를 그냥 부르지 않는다. config.js 를 안 실은 화면이나
 //   옛 config.js 가 캐시에 남은 브라우저에서 ReferenceError 가 난다.
 //   로그 한 줄 때문에 그 뒤 코드가 통째로 안 도는 것이 훨씬 나쁘다.
 var apiLog = (typeof dpLog === 'function') ? dpLog : function () {};

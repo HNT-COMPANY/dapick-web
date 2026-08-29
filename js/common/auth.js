@@ -1,6 +1,6 @@
-// ============================================================
+//
 // auth.js - dapick web auth manager
-// ------------------------------------------------------------
+//
 // Responsibility: token save/clear, login state, token refresh.
 // GNB rendering is handled by gnb-user.js (separation of concerns).
 //
@@ -9,7 +9,7 @@
 //     Must complete signup before using the site.
 //   - isPending() is the single source of truth used by the
 //     page guard (gnb-user.js) and the login modal (login.js).
-// ============================================================
+//
 
 const TOKEN_KEY = 'dapick_token';
 const REFRESH_KEY = 'dapick_refresh';
@@ -70,16 +70,16 @@ function markActive() {
   localStorage.setItem(STATUS_KEY, 'ACTIVE');
 }
 
-// ================================================================
+//
 // 로그인 후 복귀 경로
-// ----------------------------------------------------------------
+//
 // 로그인을 요구하는 지점이 사이트 곳곳에 흩어져 있는데(찜·후기·문의·
 // 마이페이지·세션만료 등) 대부분 현재 위치를 안 남기고 /login 으로만
 // 보냈다. 그래서 로그인하면 전부 홈으로 떨어졌다.
 // 저장과 복원을 여기 한 곳으로 모은다.
 //   보내기 전:  saveReturnUrl()
 //   로그인 후:  takeReturnUrl() || 'index.html'
-// ================================================================
+//
 const RETURN_KEY = 'redirect_after_login';
 
 // 같은 사이트 안의 경로인가.

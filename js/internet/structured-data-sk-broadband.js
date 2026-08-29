@@ -1,7 +1,7 @@
-// ════════════════════════════════════════════════════
+//
 // structured-data-skb.js — SK broadband 페이지 SEO (JSON-LD)
 // @graph: Organization, WebPage, BreadcrumbList, Service
-// ════════════════════════════════════════════════════
+//
 
 (function () {
   'use strict';

@@ -1,8 +1,8 @@
-// ════════════════════════════════════════════════════
+//
 // structured-data-kt.js — KT 페이지 SEO (JSON-LD)
 // ────────────────────────────────────────────────────
 // @graph: Organization, WebPage, BreadcrumbList, Service
-// ════════════════════════════════════════════════════
+//
 
 (function () {
   'use strict';

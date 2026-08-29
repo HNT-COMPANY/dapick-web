@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // internet-detail.js — 인터넷·TV 소비자 상세페이지
 // ────────────────────────────────────────────────────
 // 계산은 InternetCalc 재사용(자체 계산식 금지), 신청은 DapickApplication 재사용.
@@ -10,12 +10,12 @@
 //   - with: 켜진 부가옵션 콤마 목록 (방어용 힌트; 실제 on/off는 옵션 복원 성공 여부로 결정)
 //
 // STEP 1: 진입→로드→복원→정적 렌더. (변경/추가/제거=STEP 2, 신청=STEP 3)
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 
   // ── CARRIER_MAP 최소 복제 (1차: 렌더용 표시명/색/로고만) ──
-  // ★ 백로그: base.js의 CARRIER_MAP과 권위 소스가 갈라짐 → 추후 공유 모듈로 추출 예정.
+  // 백로그: base.js의 CARRIER_MAP과 권위 소스가 갈라짐 → 추후 공유 모듈로 추출 예정.
   var CARRIER_MAP = {
     SKT: { name: 'SKT', color: '#3617CE', logo: 'assets/logos/SKTLOGO.png' },
     KT: { name: 'KT', color: '#E31837', logo: 'assets/logos/KT.png' },
@@ -132,7 +132,7 @@
   }
 
   // 현재 조합 → 복원용 쿼리 파라미터.
-  // ★ 키 이름은 restoreSelection() 이 읽는 이름과 반드시 같아야 한다.
+  // 키 이름은 restoreSelection() 이 읽는 이름과 반드시 같아야 한다.
   //   여기서 하나라도 어긋나면 찜 목록에서 돌아왔을 때 조용히 다른 조합이 뜬다.
   function favOptions() {
     var o = { carrier: _carrierKey };
@@ -179,9 +179,9 @@
     }
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // 진입
-  // ════════════════════════════════════════════════════
+  //
   function init() {
     var params = new URLSearchParams(window.location.search);
     _carrierKey = params.get('carrier');
@@ -242,7 +242,7 @@
   }
 
   // 비교함 버튼 1회 생성. 찜과 똑같이 조합이 바뀔 때마다 refresh 한다.
-  // ★ 인터넷·TV 는 상품 1개 = 통신사 1개라서, 조합(options)이 빠지면
+  // 인터넷·TV 는 상품 1개 = 통신사 1개라서, 조합(options)이 빠지면
   //   같은 통신사의 기가1G / 기가500M 이 한 항목으로 뭉개진다.
   function initCompare() {
     if (typeof window.dpCompareInit !== 'function' || !_product) return;
@@ -272,9 +272,9 @@
   }
 
   // ── 하단 트레이 '+' 카드 → 그 자리에서 다른 인터넷 조합 고르기 ────────
-  // ★ 여기서 목록을 페이지 이동 없이 받아온다. internet.html 로 보내면
+  // 여기서 목록을 페이지 이동 없이 받아온다. internet.html 로 보내면
   //   담아둔 걸 두고 화면을 떠나는 셈이라 비교 흐름이 끊긴다.
-  // ★ 한 줄 = 통신사 × 인터넷 옵션 하나(TV·공유기 없는 인터넷 단독가).
+  // 한 줄 = 통신사 × 인터넷 옵션 하나(TV·공유기 없는 인터넷 단독가).
   //   TV 조합까지 여기서 고르게 하면 목록이 수백 줄이 된다. 인터넷 단독으로
   //   담고, 세부 조합은 '자세히 보기'로 그 상세에서 다시 담는 흐름이다.
   function registerPicker() {
@@ -353,9 +353,9 @@
     syncSetTop2WithTv2();
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // 렌더
-  // ════════════════════════════════════════════════════
+  //
   function renderBrand() {
     var m = CARRIER_MAP[_carrierKey] || {
       name: _carrierKey,
@@ -520,7 +520,7 @@
       cardConsult.hidden = !showConsult;
     }
 
-    // ★ 안내문구는 calculate 출력이 아니라 선택 인터넷 옵션에서 직접 읽음
+    // 안내문구는 calculate 출력이 아니라 선택 인터넷 옵션에서 직접 읽음
     var notice =
       _selectedInternet && _selectedInternet.noticeText
         ? String(_selectedInternet.noticeText)
@@ -550,9 +550,9 @@
     if (btn) btn.disabled = true;
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // 동작: 변경 / 추가 / 제거 + 다이얼로그
-  // ════════════════════════════════════════════════════
+  //
   var _dlgKind = null;
 
   function optsFor(kind) {

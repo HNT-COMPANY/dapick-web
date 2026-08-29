@@ -1,10 +1,10 @@
-// ════════════════════════════════════════════════════
+//
 // card-partners.js — '함께하는 카드사' 그리드 (카드사 = 선택자)
 // GET /api/card-categories (공개) → 로고 + 카드사명 타일.
 // 타일 클릭 → 그 카드사 선택(하이라이트) + window.cardListShow(cat)로 '추천 카드' 영역 교체.
 // (외부 사이트 이동은 카드 상세페이지의 '카드사 바로가기'에서 처리 — 여기선 선택만.)
 // 의존: api.js(api.get), card-list.js(window.cardListShow)
-// ════════════════════════════════════════════════════
+//
 (function () {
   const box = document.getElementById('cardPartners');
   if (!box) return;

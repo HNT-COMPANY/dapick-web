@@ -1,9 +1,9 @@
-// ════════════════════════════════════════════════════
+//
 // card-list.js — 카드 페이지 카드 목록 (선택된 카드사의 카드를 히어로로 렌더)
 // window.cardListShow(cat) 를 card-partners.js가 카드사 선택 시 호출.
 //   cat = { id, slug, name } → GET /api/card-categories/{slug}/cards
 // 클릭 시 card-detail.html?id={id}. 혜택 아이콘: Lucide.
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
   const box = document.getElementById('cardList');

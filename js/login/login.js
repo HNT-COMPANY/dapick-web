@@ -86,13 +86,13 @@ function handleAfterLogin() {
   window.location.href = takeReturnUrl() || 'index.html';
 }
 
-// ============================================================
+//
 // PENDING LOCK - trap the user in the signup modal.
 // No close button exists in the modal HTML, so we only need to
 // block the browser back button while pending. Combined with the
 // page guard in gnb-user.js (which bounces any other page back to
 // login.html), the user cannot leave until signup completes.
-// ============================================================
+//
 function engagePendingLock() {
   if (_csPendingLock) return;
   _csPendingLock = true;
@@ -133,9 +133,9 @@ async function cancelSignup() {
   location.href = 'index.html';
 }
 
-// ============================================================
+//
 // [Step 1] agreement modal
-// ============================================================
+//
 function openAgreementModal() {
   engagePendingLock(); // lock as soon as the signup flow starts
 
@@ -204,9 +204,9 @@ function agHideAlert() {
   if (el) el.classList.remove('show');
 }
 
-// ============================================================
+//
 // [Step 2] complete-signup modal (PENDING_PROFILE -> ACTIVE)
-// ============================================================
+//
 let _csSmsSent = false;
 let _csSmsVerified = false;
 let _csSmsTimer = null;
@@ -544,11 +544,11 @@ function toggleEmail(e) {
   }
 }
 
-// ============================================================
+//
 // auth panel routing (login <-> find-id <-> reset-pw)
 // 기존 패널 show/hide 패턴과 동일하게 단순 표시 전환.
 // 입력 검증/실제 API 호출/단계 전환은 W4에서 채운다.
-// ============================================================
+//
 function showAuthPanel(name) {
   const views = {
     default: document.getElementById('auth-default'),
@@ -573,11 +573,11 @@ function showAuthPanel(name) {
   }
 }
 
-// ============================================================
+//
 // 비밀번호 찾기 3단계 (send-code -> verify-code -> confirm)
 // 모든 호출은 미로그인 상태 → {skipAuthRefresh:true} (W2 옵션) 필수.
 // resetToken 은 메모리 변수로만 보관(localStorage 저장 금지 — 단기 토큰).
-// ============================================================
+//
 let _resetEmail = '';
 let _resetToken = '';
 let _resetRemain = 300;
@@ -789,11 +789,11 @@ async function handleResetConfirm() {
   }
 }
 
-// ============================================================
+//
 // 아이디(이메일) 찾기 — 이름 + 전화 동시 일치 시 마스킹 이메일 표시.
 // 공개 엔드포인트 → {skipAuthRefresh:true}. 전화는 csFormatPhone(재사용)으로
 // 입력 중 자동 포맷되며, 백엔드가 숫자만 추출해 정규화한다.
-// ============================================================
+//
 function showFindIdAlert(msg, type = 'error') {
   const el = document.getElementById('find-id-alert');
   if (!el) return;

@@ -1,11 +1,11 @@
-// ════════════════════════════════════════════════════
+//
 // _worker.js — Cloudflare Pages 고급 모드 Worker
 // 항목별 OG/메타 서버 주입(SSR-lite) — 카톡·페북 등 JS 미실행 봇 대응.
 //  · 후기: /reviews/{제목슬러그}-{id}
 //  · 상세(?id=): /event-detail /card-detail /water-detail /rental-detail /popup-detail
 //  · 매장: /store/{URL 식별자} → store-detail.html 틀에 메타 + 본문까지 주입 (옛 /store-{x} 는 301)
 // 그 외 요청은 정적 자산 위임. ※ Pages 고급 모드: env.ASSETS 자동 제공.
-// ════════════════════════════════════════════════════
+//
 
 const API_BASE = 'https://api.dapick.co.kr';
 const SITE = 'https://dapick.co.kr';
@@ -115,18 +115,18 @@ async function injectReview(request, env, id) {
   }
 }
 
-// ════════════════════════════════════════════════════
+//
 // 매장 상세 — /store/{URL 식별자}
 //
 // 주소는 관리자 5단계 'URL 식별자'(stores.slug) 하나로 정해진다.
 // 상세페이지 주소(detail_url) 는 안 쓴다 — 그건 손으로 파일 만들던 시절 값이다.
 // 페이지는 매번 틀(/store-detail)로 새로 그린다. 옛 store-*.html 은 안 본다.
 //
-// ⚠️ 아래 sdEsc / sdSec* 는 js/store/store-detail.js 의 같은 이름 함수와
+// 아래 sdEsc / sdSec* 는 js/store/store-detail.js 의 같은 이름 함수와
 //    '똑같은 HTML' 을 만들어야 한다. 여기가 봇(네이버 Yeti 는 JS 를 안 돌린다)과
 //    첫 화면이 보는 쪽이고, 저쪽은 worker 가 없는 자리(로컬)에서 도는 쪽이다.
 //    한쪽만 고치면 두 화면이 갈린다.
-// ════════════════════════════════════════════════════
+//
 
 /* /store/{slug} 만 매장이다. slug 는 백엔드 StoreService.resolveSlug 가
    보증하는 문자열(영숫자·하이픈·밑줄)이고, 한글 지점명이면 'store','store-2'
@@ -436,14 +436,14 @@ async function redirectLegacyDir(request, env) {
   return Response.redirect(`${SITE}/mobile`, 302);
 }
 
-// ════════════════════════════════════════════════════
+//
 // sitemap.xml — 매장 줄은 손으로 안 적는다
 //
 // 가맹점이 10곳이 되든 100곳이 되든 sitemap 을 고치러 들어올 일이 없어야 한다.
 // 그래서 매장 <url> 은 파일에 안 적고 API 로 채운다.
 // 잘 안 바뀌는 고정 페이지(메인·카테고리·정책)는 그대로 파일에 둔다 —
 // 그건 관리자에서 만드는 게 아니라 우리가 파일로 만드는 페이지라서다.
-// ════════════════════════════════════════════════════
+//
 const SITEMAP_MARK = '<!--STORES-->';
 
 async function injectSitemap(request, env) {
@@ -531,7 +531,7 @@ export default {
     // 문자·알림톡에 담기는 주소라 짧아야 한다. 토큰은 URL 안전 base64(43자) 이므로
     // A-Z a-z 0-9 - _ 만 나온다. 여기서 걸러 두면 이상한 주소가 화면까지 가지 않는다.
     //
-    // ⚠ review-write.html 은 반드시 <base href="/"> 를 달고 있어야 한다.
+    // review-write.html 은 반드시 <base href="/"> 를 달고 있어야 한다.
     //    이 응답은 주소창이 /r/xxx 인 채로 내려가므로, 상대 경로(css/...)는
     //    /r/css/... 로 풀려 전부 404 가 된다 — 스타일 없는 알몸 페이지가 뜬다.
     if (/^\/r\/[A-Za-z0-9_-]{16,64}$/.test(key)) {

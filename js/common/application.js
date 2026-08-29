@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // application.js — 다픽 신청 처리 통합 모듈 (공통 모달 버전)
 // ────────────────────────────────────────────────────
 // 5/27 통일: 신청자정보 모달을 이 모듈이 동적 주입 (전 카테고리 공유)
@@ -16,7 +16,7 @@
 //            applicantName, applicantPhone, applicantEmail,
 //            bankAccount, zipcode, address,
 //            agreePrivacy, agreeMarketing, agreeEmailInfo }
-// ════════════════════════════════════════════════════
+//
 
 window.DapickApplication = (function () {
   'use strict';
@@ -129,9 +129,9 @@ window.DapickApplication = (function () {
     return d.slice(0, 3) + '-' + d.slice(3, 7) + '-' + d.slice(7);
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // 모달 주입 (1회)
-  // ════════════════════════════════════════════════════
+  //
   function injectModal() {
     if (modalInjected) return;
     modalInjected = true;
@@ -407,9 +407,9 @@ window.DapickApplication = (function () {
     return { zipcode: zip || null, address: full || null };
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // 모달 열기/닫기
-  // ════════════════════════════════════════════════════
+  //
   function openModal(payload) {
     injectModal();
     currentPayload = payload;
@@ -454,9 +454,9 @@ window.DapickApplication = (function () {
     document.body.style.overflow = '';
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // 신청 시작
-  // ════════════════════════════════════════════════════
+  //
   function apply(payload) {
     if (!payload || !payload.category || !payload.productId) {
       alert('상품 정보가 올바르지 않습니다.');
@@ -471,9 +471,9 @@ window.DapickApplication = (function () {
     openModal(payload);
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // 제출
-  // ════════════════════════════════════════════════════
+  //
   function submitForm() {
     var errEl = document.getElementById('daApplyErr');
     errEl.textContent = '';
@@ -605,9 +605,9 @@ window.DapickApplication = (function () {
       });
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // 자동 복귀
-  // ════════════════════════════════════════════════════
+  //
   function resumeIfPending() {
     if (!isLoggedIn()) return;
     var raw = sessionStorage.getItem(STORAGE_KEY);

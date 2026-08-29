@@ -1,8 +1,8 @@
-// ════════════════════════════════════════════════════
+//
 // structured-data-lg.js — LG U+ 페이지 SEO (JSON-LD)
 // ────────────────────────────────────────────────────
 // @graph: Organization, WebPage, BreadcrumbList, Service
-// ════════════════════════════════════════════════════
+//
 
 (function () {
   'use strict';

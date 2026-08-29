@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // water-detail.js — 정수기 상세 페이지
 // ────────────────────────────────────────────────────
 // ?id={상품UUID} 로 진입 → /api/water-products/{id} 조회
@@ -7,11 +7,11 @@
 // 5/28: 하단 상세에 detailImages(쿠팡식 세로 나열) + 펼쳐보기 토글
 //   ※ water.js 가 먼저 로드되어 있어야 함
 //     (CONTRACT_LABELS / BRAND_META / openDialog / openKakaoConsult 재사용)
-// ════════════════════════════════════════════════════
+//
 
 // 에너지효율을 사람이 읽는 말로 (2026-08-12).
 //
-// ⚠ 9 는 '9등급' 이 아니라 '최저소비효율기준 만족' 이라는 약속값이다.
+// 9 는 '9등급' 이 아니라 '최저소비효율기준 만족' 이라는 약속값이다.
 //   energy_grade 는 숫자 칸(Integer)이라 글자를 못 담아서, 안 쓰는 숫자 하나를 정했다.
 //   고르는 자리는 어드민 water-edit.html 의 에너지효율 드롭다운이다.
 //   한쪽만 고치면 어드민에서 고른 것과 고객이 보는 글자가 달라진다.
@@ -31,7 +31,7 @@ const WD_BACK_BRAND =
   new URLSearchParams(location.search).get('brand') || ''; // 뒤로가기용 브랜드
 
 // ── 찜 목록에서 돌아왔을 때 그 조합 그대로 열기 ─────────
-// ★ 키 이름은 wdFavState().options 가 내보내는 이름과 반드시 같아야 한다.
+// 키 이름은 wdFavState().options 가 내보내는 이름과 반드시 같아야 한다.
 //   (contract / cycle / type / color) 한쪽만 바꾸면 조용히 다른 조합이 뜬다.
 // 한 번만 쓰고 renderDetail() 끝에서 비운다 — 안 그러면 사용자가 약정을
 // 바꿔도 주기가 계속 이 값으로 되돌아간다.
@@ -63,7 +63,7 @@ document.addEventListener('DOMContentLoaded', () => {
   //   /api/products/{id}/reviews 이고, 정수기 상품은 water_products 라는 다른 표에 있다.
   //   게다가 관리자가 등록한 정수기 후기는 product_id 가 비어 있어서 한 건도 안 잡혔다.
   //   지금은 water-detail-more.js 가 브랜드를 알아낸 뒤 브랜드 기준으로 부른다.
-  //   ⚠ 그래서 water-detail-more.js 가 안 실리면 후기 영역이 비어 있게 된다.
+  //   그래서 water-detail-more.js 가 안 실리면 후기 영역이 비어 있게 된다.
   // 상세/제품사양/리뷰 탭 전환 (data-tab ↔ 패널 id 맵 기반 범용 토글, N탭 대응)
   initDetailTabs();
   // 스펙 상세 뷰 뒤로/앞으로 대응 (1회 등록)
@@ -502,7 +502,7 @@ function mountFav(productId) {
 }
 
 // ── 이미지 아래 비교하기 ──────────────────────────────
-// ★ 비교함도 '조합' 단위다. 같은 정수기라도 3년/6년은 다른 항목으로 담긴다.
+// 비교함도 '조합' 단위다. 같은 정수기라도 3년/6년은 다른 항목으로 담긴다.
 //   options 를 안 실으면 비교표에 약정·주기 행이 통째로 비고, 담기 키도
 //   겹쳐서 3년을 담은 뒤 6년을 담으면 '이미 담김'으로 보인다.
 function wdCompareSnapshot() {
@@ -528,7 +528,7 @@ function mountCompare(productId) {
 // ── 하단 트레이 '+' 카드 → 그 자리에서 다른 정수기 고르기 ────────────
 // 목록 페이지로 보내면 담아둔 게 있는 채로 화면을 떠나게 된다. 그래서
 // 목록을 받아와 시트에 뿌리고, 고른 걸 바로 비교함에 넣는다.
-// ★ 가져오는 일은 여기(정수기 페이지)가 한다. compare-view.js 가 하면
+// 가져오는 일은 여기(정수기 페이지)가 한다. compare-view.js 가 하면
 //   공용 파일이 카테고리마다 다른 가격 구조를 전부 알아야 한다.
 function wdComboFee(d) {
   const card = (d && d.cardPrice) || 0;
@@ -536,7 +536,7 @@ function wdComboFee(d) {
   return card > 0 ? card : monthly;
 }
 
-// ★ 어떤 조합으로 담을 것인가 — 이 기능의 핵심은 '월 요금 비교'다.
+// 어떤 조합으로 담을 것인가 — 이 기능의 핵심은 '월 요금 비교'다.
 //   지금 화면이 3년·자가관리인데 상대를 6년·방문관리로 담으면 숫자가
 //   나란히 놓여도 비교가 아니다. 그래서 같은 조합을 먼저 찾고,
 //   그 상품에 그 조합이 없을 때만 가장 싼 조합으로 떨어진다.
@@ -834,7 +834,7 @@ function specSectionsInnerHtml(p) {
   html += specSection2('상품색상', specPairsGrid(colorPairs));
 
   // 3. 스펙 — 좌열 W/D/H/소비전력, 우열 무게/에너지효율 (단위부착 mm/kg/W, 이중부착 방지).
-  //    ★이 섹션 전용 조립: specPushPair 스킵(밀림) 대신 열 단위로 present 값만 모아 zip →
+  //    이 섹션 전용 조립: specPushPair 스킵(밀림) 대신 열 단위로 present 값만 모아 zip →
   //    한 열이 짧으면 그 행의 반대 칸을 빈 셀로 채워 좌/우 정렬 유지 (다른 섹션 스킵 규칙 불변).
   const specLeft = [
     { label: '가로(W)', value: withUnit(p.width, 'mm') },
@@ -896,7 +896,7 @@ function renderDetailBody() {
 
   // 상세 본문 (2026-08-05) — 관리자 서식 편집기 내용이 있으면 그것을 그린다.
   //
-  // ⚠ 이미지 나열(detailImages)과 '둘 다' 그리지 않는다.
+  // 이미지 나열(detailImages)과 '둘 다' 그리지 않는다.
   //   옛 상품은 사진을 본문 삼아 올려 두었기 때문에, 관리자가 그 사진을 편집기로 옮겨 넣으면
   //   같은 사진이 두 번 나온다. 그래서 본문이 있으면 본문만, 없으면 예전처럼 사진 나열이다.
   //   (어드민은 빈 편집기를 null 로 보내므로 '실수로 저장한 빈 본문' 때문에 사진이 사라지지 않는다)

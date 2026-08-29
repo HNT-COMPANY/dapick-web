@@ -1,10 +1,10 @@
-// ════════════════════════════════════════════════════
+//
 // internet-detail-content.js — 인터넷·TV 통합 페이지 '상세정보' 본문 렌더
 //   · 관리자(internet-tv-edit) 리치 에디터가 저장한 Quill Delta(detailContent)를 렌더.
 //   · 커스텀 blot(cardbutton/benefitaccordion/cardtable) 렌더는 카드/이벤트/FAQ 와 동일 로직(shape 일치 필수).
 //   · '상세정보 더보기' 접힘 박스(흰색 페이드) — 내용이 길면 접고, 버튼으로 펼침.
 //   노출: window.ItvDetailContent.render(product)  ← base.js 가 상품 로드 후 호출
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 
@@ -17,7 +17,7 @@
     });
   }
 
-  // 아코디언 본문 경량 서식: **굵게** + 줄바꿈. 관리자(rich-editor.js)와 동일 로직 유지 필수.
+  // 아코디언 본문 경량 서식: 굵게 + 줄바꿈. 관리자(rich-editor.js)와 동일 로직 유지 필수.
   function baccRichBody(s) {
     return esc(s).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   }

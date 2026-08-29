@@ -1,10 +1,10 @@
-// ════════════════════════════════════════════════════
+//
 // mypage-notice.js — 마이페이지 '공지사항' 탭.
 // 목록(GET /api/notices)은 제목만 온다. 제목을 누르면 그 자리에서 펼치고,
 // 그때 본문(GET /api/notices/{id})을 한 번만 더 가져온다 — 페이지 이동 없음.
 // 렌더는 js/common/rich-render.js 의 dpRichHtml (어드민 Quill Delta → HTML).
 // 의존: api.js, rich-render.js, Quill 1.3.7
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 

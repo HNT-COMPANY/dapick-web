@@ -1,7 +1,7 @@
-/* ════════════════════════════════════════════════════
+/*
    common-additions.css — 인라인 style 제거 대응 헬퍼
    기존 common.css 끝에 append 권장
-   ════════════════════════════════════════════════════ */
+    */
 
 /* sec-head margin-bottom 압축 (인라인 style="margin-bottom:20px" 대체) */
 .sec-head--tight {

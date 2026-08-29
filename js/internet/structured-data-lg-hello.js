@@ -1,7 +1,7 @@
-// ════════════════════════════════════════════════════
+//
 // structured-data-lg-hello.js — LG HelloVision 페이지 SEO (JSON-LD)
 // @graph: Organization, WebPage, BreadcrumbList, Service
-// ════════════════════════════════════════════════════
+//
 
 (function () {
   'use strict';

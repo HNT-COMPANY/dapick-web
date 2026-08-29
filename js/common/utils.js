@@ -42,8 +42,8 @@ function switchCat(el, cat) {
   if (cat) goPage(cat);
 }
 
-// ════════════════════════════════════════════════════
-// 상품 카드 평점 요약 (목록 카드 공용) — ★ 4.5 (12)
+//
+// 상품 카드 평점 요약 (목록 카드 공용) — 4.5 (12)
 // ────────────────────────────────────────────────────
 // avg=0/falsy → '' 반환(평점 영역 자체를 안 그림 = 리뷰 없는 상품 숨김).
 // 숫자만 출력하므로 escape 불필요. reviews.js(.dpr-*)와 독립 —
@@ -66,9 +66,9 @@ function ratingHtml(avg, cnt) {
   );
 }
 
-// ════════════════════════════════════════════════════
+//
 // 카카오 상담 — 모든 페이지 공통
-// ════════════════════════════════════════════════════
+//
 const KAKAO_CHANNEL_URL = 'https://pf.kakao.com/_exaRjX/chat';
 
 /**
@@ -154,9 +154,9 @@ function resumePendingKakaoConsult() {
   }
 }
 
-// ════════════════════════════════════════════════════
+//
 // 모달
-// ════════════════════════════════════════════════════
+//
 function openModal(summaryHtml) {
   const el = document.getElementById('modal-summary');
   if (el && summaryHtml) el.innerHTML = summaryHtml;
@@ -198,9 +198,9 @@ async function submitConsult() {
   }
 }
 
-// ════════════════════════════════════════════════════
+//
 // 토스트 알림
-// ════════════════════════════════════════════════════
+//
 function showToast(message, type = 'success') {
   const container =
     document.getElementById('toast-container') || createToastContainer();

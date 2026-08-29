@@ -1,9 +1,9 @@
-// ════════════════════════════════════════════════════
+//
 // card-detail.js — 카드 상세 (독립 페이지)
 // URL: /card-detail?id={id} (로컬/폴백) 또는 /cards/{slug}-{id}
 // GET /api/cards/{id} → 히어로(이미지·뱃지·최대혜택·제목·카드사·혜택3·바로가기·메타)
 //   + Quill Delta 본문(detailContent) 렌더. 카드사명은 GET /api/card-categories 로 매핑.
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 
@@ -15,7 +15,7 @@
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  // 아코디언 본문 경량 서식: **굵게** + 줄바꿈. 관리자(card-detail-edit.js)와 동일 로직 유지 필수.
+  // 아코디언 본문 경량 서식: 굵게 + 줄바꿈. 관리자(card-detail-edit.js)와 동일 로직 유지 필수.
   function baccRichBody(s) {
     return esc(s).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   }

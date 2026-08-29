@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // rental-detail.js — 렌탈 상세 페이지 (3단 견적 흐름)
 // ────────────────────────────────────────────────────
 // ?id={상품UUID} → /api/rental-products/{id}
@@ -10,7 +10,7 @@
 //       선택된 약정/관리주기/타사보상/색상/월요금을 payload 로 전달.
 //
 // ※ 의존: water.css / water-detail.css / common/config.js / common/application.js
-// ════════════════════════════════════════════════════
+//
 
 const RD_API_BASE =
   typeof DAPICK_CONFIG !== 'undefined' && DAPICK_CONFIG.API_BASE_URL
@@ -30,7 +30,7 @@ let RD_CMP = null; // 비교함 핸들 — 찜과 같은 '조합' 단위라 같�
 // 전에는 '36개월(의무) · 60개월(계약)' 처럼 개월+의무로 적었다.
 // 이제 의무 개념을 쓰지 않고 계약 기간만 년으로 적는다. 정수기(water.js)와 같은 규칙이다.
 //
-// ⚠ 저장값은 그대로 둔다 — pricing 을 되찾는 열쇠이고 주소(?contract=)에도 실린다.
+// 저장값은 그대로 둔다 — pricing 을 되찾는 열쇠이고 주소(?contract=)에도 실린다.
 const RD_CONTRACT_LABELS = {
   '의무36/계약60': '5년 계약',
   '의무60/계약60': '5년 계약',
@@ -42,7 +42,7 @@ let RD_PRODUCT = null;
 let RD_COLOR = '';
 
 // ── 찜 목록에서 돌아왔을 때 그 조합 그대로 열기 ─────────
-// ★ 키 이름은 rdFavState().options 가 내보내는 이름과 같아야 한다.
+// 키 이름은 rdFavState().options 가 내보내는 이름과 같아야 한다.
 //   (contract / cycle / type / color)
 // renderDetail() 끝에서 비운다 — 한 번만 강제하고 그 뒤엔 사용자 선택이 이긴다.
 let RD_WANT = (function () {
@@ -260,7 +260,7 @@ function mountFav(productId) {
 }
 
 // ── 이미지 아래 비교하기 ──────────────────────────────
-// ★ 비교함도 '조합' 단위 — options 를 실어야 표에 약정·주기 행이 생기고
+// 비교함도 '조합' 단위 — options 를 실어야 표에 약정·주기 행이 생기고
 //   같은 상품의 다른 조합이 서로 다른 항목으로 담긴다.
 function rdCompareSnapshot() {
   const p = RD_PRODUCT;
@@ -283,7 +283,7 @@ function mountCompare(productId) {
 }
 
 // ── 하단 트레이 '+' 카드 → 그 자리에서 다른 렌탈 상품 고르기 ──────────
-// ★ 같은 렌탈 카테고리 안에서만 가져온다(안마의자는 안마의자끼리).
+// 같은 렌탈 카테고리 안에서만 가져온다(안마의자는 안마의자끼리).
 //   렌탈은 카테고리 하나에 성격이 완전히 다른 물건이 섞여 있어서
 //   전체 목록을 뿌리면 정수기와 안마의자를 나란히 놓는 표가 된다.
 function rdPickCombo(pricing, want) {
@@ -549,9 +549,9 @@ function rdToggleDetail() {
   }
 }
 
-// ════════════════════════════════════════════════════
+//
 // 다이얼로그 (3단 재확인) — 정수기 패턴
-// ════════════════════════════════════════════════════
+//
 function rdApply() {
   const p = RD_PRODUCT;
   const contractKeys = Object.keys(p.pricing);
@@ -700,10 +700,10 @@ function closeDialogOutside(e) {
   if (e.target === document.getElementById('wDialogOverlay')) closeDialog();
 }
 
-// ════════════════════════════════════════════════════
+//
 // 신청 → 공통 모듈 DapickApplication.apply() 호출
 // 다이얼로그가 열려 있으면 그 값을, 아니면 우 패널 값을 사용
-// ════════════════════════════════════════════════════
+//
 function currentSelection() {
   const useDialog = document
     .getElementById('wDialogOverlay')

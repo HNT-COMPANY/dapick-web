@@ -1,16 +1,16 @@
-// ════════════════════════════════════════════════════
+//
 // internet-calc.js — 인터넷·TV 순수 계산/조회 코어 (DOM 없음)
 // ────────────────────────────────────────────────────
 // internet-product-base.js v9/v10의 calculate/bundleOf/normalOf/extrasBundleSum +
 // 상품·옵션 조회를 추출. 통합페이지와 상세페이지가 공유.
-// ★ 계산식은 원본 그대로 (위치만 이동). 동작 변경 0.
+// 계산식은 원본 그대로 (위치만 이동). 동작 변경 0.
 //   결합 전 = Σ normalPrice / 결합 = Σ bundlePrice(없으면 normalPrice)
 //   cardPrice = max(0, combo - bundleDiscount - cardDiscount)
 //   지원금 폴백: 선택 옵션값 ?? 상품 discountMeta ?? 0
 //
 // 입력은 selection 객체로 받는 순수 함수. DOM/전역 의존 없음.
 //   selection = { internet, tv, router, phone, toggles:{tv,router,phone}, meta }
-// ════════════════════════════════════════════════════
+//
 window.InternetCalc = (function () {
   'use strict';
 

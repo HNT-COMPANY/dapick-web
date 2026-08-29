@@ -1,15 +1,15 @@
-// ════════════════════════════════════════════════════
+//
 // policy.js — 다픽 정책 페이지 공통 JS
 // ────────────────────────────────────────────────────
 // 1. 아코디언 토글 (terms 별첨 5개)
 // 2. 사이드바 스크롤스파이 (현재 보고 있는 조항 하이라이트)
 // 3. 앵커 클릭 시 부드러운 스크롤
 // 4. 페이지 이동 (goPage)
-// ════════════════════════════════════════════════════
+//
 
-// ════════════════════════════════════════════════════
+//
 // 1. 아코디언 토글
-// ════════════════════════════════════════════════════
+//
 function initAccordions() {
   document.querySelectorAll('[data-accordion]').forEach((el) => {
     const head = el.querySelector('.pol-accordion-head');
@@ -18,9 +18,9 @@ function initAccordions() {
   });
 }
 
-// ════════════════════════════════════════════════════
+//
 // 2. 사이드바 스크롤스파이
-// ════════════════════════════════════════════════════
+//
 function initScrollSpy() {
   const articles = document.querySelectorAll('.pol-article[id]');
   const links = document.querySelectorAll('.pol-toc-list a');
@@ -47,9 +47,9 @@ function initScrollSpy() {
   articles.forEach((a) => observer.observe(a));
 }
 
-// ════════════════════════════════════════════════════
+//
 // 3. 앵커 부드러운 스크롤
-// ════════════════════════════════════════════════════
+//
 function initSmoothScroll() {
   document.querySelectorAll('.pol-toc-list a').forEach((link) => {
     link.addEventListener('click', (e) => {
@@ -63,9 +63,9 @@ function initSmoothScroll() {
   });
 }
 
-// ════════════════════════════════════════════════════
+//
 // 4. 페이지 이동
-// ════════════════════════════════════════════════════
+//
 function goPage(page) {
   const map = {
     mobile: 'mobile.html',
@@ -77,9 +77,9 @@ function goPage(page) {
   window.location.href = map[page] || 'index.html';
 }
 
-// ════════════════════════════════════════════════════
+//
 // 초기화
-// ════════════════════════════════════════════════════
+//
 document.addEventListener('DOMContentLoaded', () => {
   initAccordions();
   initScrollSpy();

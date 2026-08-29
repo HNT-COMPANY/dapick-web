@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // water.js — 정수기 페이지 렌더링 / 다이얼로그 / 즐겨찾기
 // 데이터는 /api/water/products 에서 로드됩니다
 // 5/27: 상담 신청(consultation) 연결 — openWaterApply() 추가
@@ -6,28 +6,28 @@
 // 5/28: 카드/리스트 클릭 → 상세 페이지(water-detail.html?id=)로 이동
 //        전체 상품 = 아정당식 카드 그리드 (water-prod-card)
 //        브랜드 배너 자동 삽입 (renderBrandBanner)
-// ════════════════════════════════════════════════════
+//
 
 // ── 공통 상수 ──
 const EMPTY = { monthly: 0, maxSupport: 0 };
 
 // 약정 표기 — 08-04 개월 표기 → 08-05 의무 년수 → 08-06 계약 년수(지금).
-// ⚠ 왼쪽 키는 절대 바꾸지 않는다. DB의 pricing jsonb 최상위 키이고,
+// 왼쪽 키는 절대 바꾸지 않는다. DB의 pricing jsonb 최상위 키이고,
 //   어드민 water-edit.js 의 CONTRACT_OPTIONS 와 글자 하나까지 같아야 한다.
 //   키를 바꾸면 이미 등록된 상품의 요금표를 전부 못 찾는다.
-// ★ 이 상수 하나가 웹 전체의 약정 표기를 결정한다.
+// 이 상수 하나가 웹 전체의 약정 표기를 결정한다.
 //   다이얼로그 · 상세 · 비교함 · 상담 접수 문자열이 모두 여기를 본다.
 // 약정 키 → 화면 글자 (2026-08-06 계약 기준으로 통일).
 //
 // 08-05 에는 '3년 의무' 처럼 의무 기간으로 적었다. 이제 의무 개념을 쓰지 않는다.
 // 고객이 실제로 묶이는 기간은 계약 기간이므로 그쪽으로 맞춘다.
 //
-// ⚠ 저장값('의무36/계약60')은 절대 바꾸지 않는다.
+// 저장값('의무36/계약60')은 절대 바꾸지 않는다.
 //   pricing jsonb 의 최상위 키이고, dpProductUrl 이 주소(?contract=)에 그대로 실어 보낸다.
 //   받는 쪽(water-detail 의 WD_WANT.contract)이 이 키로 조합을 되찾는다.
 //   라벨로 저장하면 '자세히 보기'가 조합을 못 찾는다. 그리는 순간에만 글자를 바꾼다.
 //
-// ⚠ 의무36/계약60 과 의무60/계약60 은 둘 다 '5년 계약'이 된다 — 글자가 겹친다.
+// 의무36/계약60 과 의무60/계약60 은 둘 다 '5년 계약'이 된다 — 글자가 겹친다.
 //   값은 서로 다르다(39,900 / 36,900). 2026-08-06 협의 결과 그대로 두기로 했다.
 //   둘을 함께 파실 거면 어드민에서 한쪽을 비우는 편이 낫다.
 const CONTRACT_LABELS = {
@@ -49,9 +49,9 @@ const BRAND_META = {
 let WATER_PRODUCTS = {};
 let _productsPromise = null;
 
-// ════════════════════════════════════════════════════
+//
 // API 호출 및 데이터 로딩
-// ════════════════════════════════════════════════════
+//
 function loadWaterProducts() {
   if (_productsPromise) return _productsPromise;
 
@@ -133,7 +133,7 @@ function groupByBrand(list) {
       slimType: p.slimType || null,
       tradeIn: !!p.tradeIn,
       // ── 2026-08-04 추가 ──
-      // ⚠ renderProductCard 가 받는 것은 API 원본이 아니라 이 함수가 만든 객체다.
+      // renderProductCard 가 받는 것은 API 원본이 아니라 이 함수가 만든 객체다.
       //   여기 안 옮기면 화면에서 영영 안 보인다. 새 필드를 쓸 때 반드시 확인할 것.
       // 자유 뱃지 — metaBadgesHtml 이 이 배열만 본다.
       badges: Array.isArray(p.badges) ? p.badges : [],
@@ -152,7 +152,7 @@ function groupByBrand(list) {
 // ── 월 렌탈료 구간 판정 — pricing 최저 월요금 → priceRange enum 코드 (J1: 4구간) ──
 // 1만원 미만은 RANGE_10K로 흡수(백엔드 V20260704003 UNDER_10K→RANGE_10K 병합과 일치).
 // 4만원 이상은 OVER_40K(구 RANGE_40K/OVER_50K 병합).
-// ★가격대 필터는 '월 렌탈료' 기준이어야 하므로 getMinPrice(순수 최저 monthly)로 산출.
+// 가격대 필터는 '월 렌탈료' 기준이어야 하므로 getMinPrice(순수 최저 monthly)로 산출.
 //   (getBestPriceInfo는 표시용으로 제휴카드가 포함된 '실지불 최저가'를 고르게 바뀌어 버킷과 분리.)
 function computePriceBucket(pricing) {
   const m = getMinPrice(pricing) || null; // 최저 monthly (없으면 0→null)
@@ -191,7 +191,7 @@ function waterFuncBadgesHtml(wf) {
 
 // ── 카드 메타 배지 (표 ○ 세트 중 특가/프로모션/슬림/타사보상) ──
 // BEST·정수기능은 별도(코너 배지). 값 존재 시에만 노출. 라벨은 고정 enum 라벨(이스케이프 불요).
-// ★ 2026-08-04 — 관리자가 직접 만든 뱃지로 교체했다.
+// 2026-08-04 — 관리자가 직접 만든 뱃지로 교체했다.
 //
 //   예전: special / promoType / slimType / tradeIn 네 값의 켜기·끄기.
 //         문구도 색도 여기와 water.css 에 박혀 있어 상품마다 다른 말을 못 붙였다.
@@ -255,9 +255,9 @@ function waterColorChipsHtml(colors) {
   return `<div class="wpg-colors">${dots}</div>`;
 }
 
-// ════════════════════════════════════════════════════
+//
 // 헬퍼 함수
-// ════════════════════════════════════════════════════
+//
 function getMinPrice(pricing) {
   if (!pricing || typeof pricing !== 'object') return null; // ★getBestPriceInfo 가드 미러 — null/비객체는 결측(null). Object.values 전 차단.
   let min = Infinity;
@@ -284,7 +284,7 @@ function getMinByContract(pricing, contractKey) {
 }
 
 // 표시용 최저가 옵션의 {monthly, promo, cardPrice} 반환.
-// ★최저가 후보에 제휴카드 포함: 옵션별 실지불가 eff = (cardPrice>0 ? cardPrice : monthly) 가 최소인 옵션 선택.
+// 최저가 후보에 제휴카드 포함: 옵션별 실지불가 eff = (cardPrice>0 ? cardPrice : monthly) 가 최소인 옵션 선택.
 //   → 카드 할인가가 최저-월렌탈료가 아닌 다른 약정 티어에 있어도 대표가로 노출됨(목록/BEST 공용).
 //   카드 0/미입력 안전: 어드민 toNum('')=0 이라 저장상 0=미입력 → cardPrice>0 만 카드 적용(0은 미적용).
 function getBestPriceInfo(pricing) {
@@ -307,9 +307,9 @@ function getBestPriceInfo(pricing) {
   return best;
 }
 
-// ════════════════════════════════════════════════════
+//
 // 상태
-// ════════════════════════════════════════════════════
+//
 let currentBrand = 'coway';
 let favorites = {};
 let dialogProd = null;
@@ -319,9 +319,9 @@ let dialogColor = '';
 // ※ favorites 는 이것과 무관한 '다이얼로그 선택값 기억용' 로컬 객체다(서버 저장 아님).
 let dialogFav = null;
 
-// ════════════════════════════════════════════════════
+//
 // 브랜드 전환
-// ════════════════════════════════════════════════════
+//
 async function switchBrand(brand) {
   currentBrand = brand;
 
@@ -351,9 +351,9 @@ async function switchBrand(brand) {
   await renderBrand(brand);
 }
 
-// ════════════════════════════════════════════════════
+//
 // 렌더링
-// ════════════════════════════════════════════════════
+//
 async function renderBrand(brand) {
   renderLoading();
 
@@ -461,10 +461,10 @@ async function renderBrand(brand) {
   renderListPaged(data.products.map((p) => ({ ...p, brand, emoji: data.emoji })));
 }
 
-// ════════════════════════════════════════════════════
+//
 // 전체 상품 페이징 — 처음 20개(4×5) + '더보기 +' 클릭마다 +20
 // 브랜드 화면(renderBrand)과 필터 결과(renderFilteredGrid)가 공용으로 사용
-// ════════════════════════════════════════════════════
+//
 const WLIST_PAGE = 20;
 let wlistItems = [];
 let wlistShown = WLIST_PAGE;
@@ -498,7 +498,7 @@ function waterListMore() {
 // ── 카드 렌더 (renderBrand .map에서 추출 — 결과 동일). p에 brand/emoji 주입 필수.
 //    브랜드별: {...p, brand, emoji: data.emoji} / 평면 풀: getAllProductsFlat가 이미 주입.
 //
-// ★ 2026-08-04 — /c/{slug}(에어컨) 카드와 모양을 맞췄다.
+// 2026-08-04 — /c/{slug}(에어컨) 카드와 모양을 맞췄다.
 //   본문 순서: 뱃지 → 모델명(작은 회색) → 상품명 → 가격.  색상칩·평점은 안 그린다.
 //   ※ 뱃지는 오전에 뺐다가 오후에 되살렸다. 관리자가 문구·색을 직접 정하는 것으로
 //     바뀌면서 '고정 네 종류' 가 아니게 됐기 때문이다(metaBadgesHtml 주석 참고).
@@ -620,9 +620,9 @@ function renderEmpty(brand) {
   if (lg) lg.innerHTML = html;
 }
 
-// ════════════════════════════════════════════════════
+//
 // 다이얼로그
-// ════════════════════════════════════════════════════
+//
 function openDialog(productId, brand) {
   const data = WATER_PRODUCTS[brand];
   if (!data) return;
@@ -896,9 +896,9 @@ document.addEventListener('keydown', (e) => {
   if (e.key === 'Escape') closeDialog();
 });
 
-// ════════════════════════════════════════════════════
+//
 // 즐겨찾기
-// ════════════════════════════════════════════════════
+//
 // (제거) toggleFavInDialog — 다이얼로그 하트가 찜 버튼으로 바뀌면서 호출부가 없어졌다.
 //        로컬 favorites 는 '다이얼로그 선택값 기억' 용도로만 남는다.
 
@@ -952,9 +952,9 @@ function updateBottomBar() {
   countEl.textContent = `(${ids.length}개 상품)`;
 }
 
-// ════════════════════════════════════════════════════
+//
 // 카카오 상담 — utils.js의 openKakaoConsult() 호출
-// ════════════════════════════════════════════════════
+//
 function openKakaoWithProduct() {
   if (!dialogProd) {
     openKakaoConsult();
@@ -978,9 +978,9 @@ function openKakaoWithProduct() {
   });
 }
 
-// ════════════════════════════════════════════════════
+//
 // 상담 신청 — DapickApplication.apply() 공통 모달 호출
-// ════════════════════════════════════════════════════
+//
 function openWaterApply() {
   if (!dialogProd) return;
 
@@ -1019,9 +1019,9 @@ function openWaterApply() {
   });
 }
 
-// ════════════════════════════════════════════════════
+//
 // 공통 유틸
-// ════════════════════════════════════════════════════
+//
 function goPage(page) {
   const map = {
     phone: 'phone.html',
@@ -1038,10 +1038,10 @@ function openKakao() {
 }
 
 
-// ════════════════════════════════════════════════════
+//
 // 사이드바 통합 필터 엔진 (#waterFilter 전 섹션) — 전 브랜드 평면풀 대상
 // 축간 AND, 축내 다중 OR. getAllProductsFlat/renderFilteredGrid(층1) 재사용.
-// ════════════════════════════════════════════════════
+//
 function collectFilters() {
   const c = {}; // { brand:[], waterFunction:[], householdSize:[], purposeTags:[], installType:[], filterType:[], extractType:[], pipeMaterial:[], priceRange:[], modelName:'', name:'' }
   document
@@ -1138,9 +1138,9 @@ function clearFilterInputs() {
     .forEach((el) => (el.value = ''));
 }
 
-// ════════════════════════════════════════════════════
+//
 // 초기 실행
-// ════════════════════════════════════════════════════
+//
 loadWaterProducts().catch(() => {});
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -1156,9 +1156,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 
-// ════════════════════════════════════════════════════
+//
 // 상단 필터 바: '상세필터 ▾' 펼침/접힘 (2026-07-28 검색창 중심 개편)
-// ════════════════════════════════════════════════════
+//
 (function () {
   const btn = document.getElementById('wtfMoreBtn');
   const panel = document.getElementById('wtfDetail');
@@ -1172,9 +1172,9 @@ document.addEventListener('DOMContentLoaded', () => {
   });
 })();
 
-// ════════════════════════════════════════════════════
-// 검색창 ✕ 지우기 버튼 — 입력 있을 때만 표시, 클릭 시 비우고 필터 재적용
-// ════════════════════════════════════════════════════
+//
+// 검색창  지우기 버튼 — 입력 있을 때만 표시, 클릭 시 비우고 필터 재적용
+//
 (function () {
   const input = document.querySelector('.wtf-search[data-filter="q"]');
   const clearBtn = document.getElementById('wtfClearBtn');
@@ -1193,12 +1193,12 @@ document.addEventListener('DOMContentLoaded', () => {
   sync();
 })();
 
-// ════════════════════════════════════════════════════
+//
 // (레거시) 모바일 필터 드로어 토글 (조각2-B) — 사이드바 폐기로 요소 없음 → 가드 return
 // 렌탈 페이지 개편 시 참고용으로만 남김
 // 정수기 전용 id(#wfToggleBtn/#waterFilter/#wfOverlay/#wfCloseBtn) → 렌탈 무영향.
 // CSS(조각2-A)가 .is-open으로 슬라이드/오버레이 처리. JS는 클래스 토글만.
-// ════════════════════════════════════════════════════
+//
 (function () {
   const btn = document.getElementById('wfToggleBtn');
   const panel = document.getElementById('waterFilter');

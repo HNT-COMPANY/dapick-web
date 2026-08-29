@@ -1,15 +1,15 @@
-// ============================================================
+//
 // gnb-user.js - GNB right-side user dropdown + PENDING guard
-// ------------------------------------------------------------
+//
 // 5/30: GNB 우상단 버튼 라벨 "OO 님" → "마이페이지" (드롭다운 유지)
 //   - 드롭다운 패널 헤더에는 닉네임 유지(인사용)
-// ------------------------------------------------------------
+//
 // Responsibilities:
 //   1) PENDING guard
 //   2) Render GNB right area by login state.
 // Depends on: auth.js (isLoggedIn, isAdmin, isPending, logout)
 // localStorage keys: dapick_token / dapick_nick / dapick_role / dapick_status
-// ============================================================
+//
 
 (function () {
   'use strict';
@@ -175,7 +175,7 @@
       '<a class="gnb-user-link" href="mypage.html?tab=favorites"><span><span class="gnb-user-ico">♡</span>관심 목록</span><span class="gnb-user-arrow-r">›</span></a>' +
       // 비교함 (2026-08-03 추가). 마이페이지에 탭은 원래 있었는데 여기서 갈 길이 없었다.
       // 아이콘을 이모지가 아니라 그림(SVG)으로 둔 이유 - 이모지는 기기·브라우저마다
-      // 모양이 다르고, 안 그려지면 네모(□)로 뜬다. 담긴 개수는 저장소를 읽어 붙인다.
+      // 모양이 다르고, 안 그려지면 네모()로 뜬다. 담긴 개수는 저장소를 읽어 붙인다.
       '<a class="gnb-user-link" href="mypage.html?tab=compare"><span><span class="gnb-user-ico">' +
       '<svg viewBox="0 0 24 24" width="15" height="15" fill="currentColor" style="vertical-align:-2px">' +
       '<rect x="3.5" y="11" width="7" height="9" rx="1.5"/><rect x="13.5" y="5" width="7" height="15" rx="1.5"/>' +

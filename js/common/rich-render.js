@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // rich-render.js — 어드민 리치 에디터(Quill Delta)를 웹에서 HTML 로 그리는 공통 모듈.
 // 커스텀 blot 3종(cardbutton / benefitaccordion / cardtable) 등록 + Delta→HTML.
 //
@@ -9,7 +9,7 @@
 //
 // 노출: window.dpRichHtml(raw) → HTML 문자열 ('' 이면 본문 없음)
 // 전제: 페이지에 Quill 1.3.7 이 로드돼 있어야 한다. 없으면 '' 를 돌려준다(호출부가 대체 문구 표시).
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 
@@ -19,7 +19,7 @@
     });
   }
 
-  // 아코디언 본문 경량 서식: **굵게** + 줄바꿈.
+  // 아코디언 본문 경량 서식: 굵게 + 줄바꿈.
   // 어드민(rich-editor.js baccRichBody)과 같은 규칙이어야 관리자 미리보기와 웹이 일치한다.
   function baccRichBody(s) {
     return be(s).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
@@ -167,7 +167,7 @@
     }
   }
 
-  // ════════════════════════════════════════════════════
+  //
   // Quill 없이 그리기 (2026-08-11 신설)
   //
   // 왜 필요한가
@@ -180,13 +180,13 @@
   //   그래서 Delta 를 직접 HTML 로 옮긴다. Quill 이 이미 있는 화면은 지금까지처럼
   //   Quill 을 쓴다 — 검증된 결과를 바꾸지 않으려는 것이다.
   //
-  // ⚠ 한계(솔직히)
+  // 한계(솔직히)
   //   흔한 서식(굵게·기울임·밑줄·취소선·링크·색·글자크기·목록·제목·인용·정렬·
   //   들여쓰기·이미지 + 커스텀 3종)은 덮는다. 드문 조합(중첩 인용 등)은 근사치다.
-  // ════════════════════════════════════════════════════
+  //
 
   // 줄 전체에 걸리는 서식. 나머지는 글자에만 걸리는 서식으로 본다.
-  // ★ 둘을 안 나누면 {insert:'안녕\n', attributes:{bold:true}} 같은 조각에서
+  // 둘을 안 나누면 {insert:'안녕\n', attributes:{bold:true}} 같은 조각에서
   //   bold 가 줄 서식으로 오인돼 굵기가 통째로 날아간다.
   var BLOCK_KEYS = ['header', 'list', 'blockquote', 'code-block', 'align', 'indent'];
 
@@ -242,7 +242,7 @@
     return h + '</table>';
   }
 
-  // ★ 아래 세 벌은 위 blot 의 create() 와 같은 결과를 내야 한다.
+  // 아래 세 벌은 위 blot 의 create() 와 같은 결과를 내야 한다.
   //   한쪽만 고치면 Quill 있는 화면과 없는 화면의 모양이 갈린다.
   function embedHtml(ins) {
     if (ins.image) {
@@ -350,7 +350,7 @@
   }
 
   // Quill CSS 가 담당하던 것 중 최소한만 넣는다.
-  // ★ 이 함수는 Quill 이 없는 화면에서만 불린다. 커스텀 3종(bacc/cardbtn/ctable)의
+  // 이 함수는 Quill 이 없는 화면에서만 불린다. 커스텀 3종(bacc/cardbtn/ctable)의
   //   모양은 각 화면 CSS 담당이라 여기서 안 건드린다 — 넣으면 기존 화면과 부딪힌다.
   var _fbStyled = false;
   function injectFallbackCss() {

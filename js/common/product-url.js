@@ -6,7 +6,7 @@
 //   dpProductUrl(r)       { categoryType, productId, options } → 상세 URL | null
 //   dpListUrl(category)   카테고리 → 목록 페이지 URL | null
 //
-// ★ 왜 따로 뺐나
+// 왜 따로 뺐나
 //   이 규칙을 쓰는 화면이 셋이 됐다 — 마이페이지 찜/최근본, 마이페이지 비교표,
 //   그리고 상세 하단 비교 트레이. 각자 만들면 CARRIER_MAP 처럼 사본이 늘어난다.
 //   상세 페이지의 파라미터 이름이 바뀌는 날, 고칠 곳은 이 파일 하나여야 한다.

@@ -1,10 +1,10 @@
-// ════════════════════════════════════════════════════
+//
 // track.js — 버튼/CTA 클릭을 GA4(gtag.js)로 전송 (버튼마다 행동 추적)
 //   · 위임 방식: 버튼/[role=button]/CTA성 링크/[data-track] 클릭 시 gtag 이벤트 전송
 //   · 이름 지정: data-track="이벤트명" 있으면 그 이름, 없으면 button_click
 //   · 수동: window.dpTrack('이벤트명', {키:값})
 //   전제: 각 페이지 <head>에 gtag.js(G-741SL0QH2E) 로드됨(window.gtag 존재)
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 

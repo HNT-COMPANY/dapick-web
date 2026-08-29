@@ -1,9 +1,9 @@
-// ════════════════════════════════════════════════════
+//
 // event-detail.js — 이벤트 상세 (독립 페이지)
 // URL: event-detail.html?id={id}
 // GET /api/events/{id} → 헤더(제목·기간) + Quill Delta 본문(detailContent) 렌더 + 이전/다음 글.
 // ※ 커스텀 blot(cardbutton/benefitaccordion/cardtable) 렌더는 카드 상세와 동일 로직 재사용.
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 
@@ -15,7 +15,7 @@
       ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   }
 
-  // 아코디언 본문 경량 서식: **굵게** + 줄바꿈. 관리자(card-detail-edit.js)와 동일 로직 유지 필수.
+  // 아코디언 본문 경량 서식: 굵게 + 줄바꿈. 관리자(card-detail-edit.js)와 동일 로직 유지 필수.
   function baccRichBody(s) {
     return esc(s).replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>');
   }

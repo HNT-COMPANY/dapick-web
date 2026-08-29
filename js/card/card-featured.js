@@ -1,8 +1,8 @@
-// ════════════════════════════════════════════════════
+//
 // card-featured.js — 웹 '다픽 추천 카드' 영역 (featured=true 카드)
 // GET /api/cards/featured (공개) → 히어로 카드. 없으면 섹션 숨김.
 // 클릭 시 card-detail.html?id={id}. 혜택 아이콘: Lucide. cl-* 스타일 재사용(card-list.js).
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
   const box = document.getElementById('featuredList');

@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // consent.js — 동의서 전체 HTML 계약서/서명 로직
 //   진입: /consent?token=xxx  (쿼리스트링 방식)
 //   GET  /api/consent/{token}        진입 정보 조회
@@ -7,7 +7,7 @@
 //
 //   화면: 동의서 본문(제1~6조)은 HTML, 갑/을 계약 표는 <table>.
 //        을(계약자) 성명/연락처 input·서명박스에 직접 입력·서명.
-// ════════════════════════════════════════════════════
+//
 
 (function () {
   'use strict';
@@ -75,9 +75,9 @@
   // ── 토큰 추출 ─────────────────────────────────────
   const token = new URLSearchParams(window.location.search).get('token');
 
-  // ════════════════════════════════════════════════
+  //
   //  서명 캔버스 (모달)
-  // ════════════════════════════════════════════════
+  //
   let ctx = null;
   let drawing = false;
   let hasStroke = false;
@@ -175,9 +175,9 @@
     el.signConfirm.addEventListener('click', confirmSignature);
   }
 
-  // ════════════════════════════════════════════════
+  //
   //  제출
-  // ════════════════════════════════════════════════
+  //
   function setSubmitting(on) {
     el.btnSubmit.disabled = on;
     el.btnSubmit.textContent = on ? '제출 중…' : '동의 후 제출';
@@ -228,9 +228,9 @@
     }
   }
 
-  // ════════════════════════════════════════════════
+  //
   //  진입 흐름
-  // ════════════════════════════════════════════════
+  //
   function isExpired(tokenExpiresAt) {
     if (!tokenExpiresAt) return false;
     const exp = new Date(tokenExpiresAt);

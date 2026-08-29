@@ -1,11 +1,11 @@
-// ════════════════════════════════════════════════════════
+//
 // /product-detail?id={상품 UUID} — 관리자가 만든 카테고리(GENERIC)의 상품 상세 (2026-08-01)
 //
 // 왜 이 파일이 필요한가:
 //   카테고리 페이지(/c/{slug})에서 상품을 눌러도 갈 곳이 없었다.
 //   상품마다 html 을 만들 수 없으니(관리자가 무제한으로 만든다) 이 틀 하나가 다 받는다.
 //
-// ★ 화면을 그리는 일은 이 파일이 하지 않는다 (2026-08-01 변경).
+// 화면을 그리는 일은 이 파일이 하지 않는다 (2026-08-01 변경).
 //   js/products/product-view.js 가 그린다. 그 파일은 어드민 미리보기도 같이 쓴다.
 //   전에는 웹과 어드민이 각자 그려서, 관리자가 미리보기에서 본 것과 실제 화면이 달랐다.
 //   화면 모양을 고치려면 product-view.js 를 고친다. 여기를 고치면 미리보기와 또 갈린다.
@@ -25,7 +25,7 @@
 //   상품 신청 = 로그인 필수, 월 요금·계좌까지 받아 정식 접수(/api/consultations).
 //               월 요금이 없으면 서버가 거부하므로 그 경우 버튼을 아예 안 그린다.
 //   간편 신청 = 비로그인 가능, 이름·전화·문의만. 문턱이 낮아 이탈이 적다.
-// ════════════════════════════════════════════════════════
+//
 
 var pdProduct = null;
 var pdCategory = null;   // 상품이 속한 카테고리(품목일 수 있다)
@@ -46,7 +46,7 @@ function pdId() {
 
 // 마이페이지 찜·비교함에서 눌러 들어오면 ?id=…&months=48 로 온다.
 // 그 약정이 처음부터 켜져 있어야 "내가 보던 그 화면" 이 된다.
-// ⚠ 키 이름 months 는 product-url.js 가 만드는 것과 짝이다. 한쪽만 바꾸면
+// 키 이름 months 는 product-url.js 가 만드는 것과 짝이다. 한쪽만 바꾸면
 //   링크는 열리는데 약정만 기본값으로 돌아간다 - 눈치채기 어려운 오류다.
 function pdWantMonths() {
   return new URLSearchParams(location.search).get('months') || '';
@@ -62,7 +62,7 @@ function pdFail(message) {
 // 카테고리 트리에서 id 로 찾는다. [찾은것, 최상위부모] 를 돌려준다.
 // 상품이 최상위에 바로 붙어 있으면 부모는 null 이다.
 //
-// ★ 2026-08-06 — 재귀로 바꿨다.
+// 2026-08-06 — 재귀로 바꿨다.
 //   전에는 최상위와 그 자식(2단)까지만 훑었다. 카테고리 → 서브 → 서브의 서브 처럼
 //   한 단만 더 깊어지면 [null, null] 이 나오고, 그러면 pdLoadFaq 가 조용히 빠져나가
 //   FAQ 탭이 영영 안 생긴다. 오류도 안 나서 '왜 안 나오지' 로만 남는다.
@@ -109,7 +109,7 @@ function pdFieldList() {
       Object.assign(map[f.key], f);
     });
   }
-  // ⚠ 이 네 줄의 순서는 어드민 product-edit.js 의 peBuildSchema() 와 반드시 같아야 한다.
+  // 이 네 줄의 순서는 어드민 product-edit.js 의 peBuildSchema() 와 반드시 같아야 한다.
   //    한 줄이라도 빠지면 그 자리의 칸이 웹에서 이름을 못 찾아 f_lx3a9b 같은 내부 기호로 뜬다.
   //    2026-08-01 에 부모의 '입력 양식 타입' 칸이 빠져 있어 실제로 그럴 뻔했다.
   if (pdParent) {
@@ -220,7 +220,7 @@ function pdRenderView() {
 // 월 요금이 다르니 비교표에서 별개 항목이어야 한다. 정수기·인터넷과 같은 규칙이다.
 // 지금 이 화면의 조합은 약정 하나뿐이므로 options = { months: 60 } 이 된다.
 //
-// ⚠ options 의 키 이름(months)은 product-url.js 가 링크를 만들 때도 쓴다.
+// options 의 키 이름(months)은 product-url.js 가 링크를 만들 때도 쓴다.
 //   한쪽만 바꾸면 마이페이지에서 눌러 돌아왔을 때 약정이 기본값으로 리셋된다.
 var pdFav = null;
 var pdCmp = null;
@@ -364,7 +364,7 @@ function pdActionsHtml(withTip) {
 // 거기서부터는 화면 아래에 같은 버튼을 붙여 둔다. 상품명을 왼쪽에 함께 적는 이유는
 // 한참 내려온 뒤에는 지금 보고 있는 게 어느 상품인지 흐려지기 때문이다.
 //
-// ★ 화면 아래를 나눠 쓰는 것들이 셋이다 — 비교 트레이 / 이 바 / 카카오 플로팅.
+// 화면 아래를 나눠 쓰는 것들이 셋이다 — 비교 트레이 / 이 바 / 카카오 플로팅.
 //   각자 bottom:0 을 잡으면 서로 겹친다. 아래에서부터 트레이 → 바 → 카카오 순으로 쌓고,
 //   앞엣것의 높이를 재서 뒤엣것을 밀어 올린다. 트레이는 열고 닫히므로 그때마다 다시 잰다.
 function pdMountBottomBar() {
@@ -453,7 +453,7 @@ function pdRenderNote() {
 
 // 지금 고객이 고른 약정·요금. 안 고르고 눌렀으면 처음 값(가장 싼 기간)이 나온다.
 //
-// ★ 이 값을 쓰지 않고 pdProduct.monthlyFee 를 그대로 실으면,
+// 이 값을 쓰지 않고 pdProduct.monthlyFee 를 그대로 실으면,
 //   48개월을 고른 고객의 신청서에 60개월 최저가가 들어간다. 접수 사고가 된다.
 function pdSelection() {
   if (typeof DapickProductView === 'undefined' || !DapickProductView.selection) {
@@ -530,7 +530,7 @@ var PD_COLLAPSED_PX = 1000;
 var PD_PANELS = { detail: 'pd-detail-body', faq: 'pd-faq-body' };
 var pdFaqRows = [];
 
-// ★ 2026-08-06 — 한 번만 묻고 포기하지 않는다.
+// 2026-08-06 — 한 번만 묻고 포기하지 않는다.
 //
 //   어드민(faq.js)은 최상위 카테고리만 탭으로 보여주므로 FAQ 는 보통 최상위에 붙는다.
 //   그래서 최상위부터 묻는다. 다만 다음 두 경우에 예전 코드는 조용히 0건이 됐다.
@@ -688,7 +688,7 @@ function pdMountReviews() {
   if (typeof window.initReviews !== 'function') return;
   if (!pdProduct || !pdProduct.id) return;
   try {
-    // ★ 상품 하나가 아니라 '이 카테고리' 후기를 보여준다 (2026-08-06).
+    // 상품 하나가 아니라 '이 카테고리' 후기를 보여준다 (2026-08-06).
     //   정수기 상세가 코웨이 전체 후기를 보여주는 것과 같은 규칙이다.
     //   상품마다 후기가 쌓이려면 한참 걸린다. 그동안 '0.0 / 후기 없음' 만 뜨면
     //   신뢰가 붙기는커녕 깎인다.
@@ -711,7 +711,7 @@ function pdRenderFaq() {
   var sec = document.getElementById('pd-sec-faq');
   if (!el) return;
 
-  // ⚠ 내용만 채우고 끝내면 안 된다.
+  // 내용만 채우고 끝내면 안 된다.
   //   감싼 <section id="pd-sec-faq" hidden> 을 여기서 열어야 화면에 나온다.
   //   2026-08-06 에 탭을 세로 섹션으로 바꾸면서 이 한 줄을 빠뜨려,
   //   FAQ 를 5건 받아놓고도 화면에는 아무것도 안 나왔다.

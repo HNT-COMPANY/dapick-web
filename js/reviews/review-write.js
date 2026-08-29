@@ -1,4 +1,4 @@
-// ════════════════════════════════════════════════════
+//
 // review-write.js — 간편신청 고객 후기 작성 (/r/{토큰})
 //
 // 자격은 URL 의 토큰 하나뿐이다. 로그인도, 회원 토큰도 쓰지 않는다.
@@ -10,7 +10,7 @@
 //   GET  /api/review-invite/{token}          링크 열기
 //   POST /api/review-invite/{token}/images   사진 한 장 (multipart)
 //   POST /api/review-invite/{token}/review   후기 저장 (PENDING 으로 들어감)
-// ════════════════════════════════════════════════════
+//
 (function () {
   'use strict';
 
