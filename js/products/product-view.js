@@ -30,7 +30,8 @@
 //   { name, modelName, description, imageUrl, galleryImages,
 //     monthlyFee, contractMonths, brandName, brandLogoUrl,
 //     specs:  { 자유칸key: 값 },
-//     options:{ rentalPlans:[{months,monthlyFee}], cardDiscount:숫자,
+//     options:{ rentalPlans:[{type,months,monthlyFee}], cardDiscount:숫자,
+//               planTypeLabel:'설치유형', planMonthsLabel:'약정 기간', planMonthsUnit:'개월',
 //               partnerCards:[...], panelNotes:[{label,value}],
 //               summary:[{type,label,value,choices}],   type: text | select | image (없으면 text)
 //               choiceRows:[{label,choices,value}] } }  고객이 고르는 칸만 한 벌 더
@@ -216,6 +217,28 @@
     var l = p.options && p.options.planTypeLabel;
     l = l == null ? '' : String(l).trim();
     return l || '유형';
+  }
+
+  // ── 기간 축 이름과 단위 (2026-08-29) ────────────────────────
+  //
+  // ★ 왜 풀었나
+  //   유형 축은 8/26 에 이름을 관리자가 정하게 풀었는데 기간 축은
+  //   '약정 기간' 과 '개월' 이 코드에 박혀 있었다. 렌탈은 개월이 맞지만
+  //   회차로 세는 상품이 있어, 이름을 못 바꾸면 화면이 사실과 다르게 나간다.
+  //
+  // ⚠ 값이 없으면 지금까지 쓰던 문구 그대로다.
+  //   이미 등록된 상품은 이 값이 없으므로 화면이 하나도 안 바뀐다.
+  //   기본값을 바꾸면 등록된 상품 전부의 화면이 같이 바뀐다.
+  function planMonthsLabel(p) {
+    var l = p.options && p.options.planMonthsLabel;
+    l = l == null ? '' : String(l).trim();
+    return l || '약정 기간';
+  }
+
+  function planMonthsUnit(p) {
+    var u = p.options && p.options.planMonthsUnit;
+    u = u == null ? '' : String(u).trim();
+    return u || '개월';
   }
 
   // 지금 보고 있는 유형. 부르는 쪽이 wantType 을 주면 그것, 없으면 첫 유형.
@@ -510,7 +533,7 @@
       var shown = !multi || t === cur;
 
       return '<div class="pv2-plans' + (shown ? '' : ' is-off') + '" data-pv2-plans="' + esc(t) + '">' +
-        '<div class="pv2-plans-label">약정 기간</div>' +
+        '<div class="pv2-plans-label">' + esc(planMonthsLabel(p)) + '</div>' +
         '<div class="pv2-plans-btns">' +
         plans.map(function (pl, i) {
           // 같은 요금이 두 줄이면 앞엣것 하나만 켠다. 둘 다 켜지면 어느 값이 실릴지 알 수 없다.
@@ -521,7 +544,7 @@
             ' data-ptype="' + esc(t) + '"' +
             ' data-months="' + esc(pl.months == null ? '' : pl.months) + '"' +
             ' data-fee="' + esc(pl.monthlyFee == null ? '' : pl.monthlyFee) + '">' +
-            '<span class="pv2-plan-m">' + esc(pl.months == null ? '기간 미입력' : pl.months + '개월') + '</span>' +
+            '<span class="pv2-plan-m">' + esc(pl.months == null ? '기간 미입력' : pl.months + planMonthsUnit(p)) + '</span>' +
             '<span class="pv2-plan-f">' + (pl.monthlyFee != null ? '월 ' + esc(won(pl.monthlyFee)) : '요금 미입력') + '</span>' +
             '</button>';
         }).join('') +
