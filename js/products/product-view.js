@@ -79,7 +79,10 @@
     { key: 'maker', label: '브랜드', type: 'text' },
     { key: 'itemType', label: '품목', type: 'text' },
     { key: 'rentalPlans', label: '렌탈기간', type: 'plans', base: true },
-    { key: 'monthlyFee', label: '월 렌탈료', type: 'number', base: true },
+    // 월 렌탈료는 요약표에 안 넣는다 (2026-08-29). 오른쪽 요금 상자가 이미
+    // 크게 보여주고 있어서 같은 숫자가 화면에 두 번 나온다.
+    // 제목과 같은 이유다 — 입력 칸으로는 필요하므로 목록에는 남기고 표시만 끈다.
+    { key: 'monthlyFee', label: '월 렌탈료', type: 'number', base: true, showOnSpec: false },
     { key: 'cardDiscount', label: '카드할인시 금액', type: 'number', base: true },
     { key: 'partnerCards', label: '제휴카드', type: 'cards', base: true },
     { key: 'galleryImages', label: '상세 이미지', type: 'images', base: true },
@@ -583,6 +586,19 @@
     (fields || []).forEach(function (f) {
       if (!f || f.showOnSpec === false) return;
       if (NOT_IN_TABLE.indexOf(f.type) !== -1) return;
+
+      // 렌탈사는 이름 없이 로고만 올리는 경우가 있다 (2026-08-29).
+      // 그때 이름만 보면 빈 값이 되어 표에 "미입력" 이 뜬다 — 관리자는 로고를
+      // 올렸는데 안 들어갔다고 본다. 로고가 있으면 로고를 값으로 그린다.
+      // 이름과 로고가 둘 다 있으면 이름을 쓴다. 표는 글자로 읽는 자리다.
+      if (f.type === 'brand') {
+        var b = brandOf(p);
+        if (b.name) rows.push({ label: f.label, value: b.name });
+        else if (b.logoUrl) rows.push({ label: f.label, value: b.logoUrl, image: true });
+        else if (opts.showMissing) rows.push({ label: f.label, value: '' });
+        return;
+      }
+
       var v = f.base ? baseValue(p, f.key) : (p.specs || {})[f.key];
       var text = displayValue(v, f);
       if (!text && !opts.showMissing) return;
